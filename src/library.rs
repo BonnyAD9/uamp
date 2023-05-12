@@ -5,7 +5,7 @@ use std::fs::read_dir;
 
 #[derive(Default)]
 pub struct Library {
-    pub songs: Vec<Song>,
+    songs: Vec<Song>,
 }
 
 impl Library {
@@ -15,7 +15,7 @@ impl Library {
 
     pub fn from_config(conf: &Config) -> Result<Self> {
         let mut lib = Library::new();
-        let dir = read_dir(conf.library_path.as_str())?;
+        let dir = read_dir(conf.library_path())?;
 
         for f in dir {
             let f = f?;
@@ -37,5 +37,9 @@ impl Library {
         }
 
         Ok(lib)
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<'_, Song> {
+        self.songs.iter()
     }
 }

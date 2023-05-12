@@ -34,9 +34,8 @@ impl Application for UampApp {
         _ = self.config;
         widget::scrollable(widget::column(
             self.library
-                .songs
                 .iter()
-                .map(|s| widget::text(s.title.to_string()).into())
+                .map(|s| widget::text(s.title().to_owned()).into())
                 .collect(),
         ))
         .into()

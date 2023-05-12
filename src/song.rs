@@ -2,9 +2,9 @@ use audiotags::Tag;
 use eyre::Result;
 
 pub struct Song {
-    pub title: String,
-    pub artist: String,
-    pub album: String,
+    title: String,
+    artist: String,
+    album: String,
 }
 
 impl Song {
@@ -15,5 +15,17 @@ impl Song {
             artist: tag.artist().unwrap_or("<unknown artist>").to_owned(),
             album: tag.album_title().unwrap_or("<unknown album>").to_owned(),
         })
+    }
+
+    pub fn title(&self) -> &str {
+        &self.title
+    }
+
+    pub fn artist(&self) -> &str {
+        &self.artist
+    }
+
+    pub fn album(&self) -> &str {
+        &self.album
     }
 }
