@@ -3,10 +3,10 @@ use std::{fs::File, io::BufReader};
 use eyre::Result;
 use rodio::{Decoder, OutputStream, Sink};
 
-use crate::song::Song;
+use crate::library::Library;
 
 pub struct Player {
-    current: Option<Song>,
+    current: Option<usize>,
     sink: Sink,
     _stream: OutputStream,
 }
@@ -21,10 +21,10 @@ impl Player {
         })
     }
 
-    pub fn play(&mut self, song: Song) -> Result<()> {
+    pub fn play(&mut self, lib: &Library, id: usize) -> Result<()> {
         self.sink.stop();
-        let file = BufReader::new(File::open(song.path())?);
-        self.current = Some(song);
+        let file = BufReader::new(File::open(lib[id].path())?);
+        self.current = Some(id);
         let source = Decoder::new(file)?;
         self.sink.append(source);
         self.sink.play();

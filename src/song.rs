@@ -7,6 +7,8 @@ pub struct Song {
     title: String,
     artist: String,
     album: String,
+    track: u32,
+    disc: u32,
 }
 
 impl Song {
@@ -17,6 +19,8 @@ impl Song {
             title: tag.title().unwrap_or("<unknown title>").to_owned(),
             artist: tag.artist().unwrap_or("<unknown artist>").to_owned(),
             album: tag.album_title().unwrap_or("<unknown album>").to_owned(),
+            track: tag.track().0.unwrap_or_default() as u32,
+            disc: tag.disc().0.unwrap_or_default() as u32,
         })
     }
 
@@ -34,5 +38,13 @@ impl Song {
 
     pub fn path(&self) -> &str {
         &self.path
+    }
+
+    pub fn track(&self) -> u32 {
+        self.track
+    }
+
+    pub fn disc(&self) -> u32 {
+        self.disc
     }
 }

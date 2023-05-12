@@ -1,6 +1,6 @@
 use iced::{executor, widget, Application, Command, Element, Theme};
 
-use crate::{config::Config, library::Library, player::Player, song::Song};
+use crate::{config::Config, library::Library, player::Player};
 
 pub struct UampApp {
     config: Config,
@@ -26,8 +26,8 @@ impl Application for UampApp {
 
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
         match message {
-            UampMessage::PlaySong(s) => {
-                println!("{:?}", self.player.play(self.library[s].clone()))
+            UampMessage::PlaySong(id) => {
+                _ = self.player.play(&self.library, id)
             }
         };
         Command::none()
