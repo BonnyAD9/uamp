@@ -63,6 +63,8 @@ impl Default for UampApp {
     fn default() -> Self {
         let conf = Config::default();
         let lib = Library::from_config(&conf).unwrap_or_default();
+
+        // XXX: try to avoid unwrap
         let player = Player::try_new().unwrap();
 
         UampApp {
