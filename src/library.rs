@@ -2,6 +2,7 @@ use crate::config::Config;
 use crate::song::Song;
 use eyre::Result;
 use std::fs::read_dir;
+use std::ops::Index;
 
 #[derive(Default)]
 pub struct Library {
@@ -31,7 +32,7 @@ impl Library {
                 None => continue,
             };
 
-            if let Ok(song) = Song::from_path(path) {
+            if let Ok(song) = Song::from_path(path.to_owned()) {
                 lib.songs.push(song);
             }
         }
@@ -41,5 +42,12 @@ impl Library {
 
     pub fn iter(&self) -> std::slice::Iter<'_, Song> {
         self.songs.iter()
+    }
+}
+
+impl Index<usize> for Library {
+    type Output = Song;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.songs[index]
     }
 }

@@ -1,14 +1,17 @@
 use iced::{executor, widget, Application, Command, Element, Theme};
 
-use crate::{config::Config, library::Library};
+use crate::{config::Config, library::Library, player::Player, song::Song};
 
 pub struct UampApp {
     config: Config,
     library: Library,
+    player: Player,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum UampMessage {}
+pub enum UampMessage {
+    PlaySong(usize),
+}
 
 impl Application for UampApp {
     type Executor = executor::Default;
@@ -22,7 +25,11 @@ impl Application for UampApp {
     }
 
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
-        _ = message;
+        match message {
+            UampMessage::PlaySong(s) => {
+                println!("{:?}", self.player.play(self.library[s].clone()))
+            }
+        };
         Command::none()
     }
 
@@ -32,12 +39,19 @@ impl Application for UampApp {
 
     fn view(&self) -> Element<Self::Message> {
         _ = self.config;
+        let mut c = 0;
         widget::scrollable(widget::column(
             self.library
                 .iter()
                 .map(|s| {
-                    widget::text(format!("{} - {}", s.artist(), s.title()))
-                        .into()
+                    c += 1;
+                    widget::button(widget::text(format!(
+                        "{} - {}",
+                        s.artist(),
+                        s.title()
+                    )))
+                    .on_press(UampMessage::PlaySong(c - 1))
+                    .into()
                 })
                 .collect(),
         ))
@@ -49,10 +63,12 @@ impl Default for UampApp {
     fn default() -> Self {
         let conf = Config::default();
         let lib = Library::from_config(&conf).unwrap_or_default();
+        let player = Player::try_new().unwrap();
 
         UampApp {
             config: conf,
             library: lib,
+            player,
         }
     }
 }
