@@ -26,13 +26,7 @@ impl Library {
                 continue;
             }
 
-            let path = f.path();
-            let path = match path.to_str() {
-                Some(s) => s,
-                None => continue,
-            };
-
-            if let Ok(song) = Song::from_path(path.to_owned()) {
+            if let Ok(song) = Song::from_path(f.path()) {
                 lib.songs.push(song);
             }
         }
