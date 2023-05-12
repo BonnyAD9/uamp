@@ -2,6 +2,9 @@ use eyre::Result;
 use iced::{Application, Settings};
 use uamp_app::UampApp;
 
+mod config;
+mod library;
+mod song;
 mod uamp_app;
 
 fn main() -> Result<()> {

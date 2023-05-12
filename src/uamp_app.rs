@@ -1,6 +1,11 @@
-use iced::{executor, widget::text, Application, Command, Element, Theme};
+use iced::{executor, widget, Application, Command, Element, Theme};
 
-pub struct UampApp {}
+use crate::{config::Config, library::Library};
+
+pub struct UampApp {
+    config: Config,
+    library: Library,
+}
 
 #[derive(Debug, Clone, Copy)]
 pub enum UampMessage {}
@@ -13,7 +18,7 @@ impl Application for UampApp {
 
     fn new(flags: Self::Flags) -> (Self, iced::Command<Self::Message>) {
         _ = flags;
-        (UampApp {}, Command::none())
+        (UampApp::default(), Command::none())
     }
 
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
@@ -26,6 +31,25 @@ impl Application for UampApp {
     }
 
     fn view(&self) -> Element<Self::Message> {
-        text("your music will be here :)").into()
+        widget::scrollable(widget::column(
+            self.library
+                .songs[..1000]
+                .iter()
+                .map(|s| widget::text(s.title.to_string()).into())
+                .collect(),
+        ))
+        .into()
+    }
+}
+
+impl Default for UampApp {
+    fn default() -> Self {
+        let conf = Config::default();
+        let lib = Library::from_config(&conf).unwrap_or_default();
+
+        UampApp {
+            config: conf,
+            library: lib,
+        }
     }
 }
