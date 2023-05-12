@@ -31,9 +31,10 @@ impl Application for UampApp {
     }
 
     fn view(&self) -> Element<Self::Message> {
+        _ = self.config;
         widget::scrollable(widget::column(
             self.library
-                .songs[..1000]
+                .songs
                 .iter()
                 .map(|s| widget::text(s.title.to_string()).into())
                 .collect(),

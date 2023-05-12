@@ -3,6 +3,7 @@ use crate::song::Song;
 use eyre::Result;
 use std::fs::read_dir;
 
+#[derive(Default)]
 pub struct Library {
     pub songs: Vec<Song>,
 }
@@ -36,11 +37,5 @@ impl Library {
         }
 
         Ok(lib)
-    }
-}
-
-impl Default for Library {
-    fn default() -> Self {
-        Library::new()
     }
 }
