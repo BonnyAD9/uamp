@@ -35,7 +35,10 @@ impl Application for UampApp {
         widget::scrollable(widget::column(
             self.library
                 .iter()
-                .map(|s| widget::text(s.title().to_owned()).into())
+                .map(|s| {
+                    widget::text(format!("{} - {}", s.artist(), s.title()))
+                        .into()
+                })
                 .collect(),
         ))
         .into()
