@@ -1,21 +1,22 @@
-use std::fs::File;
-
-use serde_derive::{Serialize, Deserialize};
+use eyre::{Report, Result};
+use serde_derive::{Deserialize, Serialize};
+use std::{
+    fs::{create_dir_all, File},
+    path::{Path, PathBuf},
+};
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     #[serde(default = "default_library_path")]
-    library_path: String,
+    library_path: PathBuf,
 }
 
-fn default_library_path() -> String {
+fn default_library_path() -> PathBuf {
     if let Some(dir) = dirs::audio_dir() {
-        if let Some(dir) = dir.to_str() {
-            return dir.to_owned()
-        }
+        dir
+    } else {
+        PathBuf::from("./")
     }
-
-    "./".to_owned()
 }
 
 impl Default for Config {
@@ -27,11 +28,11 @@ impl Default for Config {
 }
 
 impl Config {
-    pub fn library_path(&self) -> &str {
+    pub fn library_path(&self) -> &PathBuf {
         &self.library_path
     }
 
-    pub fn from_json(path: &str) -> Self {
+    pub fn from_json<P: AsRef<Path>>(path: P) -> Self {
         let file = match File::open(path) {
             Ok(f) => f,
             Err(_) => return Config::default(),
@@ -40,13 +41,34 @@ impl Config {
         serde_json::from_reader(file).unwrap_or_default()
     }
 
-    pub fn from_default_json(path: &str) -> Self {
-        if let Some(dir) = dirs::config_dir() {
-            if let Some(dir) = dir.to_str() {
-                return Config::from_json(dir);
-            }
+    pub fn from_default_json<P: AsRef<Path>>(path: P) -> Self {
+        if let Some(dir) = default_config_path() {
+            Config::from_json(dir.join("/config.json"))
+        } else {
+            Config::default()
+        }
+    }
+
+    pub fn to_json<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        if let Some(par) = path.as_ref().parent() {
+            create_dir_all(par)?;
         }
 
-        Config::default()
+        serde_json::to_writer(File::create(path)?, self)?;
+        Ok(())
+    }
+
+    pub fn to_default_json(&self) -> Result<()> {
+        let path = default_config_path()
+            .ok_or(Report::msg("Couldn't get the default path"))?;
+        self.to_json(path)
+    }
+}
+
+fn default_config_path() -> Option<PathBuf> {
+    if let Some(mut dir) = dirs::config_dir() {
+        Some(dir.join("/uamp"))
+    } else {
+        None
     }
 }

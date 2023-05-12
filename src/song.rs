@@ -1,9 +1,11 @@
+use std::path::{Path, PathBuf};
+
 use audiotags::Tag;
 use eyre::Result;
 
 #[derive(Debug, Clone)]
 pub struct Song {
-    path: String,
+    path: PathBuf,
     title: String,
     artist: String,
     album: String,
@@ -12,10 +14,10 @@ pub struct Song {
 }
 
 impl Song {
-    pub fn from_path(path: String) -> Result<Self> {
+    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
         let tag = Tag::new().read_from_path(&path)?;
         Ok(Song {
-            path,
+            path: path.as_ref().to_path_buf(),
             title: tag.title().unwrap_or("<unknown title>").to_owned(),
             artist: tag.artist().unwrap_or("<unknown artist>").to_owned(),
             album: tag.album_title().unwrap_or("<unknown album>").to_owned(),
@@ -36,7 +38,7 @@ impl Song {
         &self.album
     }
 
-    pub fn path(&self) -> &str {
+    pub fn path(&self) -> &PathBuf {
         &self.path
     }
 
