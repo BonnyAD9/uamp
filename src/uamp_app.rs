@@ -57,6 +57,10 @@ impl Application for UampApp {
         ))
         .into()
     }
+
+    fn theme(&self) -> Self::Theme {
+        Theme::Dark
+    }
 }
 
 impl Default for UampApp {
