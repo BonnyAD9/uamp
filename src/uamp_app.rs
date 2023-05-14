@@ -1,6 +1,10 @@
-use iced::{executor, widget, Application, Command, Element, Theme};
+use iced::{
+    executor, widget, Application, Command, Element, Length, Padding, Theme,
+};
 
-use crate::{config::Config, library::Library, player::Player};
+use crate::{
+    config::Config, library::Library, wrap_box::wrap_box, player::Player,
+};
 
 pub struct UampApp {
     config: Config,
@@ -11,6 +15,7 @@ pub struct UampApp {
 #[derive(Debug, Clone, Copy)]
 pub enum UampMessage {
     PlaySong(usize),
+    PlayPause,
 }
 
 impl Application for UampApp {
@@ -29,6 +34,7 @@ impl Application for UampApp {
             UampMessage::PlaySong(id) => {
                 _ = self.player.play(&self.library, id)
             }
+            UampMessage::PlayPause => self.player.play_pause(),
         };
         Command::none()
     }
@@ -40,22 +46,33 @@ impl Application for UampApp {
     fn view(&self) -> Element<Self::Message> {
         _ = self.config;
         let mut c = 0;
-        widget::scrollable(widget::column(
-            self.library
-                .iter()
-                .map(|s| {
-                    c += 1;
-                    widget::button(widget::text(format!(
-                        "{} - {}",
-                        s.artist(),
-                        s.title()
-                    )))
-                    .on_press(UampMessage::PlaySong(c - 1))
-                    .into()
-                })
-                .collect(),
-        ))
-        .into()
+        let list = widget::scrollable(
+            wrap_box(
+                self.library
+                    .iter()
+                    .map(|s| {
+                        c += 1;
+                        widget::button(widget::text(format!(
+                            "{} - {}",
+                            s.artist(),
+                            s.title()
+                        )))
+                        .on_press(UampMessage::PlaySong(c - 1))
+                        .width(Length::Fill)
+                        .into()
+                    })
+                    .collect(),
+            )
+            .spacing_y(5),
+        )
+        .width(Length::Fill);
+
+        /*let now_playing = widget::button(widget::text("Play/Pause"))
+            .on_press(UampMessage::PlayPause);
+
+        widget::column![list.height(Length::Fill), now_playing.height(Length::Fixed(30.))].into()*/
+
+        list.into()
     }
 
     fn theme(&self) -> Self::Theme {

@@ -41,7 +41,7 @@ impl Config {
         serde_json::from_reader(file).unwrap_or_default()
     }
 
-    pub fn from_default_json<P: AsRef<Path>>(path: P) -> Self {
+    pub fn from_default_json() -> Self {
         if let Some(dir) = default_config_path() {
             Config::from_json(dir.join("/config.json"))
         } else {
@@ -66,7 +66,7 @@ impl Config {
 }
 
 fn default_config_path() -> Option<PathBuf> {
-    if let Some(mut dir) = dirs::config_dir() {
+    if let Some(dir) = dirs::config_dir() {
         Some(dir.join("/uamp"))
     } else {
         None

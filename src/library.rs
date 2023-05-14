@@ -29,14 +29,17 @@ impl Library {
             if let Ok(song) = Song::from_path(f.path()) {
                 lib.songs.push(song);
             }
+            /*if lib.songs.len() > 100 {
+                break;
+            }*/
         }
 
         // songs are identified by their id, which is index in the song vector
         // so the library is sorted to make related songs close to each other
-        lib.songs.sort_unstable_by_key(|p| p.track());
-        lib.songs.sort_by_key(|p| p.disc());
-        lib.songs.sort_by(|a, b| a.album().cmp(b.album()));
-        lib.songs.sort_by(|a, b| a.artist().cmp(b.artist()));
+        //lib.songs.sort_unstable_by_key(|p| p.track());
+        //lib.songs.sort_by_key(|p| p.disc());
+        //lib.songs.sort_by(|a, b| a.album().cmp(b.album()));
+        //lib.songs.sort_by(|a, b| a.artist().cmp(b.artist()));
 
         Ok(lib)
     }

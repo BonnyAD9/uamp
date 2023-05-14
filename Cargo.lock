@@ -2652,6 +2652,7 @@ dependencies = [
  "dirs",
  "eyre",
  "iced",
+ "iced_native",
  "rodio",
  "serde",
  "serde_derive",
