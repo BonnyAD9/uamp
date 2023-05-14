@@ -1,9 +1,10 @@
 use iced::{
     executor, widget, Application, Command, Element, Length, Padding, Theme,
 };
+use iced_native::widget::column;
 
 use crate::{
-    config::Config, library::Library, wrap_box::wrap_box, player::Player,
+    config::Config, library::Library, player::Player, wrap_box::wrap_box,
 };
 
 pub struct UampApp {
@@ -46,26 +47,23 @@ impl Application for UampApp {
     fn view(&self) -> Element<Self::Message> {
         _ = self.config;
         let mut c = 0;
-        let list = widget::scrollable(
-            wrap_box(
-                self.library
-                    .iter()
-                    .map(|s| {
-                        c += 1;
-                        widget::button(widget::text(format!(
-                            "{} - {}",
-                            s.artist(),
-                            s.title()
-                        )))
-                        .on_press(UampMessage::PlaySong(c - 1))
-                        .width(Length::Fill)
-                        .into()
-                    })
-                    .collect(),
-            )
-            .spacing_y(5),
-        )
-        .width(Length::Fill);
+        let list = wrap_box(
+            self.library
+                .iter()
+                .map(|s| {
+                    c += 1;
+                    widget::button(widget::text(format!(
+                        "{} - {}",
+                        s.artist(),
+                        s.title()
+                    )))
+                    .on_press(UampMessage::PlaySong(c - 1))
+                    .width(Length::Fill)
+                    .height(Length::Fixed(30.))
+                    .into()
+                })
+                .collect(),
+        );
 
         /*let now_playing = widget::button(widget::text("Play/Pause"))
             .on_press(UampMessage::PlayPause);
