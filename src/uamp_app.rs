@@ -3,7 +3,7 @@ use iced::{
 };
 
 use crate::{
-    config::Config, library::Library, wrap_box::wrap_box, player::Player,
+    config::Config, library::Library, player::Player, wrap_box::wrap_box,
 };
 
 pub struct UampApp {
