@@ -1,5 +1,3 @@
-use std::borrow::Borrow;
-
 use iced_native::{
     event, layout, mouse, overlay,
     widget::{self, Tree},
@@ -11,6 +9,8 @@ use iced_native::{
 /// and also has a scollbar. Advantage over normal scrollbar combined with
 /// row or column is that this more efficiently handles large amounts of
 /// childern. In the first versions it may not support the horizontal part.
+///
+/// This is not finished and currently is the same as iced::widgets::Column
 ///
 /// The code is hevily inspired by iced::widgets::Column
 pub struct WrapBox<'a, Message, Renderer: iced_native::Renderer> {
