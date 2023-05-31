@@ -350,11 +350,9 @@ where
             let item_space = self.item_height + self.spacing_y;
             match delta {
                 ScrollDelta::Lines { x: _, y } => {
-                    //println!("lines: {y}");
                     state.offset_y -= y * item_space;
                 }
                 ScrollDelta::Pixels { x: _, y } => {
-                    //println!("pixels: {y}");
                     state.offset_y -= y;
                 }
             }
@@ -415,19 +413,6 @@ where
         viewport: &iced_native::Rectangle,
     ) {
         let state = tree.state.downcast_ref();
-
-        /*println!("{:?}", layout.bounds().size());
-        let VisibleChildernIterator {
-            wrap_box: _,
-            i: first,
-            max_i: last,
-        } = self.visible_state(layout.bounds().size(), *state);
-        println!("first: {first}, last: {last}");
-        println!("{:?}", layout.children().next().unwrap().bounds().size());
-        println!("{:?}", viewport);
-
-        println!("count: {}", self.visible_state(layout.bounds().size(), *state).count());
-        println!("count c: {}", layout.children().next().unwrap().children().count());*/
 
         for ((child, i), layout) in self
             .visible_state(layout.bounds().size(), *state)
