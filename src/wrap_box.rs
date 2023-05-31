@@ -337,7 +337,11 @@ where
         let state = tree.state.downcast_mut::<State>();
         let size = layout.bounds().size();
 
-        // BUG: incorrect layout matching
+        // BUG: incorrect layout matching, this will propably not be fixed
+        //      because it would require changing part of the iced architecture
+        //      workaround is that all the items in the wrapbox will have
+        //      their layout independent from the exact content (all layouts
+        //      are same for all the items)
         let item_space = self.item_height + self.spacing_y;
         if let iced_native::Event::Mouse(mouse::Event::WheelScrolled {
             delta,
@@ -354,8 +358,8 @@ where
         }
         state.offset_y = state
             .offset_y
-            .max(0.)
-            .min(item_space * self.children.len() as f32 - size.height);
+            .min(item_space * self.children.len() as f32 - size.height)
+            .max(0.);
 
         self.state = Some(*state);
 

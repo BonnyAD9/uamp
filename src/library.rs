@@ -29,9 +29,10 @@ impl Library {
             if let Ok(song) = Song::from_path(f.path()) {
                 lib.songs.push(song);
             }
-            if lib.songs.len() > 100 {
+
+            /*if lib.songs.len() > 10 {
                 break;
-            }
+            }*/
         }
 
         // songs are identified by their id, which is index in the song vector

@@ -56,7 +56,7 @@ impl Application for UampApp {
                         "{} - {}",
                         s.artist(),
                         s.title()
-                    )))
+                    )).width(Length::Fill))
                     .on_press(UampMessage::PlaySong(c - 1))
                     .width(Length::Fill)
                     .height(Length::Fixed(30.))
@@ -64,7 +64,8 @@ impl Application for UampApp {
                 })
                 .collect(),
         )
-        .item_height(30);
+        .item_height(30)
+        .spacing_y(5);
 
         /*let now_playing = widget::button(widget::text("Play/Pause"))
             .on_press(UampMessage::PlayPause);
