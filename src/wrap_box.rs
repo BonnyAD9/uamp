@@ -1,15 +1,11 @@
-use std::{
-    ops::{Range, RangeInclusive},
-    vec,
-};
+use std::vec;
 
-use iced::Renderer;
 use iced_native::{
     event,
     layout::{self, Node},
     mouse::{self, ScrollDelta},
-    overlay::{self, Group},
-    widget::{self, pane_grid::Direction, tree, Tree},
+    overlay::Group,
+    widget::{self, tree, Tree},
     Alignment, Element, Layout, Length, Padding, Pixels, Point, Rectangle,
     Size, Vector, Widget,
 };

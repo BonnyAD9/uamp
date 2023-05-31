@@ -1,7 +1,6 @@
 use iced::{
-    executor, widget, Application, Command, Element, Length, Padding, Theme,
+    executor, widget, Application, Command, Element, Length, Theme,
 };
-use iced_native::widget::scrollable;
 
 use crate::{
     config::Config, library::Library, player::Player, wrap_box::wrap_box,
