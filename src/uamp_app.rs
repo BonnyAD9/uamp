@@ -52,11 +52,14 @@ impl Application for UampApp {
                 .iter()
                 .map(|s| {
                     c += 1;
-                    widget::button(widget::text(format!(
-                        "{} - {}",
-                        s.artist(),
-                        s.title()
-                    )).width(Length::Fill))
+                    widget::button(
+                        widget::text(format!(
+                            "{} - {}",
+                            s.artist(),
+                            s.title()
+                        ))
+                        .width(Length::Fill),
+                    )
                     .on_press(UampMessage::PlaySong(c - 1))
                     .width(Length::Fill)
                     .height(Length::Fixed(30.))
@@ -67,12 +70,16 @@ impl Application for UampApp {
         .item_height(30)
         .spacing_y(5);
 
-        /*let now_playing = widget::button(widget::text("Play/Pause"))
+        let now_playing = widget::button(widget::text("Play/Pause"))
             .on_press(UampMessage::PlayPause);
 
-        widget::column![list.height(Length::Fill), now_playing.height(Length::Fixed(30.))].into()*/
+        widget::column![
+            list.height(Length::Fill),
+            now_playing.height(Length::Fixed(30.))
+        ]
+        .into()
 
-        list.into()
+        //list.into()
     }
 
     fn theme(&self) -> Self::Theme {

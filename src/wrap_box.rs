@@ -8,7 +8,7 @@ use iced_native::{
     event,
     layout::{self, Node},
     mouse::{self, ScrollDelta},
-    overlay,
+    overlay::{self, Group},
     widget::{self, pane_grid::Direction, tree, Tree},
     Alignment, Element, Layout, Length, Padding, Pixels, Point, Rectangle,
     Size, Vector, Widget,
@@ -334,6 +334,10 @@ where
         clipboard: &mut dyn iced_native::Clipboard,
         shell: &mut iced_native::Shell<'_, Message>,
     ) -> iced_native::event::Status {
+        if matches!(event, iced_native::Event::Mouse(_)) && !layout.bounds().contains(cursor_position) {
+            return iced_native::event::Status::Ignored
+        }
+
         let state = tree.state.downcast_mut::<State>();
         let size = layout.bounds().size();
 
@@ -387,6 +391,10 @@ where
         viewport: &Rectangle,
         renderer: &Renderer,
     ) -> mouse::Interaction {
+        if !layout.bounds().contains(cursor_position) {
+            return mouse::Interaction::Idle
+        }
+
         let state = tree.state.downcast_ref();
 
         self.visible_state(layout.bounds().size(), *state)
@@ -422,7 +430,12 @@ where
         let offset =
             Vector::new(0., first as f32 * item_space - state.offset_y);
 
-        let mouse_pos = cursor_position - offset;
+        let mouse_pos = if layout.bounds().contains(cursor_position) {
+            cursor_position - offset
+        } else {
+            // don't count with the mous if it is outside
+            Point::new(f32::INFINITY, f32::INFINITY)
+        };
         let child_viewport = Rectangle {
             x: bounds.x - state.offset_x,
             y: bounds.y - state.offset_y,
@@ -451,12 +464,26 @@ where
 
     fn overlay<'b>(
         &'b mut self,
-        state: &'b mut Tree,
+        tree: &'b mut Tree,
         layout: Layout<'_>,
         renderer: &Renderer,
     ) -> Option<iced_native::overlay::Element<'b, Message, Renderer>> {
-        //overlay::from_children(&mut self.children, state, layout, renderer)
-        None
+        let state = tree.state.downcast_ref::<State>();
+
+        let (first, last) =
+            self.visible_pos_state(layout.bounds().size(), *state);
+
+        let children = self
+            .visible_state_mut(layout.bounds().size(), *state)
+            .zip(&mut tree.children[first..=last])
+            .zip(layout.children())
+            .filter_map(|(((child, _), state), layout)| {
+                child.as_widget_mut().overlay(state, layout, renderer)
+            })
+            .collect::<Vec<_>>();
+
+        (!children.is_empty())
+            .then(|| Group::with_children(children).overlay())
     }
 }
 
