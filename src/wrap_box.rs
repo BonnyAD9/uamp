@@ -1,4 +1,7 @@
-use std::vec;
+use std::{
+    ops::{Range, RangeInclusive},
+    vec,
+};
 
 use iced::Renderer;
 use iced_native::{
@@ -278,11 +281,7 @@ where
             .width(self.width)
             .height(self.height);
 
-        let VisibleChildernIterator {
-            wrap_box: _,
-            i: first_item,
-            max_i: last_item,
-        } = self.visible(limits.max());
+        let (first, last) = self.visible_pos(limits.max());
 
         let child_limits = layout::Limits::new(
             Size::new(limits.min().width, 0.),
@@ -296,17 +295,10 @@ where
             self.padding,
             self.spacing_y,
             Alignment::Start,
-            &self.children[first_item..=last_item],
+            &self.children[first..=last],
         );
 
-        Node::with_children(
-            limits.max(),
-            vec![if let Some((x, y)) = self.offset() {
-                node.translate(Vector::new(x, y))
-            } else {
-                node
-            }],
-        )
+        Node::with_children(limits.max(), vec![node])
     }
 
     fn operate(
@@ -343,14 +335,14 @@ where
         shell: &mut iced_native::Shell<'_, Message>,
     ) -> iced_native::event::Status {
         let state = tree.state.downcast_mut::<State>();
+        let size = layout.bounds().size();
 
-        // BUG: incorrect scroll bounds
-        // BUG: incorrect offset after changing height of window
+        // BUG: incorrect layout matching
+        let item_space = self.item_height + self.spacing_y;
         if let iced_native::Event::Mouse(mouse::Event::WheelScrolled {
             delta,
         }) = event
         {
-            let item_space = self.item_height + self.spacing_y;
             match delta {
                 ScrollDelta::Lines { x: _, y } => {
                     state.offset_y -= y * item_space;
@@ -359,15 +351,15 @@ where
                     state.offset_y -= y;
                 }
             }
-            state.offset_y = state.offset_y.max(0.).min(
-                item_space * self.children.len() as f32
-                    - layout.bounds().size().height,
-            );
         }
+        state.offset_y = state
+            .offset_y
+            .max(0.)
+            .min(item_space * self.children.len() as f32 - size.height);
 
         self.state = Some(*state);
 
-        self.visible_state_mut(layout.bounds().size(), *state)
+        self.visible_state_mut(size, *state)
             .zip(layout.children().next().unwrap().children())
             .map(|((child, i), layout)| {
                 child.as_widget_mut().on_event(
@@ -414,26 +406,43 @@ where
         renderer: &mut Renderer,
         theme: &<Renderer as iced_native::Renderer>::Theme,
         style: &iced_native::renderer::Style,
-        layout: iced_native::Layout<'_>,
-        cursor_position: iced_native::Point,
-        viewport: &iced_native::Rectangle,
+        layout: Layout<'_>,
+        cursor_position: Point,
+        _viewport: &Rectangle,
     ) {
-        let state = tree.state.downcast_ref();
+        let state = tree.state.downcast_ref::<State>();
+        let bounds = layout.bounds();
+        let item_space = self.item_height + self.spacing_y;
 
-        for ((child, i), layout) in self
-            .visible_state(layout.bounds().size(), *state)
-            .zip(layout.children().next().unwrap().children())
-        {
-            child.as_widget().draw(
-                &tree.children[i],
-                renderer,
-                theme,
-                style,
-                layout,
-                cursor_position,
-                viewport,
-            );
-        }
+        let (first, _) = self.visible_pos_state(bounds.size(), *state);
+        let offset =
+            Vector::new(0., first as f32 * item_space - state.offset_y);
+
+        let mouse_pos = cursor_position - offset;
+        let child_viewport = Rectangle {
+            x: bounds.x - state.offset_x,
+            y: bounds.y - state.offset_y,
+            ..bounds
+        };
+
+        renderer.with_layer(bounds, |renderer| {
+            renderer.with_translation(offset, |renderer| {
+                for ((child, i), layout) in self
+                    .visible_state(layout.bounds().size(), *state)
+                    .zip(layout.children().next().unwrap().children())
+                {
+                    child.as_widget().draw(
+                        &tree.children[i],
+                        renderer,
+                        theme,
+                        style,
+                        layout,
+                        mouse_pos,
+                        &child_viewport,
+                    );
+                }
+            })
+        });
     }
 
     fn overlay<'b>(
@@ -458,27 +467,52 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
 impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
     WrapBox<'a, Message, Renderer>
 {
+    fn visible_pos_state(
+        &self,
+        view_size: Size,
+        state: State,
+    ) -> (usize, usize) {
+        if self.item_height == 0. {
+            (0, self.children.len() - 1)
+        } else {
+            let item_space = self.item_height + self.spacing_y;
+            (
+                (state.offset_y / item_space).max(0.) as usize,
+                (((state.offset_y + view_size.height) / item_space) as usize)
+                    .min(self.children.len() - 1),
+            )
+        }
+    }
+
+    fn visible_pos(&self, view_size: Size) -> (usize, usize) {
+        if let Some(state) = self.state {
+            self.visible_pos_state(view_size, state)
+        } else {
+            (0, self.children.len() - 1)
+        }
+    }
+
     fn visible(
         &'a self,
         view_size: Size,
-    ) -> VisibleChildernIterator<'a, Message, Renderer> {
-        if let Some(state) = self.state {
-            VisibleChildernIterator::new(self, state, view_size)
-        } else {
-            VisibleChildernIterator {
-                wrap_box: self,
-                i: 0,
-                max_i: self.children.len() - 1,
-            }
-        }
+    ) -> impl Iterator<Item = (&Element<'a, Message, Renderer>, usize)> {
+        let (first, last) = self.visible_pos(view_size);
+        self.children[first..=last]
+            .iter()
+            .enumerate()
+            .map(move |(i, c)| (c, i + first))
     }
 
     fn visible_state(
         &'a self,
         view_size: Size,
         state: State,
-    ) -> VisibleChildernIterator<'a, Message, Renderer> {
-        VisibleChildernIterator::new(self, state, view_size)
+    ) -> impl Iterator<Item = (&Element<'a, Message, Renderer>, usize)> {
+        let (first, last) = self.visible_pos_state(view_size, state);
+        self.children[first..=last]
+            .iter()
+            .enumerate()
+            .map(move |(i, c)| (c, i + first))
     }
 
     fn visible_state_mut(
@@ -487,11 +521,7 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
         state: State,
     ) -> impl Iterator<Item = (&mut Element<'a, Message, Renderer>, usize)>
     {
-        let VisibleChildernIterator {
-            wrap_box: _,
-            i: first,
-            max_i: last,
-        } = self.visible_state(view_size, state);
+        let (first, last) = self.visible_pos_state(view_size, state);
         self.children[first..=last]
             .iter_mut()
             .enumerate()
@@ -545,54 +575,5 @@ impl State {
 impl Default for State {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-struct VisibleChildernIterator<'a, Message, Renderer: iced_native::Renderer> {
-    wrap_box: &'a WrapBox<'a, Message, Renderer>,
-    i: usize,
-    max_i: usize,
-}
-
-impl<'a, Message, Renderer: iced_native::Renderer>
-    VisibleChildernIterator<'a, Message, Renderer>
-{
-    fn new(
-        wrap_box: &'a WrapBox<'a, Message, Renderer>,
-        state: State,
-        view_size: Size,
-    ) -> Self {
-        if wrap_box.item_height == 0. {
-            VisibleChildernIterator {
-                wrap_box,
-                i: 0,
-                max_i: wrap_box.children.len() - 1,
-            }
-        } else {
-            let item_space = wrap_box.item_height + wrap_box.spacing_y;
-            VisibleChildernIterator {
-                wrap_box,
-                i: (state.offset_y / item_space).max(0.) as usize,
-                max_i: (((state.offset_y + view_size.height) / item_space)
-                    as usize)
-                    .min(wrap_box.children.len() - 1),
-            }
-        }
-    }
-}
-
-impl<'a, Message, Renderer: iced_native::Renderer> Iterator
-    for VisibleChildernIterator<'a, Message, Renderer>
-{
-    type Item = (&'a Element<'a, Message, Renderer>, usize);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.i > self.max_i {
-            None
-        } else {
-            let res = Some((&self.wrap_box.children[self.i], self.i));
-            self.i += 1;
-            res
-        }
     }
 }
