@@ -63,7 +63,8 @@ impl Application for UampApp {
                     .into()
                 })
                 .collect(),
-        ).item_height(30);
+        )
+        .item_height(30);
 
         /*let now_playing = widget::button(widget::text("Play/Pause"))
             .on_press(UampMessage::PlayPause);

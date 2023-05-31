@@ -2,7 +2,8 @@ use std::vec;
 
 use iced::Renderer;
 use iced_native::{
-    event, layout::{self, Node},
+    event,
+    layout::{self, Node},
     mouse::{self, ScrollDelta},
     overlay,
     widget::{self, pane_grid::Direction, tree, Tree},
@@ -298,12 +299,14 @@ where
             &self.children[first_item..=last_item],
         );
 
-        Node::with_children(limits.max(), vec![
-        if let Some((x, y)) = self.offset() {
-            node.translate(Vector::new(x, y))
-        } else {
-            node
-        }])
+        Node::with_children(
+            limits.max(),
+            vec![if let Some((x, y)) = self.offset() {
+                node.translate(Vector::new(x, y))
+            } else {
+                node
+            }],
+        )
     }
 
     fn operate(
@@ -356,7 +359,10 @@ where
                     state.offset_y -= y;
                 }
             }
-            state.offset_y = state.offset_y.max(0.).min(item_space * self.children.len() as f32 - layout.bounds().size().height);
+            state.offset_y = state.offset_y.max(0.).min(
+                item_space * self.children.len() as f32
+                    - layout.bounds().size().height,
+            );
         }
 
         self.state = Some(*state);
