@@ -1,6 +1,4 @@
-use iced::{
-    executor, widget, Application, Command, Element, Length, Theme,
-};
+use iced::{executor, widget, Application, Command, Element, Length, Theme};
 
 use crate::{
     config::Config, library::Library, player::Player, wrap_box::wrap_box,
@@ -34,7 +32,9 @@ impl Application for UampApp {
             UampMessage::PlaySong(id) => {
                 _ = self.player.play(&self.library, id)
             }
-            UampMessage::PlayPause => self.player.play_pause(),
+            UampMessage::PlayPause => {
+                self.player.play_pause();
+            }
         };
         Command::none()
     }
@@ -51,13 +51,11 @@ impl Application for UampApp {
                 .iter()
                 .map(|s| {
                     c += 1;
-                    widget::button(
-                        widget::text(format!(
-                            "{} - {}",
-                            s.artist(),
-                            s.title()
-                        )),
-                    )
+                    widget::button(widget::text(format!(
+                        "{} - {}",
+                        s.artist(),
+                        s.title()
+                    )))
                     .on_press(UampMessage::PlaySong(c - 1))
                     .width(Length::Fill)
                     .height(Length::Fixed(30.))

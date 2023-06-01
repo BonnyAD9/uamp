@@ -2,9 +2,10 @@ use std::vec;
 
 use iced_native::{
     event,
-    layout::{self, Node, Limits},
+    layout::{self, Limits, Node},
     mouse::{self, ScrollDelta},
     overlay::Group,
+    renderer,
     widget::{self, tree, Tree},
     Alignment, Element, Layout, Length, Padding, Pixels, Point, Rectangle,
     Size, Vector, Widget,
@@ -266,11 +267,7 @@ where
         self.height
     }
 
-    fn layout(
-        &self,
-        renderer: &Renderer,
-        limits: &iced_native::layout::Limits,
-    ) -> iced_native::layout::Node {
+    fn layout(&self, renderer: &Renderer, limits: &Limits) -> Node {
         let limits = limits
             .max_width(self.max_width)
             .max_height(self.max_height)
@@ -281,28 +278,11 @@ where
 
         // skip the layout if it cannot be calculated efficiently
         // the nearest event will allow and trigger efficient layout
-        if self.state.is_none() {
-            return Node::new(size);
+        if let Some(state) = self.state {
+            self.create_layout(renderer, &limits, &state)
+        } else {
+            Node::new(size)
         }
-
-        let (first, last) = self.visible_pos(size);
-
-        let child_limits = layout::Limits::new(
-            Size::new(limits.min().width, 0.),
-            Size::new(size.width, f32::MAX),
-        );
-
-        let node = layout::flex::resolve(
-            layout::flex::Axis::Vertical,
-            renderer,
-            &child_limits,
-            self.padding,
-            self.spacing_y,
-            Alignment::Start,
-            &self.children[first..=last],
-        );
-
-        Node::with_children(size, vec![node])
     }
 
     fn operate(
@@ -312,14 +292,13 @@ where
         renderer: &Renderer,
         operation: &mut dyn widget::Operation<Message>,
     ) {
-        let child = match layout.children().next() {
-            Some(c) => c,
-            None => return
-        };
         let state = tree.state.downcast_ref();
+        let mut owner = Node::default();
+        let child =
+            self.get_layout(renderer, layout, state, &mut owner, || {});
 
         operation.container(None, &mut |operation| {
-            self.visible_state(layout.bounds().size(), *state)
+            self.visible_state(layout.bounds().size(), state)
                 .zip(child.children())
                 .for_each(|((child, i), layout)| {
                     child.as_widget().operate(
@@ -342,15 +321,17 @@ where
         clipboard: &mut dyn iced_native::Clipboard,
         shell: &mut iced_native::Shell<'_, Message>,
     ) -> iced_native::event::Status {
-        if matches!(event, iced_native::Event::Mouse(_)) && !layout.bounds().contains(cursor_position) {
-            return iced_native::event::Status::Ignored
+        if matches!(event, iced_native::Event::Mouse(_))
+            && !layout.bounds().contains(cursor_position)
+        {
+            return iced_native::event::Status::Ignored;
         }
 
         let state = tree.state.downcast_mut::<State>();
         let size = layout.bounds().size();
         let item_space = self.item_height + self.spacing_y;
 
-        let (first_o, last_o) = self.visible_pos_state(size, *state);
+        let (first_o, last_o) = self.visible_pos_state(size, state);
 
         if let iced_native::Event::Mouse(mouse::Event::WheelScrolled {
             delta,
@@ -370,26 +351,20 @@ where
             .min(item_space * self.children.len() as f32 - size.height)
             .max(0.);
 
-        let (first, last) = self.visible_pos_state(size, *state);
+        let (first, last) = self.visible_pos_state(size, state);
         if first_o != first || last_o != last {
             shell.invalidate_layout();
         }
 
         self.state = Some(*state);
 
-        let node; // just owner of potential memory
-        let child = match layout.children().next() {
-            Some(c) => c,
-            None => {
-                // when the layout is not available, calculate temporary layout
-                // so that there is no dropped event
+        let mut owner = Node::default();
+        let child =
+            self.get_layout(renderer, layout, state, &mut owner, || {
                 shell.invalidate_layout();
-                node = self.layout(renderer, &Limits::new(Size::new(0., 0.), size));
-                Layout::new(node.children().iter().next().unwrap())
-            }
-        };
+            });
 
-        self.visible_state_mut(size, *state)
+        self.visible_state_mut(size, state)
             .zip(child.children())
             .map(|((child, i), layout)| {
                 child.as_widget_mut().on_event(
@@ -414,16 +389,15 @@ where
         renderer: &Renderer,
     ) -> mouse::Interaction {
         if !layout.bounds().contains(cursor_position) {
-            return mouse::Interaction::Idle
+            return mouse::Interaction::Idle;
         }
-        let child = match layout.children().next() {
-            Some(c) => c,
-            None => return mouse::Interaction::Idle
-        };
 
         let state = tree.state.downcast_ref();
+        let mut owner = Node::default();
+        let child =
+            self.get_layout(renderer, layout, state, &mut owner, || {});
 
-        self.visible_state(layout.bounds().size(), *state)
+        self.visible_state(layout.bounds().size(), state)
             .zip(child.children())
             .map(|((child, i), layout)| {
                 child.as_widget().mouse_interaction(
@@ -448,17 +422,15 @@ where
         cursor_position: Point,
         _viewport: &Rectangle,
     ) {
-        let child = match layout.children().next() {
-            Some(c) => c,
-            None => return
-        };
+        let state = tree.state.downcast_ref::<State>();
+        let mut owner = Node::default();
+        let child =
+            self.get_layout(renderer, layout, state, &mut owner, || {});
 
         let bounds = layout.bounds();
-
-        let state = tree.state.downcast_ref::<State>();
         let item_space = self.item_height + self.spacing_y;
 
-        let (first, _) = self.visible_pos_state(bounds.size(), *state);
+        let (first, _) = self.visible_pos_state(bounds.size(), state);
         let offset =
             Vector::new(0., first as f32 * item_space - state.offset_y);
 
@@ -477,7 +449,7 @@ where
         renderer.with_layer(bounds, |renderer| {
             renderer.with_translation(offset, |renderer| {
                 for ((child, i), layout) in self
-                    .visible_state(layout.bounds().size(), *state)
+                    .visible_state(layout.bounds().size(), state)
                     .zip(child.children())
                 {
                     child.as_widget().draw(
@@ -500,18 +472,16 @@ where
         layout: Layout<'_>,
         renderer: &Renderer,
     ) -> Option<iced_native::overlay::Element<'b, Message, Renderer>> {
-        let child = match layout.children().next() {
-            Some(c) => c,
-            None => return None
-        };
-
         let state = tree.state.downcast_ref::<State>();
+        let mut owner = Node::default();
+        let child =
+            self.get_layout(renderer, layout, state, &mut owner, || {});
 
         let (first, last) =
-            self.visible_pos_state(layout.bounds().size(), *state);
+            self.visible_pos_state(layout.bounds().size(), state);
 
         let children = self
-            .visible_state_mut(layout.bounds().size(), *state)
+            .visible_state_mut(layout.bounds().size(), state)
             .zip(&mut tree.children[first..=last])
             .zip(child.children())
             .filter_map(|(((child, _), state), layout)| {
@@ -535,11 +505,63 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
 impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
     WrapBox<'a, Message, Renderer>
 {
+    fn create_layout(
+        &self,
+        renderer: &Renderer,
+        limits: &Limits,
+        state: &State,
+    ) -> Node {
+        let size = limits.fill();
+        let (first, last) = self.visible_pos_state(size, state);
+
+        let child_limits = layout::Limits::new(
+            Size::new(limits.min().width, 0.),
+            Size::new(size.width, f32::MAX),
+        );
+
+        let node = layout::flex::resolve(
+            layout::flex::Axis::Vertical,
+            renderer,
+            &child_limits,
+            self.padding,
+            self.spacing_y,
+            Alignment::Start,
+            &self.children[first..=last],
+        );
+        Node::with_children(size, vec![node])
+    }
+
+    fn get_layout<'b: 'c, 'c, F: FnOnce()>(
+        &self,
+        renderer: &Renderer,
+        layout: Layout<'b>,
+        state: &State,
+        owner: &'c mut Node,
+        fun: F,
+    ) -> Layout<'c> {
+        match layout.children().next() {
+            Some(c) => c,
+            None => {
+                // when the layout is not available, calculate temporary layout
+                // so that there is no dropped event
+                fun();
+                *owner = self.create_layout(
+                    renderer,
+                    &Limits::new(Size::new(0., 0.), layout.bounds().size())
+                        .width(self.width)
+                        .height(self.height),
+                    state,
+                );
+                Layout::new(owner.children().iter().next().unwrap())
+            }
+        }
+    }
+
     #[inline]
     fn visible_pos_state(
         &self,
         view_size: Size,
-        state: State,
+        state: &State,
     ) -> (usize, usize) {
         if self.item_height == 0. {
             (0, self.children.len() - 1)
@@ -554,31 +576,10 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
     }
 
     #[inline]
-    fn visible_pos(&self, view_size: Size) -> (usize, usize) {
-        if let Some(state) = self.state {
-            self.visible_pos_state(view_size, state)
-        } else {
-            (0, self.children.len() - 1)
-        }
-    }
-
-    #[inline]
-    fn visible(
-        &'a self,
-        view_size: Size,
-    ) -> impl Iterator<Item = (&Element<'a, Message, Renderer>, usize)> {
-        let (first, last) = self.visible_pos(view_size);
-        self.children[first..=last]
-            .iter()
-            .enumerate()
-            .map(move |(i, c)| (c, i + first))
-    }
-
-    #[inline]
     fn visible_state(
         &'a self,
         view_size: Size,
-        state: State,
+        state: &State,
     ) -> impl Iterator<Item = (&Element<'a, Message, Renderer>, usize)> {
         let (first, last) = self.visible_pos_state(view_size, state);
         self.children[first..=last]
@@ -591,7 +592,7 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
     fn visible_state_mut(
         &mut self,
         view_size: Size,
-        state: State,
+        state: &State,
     ) -> impl Iterator<Item = (&mut Element<'a, Message, Renderer>, usize)>
     {
         let (first, last) = self.visible_pos_state(view_size, state);
