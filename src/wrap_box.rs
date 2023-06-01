@@ -57,8 +57,8 @@ impl<'a, Message, Renderer: iced_native::Renderer>
             spacing_x: 0.,
             spacing_y: 0.,
             padding: Padding::ZERO,
-            width: Length::Shrink,
-            height: Length::Shrink,
+            width: Length::Fill,
+            height: Length::Fill,
             max_width: f32::MAX,
             max_height: f32::MAX,
             item_width: 0.,
@@ -277,19 +277,19 @@ where
             .width(self.width)
             .height(self.height);
 
-        // TODO: Properly handle the limits, don't just use max
+        let size = limits.fill();
 
         // skip the layout if it cannot be calculated efficiently
         // the nearest event will allow and trigger efficient layout
         if self.state.is_none() {
-            return Node::new(limits.max());
+            return Node::new(size);
         }
 
-        let (first, last) = self.visible_pos(limits.max());
+        let (first, last) = self.visible_pos(size);
 
         let child_limits = layout::Limits::new(
             Size::new(limits.min().width, 0.),
-            Size::new(limits.max().width, f32::MAX),
+            Size::new(size.width, f32::MAX),
         );
 
         let node = layout::flex::resolve(
@@ -302,7 +302,7 @@ where
             &self.children[first..=last],
         );
 
-        Node::with_children(limits.max(), vec![node])
+        Node::with_children(size, vec![node])
     }
 
     fn operate(
