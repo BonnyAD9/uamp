@@ -56,8 +56,7 @@ impl Application for UampApp {
                             "{} - {}",
                             s.artist(),
                             s.title()
-                        ))
-                        .width(Length::Fill),
+                        )),
                     )
                     .on_press(UampMessage::PlaySong(c - 1))
                     .width(Length::Fill)

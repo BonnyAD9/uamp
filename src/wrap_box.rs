@@ -2,7 +2,7 @@ use std::vec;
 
 use iced_native::{
     event,
-    layout::{self, Node},
+    layout::{self, Node, Limits},
     mouse::{self, ScrollDelta},
     overlay::Group,
     widget::{self, tree, Tree},
@@ -277,6 +277,14 @@ where
             .width(self.width)
             .height(self.height);
 
+        // TODO: Properly handle the limits, don't just use max
+
+        // skip the layout if it cannot be calculated efficiently
+        // the nearest event will allow and trigger efficient layout
+        if self.state.is_none() {
+            return Node::new(limits.max());
+        }
+
         let (first, last) = self.visible_pos(limits.max());
 
         let child_limits = layout::Limits::new(
@@ -304,11 +312,15 @@ where
         renderer: &Renderer,
         operation: &mut dyn widget::Operation<Message>,
     ) {
+        let child = match layout.children().next() {
+            Some(c) => c,
+            None => return
+        };
         let state = tree.state.downcast_ref();
 
         operation.container(None, &mut |operation| {
             self.visible_state(layout.bounds().size(), *state)
-                .zip(layout.children().next().unwrap().children())
+                .zip(child.children())
                 .for_each(|((child, i), layout)| {
                     child.as_widget().operate(
                         &mut tree.children[i],
@@ -336,13 +348,10 @@ where
 
         let state = tree.state.downcast_mut::<State>();
         let size = layout.bounds().size();
-
-        // BUG: incorrect layout matching, this will propably not be fixed
-        //      because it would require changing part of the iced architecture
-        //      workaround is that all the items in the wrapbox will have
-        //      their layout independent from the exact content (all layouts
-        //      are same for all the items)
         let item_space = self.item_height + self.spacing_y;
+
+        let (first_o, last_o) = self.visible_pos_state(size, *state);
+
         if let iced_native::Event::Mouse(mouse::Event::WheelScrolled {
             delta,
         }) = event
@@ -361,10 +370,27 @@ where
             .min(item_space * self.children.len() as f32 - size.height)
             .max(0.);
 
+        let (first, last) = self.visible_pos_state(size, *state);
+        if first_o != first || last_o != last {
+            shell.invalidate_layout();
+        }
+
         self.state = Some(*state);
 
+        let node; // just owner of potential memory
+        let child = match layout.children().next() {
+            Some(c) => c,
+            None => {
+                // when the layout is not available, calculate temporary layout
+                // so that there is no dropped event
+                shell.invalidate_layout();
+                node = self.layout(renderer, &Limits::new(Size::new(0., 0.), size));
+                Layout::new(node.children().iter().next().unwrap())
+            }
+        };
+
         self.visible_state_mut(size, *state)
-            .zip(layout.children().next().unwrap().children())
+            .zip(child.children())
             .map(|((child, i), layout)| {
                 child.as_widget_mut().on_event(
                     &mut tree.children[i],
@@ -390,11 +416,15 @@ where
         if !layout.bounds().contains(cursor_position) {
             return mouse::Interaction::Idle
         }
+        let child = match layout.children().next() {
+            Some(c) => c,
+            None => return mouse::Interaction::Idle
+        };
 
         let state = tree.state.downcast_ref();
 
         self.visible_state(layout.bounds().size(), *state)
-            .zip(layout.children().next().unwrap().children())
+            .zip(child.children())
             .map(|((child, i), layout)| {
                 child.as_widget().mouse_interaction(
                     &tree.children[i],
@@ -410,7 +440,7 @@ where
 
     fn draw(
         &self,
-        tree: &iced_native::widget::Tree,
+        tree: &Tree,
         renderer: &mut Renderer,
         theme: &<Renderer as iced_native::Renderer>::Theme,
         style: &iced_native::renderer::Style,
@@ -418,8 +448,14 @@ where
         cursor_position: Point,
         _viewport: &Rectangle,
     ) {
-        let state = tree.state.downcast_ref::<State>();
+        let child = match layout.children().next() {
+            Some(c) => c,
+            None => return
+        };
+
         let bounds = layout.bounds();
+
+        let state = tree.state.downcast_ref::<State>();
         let item_space = self.item_height + self.spacing_y;
 
         let (first, _) = self.visible_pos_state(bounds.size(), *state);
@@ -442,7 +478,7 @@ where
             renderer.with_translation(offset, |renderer| {
                 for ((child, i), layout) in self
                     .visible_state(layout.bounds().size(), *state)
-                    .zip(layout.children().next().unwrap().children())
+                    .zip(child.children())
                 {
                     child.as_widget().draw(
                         &tree.children[i],
@@ -464,6 +500,11 @@ where
         layout: Layout<'_>,
         renderer: &Renderer,
     ) -> Option<iced_native::overlay::Element<'b, Message, Renderer>> {
+        let child = match layout.children().next() {
+            Some(c) => c,
+            None => return None
+        };
+
         let state = tree.state.downcast_ref::<State>();
 
         let (first, last) =
@@ -472,7 +513,7 @@ where
         let children = self
             .visible_state_mut(layout.bounds().size(), *state)
             .zip(&mut tree.children[first..=last])
-            .zip(layout.children())
+            .zip(child.children())
             .filter_map(|(((child, _), state), layout)| {
                 child.as_widget_mut().overlay(state, layout, renderer)
             })
@@ -494,6 +535,7 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
 impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
     WrapBox<'a, Message, Renderer>
 {
+    #[inline]
     fn visible_pos_state(
         &self,
         view_size: Size,
@@ -511,6 +553,7 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
         }
     }
 
+    #[inline]
     fn visible_pos(&self, view_size: Size) -> (usize, usize) {
         if let Some(state) = self.state {
             self.visible_pos_state(view_size, state)
@@ -519,6 +562,7 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
         }
     }
 
+    #[inline]
     fn visible(
         &'a self,
         view_size: Size,
@@ -530,6 +574,7 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
             .map(move |(i, c)| (c, i + first))
     }
 
+    #[inline]
     fn visible_state(
         &'a self,
         view_size: Size,
@@ -542,6 +587,7 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
             .map(move |(i, c)| (c, i + first))
     }
 
+    #[inline]
     fn visible_state_mut(
         &mut self,
         view_size: Size,
@@ -555,6 +601,7 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
             .map(move |(i, c)| (c, i + first))
     }
 
+    #[inline]
     fn offset(&self) -> Option<(f32, f32)> {
         if let Some(state) = self.state {
             if self.item_height == 0. {
