@@ -58,7 +58,7 @@ impl Application for UampApp {
                     )))
                     .on_press(UampMessage::PlaySong(c - 1))
                     .width(Length::Fill)
-                    .height(Length::Fixed(30.))
+                    .height(Length::Fill)
                     .into()
                 })
                 .collect(),
