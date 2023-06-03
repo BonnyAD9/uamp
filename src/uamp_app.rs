@@ -1,5 +1,4 @@
 use iced::{executor, widget, Application, Command, Element, Length, Theme};
-use iced_native::Padding;
 
 use crate::{
     config::Config, library::Library, player::Player, wrap_box::wrap_box,

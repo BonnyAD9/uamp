@@ -2,12 +2,11 @@ use std::vec;
 
 use iced_native::{
     event,
-    layout::{self, Limits, Node},
+    layout::{Limits, Node},
     mouse::{self, ScrollDelta},
     overlay::Group,
-    renderer,
     widget::{self, tree, Tree},
-    Alignment, Element, Layout, Length, Padding, Pixels, Point, Rectangle,
+    Element, Layout, Length, Padding, Pixels, Point, Rectangle,
     Size, Vector, Widget,
 };
 
