@@ -39,6 +39,8 @@ pub struct WrapBox<'a, Message, Renderer: iced_native::Renderer> {
     line_scroll: f32,
     primary_direction: ItemDirection,
     secondary_direction: ItemDirection,
+    primary_scrollbar: bool,
+    secondary_scrollbar: bool,
     children: Vec<Element<'a, Message, Renderer>>,
     state: Option<State>,
 }
@@ -70,6 +72,8 @@ impl<'a, Message, Renderer: iced_native::Renderer>
             line_scroll: 0.,
             primary_direction: ItemDirection::LeftToRight,
             secondary_direction: ItemDirection::TopToBottom,
+            primary_scrollbar: true,
+            secondary_scrollbar: false,
             children: childern,
             state: None,
         }
@@ -216,6 +220,18 @@ impl<'a, Message, Renderer: iced_native::Renderer>
             }
             _ => {}
         }
+        self
+    }
+
+    /// enable or disable the primary scrollbar of the [`WrapBox`]
+    pub fn primary_scrollbar(mut self, enable: bool) -> Self {
+        self.primary_scrollbar = enable;
+        self
+    }
+
+    /// enable or disable secondary scrollbar of the [`WrapBox`]
+    pub fn secondary_scrollbar(mut self, enable: bool) -> Self {
+        self.secondary_scrollbar = enable;
         self
     }
 
