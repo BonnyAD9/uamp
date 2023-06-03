@@ -30,7 +30,7 @@ impl Library {
                 lib.songs.push(song);
             }
 
-            /*if lib.songs.len() > 10 {
+            /*if lib.songs.len() > 100 {
                 break;
             }*/
         }

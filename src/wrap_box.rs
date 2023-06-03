@@ -293,12 +293,15 @@ where
         operation: &mut dyn widget::Operation<Message>,
     ) {
         let state = tree.state.downcast_ref();
+
         let mut owner = Node::default();
         let child =
             self.get_layout(renderer, layout, state, &mut owner, || {});
 
+        let view_size = child.bounds().size();
+
         operation.container(None, &mut |operation| {
-            self.visible(layout.bounds().size(), state)
+            self.visible(view_size, state)
                 .zip(child.children())
                 .for_each(|((child, i), layout)| {
                     child.as_widget().operate(
@@ -328,10 +331,16 @@ where
         }
 
         let state = tree.state.downcast_mut::<State>();
-        let size = layout.bounds().size();
-        let item_space = self.item_height + self.spacing_y;
 
-        let (first_o, last_o) = self.visible_pos(size, state);
+        let mut owner = Node::default();
+        let child =
+            self.get_layout(renderer, layout, state, &mut owner, || {
+                shell.invalidate_layout();
+            });
+
+        let view_size = child.bounds().size();
+        let item_space = self.item_height + self.spacing_y;
+        let (first_o, last_o) = self.visible_pos(view_size, state);
 
         if let iced_native::Event::Mouse(mouse::Event::WheelScrolled {
             delta,
@@ -348,23 +357,21 @@ where
         }
         state.offset_y = state
             .offset_y
-            .min(item_space * self.children.len() as f32 - size.height)
+            .min(
+                item_space * self.children.len() as f32
+                    - view_size.height
+                    - self.spacing_y,
+            )
             .max(0.);
 
-        let (first, last) = self.visible_pos(size, state);
+        let (first, last) = self.visible_pos(view_size, state);
         if first_o != first || last_o != last {
             shell.invalidate_layout();
         }
 
         self.state = Some(*state);
 
-        let mut owner = Node::default();
-        let child =
-            self.get_layout(renderer, layout, state, &mut owner, || {
-                shell.invalidate_layout();
-            });
-
-        self.visible_state_mut(size, state)
+        self.visible_state_mut(view_size, state)
             .zip(child.children())
             .map(|((child, i), layout)| {
                 child.as_widget_mut().on_event(
@@ -393,11 +400,14 @@ where
         }
 
         let state = tree.state.downcast_ref();
+
         let mut owner = Node::default();
         let child =
             self.get_layout(renderer, layout, state, &mut owner, || {});
 
-        self.visible(layout.bounds().size(), state)
+        let view_size = child.bounds().size();
+
+        self.visible(view_size, state)
             .zip(child.children())
             .map(|((child, i), layout)| {
                 child.as_widget().mouse_interaction(
@@ -423,14 +433,16 @@ where
         _viewport: &Rectangle,
     ) {
         let state = tree.state.downcast_ref::<State>();
+
         let mut owner = Node::default();
         let child =
             self.get_layout(renderer, layout, state, &mut owner, || {});
 
-        let bounds = layout.bounds();
+        let view_bounds = child.bounds();
+        let view_size = view_bounds.size();
         let item_space = self.item_height + self.spacing_y;
 
-        let (first, _) = self.visible_pos(bounds.size(), state);
+        let (first, _) = self.visible_pos(view_size, state);
         let offset =
             Vector::new(0., first as f32 * item_space - state.offset_y);
 
@@ -441,16 +453,15 @@ where
             Point::new(f32::INFINITY, f32::INFINITY)
         };
         let child_viewport = Rectangle {
-            x: bounds.x - state.offset_x,
-            y: bounds.y - state.offset_y,
-            ..bounds
+            x: view_bounds.x - state.offset_x,
+            y: view_bounds.y - state.offset_y,
+            ..view_bounds
         };
 
-        renderer.with_layer(bounds, |renderer| {
+        renderer.with_layer(view_bounds, |renderer| {
             renderer.with_translation(offset, |renderer| {
-                for ((child, i), layout) in self
-                    .visible(layout.bounds().size(), state)
-                    .zip(child.children())
+                for ((child, i), layout) in
+                    self.visible(view_size, state).zip(child.children())
                 {
                     child.as_widget().draw(
                         &tree.children[i],
@@ -473,14 +484,16 @@ where
         renderer: &Renderer,
     ) -> Option<iced_native::overlay::Element<'b, Message, Renderer>> {
         let state = tree.state.downcast_ref::<State>();
+
         let mut owner = Node::default();
         let child =
             self.get_layout(renderer, layout, state, &mut owner, || {});
 
-        let (first, last) = self.visible_pos(layout.bounds().size(), state);
+        let view_size = child.bounds().size();
+        let (first, last) = self.visible_pos(view_size, state);
 
         let children = self
-            .visible_state_mut(layout.bounds().size(), state)
+            .visible_state_mut(view_size, state)
             .zip(&mut tree.children[first..=last])
             .zip(child.children())
             .filter_map(|(((child, _), state), layout)| {
@@ -585,28 +598,31 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
         size: Size,
         state: &State,
     ) -> Node {
-        let pad_width = size.width - self.padding.left - self.padding.right;
-        let pad_height = size.height - self.padding.top - self.padding.bottom;
+        let size = self.pad_size(size);
         // TODO: Item height = 0
-        // TODO: Properly account for padding
         let item_lim =
-            Limits::new(Size::ZERO, Size::new(pad_width, self.item_height));
+            Limits::new(Size::ZERO, Size::new(size.width, self.item_height));
         let item_space_y = self.item_height + self.spacing_y;
 
         let children = self
             .visible(size, state)
             .enumerate()
             .map(|(i, (c, _))| {
-                c.as_widget().layout(renderer, &item_lim).translate(
-                    Vector::new(
-                        self.padding.left,
-                        self.padding.top + item_space_y * i as f32,
-                    ),
-                )
+                c.as_widget()
+                    .layout(renderer, &item_lim)
+                    .translate(Vector::new(0., item_space_y * i as f32))
             })
             .collect::<Vec<_>>();
 
-        Node::with_children(Size::new(pad_width, pad_height), children)
+        Node::with_children(size, children)
+            .translate(Vector::new(self.padding.top, self.padding.left))
+    }
+
+    fn pad_size(&self, size: Size) -> Size {
+        Size::new(
+            size.width - self.padding.left - self.padding.right,
+            size.height - self.padding.top - self.padding.bottom,
+        )
     }
 }
 
