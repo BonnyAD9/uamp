@@ -279,7 +279,7 @@ where
         // skip the layout if it cannot be calculated efficiently
         // the nearest event will allow and trigger efficient layout
         if let Some(state) = self.state {
-            self.create_layout(renderer, &limits, &state)
+            self.create_layout(renderer, limits.fill(), &state)
         } else {
             Node::new(size)
         }
@@ -298,7 +298,7 @@ where
             self.get_layout(renderer, layout, state, &mut owner, || {});
 
         operation.container(None, &mut |operation| {
-            self.visible_state(layout.bounds().size(), state)
+            self.visible(layout.bounds().size(), state)
                 .zip(child.children())
                 .for_each(|((child, i), layout)| {
                     child.as_widget().operate(
@@ -331,7 +331,7 @@ where
         let size = layout.bounds().size();
         let item_space = self.item_height + self.spacing_y;
 
-        let (first_o, last_o) = self.visible_pos_state(size, state);
+        let (first_o, last_o) = self.visible_pos(size, state);
 
         if let iced_native::Event::Mouse(mouse::Event::WheelScrolled {
             delta,
@@ -351,7 +351,7 @@ where
             .min(item_space * self.children.len() as f32 - size.height)
             .max(0.);
 
-        let (first, last) = self.visible_pos_state(size, state);
+        let (first, last) = self.visible_pos(size, state);
         if first_o != first || last_o != last {
             shell.invalidate_layout();
         }
@@ -397,7 +397,7 @@ where
         let child =
             self.get_layout(renderer, layout, state, &mut owner, || {});
 
-        self.visible_state(layout.bounds().size(), state)
+        self.visible(layout.bounds().size(), state)
             .zip(child.children())
             .map(|((child, i), layout)| {
                 child.as_widget().mouse_interaction(
@@ -430,7 +430,7 @@ where
         let bounds = layout.bounds();
         let item_space = self.item_height + self.spacing_y;
 
-        let (first, _) = self.visible_pos_state(bounds.size(), state);
+        let (first, _) = self.visible_pos(bounds.size(), state);
         let offset =
             Vector::new(0., first as f32 * item_space - state.offset_y);
 
@@ -449,7 +449,7 @@ where
         renderer.with_layer(bounds, |renderer| {
             renderer.with_translation(offset, |renderer| {
                 for ((child, i), layout) in self
-                    .visible_state(layout.bounds().size(), state)
+                    .visible(layout.bounds().size(), state)
                     .zip(child.children())
                 {
                     child.as_widget().draw(
@@ -477,8 +477,7 @@ where
         let child =
             self.get_layout(renderer, layout, state, &mut owner, || {});
 
-        let (first, last) =
-            self.visible_pos_state(layout.bounds().size(), state);
+        let (first, last) = self.visible_pos(layout.bounds().size(), state);
 
         let children = self
             .visible_state_mut(layout.bounds().size(), state)
@@ -508,26 +507,10 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
     fn create_layout(
         &self,
         renderer: &Renderer,
-        limits: &Limits,
+        size: Size,
         state: &State,
     ) -> Node {
-        let size = limits.fill();
-        let (first, last) = self.visible_pos_state(size, state);
-
-        let child_limits = layout::Limits::new(
-            Size::new(limits.min().width, 0.),
-            Size::new(size.width, f32::MAX),
-        );
-
-        let node = layout::flex::resolve(
-            layout::flex::Axis::Vertical,
-            renderer,
-            &child_limits,
-            self.padding,
-            self.spacing_y,
-            Alignment::Start,
-            &self.children[first..=last],
-        );
+        let node = self.layout_wrap(renderer, size, state);
         Node::with_children(size, vec![node])
     }
 
@@ -547,9 +530,7 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
                 fun();
                 *owner = self.create_layout(
                     renderer,
-                    &Limits::new(Size::new(0., 0.), layout.bounds().size())
-                        .width(self.width)
-                        .height(self.height),
+                    layout.bounds().size(),
                     state,
                 );
                 Layout::new(owner.children().iter().next().unwrap())
@@ -558,11 +539,7 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
     }
 
     #[inline]
-    fn visible_pos_state(
-        &self,
-        view_size: Size,
-        state: &State,
-    ) -> (usize, usize) {
+    fn visible_pos(&self, view_size: Size, state: &State) -> (usize, usize) {
         if self.item_height == 0. {
             (0, self.children.len() - 1)
         } else {
@@ -576,12 +553,12 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
     }
 
     #[inline]
-    fn visible_state(
+    fn visible(
         &'a self,
         view_size: Size,
         state: &State,
     ) -> impl Iterator<Item = (&Element<'a, Message, Renderer>, usize)> {
-        let (first, last) = self.visible_pos_state(view_size, state);
+        let (first, last) = self.visible_pos(view_size, state);
         self.children[first..=last]
             .iter()
             .enumerate()
@@ -595,24 +572,41 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
         state: &State,
     ) -> impl Iterator<Item = (&mut Element<'a, Message, Renderer>, usize)>
     {
-        let (first, last) = self.visible_pos_state(view_size, state);
+        let (first, last) = self.visible_pos(view_size, state);
         self.children[first..=last]
             .iter_mut()
             .enumerate()
             .map(move |(i, c)| (c, i + first))
     }
 
-    #[inline]
-    fn offset(&self) -> Option<(f32, f32)> {
-        if let Some(state) = self.state {
-            if self.item_height == 0. {
-                None
-            } else {
-                Some((state.offset_x, state.offset_y))
-            }
-        } else {
-            None
-        }
+    fn layout_wrap(
+        &self,
+        renderer: &Renderer,
+        size: Size,
+        state: &State,
+    ) -> Node {
+        let pad_width = size.width - self.padding.left - self.padding.right;
+        let pad_height = size.height - self.padding.top - self.padding.bottom;
+        // TODO: Item height = 0
+        // TODO: Properly account for padding
+        let item_lim =
+            Limits::new(Size::ZERO, Size::new(pad_width, self.item_height));
+        let item_space_y = self.item_height + self.spacing_y;
+
+        let children = self
+            .visible(size, state)
+            .enumerate()
+            .map(|(i, (c, _))| {
+                c.as_widget().layout(renderer, &item_lim).translate(
+                    Vector::new(
+                        self.padding.left,
+                        self.padding.top + item_space_y * i as f32,
+                    ),
+                )
+            })
+            .collect::<Vec<_>>();
+
+        Node::with_children(Size::new(pad_width, pad_height), children)
     }
 }
 
