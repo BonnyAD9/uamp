@@ -6,13 +6,15 @@ use iced_native::{
     mouse::{self, ScrollDelta},
     overlay::Group,
     widget::{self, tree, Tree},
-    Element, Layout, Length, Padding, Pixels, Point, Rectangle,
-    Size, Vector, Widget,
+    Element, Layout, Length, Padding, Pixels, Point, Rectangle, Size, Vector,
+    Widget,
 };
 
 use self::ItemDirection::{
     BottomToTop, LeftToRight, RightToLeft, TopToBottom,
 };
+
+pub const DEFAULT_SCROLL_SPEED: f32 = 60.;
 
 /// Container that distributes its contents both vertically and horizontaly
 /// and also has a scollbar. Advantage over normal scrollbar combined with
@@ -34,6 +36,7 @@ pub struct WrapBox<'a, Message, Renderer: iced_native::Renderer> {
     item_height: f32,
     max_wrap: u32,
     min_wrap: u32,
+    line_scroll: f32,
     primary_direction: ItemDirection,
     secondary_direction: ItemDirection,
     children: Vec<Element<'a, Message, Renderer>>,
@@ -64,6 +67,7 @@ impl<'a, Message, Renderer: iced_native::Renderer>
             item_height: 0.,
             max_wrap: u32::MAX,
             min_wrap: 1,
+            line_scroll: 0.,
             primary_direction: ItemDirection::LeftToRight,
             secondary_direction: ItemDirection::TopToBottom,
             children: childern,
@@ -115,7 +119,8 @@ impl<'a, Message, Renderer: iced_native::Renderer>
 
     /// Sets fixed width of the items, 0 means that each item may determine
     /// its width by itself, use this when possible, because this will optimize
-    /// all the interaction with the [`WrapBox`]
+    /// all the interaction with the [`WrapBox`], negative value will signify
+    /// that the width is max, and it will not use the optimization
     pub fn item_width(mut self, item_width: impl Into<Pixels>) -> Self {
         self.item_width = item_width.into().0;
         self
@@ -123,7 +128,8 @@ impl<'a, Message, Renderer: iced_native::Renderer>
 
     /// Sets fixed height of the items, 0 means that each item may determine
     /// its height by itself, use this when possible, because this will
-    /// optimize all the interaction with the [`WrapBox`]
+    /// optimize all the interaction with the [`WrapBox`], negative value will
+    /// signify that the height is max, and it will not use the optimization
     pub fn item_height(mut self, item_height: impl Into<Pixels>) -> Self {
         self.item_height = item_height.into().0;
         self
@@ -152,6 +158,13 @@ impl<'a, Message, Renderer: iced_native::Renderer>
     /// Sets both the min_wrap and max_wrap to the given value
     pub fn wrap_count(self, wrap_count: u32) -> Self {
         self.max_wrap(wrap_count).min_wrap(wrap_count)
+    }
+
+    /// Sets the amount of pixels to scroll for each line, zero is the item
+    /// height (if set) otherwise it is [`DEFAULT_SCROLL_SPEED`]
+    pub fn line_scroll(mut self, scroll_amount: impl Into<Pixels>) -> Self {
+        self.line_scroll = scroll_amount.into().0;
+        self
     }
 
     /// Sets the primary direction, if the secondary direction is in conflict
@@ -284,7 +297,7 @@ where
         let child =
             self.get_layout(renderer, layout, state, &mut owner, || {});
 
-        let view_size = child.bounds().size();
+        let view_size = self.pad_size(layout.bounds().size());
 
         operation.container(None, &mut |operation| {
             self.visible(view_size, state)
@@ -324,8 +337,14 @@ where
                 shell.invalidate_layout();
             });
 
-        let view_size = child.bounds().size();
-        let item_space = self.item_height + self.spacing_y;
+        let view_size = self.pad_size(layout.bounds().size());
+        let view_bounds = Rectangle {
+            width: view_size.width,
+            height: view_size.height,
+            ..child.bounds()
+        };
+
+        let content_size = child.bounds().size();
         let (first_o, last_o) = self.visible_pos(view_size, state);
 
         if let iced_native::Event::Mouse(mouse::Event::WheelScrolled {
@@ -334,7 +353,7 @@ where
         {
             match delta {
                 ScrollDelta::Lines { x: _, y } => {
-                    state.offset_y -= y * item_space;
+                    state.offset_y -= y * self.line_size();
                 }
                 ScrollDelta::Pixels { x: _, y } => {
                     state.offset_y -= y;
@@ -343,11 +362,7 @@ where
         }
         state.offset_y = state
             .offset_y
-            .min(
-                item_space * self.children.len() as f32
-                    - view_size.height
-                    - self.spacing_y,
-            )
+            .min(content_size.height - view_size.height)
             .max(0.);
 
         let (first, last) = self.visible_pos(view_size, state);
@@ -357,7 +372,13 @@ where
 
         self.state = Some(*state);
 
-        self.visible_state_mut(view_size, state)
+        if matches!(event, iced_native::Event::Mouse(_))
+            && !view_bounds.contains(cursor_position)
+        {
+            return iced_native::event::Status::Ignored;
+        }
+
+        self.visible_mut(view_size, state)
             .zip(child.children())
             .map(|((child, i), layout)| {
                 child.as_widget_mut().on_event(
@@ -391,7 +412,16 @@ where
         let child =
             self.get_layout(renderer, layout, state, &mut owner, || {});
 
-        let view_size = child.bounds().size();
+        let view_size = self.pad_size(layout.bounds().size());
+        let view_bounds = Rectangle {
+            width: view_size.width,
+            height: view_size.height,
+            ..child.bounds()
+        };
+
+        if !view_bounds.contains(cursor_position) {
+            return mouse::Interaction::Idle;
+        }
 
         self.visible(view_size, state)
             .zip(child.children())
@@ -424,18 +454,26 @@ where
         let child =
             self.get_layout(renderer, layout, state, &mut owner, || {});
 
-        let view_bounds = child.bounds();
-        let view_size = view_bounds.size();
-        let item_space = self.item_height + self.spacing_y;
+        let view_size = self.pad_size(layout.bounds().size());
+        let view_bounds = Rectangle {
+            width: view_size.width,
+            height: view_size.height,
+            ..child.bounds()
+        };
 
         let (first, _) = self.visible_pos(view_size, state);
-        let offset =
-            Vector::new(0., first as f32 * item_space - state.offset_y);
 
-        let mouse_pos = if layout.bounds().contains(cursor_position) {
+        let offset = if self.can_optimize() {
+            let item_space = self.item_height + self.spacing_y;
+            Vector::new(0., first as f32 * item_space - state.offset_y)
+        } else {
+            Vector::new(-state.offset_x, -state.offset_y)
+        };
+
+        let mouse_pos = if view_bounds.contains(cursor_position) {
             cursor_position - offset
         } else {
-            // don't count with the mous if it is outside
+            // don't count with the mouse if it is outside
             Point::new(f32::INFINITY, f32::INFINITY)
         };
         let child_viewport = Rectangle {
@@ -475,11 +513,11 @@ where
         let child =
             self.get_layout(renderer, layout, state, &mut owner, || {});
 
-        let view_size = child.bounds().size();
+        let view_size = self.pad_size(layout.bounds().size());
         let (first, last) = self.visible_pos(view_size, state);
 
         let children = self
-            .visible_state_mut(view_size, state)
+            .visible_mut(view_size, state)
             .zip(&mut tree.children[first..=last])
             .zip(child.children())
             .filter_map(|(((child, _), state), layout)| {
@@ -532,6 +570,7 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
                     layout.bounds().size(),
                     state,
                 );
+                // owner.children().iter().next() is always Some
                 Layout::new(owner.children().iter().next().unwrap())
             }
         }
@@ -539,7 +578,7 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
 
     #[inline]
     fn visible_pos(&self, view_size: Size, state: &State) -> (usize, usize) {
-        if self.item_height == 0. {
+        if !self.can_optimize() {
             (0, self.children.len() - 1)
         } else {
             let item_space = self.item_height + self.spacing_y;
@@ -565,7 +604,7 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
     }
 
     #[inline]
-    fn visible_state_mut(
+    fn visible_mut(
         &mut self,
         view_size: Size,
         state: &State,
@@ -584,8 +623,20 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
         size: Size,
         state: &State,
     ) -> Node {
+        if self.can_optimize() {
+            self.layout_wrap_optimized(renderer, size, state)
+        } else {
+            self.layout_wrap_general(renderer, size)
+        }
+    }
+
+    fn layout_wrap_optimized(
+        &self,
+        renderer: &Renderer,
+        size: Size,
+        state: &State,
+    ) -> Node {
         let size = self.pad_size(size);
-        // TODO: Item height = 0
         let item_lim =
             Limits::new(Size::ZERO, Size::new(size.width, self.item_height));
         let item_space_y = self.item_height + self.spacing_y;
@@ -600,8 +651,40 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
             })
             .collect::<Vec<_>>();
 
-        Node::with_children(size, children)
-            .translate(Vector::new(self.padding.top, self.padding.left))
+        Node::with_children(
+            Size::new(
+                size.width,
+                item_space_y * self.children.len() as f32 - self.spacing_y,
+            ),
+            children,
+        )
+        .translate(Vector::new(self.padding.left, self.padding.top))
+    }
+
+    fn layout_wrap_general(&self, renderer: &Renderer, size: Size) -> Node {
+        let size = self.pad_size(size);
+        let item_lim =
+            Limits::new(Size::ZERO, Size::new(size.width, f32::MAX));
+
+        let mut pos = 0.;
+        let children = self
+            .children
+            .iter()
+            .map(|c| {
+                let node = c
+                    .as_widget()
+                    .layout(renderer, &item_lim)
+                    .translate(Vector::new(0., pos));
+                pos += node.size().height + self.spacing_y;
+                node
+            })
+            .collect();
+
+        Node::with_children(
+            Size::new(size.width, pos - self.spacing_y),
+            children,
+        )
+        .translate(Vector::new(self.padding.left, self.padding.top))
     }
 
     fn pad_size(&self, size: Size) -> Size {
@@ -609,6 +692,22 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
             size.width - self.padding.left - self.padding.right,
             size.height - self.padding.top - self.padding.bottom,
         )
+    }
+
+    fn can_optimize(&self) -> bool {
+        self.item_height > 0.
+    }
+
+    fn line_size(&self) -> f32 {
+        if self.line_scroll == 0. {
+            if self.item_height == 0. {
+                DEFAULT_SCROLL_SPEED
+            } else {
+                self.item_height + self.spacing_y
+            }
+        } else {
+            self.line_scroll
+        }
     }
 }
 
