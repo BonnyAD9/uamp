@@ -74,8 +74,6 @@ impl Application for UampApp {
             now_playing.height(Length::Fixed(30.))
         ]
         .into()
-
-        //list.into()
     }
 
     fn theme(&self) -> Self::Theme {
