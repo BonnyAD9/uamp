@@ -34,7 +34,6 @@ pub struct WrapBox<'a, Message, Renderer: iced_native::Renderer> {
     item_height: f32,
     max_wrap: u32,
     min_wrap: u32,
-    wrap_jump: u32,
     primary_direction: ItemDirection,
     secondary_direction: ItemDirection,
     children: Vec<Element<'a, Message, Renderer>>,
@@ -65,7 +64,6 @@ impl<'a, Message, Renderer: iced_native::Renderer>
             item_height: 0.,
             max_wrap: u32::MAX,
             min_wrap: 1,
-            wrap_jump: 1,
             primary_direction: ItemDirection::LeftToRight,
             secondary_direction: ItemDirection::TopToBottom,
             children: childern,
@@ -154,17 +152,6 @@ impl<'a, Message, Renderer: iced_native::Renderer>
     /// Sets both the min_wrap and max_wrap to the given value
     pub fn wrap_count(self, wrap_count: u32) -> Self {
         self.max_wrap(wrap_count).min_wrap(wrap_count)
-    }
-
-    /// Sets the wrap jump, number of items on the axis given by the
-    /// orientation will be multiple of the wrap jump
-    pub fn wrap_jump(mut self, wrap_jump: u32) -> Self {
-        if wrap_jump == 0 {
-            self.wrap_jump = 1;
-        } else {
-            self.wrap_jump = wrap_jump;
-        }
-        self
     }
 
     /// Sets the primary direction, if the secondary direction is in conflict
