@@ -780,7 +780,6 @@ pub struct WrapBoxStyle {
     scrollbar_border_radius: BorderRadius,
     scrollbar_border_thickness: f32,
     scrollbar_border_color: Color,
-    scrollbar_show_buttons: bool,
     scrollbar_buttons_foreground: Color,
     scrollbar_buttons_background: Background,
     scrollbar_buttons_hover_foreground: Color,
@@ -821,7 +820,6 @@ impl WrapBoxStyle {
             scrollbar_border_radius: BorderRadius::default(),
             scrollbar_border_thickness: 0.,
             scrollbar_border_color: Color::BLACK,
-            scrollbar_show_buttons: true,
             scrollbar_buttons_foreground: Color::from_rgb8(0xEE, 0xEE, 0xEE),
             scrollbar_buttons_background: Background::Color(Color::from_rgb8(
                 0x22, 0x22, 0x22,
