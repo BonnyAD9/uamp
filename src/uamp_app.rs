@@ -1,7 +1,8 @@
 use iced::{executor, widget, Application, Command, Element, Length, Theme};
 
 use crate::{
-    config::Config, library::Library, player::Player, wrap_box::wrap_box,
+    config::Config, fancy_widgets::wrap_box::wrap_box, library::Library,
+    player::Player,
 };
 
 pub struct UampApp {

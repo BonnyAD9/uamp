@@ -1,13 +1,14 @@
-use std::vec;
+use std::{backtrace, vec};
 
 use iced_native::{
     event,
     layout::{Limits, Node},
     mouse::{self, ScrollDelta},
     overlay::Group,
+    renderer::BorderRadius,
     widget::{self, tree, Tree},
-    Element, Layout, Length, Padding, Pixels, Point, Rectangle, Size, Vector,
-    Widget,
+    Background, Color, Element, Layout, Length, Padding, Pixels, Point,
+    Rectangle, Size, Vector, Widget,
 };
 
 use self::ItemDirection::{
@@ -15,6 +16,7 @@ use self::ItemDirection::{
 };
 
 pub const DEFAULT_SCROLL_SPEED: f32 = 60.;
+pub const DEFAULT_SCROLL_WIDTH: f32 = 20.;
 
 /// Container that distributes its contents both vertically and horizontaly
 /// and also has a scollbar. Advantage over normal scrollbar combined with
@@ -39,8 +41,8 @@ pub struct WrapBox<'a, Message, Renderer: iced_native::Renderer> {
     line_scroll: f32,
     primary_direction: ItemDirection,
     secondary_direction: ItemDirection,
-    primary_scrollbar: bool,
-    secondary_scrollbar: bool,
+    primary_scrollbar: Behaviour,
+    secondary_scrollbar: Behaviour,
     children: Vec<Element<'a, Message, Renderer>>,
     state: Option<State>,
 }
@@ -72,8 +74,8 @@ impl<'a, Message, Renderer: iced_native::Renderer>
             line_scroll: 0.,
             primary_direction: ItemDirection::LeftToRight,
             secondary_direction: ItemDirection::TopToBottom,
-            primary_scrollbar: true,
-            secondary_scrollbar: false,
+            primary_scrollbar: Behaviour::Enabled,
+            secondary_scrollbar: Behaviour::Disabled,
             children: childern,
             state: None,
         }
@@ -224,14 +226,14 @@ impl<'a, Message, Renderer: iced_native::Renderer>
     }
 
     /// enable or disable the primary scrollbar of the [`WrapBox`]
-    pub fn primary_scrollbar(mut self, enable: bool) -> Self {
-        self.primary_scrollbar = enable;
+    pub fn primary_scrollbar(mut self, state: Behaviour) -> Self {
+        self.primary_scrollbar = state;
         self
     }
 
     /// enable or disable secondary scrollbar of the [`WrapBox`]
-    pub fn secondary_scrollbar(mut self, enable: bool) -> Self {
-        self.secondary_scrollbar = enable;
+    pub fn secondary_scrollbar(mut self, state: Behaviour) -> Self {
+        self.secondary_scrollbar = state;
         self
     }
 
@@ -761,5 +763,129 @@ impl State {
 impl Default for State {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+pub enum Behaviour {
+    Enabled,
+    Disabled,
+    Hidden,
+}
+
+pub struct WrapBoxStyle {
+    background: Background,
+    border_color: Color,
+    border_radius: BorderRadius,
+    border_thickness: f32,
+    scrollbar_border_radius: BorderRadius,
+    scrollbar_border_thickness: f32,
+    scrollbar_border_color: Color,
+    scrollbar_show_buttons: bool,
+    scrollbar_buttons_foreground: Color,
+    scrollbar_buttons_background: Background,
+    scrollbar_buttons_hover_foreground: Color,
+    scrollbar_buttons_hover_background: Background,
+    scrollbar_buttons_pressed_foreground: Color,
+    scrollbar_buttons_pressed_background: Background,
+    scrollbar_buttons_inactive_foreground: Color,
+    scrollbar_buttons_inactive_background: Background,
+    scrollbar_buttons_inactive_hover_foreground: Color,
+    scrollbar_buttons_inactive_hover_background: Background,
+    scrollbar_buttons_inactive_pressed_foreground: Color,
+    scrollbar_buttons_inactive_pressed_background: Background,
+    scrollbar_topleft_trough: Background,
+    scrollbar_bottomright_trough: Background,
+    scrollbar_topleft_trough_hover: Background,
+    scrollbar_bottomright_trough_hover: Background,
+    scrollbar_thumb_border_radius: BorderRadius,
+    scrollbar_thumb_border_thickness: f32,
+    scrollbar_thumb_border_color: Color,
+    scrollbar_thumb_color: Background,
+    scrollbar_thumb_hover_color: Background,
+    scrollbar_thumb_hover_border_radius: BorderRadius,
+    scrollbar_thumb_hover_border_thickness: f32,
+    scrollbar_thumb_hover_border_color: Color,
+    scrollbar_thumb_pressed_color: Background,
+    scrollbar_thumb_pressed_border_radius: BorderRadius,
+    scrollbar_thumb_pressed_border_thickness: f32,
+    scrollbar_thumb_pressed_border_color: Color,
+}
+
+impl WrapBoxStyle {
+    pub fn dark() -> Self {
+        Self {
+            background: Background::Color(Color::TRANSPARENT),
+            border_color: Color::BLACK,
+            border_radius: BorderRadius::default(),
+            border_thickness: 0.,
+            scrollbar_border_radius: BorderRadius::default(),
+            scrollbar_border_thickness: 0.,
+            scrollbar_border_color: Color::BLACK,
+            scrollbar_show_buttons: true,
+            scrollbar_buttons_foreground: Color::from_rgb8(0xEE, 0xEE, 0xEE),
+            scrollbar_buttons_background: Background::Color(Color::from_rgb8(
+                0x22, 0x22, 0x22,
+            )),
+            scrollbar_buttons_hover_foreground: Color::from_rgb8(
+                0xEE, 0xEE, 0xEE,
+            ),
+            scrollbar_buttons_hover_background: Background::Color(
+                Color::from_rgb8(0x33, 0x33, 0x33),
+            ),
+            scrollbar_buttons_pressed_foreground: Color::from_rgb8(
+                0xEE, 0xEE, 0xEE,
+            ),
+            scrollbar_buttons_pressed_background: Background::Color(
+                Color::from_rgb8(0x18, 0x18, 0x18),
+            ),
+            scrollbar_buttons_inactive_foreground: Color::from_rgb8(
+                0x77, 0x77, 0x77,
+            ),
+            scrollbar_buttons_inactive_background: Background::Color(
+                Color::from_rgb8(0x22, 0x22, 0x22),
+            ),
+            scrollbar_buttons_inactive_hover_foreground: Color::from_rgb8(
+                0x77, 0x77, 0x77,
+            ),
+            scrollbar_buttons_inactive_hover_background: Background::Color(
+                Color::from_rgb8(0x22, 0x22, 0x22),
+            ),
+            scrollbar_buttons_inactive_pressed_foreground: Color::from_rgb8(
+                0x77, 0x77, 0x77,
+            ),
+            scrollbar_buttons_inactive_pressed_background: Background::Color(
+                Color::from_rgb8(0x22, 0x22, 0x22),
+            ),
+            scrollbar_topleft_trough: Background::Color(Color::from_rgb8(
+                0x18, 0x18, 0x18,
+            )),
+            scrollbar_bottomright_trough: Background::Color(Color::from_rgb8(
+                0x18, 0x18, 0x18,
+            )),
+            scrollbar_topleft_trough_hover: Background::Color(
+                Color::from_rgb8(0x22, 0x22, 0x22),
+            ),
+            scrollbar_bottomright_trough_hover: Background::Color(
+                Color::from_rgb8(0x22, 0x22, 0x22),
+            ),
+            scrollbar_thumb_border_radius: BorderRadius::default(),
+            scrollbar_thumb_border_thickness: 0.,
+            scrollbar_thumb_border_color: Color::BLACK,
+            scrollbar_thumb_color: Background::Color(Color::from_rgb8(
+                0x33, 0x33, 0x33,
+            )),
+            scrollbar_thumb_hover_border_radius: BorderRadius::default(),
+            scrollbar_thumb_hover_border_thickness: 0.,
+            scrollbar_thumb_hover_border_color: Color::BLACK,
+            scrollbar_thumb_hover_color: Background::Color(Color::from_rgb8(
+                0x55, 0x55, 0x55,
+            )),
+            scrollbar_thumb_pressed_border_radius: BorderRadius::default(),
+            scrollbar_thumb_pressed_border_thickness: 0.,
+            scrollbar_thumb_pressed_border_color: Color::BLACK,
+            scrollbar_thumb_pressed_color: Background::Color(
+                Color::from_rgb8(0x22, 0x22, 0x22),
+            ),
+        }
     }
 }
