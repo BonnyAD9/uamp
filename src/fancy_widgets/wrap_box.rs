@@ -1,14 +1,14 @@
-use std::{backtrace, vec};
+use std::{ops, vec};
 
 use iced_native::{
     event,
     layout::{Limits, Node},
     mouse::{self, ScrollDelta},
     overlay::Group,
-    renderer::BorderRadius,
+    renderer::{BorderRadius, Quad},
     widget::{self, tree, Tree},
     Background, Color, Element, Layout, Length, Padding, Pixels, Point,
-    Rectangle, Size, Vector, Widget,
+    Rectangle, Size, Vector, Widget, Theme,
 };
 
 use self::ItemDirection::{
@@ -16,7 +16,8 @@ use self::ItemDirection::{
 };
 
 pub const DEFAULT_SCROLL_SPEED: f32 = 60.;
-pub const DEFAULT_SCROLL_WIDTH: f32 = 20.;
+pub const DEFAULT_SCROLLBAR_WIDTH: f32 = 20.;
+pub const DEFAULT_SCROLLBAR_BUTTON_HEIGHT: f32 = 20.;
 
 /// Container that distributes its contents both vertically and horizontaly
 /// and also has a scollbar. Advantage over normal scrollbar combined with
@@ -26,7 +27,10 @@ pub const DEFAULT_SCROLL_WIDTH: f32 = 20.;
 /// This is not finished and currently is the same as iced::widgets::Column
 ///
 /// The code is hevily inspired by iced::widgets::Column
-pub struct WrapBox<'a, Message, Renderer: iced_native::Renderer> {
+pub struct WrapBox<'a, Message, Renderer: iced_native::Renderer>
+where
+    Renderer::Theme: WrapBoxStyleSheet,
+{
     spacing_x: f32,
     spacing_y: f32,
     padding: Padding,
@@ -39,16 +43,21 @@ pub struct WrapBox<'a, Message, Renderer: iced_native::Renderer> {
     max_wrap: u32,
     min_wrap: u32,
     line_scroll: f32,
+    scrollbar_width: f32,
+    scrollbar_button_height: f32,
     primary_direction: ItemDirection,
     secondary_direction: ItemDirection,
     primary_scrollbar: Behaviour,
     secondary_scrollbar: Behaviour,
     children: Vec<Element<'a, Message, Renderer>>,
     state: Option<State>,
+    style: <Renderer::Theme as WrapBoxStyleSheet>::Style,
 }
 
 impl<'a, Message, Renderer: iced_native::Renderer>
     WrapBox<'a, Message, Renderer>
+where
+    Renderer::Theme: WrapBoxStyleSheet,
 {
     /// creates empty [`WrapBox`]
     pub fn new() -> Self {
@@ -72,12 +81,15 @@ impl<'a, Message, Renderer: iced_native::Renderer>
             max_wrap: u32::MAX,
             min_wrap: 1,
             line_scroll: 0.,
+            scrollbar_width: DEFAULT_SCROLLBAR_WIDTH,
+            scrollbar_button_height: DEFAULT_SCROLLBAR_BUTTON_HEIGHT,
             primary_direction: ItemDirection::LeftToRight,
             secondary_direction: ItemDirection::TopToBottom,
             primary_scrollbar: Behaviour::Enabled,
             secondary_scrollbar: Behaviour::Disabled,
             children: childern,
             state: None,
+            style: Default::default(),
         }
     }
 
@@ -173,6 +185,23 @@ impl<'a, Message, Renderer: iced_native::Renderer>
         self
     }
 
+    // sets the width of the scrollbar (this is the height of the horizontal
+    // scrollbar)
+    pub fn scrollbar_width(mut self, width: impl Into<Pixels>) -> Self {
+        self.scrollbar_width = width.into().0;
+        self
+    }
+
+    // sets the height of the scrollbar buttons (this is width of the buttons
+    // on the horizontal scrollbar)
+    pub fn scrollbar_button_height(
+        mut self,
+        height: impl Into<Pixels>,
+    ) -> Self {
+        self.scrollbar_button_height = height.into().0;
+        self
+    }
+
     /// Sets the primary direction, if the secondary direction is in conflict
     /// the secundary direction is adjusted.
     ///
@@ -249,6 +278,8 @@ impl<'a, Message, Renderer: iced_native::Renderer>
 
 impl<'a, Message, Renderer: iced_native::Renderer> Default
     for WrapBox<'a, Message, Renderer>
+where
+    Renderer::Theme: WrapBoxStyleSheet,
 {
     fn default() -> Self {
         Self::new()
@@ -259,6 +290,7 @@ impl<'a, Message: 'a, Renderer> Widget<Message, Renderer>
     for WrapBox<'a, Message, Renderer>
 where
     Renderer: iced_native::Renderer + 'a,
+    Renderer::Theme: WrapBoxStyleSheet,
 {
     fn tag(&self) -> widget::tree::Tag {
         tree::Tag::of::<State>()
@@ -517,6 +549,12 @@ where
                 }
             })
         });
+
+        if self.primary_scrollbar != Behaviour::Enabled {
+            return;
+        }
+
+        // TODO: draw the scrollbar
     }
 
     fn overlay<'b>(
@@ -550,6 +588,8 @@ where
 
 impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
     From<WrapBox<'a, Message, Renderer>> for Element<'a, Message, Renderer>
+where
+    Renderer::Theme: WrapBoxStyleSheet,
 {
     fn from(value: WrapBox<'a, Message, Renderer>) -> Self {
         Self::new(value)
@@ -558,6 +598,8 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
 
 impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
     WrapBox<'a, Message, Renderer>
+where
+    Renderer::Theme: WrapBoxStyleSheet,
 {
     fn create_layout(
         &self,
@@ -731,7 +773,10 @@ impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
 
 pub fn wrap_box<Message, Renderer: iced_native::Renderer>(
     childern: Vec<Element<'_, Message, Renderer>>,
-) -> WrapBox<'_, Message, Renderer> {
+) -> WrapBox<'_, Message, Renderer>
+where
+    Renderer::Theme: WrapBoxStyleSheet,
+{
     WrapBox::with_childern(childern)
 }
 
@@ -758,6 +803,13 @@ impl State {
             offset_y: 0.,
         }
     }
+
+    fn get_relative(&self, view_size: Size, content_size: Size) -> (f32, f32) {
+        (
+            self.offset_x / (content_size.width - view_size.width),
+            self.offset_y / (content_size.height - view_size.height),
+        )
+    }
 }
 
 impl Default for State {
@@ -772,118 +824,91 @@ pub enum Behaviour {
     Hidden,
 }
 
-pub struct WrapBoxStyle {
-    background: Background,
-    border_color: Color,
-    border_radius: BorderRadius,
-    border_thickness: f32,
-    scrollbar_border_radius: BorderRadius,
-    scrollbar_border_thickness: f32,
-    scrollbar_border_color: Color,
-    scrollbar_buttons_foreground: Color,
-    scrollbar_buttons_background: Background,
-    scrollbar_buttons_hover_foreground: Color,
-    scrollbar_buttons_hover_background: Background,
-    scrollbar_buttons_pressed_foreground: Color,
-    scrollbar_buttons_pressed_background: Background,
-    scrollbar_buttons_inactive_foreground: Color,
-    scrollbar_buttons_inactive_background: Background,
-    scrollbar_buttons_inactive_hover_foreground: Color,
-    scrollbar_buttons_inactive_hover_background: Background,
-    scrollbar_buttons_inactive_pressed_foreground: Color,
-    scrollbar_buttons_inactive_pressed_background: Background,
-    scrollbar_topleft_trough: Background,
-    scrollbar_bottomright_trough: Background,
-    scrollbar_topleft_trough_hover: Background,
-    scrollbar_bottomright_trough_hover: Background,
-    scrollbar_thumb_border_radius: BorderRadius,
-    scrollbar_thumb_border_thickness: f32,
-    scrollbar_thumb_border_color: Color,
-    scrollbar_thumb_color: Background,
-    scrollbar_thumb_hover_color: Background,
-    scrollbar_thumb_hover_border_radius: BorderRadius,
-    scrollbar_thumb_hover_border_thickness: f32,
-    scrollbar_thumb_hover_border_color: Color,
-    scrollbar_thumb_pressed_color: Background,
-    scrollbar_thumb_pressed_border_radius: BorderRadius,
-    scrollbar_thumb_pressed_border_thickness: f32,
-    scrollbar_thumb_pressed_border_color: Color,
+impl PartialEq for Behaviour {
+    fn eq(&self, other: &Self) -> bool {
+        core::mem::discriminant(self) == core::mem::discriminant(other)
+    }
 }
 
-impl WrapBoxStyle {
-    pub fn dark() -> Self {
-        Self {
-            background: Background::Color(Color::TRANSPARENT),
-            border_color: Color::BLACK,
-            border_radius: BorderRadius::default(),
-            border_thickness: 0.,
-            scrollbar_border_radius: BorderRadius::default(),
-            scrollbar_border_thickness: 0.,
-            scrollbar_border_color: Color::BLACK,
-            scrollbar_buttons_foreground: Color::from_rgb8(0xEE, 0xEE, 0xEE),
-            scrollbar_buttons_background: Background::Color(Color::from_rgb8(
-                0x22, 0x22, 0x22,
-            )),
-            scrollbar_buttons_hover_foreground: Color::from_rgb8(
-                0xEE, 0xEE, 0xEE,
-            ),
-            scrollbar_buttons_hover_background: Background::Color(
-                Color::from_rgb8(0x33, 0x33, 0x33),
-            ),
-            scrollbar_buttons_pressed_foreground: Color::from_rgb8(
-                0xEE, 0xEE, 0xEE,
-            ),
-            scrollbar_buttons_pressed_background: Background::Color(
-                Color::from_rgb8(0x18, 0x18, 0x18),
-            ),
-            scrollbar_buttons_inactive_foreground: Color::from_rgb8(
-                0x77, 0x77, 0x77,
-            ),
-            scrollbar_buttons_inactive_background: Background::Color(
-                Color::from_rgb8(0x22, 0x22, 0x22),
-            ),
-            scrollbar_buttons_inactive_hover_foreground: Color::from_rgb8(
-                0x77, 0x77, 0x77,
-            ),
-            scrollbar_buttons_inactive_hover_background: Background::Color(
-                Color::from_rgb8(0x22, 0x22, 0x22),
-            ),
-            scrollbar_buttons_inactive_pressed_foreground: Color::from_rgb8(
-                0x77, 0x77, 0x77,
-            ),
-            scrollbar_buttons_inactive_pressed_background: Background::Color(
-                Color::from_rgb8(0x22, 0x22, 0x22),
-            ),
-            scrollbar_topleft_trough: Background::Color(Color::from_rgb8(
-                0x18, 0x18, 0x18,
-            )),
-            scrollbar_bottomright_trough: Background::Color(Color::from_rgb8(
-                0x18, 0x18, 0x18,
-            )),
-            scrollbar_topleft_trough_hover: Background::Color(
-                Color::from_rgb8(0x22, 0x22, 0x22),
-            ),
-            scrollbar_bottomright_trough_hover: Background::Color(
-                Color::from_rgb8(0x22, 0x22, 0x22),
-            ),
-            scrollbar_thumb_border_radius: BorderRadius::default(),
-            scrollbar_thumb_border_thickness: 0.,
-            scrollbar_thumb_border_color: Color::BLACK,
-            scrollbar_thumb_color: Background::Color(Color::from_rgb8(
-                0x33, 0x33, 0x33,
-            )),
-            scrollbar_thumb_hover_border_radius: BorderRadius::default(),
-            scrollbar_thumb_hover_border_thickness: 0.,
-            scrollbar_thumb_hover_border_color: Color::BLACK,
-            scrollbar_thumb_hover_color: Background::Color(Color::from_rgb8(
-                0x55, 0x55, 0x55,
-            )),
-            scrollbar_thumb_pressed_border_radius: BorderRadius::default(),
-            scrollbar_thumb_pressed_border_thickness: 0.,
-            scrollbar_thumb_pressed_border_color: Color::BLACK,
-            scrollbar_thumb_pressed_color: Background::Color(
-                Color::from_rgb8(0x22, 0x22, 0x22),
-            ),
-        }
+pub trait WrapBoxStyleSheet {
+    type Style: Default;
+
+    fn button_style(
+        &self,
+        style: &Self::Style,
+        pos: MousePos,
+        pressed: bool,
+        is_start: bool,
+        relative_scroll: f32,
+    ) -> ButtonStyle;
+
+    fn thumb_style(
+        &self,
+        style: &Self::Style,
+        pos: MousePos,
+        pressed: bool,
+        relative_scroll: f32,
+    ) -> SquareStyle;
+
+    fn trough_style(
+        &self,
+        style: &Self::Style,
+        pos: MousePos,
+        pressed: bool,
+        relative_scroll: f32,
+    ) -> Background;
+}
+
+pub enum MousePos {
+    DirectlyOver,
+    OverScrollbar,
+    OverWrapBox,
+    None,
+}
+
+pub struct SquareStyle {
+    background: Background,
+    border: Color,
+    border_thickness: f32,
+    border_radius: BorderRadius,
+}
+
+pub struct ButtonStyle {
+    square: SquareStyle,
+    foreground: Color,
+}
+
+impl WrapBoxStyleSheet for Theme {
+    type Style = ();
+
+    fn button_style(
+        &self,
+        style: &Self::Style,
+        pos: MousePos,
+        pressed: bool,
+        is_start: bool,
+        relative_scroll: f32,
+    ) -> ButtonStyle {
+        todo!()
+    }
+
+    fn thumb_style(
+        &self,
+        style: &Self::Style,
+        pos: MousePos,
+        pressed: bool,
+        relative_scroll: f32,
+    ) -> SquareStyle {
+        todo!()
+    }
+
+    fn trough_style(
+        &self,
+        style: &Self::Style,
+        pos: MousePos,
+        pressed: bool,
+        relative_scroll: f32,
+    ) -> Background {
+        todo!()
     }
 }
