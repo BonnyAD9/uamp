@@ -3,12 +3,12 @@ use std::vec;
 use iced_native::{
     color, event,
     layout::{Limits, Node},
-    mouse::{self, ScrollDelta},
+    mouse::{self, Button, ScrollDelta},
     overlay::Group,
     renderer::{BorderRadius, Quad},
     widget::{self, tree, Tree},
     Background, Color, Element, Layout, Length, Padding, Pixels, Point,
-    Rectangle, Size, Theme, Vector, Widget,
+    Rectangle, Size, Theme, Vector, Widget, touch,
 };
 use iced_native::{renderer, text};
 
@@ -383,13 +383,13 @@ where
         clipboard: &mut dyn iced_native::Clipboard,
         shell: &mut iced_native::Shell<'_, Message>,
     ) -> iced_native::event::Status {
+        let state = tree.state.downcast_mut::<State>();
         if matches!(event, iced_native::Event::Mouse(_))
             && !layout.bounds().contains(cursor_position)
+            && matches!(state.pressed, ScrollbarInteraction::None)
         {
             return iced_native::event::Status::Ignored;
         }
-
-        let state = tree.state.downcast_mut::<State>();
 
         let mut owner = Node::default();
         let child =
@@ -407,6 +407,7 @@ where
         let content_size = child.bounds().size();
         let (first_o, last_o) = self.visible_pos(view_size, state);
 
+        // scrolling
         if let iced_native::Event::Mouse(mouse::Event::WheelScrolled {
             delta,
         }) = event
@@ -420,10 +421,128 @@ where
                 }
             }
         }
+
+        let mut captured = false;
+
+        // mouse down
+        if matches!(
+            event,
+            iced_native::Event::Mouse(mouse::Event::ButtonPressed(
+                Button::Left
+            ))
+        ) {
+            let bounds = layout.bounds();
+            let (_, offset) = state.get_relative(view_size, content_size);
+            let thumb_size = self.thumb_size(bounds, content_size);
+
+            captured = true;
+
+            if self.top_button_bounds(bounds).contains(cursor_position) {
+                state.pressed = ScrollbarInteraction::Up;
+            } else if self.bot_button_bounds(bounds).contains(cursor_position)
+            {
+                state.pressed = ScrollbarInteraction::Down;
+            } else if self
+                .thumb_bounds(bounds, thumb_size, offset)
+                .contains(cursor_position)
+            {
+                state.pressed = ScrollbarInteraction::Thumb {
+                    relative: offset,
+                    cursor: cursor_position,
+                };
+            } else {
+                let trough = self.top_trough_bounds(bounds, thumb_size, offset);
+                if trough.contains(cursor_position) {
+                    let relative = offset * (cursor_position.y - trough.y)
+                        / trough.height;
+                    state.pressed = ScrollbarInteraction::Thumb {
+                        relative,
+                        cursor: cursor_position,
+                    };
+                    state.scroll_relative_y(view_size, content_size, relative);
+                } else {
+                    let trough =
+                        self.bot_trough_bounds(bounds, thumb_size, offset);
+                    if trough.contains(cursor_position) {
+                        let relative = offset
+                            + (1. - offset) * (cursor_position.y - trough.y)
+                                / trough.height;
+                        state.pressed = ScrollbarInteraction::Thumb {
+                            relative,
+                            cursor: cursor_position,
+                        };
+                        state.scroll_relative_y(
+                            view_size,
+                            content_size,
+                            relative,
+                        );
+                    } else {
+                        captured = false;
+                    }
+                }
+            }
+        }
+
+        // mouse up
+        if matches!(
+            event,
+            iced_native::Event::Mouse(mouse::Event::ButtonReleased(
+                Button::Left
+            ))
+        ) {
+            captured = true;
+
+            match state.pressed {
+                ScrollbarInteraction::Up => {
+                    if self
+                        .top_button_bounds(layout.bounds())
+                        .contains(cursor_position)
+                    {
+                        state.offset_y -= view_bounds.height;
+                    }
+                }
+                ScrollbarInteraction::Down => {
+                    if self
+                        .bot_button_bounds(layout.bounds())
+                        .contains(cursor_position)
+                    {
+                        state.offset_y += view_bounds.height;
+                    }
+                }
+                _ => captured = false,
+            }
+
+            state.pressed = ScrollbarInteraction::None;
+        }
+
+        // dragging
+        if matches!(event, event::Event::Mouse(mouse::Event::CursorMoved { .. })) {
+            if let ScrollbarInteraction::Thumb { relative, cursor } = state.pressed
+            {
+                let bounds = layout.bounds();
+                let relative = relative
+                    + (cursor_position.y - cursor.y)
+                        / (bounds.height
+                            - self.scrollbar_button_height * 2.
+                            - self.thumb_size(bounds, content_size));
+                state.scroll_relative_y(view_size, content_size, relative);
+                state.pressed = ScrollbarInteraction::Thumb {
+                    relative,
+                    cursor: cursor_position,
+                };
+
+                captured = true;
+            }
+        }
+
         state.offset_y = state
             .offset_y
             .min(content_size.height - view_size.height)
             .max(0.);
+
+        if captured {
+            return event::Status::Captured;
+        }
 
         let (first, last) = self.visible_pos(view_size, state);
         if first_o != first || last_o != last {
@@ -812,12 +931,12 @@ where
         }
     }
 
-    fn top_trough_bounds(&self, bounds: Rectangle, offset: f32) -> Rectangle {
+    fn top_trough_bounds(&self, bounds: Rectangle, thumb_size: f32, offset: f32) -> Rectangle {
         Rectangle {
             x: bounds.x + bounds.width - self.scrollbar_width,
             y: bounds.y + self.scrollbar_button_height,
             width: self.scrollbar_width,
-            height: (bounds.height - self.scrollbar_button_height * 2.)
+            height: (bounds.height - self.scrollbar_button_height * 2. - thumb_size)
                 * offset,
         }
     }
@@ -829,8 +948,8 @@ where
         offset: f32,
     ) -> Rectangle {
         let y = bounds.y
-            + (bounds.height - self.scrollbar_button_height * 2.) * offset
-            + thumb_size;
+            + (bounds.height - self.scrollbar_button_height * 2. - thumb_size) * offset
+            + thumb_size + self.scrollbar_button_height;
         Rectangle {
             x: bounds.x + bounds.width - self.scrollbar_width,
             y,
@@ -849,17 +968,16 @@ where
             x: bounds.x + bounds.width - self.scrollbar_width,
             y: bounds.y
                 + self.scrollbar_button_height
-                + (bounds.height - self.scrollbar_button_height * 2.) * offset,
+                + (bounds.height
+                    - self.scrollbar_button_height * 2.
+                    - thumb_size)
+                    * offset,
             width: self.scrollbar_width,
             height: thumb_size,
         }
     }
 
-    fn thumb_size(
-        &self,
-        bounds: Rectangle,
-        content: Rectangle
-    ) -> f32 {
+    fn thumb_size(&self, bounds: Rectangle, content: Size) -> f32 {
         let trough_height = bounds.height - self.scrollbar_button_height * 2.;
         self.min_thumb_size
             .max(trough_height * bounds.height / content.height)
@@ -880,9 +998,8 @@ where
         let content_bounds = layout.children().next().unwrap().bounds();
         let topleft =
             Point::new(bounds.width - self.scrollbar_width, bounds.y);
-        let thumb_size = self.thumb_size(bounds, content_bounds);
-        let (_, offset) =
-            state.get_relative(view_size, content_bounds.size());
+        let thumb_size = self.thumb_size(bounds, content_bounds.size());
+        let (_, offset) = state.get_relative(view_size, content_bounds.size());
 
         let mo_wrap = bounds.contains(cursor_position);
         let mo_scroll = Rectangle::new(
@@ -906,8 +1023,13 @@ where
             mo_scroll,
             top_button.contains(cursor_position),
         );
-        let b_style =
-            theme.button_style(&self.style, pos, false, true, offset);
+        let b_style = theme.button_style(
+            &self.style,
+            pos,
+            matches!(state.pressed, ScrollbarInteraction::Up),
+            true,
+            offset,
+        );
         b_style.square.draw(renderer, top_button);
         // TODO: use better arrow than just the character '^'
         renderer.fill_text(text::Text {
@@ -931,8 +1053,13 @@ where
             mo_scroll,
             bottom_button.contains(cursor_position),
         );
-        let b_style =
-            theme.button_style(&self.style, pos, false, false, offset);
+        let b_style = theme.button_style(
+            &self.style,
+            pos,
+            matches!(state.pressed, ScrollbarInteraction::Down),
+            false,
+            offset,
+        );
         b_style.square.draw(renderer, bottom_button);
         // TODO: use better arrow than just the character 'v'
         renderer.fill_text(text::Text {
@@ -951,7 +1078,7 @@ where
 
         // draw the top trough
         if offset != 0. {
-            let trough = self.top_trough_bounds(bounds, offset);
+            let trough = self.top_trough_bounds(bounds, thumb_size, offset);
             let pos = MousePos::from_bools(
                 mo_wrap,
                 mo_scroll,
@@ -971,8 +1098,7 @@ where
 
         // draw the bottom trough
         if offset != 1. {
-            let trough =
-                self.bot_trough_bounds(bounds, thumb_size, offset);
+            let trough = self.bot_trough_bounds(bounds, thumb_size, offset);
             let pos = MousePos::from_bools(
                 mo_wrap,
                 mo_scroll,
@@ -998,7 +1124,18 @@ where
             thumb.contains(cursor_position),
         );
         theme
-            .thumb_style(&self.style, pos, false, offset)
+            .thumb_style(
+                &self.style,
+                pos,
+                matches!(
+                    state.pressed,
+                    ScrollbarInteraction::Thumb {
+                        relative: _,
+                        cursor: _
+                    }
+                ),
+                offset,
+            )
             .draw(renderer, thumb);
     }
 }
@@ -1026,6 +1163,7 @@ struct State {
     offset_x: f32,
     /// Absolute offset on the y axis
     offset_y: f32,
+    pressed: ScrollbarInteraction,
 }
 
 impl State {
@@ -1033,6 +1171,7 @@ impl State {
         Self {
             offset_x: 0.,
             offset_y: 0.,
+            pressed: ScrollbarInteraction::None,
         }
     }
 
@@ -1042,12 +1181,29 @@ impl State {
             self.offset_y / (content_size.height - view_size.height),
         )
     }
+
+    fn scroll_relative_y(
+        &mut self,
+        view_size: Size,
+        content_size: Size,
+        pos: f32,
+    ) {
+        self.offset_y = (content_size.height - view_size.height) * pos;
+    }
 }
 
 impl Default for State {
     fn default() -> Self {
         Self::new()
     }
+}
+
+#[derive(Clone, Copy)]
+enum ScrollbarInteraction {
+    None,
+    Up,
+    Down,
+    Thumb { relative: f32, cursor: Point },
 }
 
 pub enum Behaviour {
@@ -1205,7 +1361,7 @@ impl WrapBoxStyleSheet for Theme {
 
         if pressed {
             SquareStyle {
-                background: Background::Color(color!(0x333333)),
+                background: Background::Color(color!(0x555555)),
                 ..square
             }
         } else if pos == MousePos::DirectlyOver {
