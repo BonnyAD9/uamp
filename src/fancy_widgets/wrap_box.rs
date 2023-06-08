@@ -560,152 +560,15 @@ where
             })
         });
 
-        if self.primary_scrollbar != Behaviour::Enabled {
-            return;
-        }
-
-        let bounds = layout.bounds();
-        let content_size = child.bounds().size();
-        let topleft =
-            Point::new(bounds.width - self.scrollbar_width, bounds.y);
-        let trough_height = bounds.height - self.scrollbar_button_height * 2.;
-        let thumb_size = self
-            .min_thumb_size
-            .max(trough_height * bounds.height / child.bounds().size().height)
-            .min(trough_height / 2.);
-        let thumb_offset = state.get_relative(view_size, content_size);
-
-        let mo_wrap = bounds.contains(cursor_position);
-        let mo_scroll = Rectangle::new(
-            topleft,
-            Size::new(self.scrollbar_width, bounds.height),
-        )
-        .contains(cursor_position);
-
-        // draw the wrap_box background
-        theme
-            .background(
-                &self.style,
-                MousePos::from_bools(mo_wrap, mo_scroll, mo_wrap),
-            )
-            .draw(renderer, bounds);
-
-        // draw the top scrollbar button
-        let top_button = Rectangle::new(
-            topleft,
-            Size::new(self.scrollbar_width, self.scrollbar_button_height),
-        );
-        let pos = MousePos::from_bools(
-            mo_wrap,
-            mo_scroll,
-            top_button.contains(cursor_position),
-        );
-        let b_style =
-            theme.button_style(&self.style, pos, false, true, thumb_offset.1);
-        b_style.square.draw(renderer, top_button);
-        renderer.fill_text(text::Text {
-            content: "^",
-            bounds: Rectangle { x: top_button.x + 10., y: top_button.y + 13., ..top_button },
-            size: self.scrollbar_button_height,
-            color: b_style.foreground,
-            font: Default::default(),
-            horizontal_alignment: iced_native::alignment::Horizontal::Center,
-            vertical_alignment: iced_native::alignment::Vertical::Center,
-        });
-
-        // draw the bottom scrollbar button
-        let bottom_button = Rectangle {
-            x: topleft.x,
-            y: topleft.y + self.scrollbar_button_height + trough_height,
-            width: self.scrollbar_width,
-            height: self.scrollbar_button_height,
-        };
-        let pos = MousePos::from_bools(
-            mo_wrap,
-            mo_scroll,
-            bottom_button.contains(cursor_position),
-        );
-        let b_style =
-            theme.button_style(&self.style, pos, false, false, thumb_offset.1);
-        b_style.square.draw(renderer, bottom_button);
-        renderer.fill_text(text::Text {
-            content: "v",
-            bounds: Rectangle { x: bottom_button.x + 10., y: bottom_button.y + 7., ..bottom_button },
-            size: self.scrollbar_button_height,
-            color: b_style.foreground,
-            font: Default::default(),
-            horizontal_alignment: iced_native::alignment::Horizontal::Center,
-            vertical_alignment: iced_native::alignment::Vertical::Center,
-        });
-
-        let thumb_trough_pos = self.scrollbar_button_height
-            + (trough_height - thumb_size) * thumb_offset.1;
-
-        // draw the top trough
-        if thumb_offset.1 != 0. {
-            let trough = Rectangle {
-                x: topleft.x,
-                y: topleft.y + self.scrollbar_button_height,
-                width: self.scrollbar_width,
-                height: trough_height - thumb_trough_pos,
-            };
-            let pos = MousePos::from_bools(
-                mo_wrap,
-                mo_scroll,
-                trough.contains(cursor_position),
-            );
-            let quad = Quad {
-                bounds: trough,
-                border_radius: 0.0.into(),
-                border_width: 0.,
-                border_color: Color::BLACK,
-            };
-            renderer.fill_quad(
-                quad,
-                theme.trough_style(&self.style, pos, false, thumb_offset.1),
+        if self.primary_scrollbar == Behaviour::Enabled {
+            self.draw_scrollbar(
+                layout,
+                state,
+                cursor_position,
+                renderer,
+                theme,
             );
         }
-
-        // draw the bottom trough
-        if thumb_offset.1 != 1. {
-            let trough = Rectangle {
-                x: topleft.x,
-                y: topleft.y + thumb_trough_pos + thumb_size,
-                width: self.scrollbar_width,
-                height: trough_height - thumb_trough_pos - thumb_size,
-            };
-            let pos = MousePos::from_bools(
-                mo_wrap,
-                mo_scroll,
-                trough.contains(cursor_position),
-            );
-            let quad = Quad {
-                bounds: trough,
-                border_radius: 0.0.into(),
-                border_width: 0.,
-                border_color: Color::BLACK,
-            };
-            renderer.fill_quad(
-                quad,
-                theme.trough_style(&self.style, pos, false, thumb_offset.1),
-            );
-        }
-
-        // draw the thumb
-        let thumb = Rectangle {
-            x: topleft.x,
-            y: topleft.y + thumb_trough_pos,
-            width: self.scrollbar_width,
-            height: thumb_size,
-        };
-        let pos = MousePos::from_bools(
-            mo_wrap,
-            mo_scroll,
-            thumb.contains(cursor_position),
-        );
-        theme
-            .thumb_style(&self.style, pos, false, thumb_offset.1)
-            .draw(renderer, thumb);
     }
 
     fn overlay<'b>(
@@ -930,6 +793,214 @@ where
             self.line_scroll
         }
     }
+
+    fn top_button_bounds(&self, bounds: Rectangle) -> Rectangle {
+        Rectangle {
+            x: bounds.x + bounds.width - self.scrollbar_width,
+            y: bounds.y,
+            width: self.scrollbar_width,
+            height: self.scrollbar_button_height,
+        }
+    }
+
+    fn bot_button_bounds(&self, bounds: Rectangle) -> Rectangle {
+        Rectangle {
+            x: bounds.x + bounds.width - self.scrollbar_width,
+            y: bounds.y + bounds.height - self.scrollbar_button_height,
+            width: self.scrollbar_width,
+            height: self.scrollbar_button_height,
+        }
+    }
+
+    fn top_trough_bounds(&self, bounds: Rectangle, offset: f32) -> Rectangle {
+        Rectangle {
+            x: bounds.x + bounds.width - self.scrollbar_width,
+            y: bounds.y + self.scrollbar_button_height,
+            width: self.scrollbar_width,
+            height: (bounds.height - self.scrollbar_button_height * 2.)
+                * offset,
+        }
+    }
+
+    fn bot_trough_bounds(
+        &self,
+        bounds: Rectangle,
+        thumb_size: f32,
+        offset: f32,
+    ) -> Rectangle {
+        let y = bounds.y
+            + (bounds.height - self.scrollbar_button_height * 2.) * offset
+            + thumb_size;
+        Rectangle {
+            x: bounds.x + bounds.width - self.scrollbar_width,
+            y,
+            width: self.scrollbar_width,
+            height: bounds.height - y - self.scrollbar_button_height,
+        }
+    }
+
+    fn thumb_bounds(
+        &self,
+        bounds: Rectangle,
+        thumb_size: f32,
+        offset: f32,
+    ) -> Rectangle {
+        Rectangle {
+            x: bounds.x + bounds.width - self.scrollbar_width,
+            y: bounds.y
+                + self.scrollbar_button_height
+                + (bounds.height - self.scrollbar_button_height * 2.) * offset,
+            width: self.scrollbar_width,
+            height: thumb_size,
+        }
+    }
+
+    fn thumb_size(
+        &self,
+        bounds: Rectangle,
+        content: Rectangle
+    ) -> f32 {
+        let trough_height = bounds.height - self.scrollbar_button_height * 2.;
+        self.min_thumb_size
+            .max(trough_height * bounds.height / content.height)
+            .min(trough_height / 2.)
+    }
+
+    fn draw_scrollbar(
+        &self,
+        layout: Layout,
+        state: &State,
+        cursor_position: Point,
+        renderer: &mut Renderer,
+        theme: &Renderer::Theme,
+    ) {
+        let bounds = layout.bounds();
+        // the childern.next will always be Some
+        let view_size = self.pad_size(bounds.size());
+        let content_bounds = layout.children().next().unwrap().bounds();
+        let topleft =
+            Point::new(bounds.width - self.scrollbar_width, bounds.y);
+        let thumb_size = self.thumb_size(bounds, content_bounds);
+        let (_, offset) =
+            state.get_relative(view_size, content_bounds.size());
+
+        let mo_wrap = bounds.contains(cursor_position);
+        let mo_scroll = Rectangle::new(
+            topleft,
+            Size::new(self.scrollbar_width, bounds.height),
+        )
+        .contains(cursor_position);
+
+        // draw the wrap_box background
+        theme
+            .background(
+                &self.style,
+                MousePos::from_bools(mo_wrap, mo_scroll, mo_wrap),
+            )
+            .draw(renderer, bounds);
+
+        // draw the top scrollbar button
+        let top_button = self.top_button_bounds(bounds);
+        let pos = MousePos::from_bools(
+            mo_wrap,
+            mo_scroll,
+            top_button.contains(cursor_position),
+        );
+        let b_style =
+            theme.button_style(&self.style, pos, false, true, offset);
+        b_style.square.draw(renderer, top_button);
+        // TODO: use better arrow than just the character '^'
+        renderer.fill_text(text::Text {
+            content: "^",
+            bounds: Rectangle {
+                x: top_button.x + 10.,
+                y: top_button.y + 13.,
+                ..top_button
+            },
+            size: self.scrollbar_button_height,
+            color: b_style.foreground,
+            font: Default::default(),
+            horizontal_alignment: iced_native::alignment::Horizontal::Center,
+            vertical_alignment: iced_native::alignment::Vertical::Center,
+        });
+
+        // draw the bottom scrollbar button
+        let bottom_button = self.bot_button_bounds(bounds);
+        let pos = MousePos::from_bools(
+            mo_wrap,
+            mo_scroll,
+            bottom_button.contains(cursor_position),
+        );
+        let b_style =
+            theme.button_style(&self.style, pos, false, false, offset);
+        b_style.square.draw(renderer, bottom_button);
+        // TODO: use better arrow than just the character 'v'
+        renderer.fill_text(text::Text {
+            content: "v",
+            bounds: Rectangle {
+                x: bottom_button.x + 10.,
+                y: bottom_button.y + 7.,
+                ..bottom_button
+            },
+            size: self.scrollbar_button_height,
+            color: b_style.foreground,
+            font: Default::default(),
+            horizontal_alignment: iced_native::alignment::Horizontal::Center,
+            vertical_alignment: iced_native::alignment::Vertical::Center,
+        });
+
+        // draw the top trough
+        if offset != 0. {
+            let trough = self.top_trough_bounds(bounds, offset);
+            let pos = MousePos::from_bools(
+                mo_wrap,
+                mo_scroll,
+                trough.contains(cursor_position),
+            );
+            let quad = Quad {
+                bounds: trough,
+                border_radius: 0.0.into(),
+                border_width: 0.,
+                border_color: Color::BLACK,
+            };
+            renderer.fill_quad(
+                quad,
+                theme.trough_style(&self.style, pos, true, offset),
+            );
+        }
+
+        // draw the bottom trough
+        if offset != 1. {
+            let trough =
+                self.bot_trough_bounds(bounds, thumb_size, offset);
+            let pos = MousePos::from_bools(
+                mo_wrap,
+                mo_scroll,
+                trough.contains(cursor_position),
+            );
+            let quad = Quad {
+                bounds: trough,
+                border_radius: 0.0.into(),
+                border_width: 0.,
+                border_color: Color::BLACK,
+            };
+            renderer.fill_quad(
+                quad,
+                theme.trough_style(&self.style, pos, false, offset),
+            );
+        }
+
+        // draw the thumb
+        let thumb = self.thumb_bounds(bounds, thumb_size, offset);
+        let pos = MousePos::from_bools(
+            mo_wrap,
+            mo_scroll,
+            thumb.contains(cursor_position),
+        );
+        theme
+            .thumb_style(&self.style, pos, false, offset)
+            .draw(renderer, thumb);
+    }
 }
 
 pub fn wrap_box<Message, Renderer: text::Renderer>(
@@ -1017,7 +1088,7 @@ pub trait WrapBoxStyleSheet {
         &self,
         style: &Self::Style,
         pos: MousePos,
-        pressed: bool,
+        is_start: bool,
         relative_scroll: f32,
     ) -> Background;
 }
@@ -1151,7 +1222,7 @@ impl WrapBoxStyleSheet for Theme {
         &self,
         _style: &Self::Style,
         _pos: MousePos,
-        _pressed: bool,
+        _is_start: bool,
         _relative_scroll: f32,
     ) -> Background {
         Background::Color(color!(0x222222))
