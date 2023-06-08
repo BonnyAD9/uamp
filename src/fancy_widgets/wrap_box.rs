@@ -545,16 +545,16 @@ where
             .min(content_size.height - view_size.height)
             .max(0.);
 
-        if captured {
-            return event::Status::Captured;
-        }
-
         let (first, last) = self.visible_pos(view_size, state);
         if first_o != first || last_o != last {
             shell.invalidate_layout();
         }
 
         self.state = Some(*state);
+
+        if captured {
+            return event::Status::Captured;
+        }
 
         if matches!(event, iced_native::Event::Mouse(_))
             && !view_bounds.contains(cursor_position)
