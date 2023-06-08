@@ -8,7 +8,7 @@ use iced_native::{
     renderer::{BorderRadius, Quad},
     widget::{self, tree, Tree},
     Background, Color, Element, Layout, Length, Padding, Pixels, Point,
-    Rectangle, Size, Theme, Vector, Widget, touch,
+    Rectangle, Size, Theme, Vector, Widget,
 };
 use iced_native::{renderer, text};
 
@@ -451,7 +451,8 @@ where
                     cursor: cursor_position,
                 };
             } else {
-                let trough = self.top_trough_bounds(bounds, thumb_size, offset);
+                let trough =
+                    self.top_trough_bounds(bounds, thumb_size, offset);
                 if trough.contains(cursor_position) {
                     let relative = offset * (cursor_position.y - trough.y)
                         / trough.height;
@@ -516,8 +517,12 @@ where
         }
 
         // dragging
-        if matches!(event, event::Event::Mouse(mouse::Event::CursorMoved { .. })) {
-            if let ScrollbarInteraction::Thumb { relative, cursor } = state.pressed
+        if matches!(
+            event,
+            event::Event::Mouse(mouse::Event::CursorMoved { .. })
+        ) {
+            if let ScrollbarInteraction::Thumb { relative, cursor } =
+                state.pressed
             {
                 let bounds = layout.bounds();
                 let relative = relative
@@ -931,12 +936,19 @@ where
         }
     }
 
-    fn top_trough_bounds(&self, bounds: Rectangle, thumb_size: f32, offset: f32) -> Rectangle {
+    fn top_trough_bounds(
+        &self,
+        bounds: Rectangle,
+        thumb_size: f32,
+        offset: f32,
+    ) -> Rectangle {
         Rectangle {
             x: bounds.x + bounds.width - self.scrollbar_width,
             y: bounds.y + self.scrollbar_button_height,
             width: self.scrollbar_width,
-            height: (bounds.height - self.scrollbar_button_height * 2. - thumb_size)
+            height: (bounds.height
+                - self.scrollbar_button_height * 2.
+                - thumb_size)
                 * offset,
         }
     }
@@ -948,8 +960,10 @@ where
         offset: f32,
     ) -> Rectangle {
         let y = bounds.y
-            + (bounds.height - self.scrollbar_button_height * 2. - thumb_size) * offset
-            + thumb_size + self.scrollbar_button_height;
+            + (bounds.height - self.scrollbar_button_height * 2. - thumb_size)
+                * offset
+            + thumb_size
+            + self.scrollbar_button_height;
         Rectangle {
             x: bounds.x + bounds.width - self.scrollbar_width,
             y,

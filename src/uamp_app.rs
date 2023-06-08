@@ -1,5 +1,4 @@
 use iced::{executor, widget, Application, Command, Element, Length, Theme};
-use iced_native::widget::column;
 
 use crate::{
     config::Config, fancy_widgets::wrap_box::wrap_box, library::Library,
