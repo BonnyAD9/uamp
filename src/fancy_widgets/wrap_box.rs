@@ -26,7 +26,8 @@ pub const DEFAULT_MIN_THUMB_SIZE: f32 = 20.;
 /// row or column is that this more efficiently handles large amounts of
 /// childern. In the first versions it may not support the horizontal part.
 ///
-/// This is not finished and currently supports only vertical scrolling
+/// This is not finished and currently supports only TopToBottom vertical
+/// scrolling
 pub struct WrapBox<'a, Message, Renderer: text::Renderer>
 where
     Renderer::Theme: WrapBoxStyleSheet,
@@ -300,7 +301,7 @@ where
     Renderer: text::Renderer + 'a,
     Renderer::Theme: WrapBoxStyleSheet,
 {
-    fn tag(&self) -> widget::tree::Tag {
+    fn tag(&self) -> tree::Tag {
         tree::Tag::of::<State>()
     }
 
