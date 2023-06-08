@@ -1,7 +1,5 @@
-use std::hint::black_box;
-use std::{ops, vec};
+use std::vec;
 
-use iced_native::widget::Button;
 use iced_native::{
     color, event,
     layout::{Limits, Node},
@@ -12,7 +10,7 @@ use iced_native::{
     Background, Color, Element, Layout, Length, Padding, Pixels, Point,
     Rectangle, Size, Theme, Vector, Widget,
 };
-use iced_native::{renderer, text, Font};
+use iced_native::{renderer, text};
 
 use self::ItemDirection::{
     BottomToTop, LeftToRight, RightToLeft, TopToBottom,
