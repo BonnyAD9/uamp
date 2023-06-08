@@ -187,15 +187,16 @@ where
         self
     }
 
-    // sets the width of the scrollbar (this is the height of the horizontal
-    // scrollbar)
+    /// sets the width of the scrollbar (this is the height of the horizontal
+    /// scrollbar), default value is [`DEFAULT_SCROLLBAR_WIDTH`]
     pub fn scrollbar_width(mut self, width: impl Into<Pixels>) -> Self {
         self.scrollbar_width = width.into().0;
         self
     }
 
-    // sets the height of the scrollbar buttons (this is width of the buttons
-    // on the horizontal scrollbar)
+    /// sets the height of the scrollbar buttons (this is width of the buttons
+    /// on the horizontal scrollbar), default value is
+    /// [`DEFAULT_SCROLLBAR_BUTTON_HEIGHT`]
     pub fn scrollbar_button_height(
         mut self,
         height: impl Into<Pixels>,
@@ -204,8 +205,8 @@ where
         self
     }
 
-    // sets the width of the scrollbar (this is the height of the horizontal
-    // scrollbar)
+    /// sets the width of the scrollbar (this is the height of the horizontal
+    /// scrollbar), default valueis [`DEFAULT_MIN_THUMB_SIZE`]
     pub fn min_thumb_size(mut self, height: impl Into<Pixels>) -> Self {
         self.min_thumb_size = height.into().0;
         self
