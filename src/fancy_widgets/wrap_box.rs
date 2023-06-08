@@ -1,15 +1,18 @@
+use std::hint::black_box;
 use std::{ops, vec};
 
+use iced_native::widget::Button;
 use iced_native::{
-    event,
+    color, event,
     layout::{Limits, Node},
     mouse::{self, ScrollDelta},
     overlay::Group,
     renderer::{BorderRadius, Quad},
     widget::{self, tree, Tree},
     Background, Color, Element, Layout, Length, Padding, Pixels, Point,
-    Rectangle, Size, Vector, Widget, Theme,
+    Rectangle, Size, Theme, Vector, Widget,
 };
+use iced_native::{renderer, text, Font};
 
 use self::ItemDirection::{
     BottomToTop, LeftToRight, RightToLeft, TopToBottom,
@@ -18,6 +21,7 @@ use self::ItemDirection::{
 pub const DEFAULT_SCROLL_SPEED: f32 = 60.;
 pub const DEFAULT_SCROLLBAR_WIDTH: f32 = 20.;
 pub const DEFAULT_SCROLLBAR_BUTTON_HEIGHT: f32 = 20.;
+pub const DEFAULT_MIN_THUMB_SIZE: f32 = 20.;
 
 /// Container that distributes its contents both vertically and horizontaly
 /// and also has a scollbar. Advantage over normal scrollbar combined with
@@ -27,7 +31,7 @@ pub const DEFAULT_SCROLLBAR_BUTTON_HEIGHT: f32 = 20.;
 /// This is not finished and currently is the same as iced::widgets::Column
 ///
 /// The code is hevily inspired by iced::widgets::Column
-pub struct WrapBox<'a, Message, Renderer: iced_native::Renderer>
+pub struct WrapBox<'a, Message, Renderer: text::Renderer>
 where
     Renderer::Theme: WrapBoxStyleSheet,
 {
@@ -45,6 +49,7 @@ where
     line_scroll: f32,
     scrollbar_width: f32,
     scrollbar_button_height: f32,
+    min_thumb_size: f32,
     primary_direction: ItemDirection,
     secondary_direction: ItemDirection,
     primary_scrollbar: Behaviour,
@@ -54,8 +59,7 @@ where
     style: <Renderer::Theme as WrapBoxStyleSheet>::Style,
 }
 
-impl<'a, Message, Renderer: iced_native::Renderer>
-    WrapBox<'a, Message, Renderer>
+impl<'a, Message, Renderer: text::Renderer> WrapBox<'a, Message, Renderer>
 where
     Renderer::Theme: WrapBoxStyleSheet,
 {
@@ -83,6 +87,7 @@ where
             line_scroll: 0.,
             scrollbar_width: DEFAULT_SCROLLBAR_WIDTH,
             scrollbar_button_height: DEFAULT_SCROLLBAR_BUTTON_HEIGHT,
+            min_thumb_size: DEFAULT_MIN_THUMB_SIZE,
             primary_direction: ItemDirection::LeftToRight,
             secondary_direction: ItemDirection::TopToBottom,
             primary_scrollbar: Behaviour::Enabled,
@@ -202,6 +207,13 @@ where
         self
     }
 
+    // sets the width of the scrollbar (this is the height of the horizontal
+    // scrollbar)
+    pub fn min_thumb_size(mut self, height: impl Into<Pixels>) -> Self {
+        self.min_thumb_size = height.into().0;
+        self
+    }
+
     /// Sets the primary direction, if the secondary direction is in conflict
     /// the secundary direction is adjusted.
     ///
@@ -276,7 +288,7 @@ where
     }
 }
 
-impl<'a, Message, Renderer: iced_native::Renderer> Default
+impl<'a, Message, Renderer: text::Renderer> Default
     for WrapBox<'a, Message, Renderer>
 where
     Renderer::Theme: WrapBoxStyleSheet,
@@ -289,7 +301,7 @@ where
 impl<'a, Message: 'a, Renderer> Widget<Message, Renderer>
     for WrapBox<'a, Message, Renderer>
 where
-    Renderer: iced_native::Renderer + 'a,
+    Renderer: text::Renderer + 'a,
     Renderer::Theme: WrapBoxStyleSheet,
 {
     fn tag(&self) -> widget::tree::Tag {
@@ -493,7 +505,7 @@ where
         tree: &Tree,
         renderer: &mut Renderer,
         theme: &<Renderer as iced_native::Renderer>::Theme,
-        style: &iced_native::renderer::Style,
+        style: &renderer::Style,
         layout: Layout<'_>,
         cursor_position: Point,
         _viewport: &Rectangle,
@@ -554,7 +566,148 @@ where
             return;
         }
 
-        // TODO: draw the scrollbar
+        let bounds = layout.bounds();
+        let content_size = child.bounds().size();
+        let topleft =
+            Point::new(bounds.width - self.scrollbar_width, bounds.y);
+        let trough_height = bounds.height - self.scrollbar_button_height * 2.;
+        let thumb_size = self
+            .min_thumb_size
+            .max(trough_height * bounds.height / child.bounds().size().height)
+            .min(trough_height / 2.);
+        let thumb_offset = state.get_relative(view_size, content_size);
+
+        let mo_wrap = bounds.contains(cursor_position);
+        let mo_scroll = Rectangle::new(
+            topleft,
+            Size::new(self.scrollbar_width, bounds.height),
+        )
+        .contains(cursor_position);
+
+        // draw the wrap_box background
+        theme
+            .background(
+                &self.style,
+                MousePos::from_bools(mo_wrap, mo_scroll, mo_wrap),
+            )
+            .draw(renderer, bounds);
+
+        // draw the top scrollbar button
+        let top_button = Rectangle::new(
+            topleft,
+            Size::new(self.scrollbar_width, self.scrollbar_button_height),
+        );
+        let pos = MousePos::from_bools(
+            mo_wrap,
+            mo_scroll,
+            top_button.contains(cursor_position),
+        );
+        let b_style =
+            theme.button_style(&self.style, pos, false, true, thumb_offset.1);
+        b_style.square.draw(renderer, top_button);
+        renderer.fill_text(text::Text {
+            content: "^",
+            bounds: Rectangle { x: top_button.x + 10., y: top_button.y + 13., ..top_button },
+            size: self.scrollbar_button_height,
+            color: b_style.foreground,
+            font: Default::default(),
+            horizontal_alignment: iced_native::alignment::Horizontal::Center,
+            vertical_alignment: iced_native::alignment::Vertical::Center,
+        });
+
+        // draw the bottom scrollbar button
+        let bottom_button = Rectangle {
+            x: topleft.x,
+            y: topleft.y + self.scrollbar_button_height + trough_height,
+            width: self.scrollbar_width,
+            height: self.scrollbar_button_height,
+        };
+        let pos = MousePos::from_bools(
+            mo_wrap,
+            mo_scroll,
+            bottom_button.contains(cursor_position),
+        );
+        let b_style =
+            theme.button_style(&self.style, pos, false, false, thumb_offset.1);
+        b_style.square.draw(renderer, bottom_button);
+        renderer.fill_text(text::Text {
+            content: "v",
+            bounds: Rectangle { x: bottom_button.x + 10., y: bottom_button.y + 7., ..bottom_button },
+            size: self.scrollbar_button_height,
+            color: b_style.foreground,
+            font: Default::default(),
+            horizontal_alignment: iced_native::alignment::Horizontal::Center,
+            vertical_alignment: iced_native::alignment::Vertical::Center,
+        });
+
+        let thumb_trough_pos = self.scrollbar_button_height
+            + (trough_height - thumb_size) * thumb_offset.1;
+
+        // draw the top trough
+        if thumb_offset.1 != 0. {
+            let trough = Rectangle {
+                x: topleft.x,
+                y: topleft.y + self.scrollbar_button_height,
+                width: self.scrollbar_width,
+                height: trough_height - thumb_trough_pos,
+            };
+            let pos = MousePos::from_bools(
+                mo_wrap,
+                mo_scroll,
+                trough.contains(cursor_position),
+            );
+            let quad = Quad {
+                bounds: trough,
+                border_radius: 0.0.into(),
+                border_width: 0.,
+                border_color: Color::BLACK,
+            };
+            renderer.fill_quad(
+                quad,
+                theme.trough_style(&self.style, pos, false, thumb_offset.1),
+            );
+        }
+
+        // draw the bottom trough
+        if thumb_offset.1 != 1. {
+            let trough = Rectangle {
+                x: topleft.x,
+                y: topleft.y + thumb_trough_pos + thumb_size,
+                width: self.scrollbar_width,
+                height: trough_height - thumb_trough_pos - thumb_size,
+            };
+            let pos = MousePos::from_bools(
+                mo_wrap,
+                mo_scroll,
+                trough.contains(cursor_position),
+            );
+            let quad = Quad {
+                bounds: trough,
+                border_radius: 0.0.into(),
+                border_width: 0.,
+                border_color: Color::BLACK,
+            };
+            renderer.fill_quad(
+                quad,
+                theme.trough_style(&self.style, pos, false, thumb_offset.1),
+            );
+        }
+
+        // draw the thumb
+        let thumb = Rectangle {
+            x: topleft.x,
+            y: topleft.y + thumb_trough_pos,
+            width: self.scrollbar_width,
+            height: thumb_size,
+        };
+        let pos = MousePos::from_bools(
+            mo_wrap,
+            mo_scroll,
+            thumb.contains(cursor_position),
+        );
+        theme
+            .thumb_style(&self.style, pos, false, thumb_offset.1)
+            .draw(renderer, thumb);
     }
 
     fn overlay<'b>(
@@ -586,7 +739,7 @@ where
     }
 }
 
-impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
+impl<'a, Message: 'a, Renderer: text::Renderer + 'a>
     From<WrapBox<'a, Message, Renderer>> for Element<'a, Message, Renderer>
 where
     Renderer::Theme: WrapBoxStyleSheet,
@@ -596,7 +749,7 @@ where
     }
 }
 
-impl<'a, Message: 'a, Renderer: iced_native::Renderer + 'a>
+impl<'a, Message: 'a, Renderer: text::Renderer + 'a>
     WrapBox<'a, Message, Renderer>
 where
     Renderer::Theme: WrapBoxStyleSheet,
@@ -748,10 +901,20 @@ where
     }
 
     fn pad_size(&self, size: Size) -> Size {
-        Size::new(
+        let mut size = Size::new(
             size.width - self.padding.left - self.padding.right,
             size.height - self.padding.top - self.padding.bottom,
-        )
+        );
+
+        if self.primary_scrollbar == Behaviour::Enabled {
+            size.width -= self.scrollbar_width;
+        }
+
+        if self.secondary_scrollbar == Behaviour::Enabled {
+            size.height -= self.scrollbar_width;
+        }
+
+        size
     }
 
     fn can_optimize(&self) -> bool {
@@ -771,7 +934,7 @@ where
     }
 }
 
-pub fn wrap_box<Message, Renderer: iced_native::Renderer>(
+pub fn wrap_box<Message, Renderer: text::Renderer>(
     childern: Vec<Element<'_, Message, Renderer>>,
 ) -> WrapBox<'_, Message, Renderer>
 where
@@ -833,6 +996,8 @@ impl PartialEq for Behaviour {
 pub trait WrapBoxStyleSheet {
     type Style: Default;
 
+    fn background(&self, style: &Self::Style, pos: MousePos) -> SquareStyle;
+
     fn button_style(
         &self,
         style: &Self::Style,
@@ -866,11 +1031,49 @@ pub enum MousePos {
     None,
 }
 
+impl MousePos {
+    fn from_bools(wrap: bool, scroll: bool, directly: bool) -> Self {
+        if directly {
+            Self::DirectlyOver
+        } else if scroll {
+            Self::OverScrollbar
+        } else if wrap {
+            Self::OverWrapBox
+        } else {
+            Self::None
+        }
+    }
+}
+
+impl PartialEq for MousePos {
+    fn eq(&self, other: &Self) -> bool {
+        core::mem::discriminant(self) == core::mem::discriminant(other)
+    }
+}
+
 pub struct SquareStyle {
     background: Background,
     border: Color,
     border_thickness: f32,
     border_radius: BorderRadius,
+}
+
+impl SquareStyle {
+    fn draw<Renderer: text::Renderer>(
+        &self,
+        renderer: &mut Renderer,
+        bounds: Rectangle,
+    ) {
+        renderer.fill_quad(
+            Quad {
+                bounds,
+                border_radius: self.border_radius,
+                border_width: self.border_thickness,
+                border_color: self.border,
+            },
+            self.background,
+        )
+    }
 }
 
 pub struct ButtonStyle {
@@ -881,6 +1084,15 @@ pub struct ButtonStyle {
 impl WrapBoxStyleSheet for Theme {
     type Style = ();
 
+    fn background(&self, _style: &Self::Style, _pos: MousePos) -> SquareStyle {
+        SquareStyle {
+            background: Background::Color(Color::TRANSPARENT),
+            border: Color::BLACK,
+            border_thickness: 0.,
+            border_radius: 0.0.into(),
+        }
+    }
+
     fn button_style(
         &self,
         style: &Self::Style,
@@ -889,26 +1101,61 @@ impl WrapBoxStyleSheet for Theme {
         is_start: bool,
         relative_scroll: f32,
     ) -> ButtonStyle {
-        todo!()
+        let square = self.thumb_style(style, pos, pressed, relative_scroll);
+
+        if is_start && relative_scroll == 0.
+            || !is_start && relative_scroll == 1.
+        {
+            // inactive
+            ButtonStyle {
+                square,
+                foreground: color!(0x777777),
+            }
+        } else {
+            // active
+            ButtonStyle {
+                square,
+                foreground: color!(0xEEEEEE),
+            }
+        }
     }
 
     fn thumb_style(
         &self,
-        style: &Self::Style,
+        _style: &Self::Style,
         pos: MousePos,
         pressed: bool,
-        relative_scroll: f32,
+        _relative_scroll: f32,
     ) -> SquareStyle {
-        todo!()
+        let square = SquareStyle {
+            background: Background::Color(color!(0x333333)),
+            border: color!(0x555555),
+            border_thickness: 0.,
+            border_radius: 0.0.into(),
+        };
+
+        if pressed {
+            SquareStyle {
+                background: Background::Color(color!(0x333333)),
+                ..square
+            }
+        } else if pos == MousePos::DirectlyOver {
+            SquareStyle {
+                background: Background::Color(color!(0x444444)),
+                ..square
+            }
+        } else {
+            square
+        }
     }
 
     fn trough_style(
         &self,
-        style: &Self::Style,
-        pos: MousePos,
-        pressed: bool,
-        relative_scroll: f32,
+        _style: &Self::Style,
+        _pos: MousePos,
+        _pressed: bool,
+        _relative_scroll: f32,
     ) -> Background {
-        todo!()
+        Background::Color(color!(0x222222))
     }
 }
