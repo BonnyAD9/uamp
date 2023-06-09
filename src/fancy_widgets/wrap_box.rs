@@ -5,12 +5,12 @@ use iced_native::{
     layout::{Limits, Node},
     mouse::{self, Button, ScrollDelta},
     overlay::Group,
-    renderer::{BorderRadius, Quad},
+    renderer::{self, BorderRadius, Quad},
     widget::{self, tree, Tree},
+    svg::{self, Handle},
     Background, Color, Element, Layout, Length, Padding, Pixels, Point,
     Rectangle, Size, Theme, Vector, Widget,
 };
-use iced_native::{renderer, text};
 
 use self::ItemDirection::{
     BottomToTop, LeftToRight, RightToLeft, TopToBottom,
@@ -28,7 +28,7 @@ pub const DEFAULT_MIN_THUMB_SIZE: f32 = 20.;
 ///
 /// This is not finished and currently supports only TopToBottom vertical
 /// scrolling
-pub struct WrapBox<'a, Message, Renderer: text::Renderer>
+pub struct WrapBox<'a, Message, Renderer: svg::Renderer>
 where
     Renderer::Theme: WrapBoxStyleSheet,
 {
@@ -56,7 +56,7 @@ where
     style: <Renderer::Theme as WrapBoxStyleSheet>::Style,
 }
 
-impl<'a, Message, Renderer: text::Renderer> WrapBox<'a, Message, Renderer>
+impl<'a, Message, Renderer: svg::Renderer> WrapBox<'a, Message, Renderer>
 where
     Renderer::Theme: WrapBoxStyleSheet,
 {
@@ -286,7 +286,7 @@ where
     }
 }
 
-impl<'a, Message, Renderer: text::Renderer> Default
+impl<'a, Message, Renderer: svg::Renderer> Default
     for WrapBox<'a, Message, Renderer>
 where
     Renderer::Theme: WrapBoxStyleSheet,
@@ -299,7 +299,7 @@ where
 impl<'a, Message: 'a, Renderer> Widget<Message, Renderer>
     for WrapBox<'a, Message, Renderer>
 where
-    Renderer: text::Renderer + 'a,
+    Renderer: svg::Renderer + 'a,
     Renderer::Theme: WrapBoxStyleSheet,
 {
     fn tag(&self) -> tree::Tag {
@@ -724,7 +724,7 @@ where
     }
 }
 
-impl<'a, Message: 'a, Renderer: text::Renderer + 'a>
+impl<'a, Message: 'a, Renderer: svg::Renderer + 'a>
     From<WrapBox<'a, Message, Renderer>> for Element<'a, Message, Renderer>
 where
     Renderer::Theme: WrapBoxStyleSheet,
@@ -734,7 +734,7 @@ where
     }
 }
 
-impl<'a, Message: 'a, Renderer: text::Renderer + 'a>
+impl<'a, Message: 'a, Renderer: svg::Renderer + 'a>
     WrapBox<'a, Message, Renderer>
 where
     Renderer::Theme: WrapBoxStyleSheet,
@@ -1045,20 +1045,7 @@ where
             offset,
         );
         b_style.square.draw(renderer, top_button);
-        // TODO: use better arrow than just the character '^'
-        renderer.fill_text(text::Text {
-            content: "^",
-            bounds: Rectangle {
-                x: top_button.x + 10.,
-                y: top_button.y + 13.,
-                ..top_button
-            },
-            size: self.scrollbar_button_height,
-            color: b_style.foreground,
-            font: Default::default(),
-            horizontal_alignment: iced_native::alignment::Horizontal::Center,
-            vertical_alignment: iced_native::alignment::Vertical::Center,
-        });
+        renderer.draw(Handle::from_memory(include_bytes!("../../assets/svg/point_up.svg").as_slice()), Some(b_style.foreground), top_button);
 
         // draw the bottom scrollbar button
         let bottom_button = self.bot_button_bounds(bounds);
@@ -1075,20 +1062,7 @@ where
             offset,
         );
         b_style.square.draw(renderer, bottom_button);
-        // TODO: use better arrow than just the character 'v'
-        renderer.fill_text(text::Text {
-            content: "v",
-            bounds: Rectangle {
-                x: bottom_button.x + 10.,
-                y: bottom_button.y + 7.,
-                ..bottom_button
-            },
-            size: self.scrollbar_button_height,
-            color: b_style.foreground,
-            font: Default::default(),
-            horizontal_alignment: iced_native::alignment::Horizontal::Center,
-            vertical_alignment: iced_native::alignment::Vertical::Center,
-        });
+        renderer.draw(Handle::from_memory(include_bytes!("../../assets/svg/point_down.svg").as_slice()), None, bottom_button);
 
         // draw the top trough
         if offset != 0. {
@@ -1154,7 +1128,7 @@ where
     }
 }
 
-pub fn wrap_box<Message, Renderer: text::Renderer>(
+pub fn wrap_box<Message, Renderer: svg::Renderer>(
     childern: Vec<Element<'_, Message, Renderer>>,
 ) -> WrapBox<'_, Message, Renderer>
 where
@@ -1298,7 +1272,7 @@ pub struct SquareStyle {
 }
 
 impl SquareStyle {
-    fn draw<Renderer: text::Renderer>(
+    fn draw<Renderer: svg::Renderer>(
         &self,
         renderer: &mut Renderer,
         bounds: Rectangle,

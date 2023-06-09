@@ -9,7 +9,7 @@ edition = "2021"
 audiotags = "0.4.1"
 dirs = "5.0.1"
 eyre = "0.6.8"
-iced = "0.9.0"
+iced = { version = "0.9.0", features = [ "svg" ] }
 iced_native = "0.10.3"
 rodio = "0.17.1"
 serde = "1.0.163"
