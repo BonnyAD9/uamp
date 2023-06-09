@@ -6,7 +6,7 @@ use iced_native::{
     mouse::{self, Button, ScrollDelta},
     overlay::Group,
     renderer::{self, BorderRadius, Quad},
-    svg::{self, Handle},
+    svg,
     widget::{self, tree, Tree},
     Background, Color, Element, Layout, Length, Padding, Pixels, Point,
     Rectangle, Size, Theme, Vector, Widget,
