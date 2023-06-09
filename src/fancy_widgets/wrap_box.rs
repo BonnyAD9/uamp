@@ -6,8 +6,8 @@ use iced_native::{
     mouse::{self, Button, ScrollDelta},
     overlay::Group,
     renderer::{self, BorderRadius, Quad},
-    widget::{self, tree, Tree},
     svg::{self, Handle},
+    widget::{self, tree, Tree},
     Background, Color, Element, Layout, Length, Padding, Pixels, Point,
     Rectangle, Size, Theme, Vector, Widget,
 };
@@ -15,6 +15,8 @@ use iced_native::{
 use self::ItemDirection::{
     BottomToTop, LeftToRight, RightToLeft, TopToBottom,
 };
+
+use super::icons;
 
 pub const DEFAULT_SCROLL_SPEED: f32 = 60.;
 pub const DEFAULT_SCROLLBAR_WIDTH: f32 = 20.;
@@ -1045,7 +1047,11 @@ where
             offset,
         );
         b_style.square.draw(renderer, top_button);
-        renderer.draw(Handle::from_memory(include_bytes!("../../assets/svg/point_up.svg").as_slice()), Some(b_style.foreground), top_button);
+        renderer.draw(
+            icons::POINT_UP.into(),
+            Some(b_style.foreground),
+            top_button,
+        );
 
         // draw the bottom scrollbar button
         let bottom_button = self.bot_button_bounds(bounds);
@@ -1062,7 +1068,7 @@ where
             offset,
         );
         b_style.square.draw(renderer, bottom_button);
-        renderer.draw(Handle::from_memory(include_bytes!("../../assets/svg/point_down.svg").as_slice()), None, bottom_button);
+        renderer.draw(icons::POINT_DOWN.into(), None, bottom_button);
 
         // draw the top trough
         if offset != 0. {

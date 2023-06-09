@@ -1,14 +1,20 @@
 use iced::{executor, widget, Application, Command, Element, Length, Theme};
 
 use crate::{
-    config::Config, fancy_widgets::wrap_box::wrap_box, library::Library,
+    config::Config,
+    fancy_widgets::{icons, wrap_box::wrap_box},
+    library::Library,
     player::Player,
 };
+
+use self::PlayState::{Paused, Playing, Stopped};
 
 pub struct UampApp {
     config: Config,
     library: Library,
     player: Player,
+
+    now_playing: PlayState,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -31,10 +37,12 @@ impl Application for UampApp {
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
         match message {
             UampMessage::PlaySong(id) => {
-                _ = self.player.play(&self.library, id)
+                _ = self.player.play(&self.library, id);
+                self.now_playing = Playing(id);
             }
             UampMessage::PlayPause => {
                 self.player.play_pause();
+                self.now_playing.play_pause();
             }
         };
         Command::none()
@@ -67,14 +75,17 @@ impl Application for UampApp {
         .item_height(30)
         .spacing_y(5);
 
-        let now_playing = widget::button(widget::text("Play/Pause"))
-            .on_press(UampMessage::PlayPause);
+        let now_playing =
+            widget::button(widget::svg(if self.now_playing.is_playing() {
+                icons::PAUSE
+            } else {
+                icons::PLAY
+            }))
+            .on_press(UampMessage::PlayPause)
+            .width(Length::Fixed(30.))
+            .height(Length::Fixed(30.));
 
-        widget::column![
-            list.height(Length::Fill),
-            now_playing.height(Length::Fixed(30.))
-        ]
-        .into()
+        widget::column![list.height(Length::Fill), now_playing,].into()
     }
 
     fn theme(&self) -> Self::Theme {
@@ -94,6 +105,33 @@ impl Default for UampApp {
             config: conf,
             library: lib,
             player,
+            now_playing: Stopped,
         }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum PlayState {
+    Stopped,
+    Playing(usize),
+    Paused(usize),
+}
+
+impl PlayState {
+    pub fn play_pause(&mut self) -> Self {
+        match *self {
+            Stopped => {}
+            Playing(id) => {
+                *self = Paused(id);
+            }
+            Paused(id) => {
+                *self = Playing(id);
+            }
+        };
+        *self
+    }
+
+    pub fn is_playing(&self) -> bool {
+        matches!(self, Playing(_))
     }
 }

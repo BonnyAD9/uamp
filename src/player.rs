@@ -31,11 +31,13 @@ impl Player {
         Ok(())
     }
 
-    pub fn play_pause(&mut self) {
+    pub fn play_pause(&mut self) -> bool {
         if self.sink.is_paused() {
             self.sink.play();
+            true
         } else {
             self.sink.pause();
+            false
         }
     }
 }
