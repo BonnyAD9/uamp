@@ -7,6 +7,7 @@ mod fancy_widgets;
 mod library;
 mod player;
 mod song;
+mod theme;
 mod uamp_app;
 
 fn main() -> Result<()> {

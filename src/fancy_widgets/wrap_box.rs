@@ -1068,7 +1068,11 @@ where
             offset,
         );
         b_style.square.draw(renderer, bottom_button);
-        renderer.draw(icons::POINT_DOWN.into(), None, bottom_button);
+        renderer.draw(
+            icons::POINT_DOWN.into(),
+            Some(b_style.foreground),
+            bottom_button,
+        );
 
         // draw the top trough
         if offset != 0. {

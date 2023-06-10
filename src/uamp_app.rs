@@ -1,4 +1,4 @@
-use iced::{executor, widget, Application, Command, Element, Length, Theme};
+use iced::{executor, widget, Application, Command, Element, Length};
 
 use crate::{
     config::Config,
@@ -27,7 +27,7 @@ impl Application for UampApp {
     type Executor = executor::Default;
     type Flags = ();
     type Message = UampMessage;
-    type Theme = Theme;
+    type Theme = iced::Theme;
 
     fn new(flags: Self::Flags) -> (Self, iced::Command<Self::Message>) {
         _ = flags;
@@ -89,7 +89,7 @@ impl Application for UampApp {
     }
 
     fn theme(&self) -> Self::Theme {
-        Theme::Dark
+        iced::Theme::Dark
     }
 }
 
