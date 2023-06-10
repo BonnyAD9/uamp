@@ -12,6 +12,18 @@ pub const PLAY: SvgData =
 pub const PAUSE: SvgData =
     SvgData::new(include_bytes!("../../assets/svg/pause.svg").as_slice());
 
+pub const STOP: SvgData =
+    SvgData::new(include_bytes!("../../assets/svg/stop.svg").as_slice());
+
+pub const NEXT: SvgData =
+    SvgData::new(include_bytes!("../../assets/svg/next.svg").as_slice());
+
+pub const PREVIOUS: SvgData =
+    SvgData::new(include_bytes!("../../assets/svg/previous.svg").as_slice());
+
+pub const VOLUME: SvgData =
+    SvgData::new(include_bytes!("../../assets/svg/volume.svg").as_slice());
+
 #[derive(Clone, Copy)]
 pub struct SvgData(&'static [u8]);
 

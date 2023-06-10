@@ -1,0 +1,12 @@
+<?xml version="1.0" standalone="no"?>
+<svg viewBox="0 0 10 10" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <line x1="2" y1="2" x2="8" y2="2" stroke="#FFF"/>
+    <line x1="2" y1="2" x2="2" y2="8" stroke="#FFF"/>
+    <line x1="8" y1="2" x2="8" y2="8" stroke="#FFF"/>
+    <line x1="2" y1="8" x2="8" y2="8" stroke="#FFF"/>
+    <polygon points="2,2 8,2 8,8 2,8" fill="#FFF" />
+    <circle cx="2" cy="2" r="0.5" fill="#FFF" />
+    <circle cx="2" cy="8" r="0.5" fill="#FFF" />
+    <circle cx="8" cy="2" r="0.5" fill="#FFF" />
+    <circle cx="8" cy="8" r="0.5" fill="#FFF" />
+</svg>
