@@ -1,5 +1,41 @@
-use iced::application;
-use iced::color;
+use iced::{
+    application, color,
+    overlay::menu,
+    widget::{
+        button, checkbox, container, pane_grid, pick_list, progress_bar,
+        radio, rule, scrollable, slider, svg, toggler, text, text_input
+    },
+};
+use iced_native::{Background, Color};
+
+use crate::fancy_widgets::wrap_box::{WrapBoxStyleSheet, SquareStyle, MousePos, ButtonStyle};
+
+macro_rules! const_color {
+    ($x:literal) => {
+        Color::from_rgb(
+            (($x & 0xFF0000) >> 16) as f32 / 255.,
+            (($x & 0xFF00) >> 8) as f32 / 255.,
+            (($x & 0xFF)) as f32 / 255.,
+        )
+    };
+}
+
+const PRIMARY: Color = const_color!(0x222222);
+const PRIMARY_BG: Background = Background::Color(PRIMARY);
+const SECONDARY: Color = const_color!(0x181818);
+const SECONDARY_BG: Background = Background::Color(SECONDARY);
+const OUTLINE: Color = const_color!(0x555555);
+const OUTLINE_BG: Background = Background::Color(OUTLINE);
+const FOREGROUND: Color = const_color!(0xEEEEEE);
+const DARK_FOREGROUND: Color = const_color!(0x777777);
+const PRESSED: Color = const_color!(0x333333);
+const PRESSED_BG: Background = Background::Color(PRESSED);
+const SELECTED: Color = const_color!(0x444444);
+const SELECTED_BG: Background = Background::Color(SELECTED);
+const CONTRAST: Color = const_color!(0xDDDD00);
+const CONTRAST_BG: Background = Background::Color(CONTRAST);
+const RADIUS: f32 = 2.;
+const THICKNESS: f32 = 1.;
 
 #[derive(Default)]
 pub struct Theme {}
@@ -12,5 +48,447 @@ impl application::StyleSheet for Theme {
             background_color: color!(0x181818),
             text_color: color!(0xEEEEEE),
         }
+    }
+}
+
+impl button::StyleSheet for Theme {
+    type Style = ();
+
+    fn active(&self, _style: &Self::Style) -> button::Appearance {
+        button::Appearance::default()
+    }
+
+    fn hovered(&self, style: &Self::Style) -> button::Appearance {
+        button::Appearance {
+            background: Some(SELECTED_BG),
+            ..self.active(style)
+        }
+    }
+
+    fn pressed(&self, style: &Self::Style) -> button::Appearance {
+        button::Appearance {
+            background: Some(PRESSED_BG),
+            ..self.active(style)
+        }
+    }
+
+    // fn disabled(&self, style: &Self::Style) -> button::Appearance;
+}
+
+impl checkbox::StyleSheet for Theme {
+    type Style = ();
+
+    fn active(
+        &self,
+        _style: &Self::Style,
+        is_checked: bool,
+    ) -> checkbox::Appearance {
+        checkbox::Appearance {
+            background: SECONDARY_BG,
+            icon_color: CONTRAST,
+            border_radius: RADIUS,
+            border_width: THICKNESS,
+            border_color: OUTLINE,
+            text_color: if is_checked { Some(CONTRAST) } else { None },
+        }
+    }
+
+    fn hovered(
+        &self,
+        style: &Self::Style,
+        is_checked: bool,
+    ) -> checkbox::Appearance {
+        checkbox::Appearance {
+            background: SELECTED_BG,
+            ..self.active(style, is_checked)
+        }
+    }
+}
+
+impl container::StyleSheet for Theme {
+    type Style = ();
+
+    fn appearance(&self, _style: &Self::Style) -> container::Appearance {
+        container::Appearance::default()
+    }
+}
+
+impl slider::StyleSheet for Theme {
+    type Style = ();
+
+    fn active(&self, _style: &Self::Style) -> slider::Appearance {
+        slider::Appearance {
+            rail: slider::Rail {
+                colors: (OUTLINE, CONTRAST),
+                width: THICKNESS,
+            },
+            handle: slider::Handle {
+                shape: slider::HandleShape::Circle { radius: 5. },
+                color: SECONDARY,
+                border_width: THICKNESS,
+                border_color: PRIMARY,
+            },
+        }
+    }
+
+    fn hovered(&self, style: &Self::Style) -> slider::Appearance {
+        let base = self.active(style);
+        slider::Appearance {
+            handle: slider::Handle {
+                color: SELECTED,
+                ..base.handle
+            },
+            ..base
+        }
+    }
+
+    fn dragging(&self, style: &Self::Style) -> slider::Appearance {
+        let base = self.active(style);
+        slider::Appearance {
+            handle: slider::Handle {
+                color: PRESSED,
+                ..base.handle
+            },
+            ..base
+        }
+    }
+}
+
+impl menu::StyleSheet for Theme {
+    type Style = ();
+
+    fn appearance(&self, _style: &Self::Style) -> menu::Appearance {
+        menu::Appearance {
+            text_color: FOREGROUND,
+            background: PRIMARY_BG,
+            border_width: THICKNESS,
+            border_radius: RADIUS,
+            border_color: OUTLINE,
+            selected_text_color: CONTRAST,
+            selected_background: SELECTED_BG,
+        }
+    }
+}
+
+impl pick_list::StyleSheet for Theme {
+    type Style = ();
+
+    fn active(
+        &self,
+        _style: &<Self as pick_list::StyleSheet>::Style,
+    ) -> pick_list::Appearance {
+        pick_list::Appearance {
+            text_color: FOREGROUND,
+            placeholder_color: DARK_FOREGROUND,
+            handle_color: CONTRAST,
+            background: SECONDARY_BG,
+            border_radius: RADIUS,
+            border_width: THICKNESS,
+            border_color: OUTLINE,
+        }
+    }
+
+    fn hovered(
+        &self,
+        style: &<Self as pick_list::StyleSheet>::Style,
+    ) -> pick_list::Appearance {
+        pick_list::Appearance {
+            background: SELECTED_BG,
+            ..self.active(style)
+        }
+    }
+}
+
+impl radio::StyleSheet for Theme {
+    type Style = ();
+
+    fn active(
+        &self,
+        _style: &Self::Style,
+        is_selected: bool,
+    ) -> radio::Appearance {
+        radio::Appearance {
+            background: SECONDARY_BG,
+            dot_color: if is_selected { CONTRAST } else { SELECTED },
+            border_width: THICKNESS,
+            border_color: OUTLINE,
+            text_color: if is_selected { Some(FOREGROUND) } else { None },
+        }
+    }
+
+    fn hovered(
+        &self,
+        style: &Self::Style,
+        is_selected: bool,
+    ) -> radio::Appearance {
+        radio::Appearance {
+            background: SELECTED_BG,
+            ..self.active(style, is_selected)
+        }
+    }
+}
+
+impl toggler::StyleSheet for Theme {
+    type Style = ();
+
+    fn active(
+        &self,
+        _style: &Self::Style,
+        is_active: bool,
+    ) -> toggler::Appearance {
+        toggler::Appearance {
+            background: PRIMARY,
+            background_border: None,
+            foreground: if is_active { DARK_FOREGROUND } else { SELECTED },
+            foreground_border: None,
+        }
+    }
+
+    fn hovered(
+        &self,
+        style: &Self::Style,
+        is_active: bool,
+    ) -> toggler::Appearance {
+        toggler::Appearance {
+            background: SELECTED,
+            ..self.active(style, is_active)
+        }
+    }
+}
+
+impl pane_grid::StyleSheet for Theme {
+    type Style = ();
+
+    fn picked_split(&self, _style: &Self::Style) -> Option<pane_grid::Line> {
+        Some(pane_grid::Line {
+            color: OUTLINE,
+            width: THICKNESS,
+        })
+    }
+
+    fn hovered_split(&self, _style: &Self::Style) -> Option<pane_grid::Line> {
+        Some(pane_grid::Line {
+            color: CONTRAST,
+            width: THICKNESS,
+        })
+    }
+}
+
+impl progress_bar::StyleSheet for Theme {
+    type Style = ();
+
+    fn appearance(&self, _style: &Self::Style) -> progress_bar::Appearance {
+        progress_bar::Appearance {
+            background: SECONDARY_BG,
+            bar: CONTRAST_BG,
+            border_radius: RADIUS,
+        }
+    }
+}
+
+impl rule::StyleSheet for Theme {
+    type Style = ();
+
+    fn appearance(&self, _style: &Self::Style) -> rule::Appearance {
+        rule::Appearance {
+            color: SELECTED,
+            width: THICKNESS as u16,
+            radius: RADIUS,
+            fill_mode: rule::FillMode::Full,
+        }
+    }
+}
+
+impl svg::StyleSheet for Theme {
+    type Style = ();
+
+    fn appearance(&self, _style: &Self::Style) -> svg::Appearance {
+        svg::Appearance::default()
+    }
+}
+
+impl scrollable::StyleSheet for Theme {
+    type Style = ();
+
+    fn active(&self, _style: &Self::Style) -> scrollable::Scrollbar {
+        scrollable::Scrollbar {
+            background: None,
+            border_radius: RADIUS,
+            border_width: THICKNESS,
+            border_color: OUTLINE,
+            scroller: scrollable::Scroller {
+                color: PRIMARY,
+                border_radius: RADIUS,
+                border_width: THICKNESS,
+                border_color: OUTLINE,
+            },
+        }
+    }
+
+    fn hovered(
+        &self,
+        style: &Self::Style,
+        is_mouse_over_scrollbar: bool,
+    ) -> scrollable::Scrollbar {
+        let base = self.active(style);
+        scrollable::Scrollbar {
+            scroller: scrollable::Scroller {
+                color: if is_mouse_over_scrollbar {
+                    SELECTED
+                } else {
+                    PRIMARY
+                },
+                ..base.scroller
+            },
+            ..base
+        }
+    }
+
+    // fn dragging(&self, style: &Self::Style) -> scrollable::Scrollbar;
+    // fn active_horizontal(
+    //     &self,
+    //     style: &Self::Style
+    // ) -> scrollable::Scrollbar;
+    // fn hovered_horizontal(
+    //     &self,
+    //     style: &Self::Style,
+    //     is_mouse_over_scrollbar: bool,
+    // ) -> scrollable::Scrollbar;
+    // fn dragging_horizontal(
+    //     &self,
+    //     style: &Self::Style,
+    // ) -> scrollable::Scrollbar;
+}
+
+impl text::StyleSheet for Theme {
+    type Style = ();
+
+    fn appearance(&self, _style: Self::Style) -> text::Appearance {
+        text::Appearance {
+            color: Some(FOREGROUND),
+        }
+    }
+}
+
+impl text_input::StyleSheet for Theme {
+    type Style = ();
+
+    fn active(&self, _style: &Self::Style) -> text_input::Appearance {
+        text_input::Appearance {
+            background: SECONDARY_BG,
+            border_radius: RADIUS,
+            border_width: THICKNESS,
+            border_color: OUTLINE,
+            icon_color: PRIMARY
+        }
+    }
+
+    fn focused(&self, style: &Self::Style) -> text_input::Appearance {
+        let base = self.active(style);
+        text_input::Appearance {
+            border_color: PRIMARY,
+            ..base
+        }
+    }
+
+    fn placeholder_color(&self, _style: &Self::Style) -> Color {
+        DARK_FOREGROUND
+    }
+
+    fn value_color(&self, _style: &Self::Style) -> Color {
+        FOREGROUND
+    }
+
+    fn disabled_color(&self, _style: &Self::Style) -> Color {
+        FOREGROUND
+    }
+
+    fn selection_color(&self, _style: &Self::Style) -> Color {
+        FOREGROUND
+    }
+
+    fn disabled(&self, style: &Self::Style) -> text_input::Appearance {
+        self.active(style)
+    }
+
+    // fn disabled_color(&self, style: &Self::Style) -> Color;
+}
+
+impl WrapBoxStyleSheet for Theme {
+    type Style = ();
+
+    fn background(&self, _style: &Self::Style, _pos: MousePos) -> SquareStyle {
+        SquareStyle {
+            background: Background::Color(Color::TRANSPARENT),
+            border: Color::BLACK,
+            border_thickness: 0.,
+            border_radius: 0.0.into(),
+        }
+    }
+
+    fn button_style(
+        &self,
+        style: &Self::Style,
+        pos: MousePos,
+        pressed: bool,
+        is_start: bool,
+        relative_scroll: f32,
+    ) -> ButtonStyle {
+        let square = self.thumb_style(style, pos, pressed, relative_scroll);
+
+        if is_start && relative_scroll == 0.
+            || !is_start && relative_scroll == 1.
+        {
+            // inactive
+            ButtonStyle {
+                square,
+                foreground: DARK_FOREGROUND,
+            }
+        } else {
+            // active
+            ButtonStyle {
+                square,
+                foreground: FOREGROUND,
+            }
+        }
+    }
+
+    fn thumb_style(
+        &self,
+        _style: &Self::Style,
+        pos: MousePos,
+        pressed: bool,
+        _relative_scroll: f32,
+    ) -> SquareStyle {
+        let square = SquareStyle {
+            background: PRESSED_BG,
+            border: OUTLINE,
+            border_thickness: 0.,
+            border_radius: 0.0.into(),
+        };
+
+        if pressed {
+            SquareStyle {
+                background: OUTLINE_BG,
+                ..square
+            }
+        } else if pos == MousePos::DirectlyOver {
+            SquareStyle {
+                background: SELECTED_BG,
+                ..square
+            }
+        } else {
+            square
+        }
+    }
+
+    fn trough_style(
+        &self,
+        _style: &Self::Style,
+        _pos: MousePos,
+        _is_start: bool,
+        _relative_scroll: f32,
+    ) -> Background {
+        PRIMARY_BG
     }
 }

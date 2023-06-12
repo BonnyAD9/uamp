@@ -1275,10 +1275,10 @@ impl PartialEq for MousePos {
 }
 
 pub struct SquareStyle {
-    background: Background,
-    border: Color,
-    border_thickness: f32,
-    border_radius: BorderRadius,
+    pub background: Background,
+    pub border: Color,
+    pub border_thickness: f32,
+    pub border_radius: BorderRadius,
 }
 
 impl SquareStyle {
@@ -1300,8 +1300,8 @@ impl SquareStyle {
 }
 
 pub struct ButtonStyle {
-    square: SquareStyle,
-    foreground: Color,
+    pub square: SquareStyle,
+    pub foreground: Color,
 }
 
 impl WrapBoxStyleSheet for Theme {

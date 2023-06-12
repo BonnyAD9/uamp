@@ -1,10 +1,13 @@
-use iced::{executor, widget, Application, Command, Element, Length};
+use iced::{
+    executor, widget, Application, Command, Element, Length, Renderer,
+};
 
 use crate::{
     config::Config,
     fancy_widgets::{icons, wrap_box::wrap_box},
     library::Library,
     player::Player,
+    theme::Theme,
 };
 
 use self::PlayState::{Paused, Playing, Stopped};
@@ -27,7 +30,7 @@ impl Application for UampApp {
     type Executor = executor::Default;
     type Flags = ();
     type Message = UampMessage;
-    type Theme = iced::Theme;
+    type Theme = Theme;
 
     fn new(flags: Self::Flags) -> (Self, iced::Command<Self::Message>) {
         _ = flags;
@@ -52,10 +55,10 @@ impl Application for UampApp {
         "uamp".to_owned()
     }
 
-    fn view(&self) -> Element<Self::Message> {
+    fn view(&self) -> iced_native::Element<'_, UampMessage, Renderer<Theme>> {
         _ = self.config;
         let mut c = 0;
-        let list = wrap_box(
+        let list = wrap_box::<_, Renderer<Theme>>(
             self.library
                 .iter()
                 .map(|s| {
@@ -85,11 +88,15 @@ impl Application for UampApp {
             .width(Length::Fixed(30.))
             .height(Length::Fixed(30.));
 
-        widget::column![list.height(Length::Fill), now_playing,].into()
+        let app = widget::Column::<_, Renderer<Theme>>::with_children(vec![
+            list.height(Length::Fill).into(),
+            now_playing.into(),
+        ]);
+        app.into()
     }
 
     fn theme(&self) -> Self::Theme {
-        iced::Theme::Dark
+        Theme::default()
     }
 }
 
