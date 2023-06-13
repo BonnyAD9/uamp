@@ -4,6 +4,7 @@ use uamp_app::UampApp;
 
 mod config;
 mod fancy_widgets;
+mod iced_xml_traits;
 mod library;
 mod player;
 mod song;

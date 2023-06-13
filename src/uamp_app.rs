@@ -1,5 +1,5 @@
 use iced::{executor, widget, Application, Command, Length, Renderer};
-use iced_xml::iced_xml;
+//use iced_xml::iced_xml;
 
 use crate::{
     config::Config,
@@ -98,7 +98,7 @@ impl Application for UampApp {
             list.height(Length::Fill).into(),
             now_playing.into(),
         ]);
-        iced_xml! {
+        /*iced_xml! {
             <:config theme={ Theme } />
             <Column>
                 <WrapBox item_height="30" layout_style={ &self.theme }>
@@ -129,7 +129,7 @@ impl Application for UampApp {
                     </Svg>
                 </Button>
             </Column>
-        };
+        };*/
         app.into()
     }
 
