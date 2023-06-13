@@ -1410,6 +1410,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "iced_xml"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 2.0.15",
+]
+
+[[package]]
 name = "id3"
 version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2937,6 +2945,7 @@ dependencies = [
  "eyre",
  "iced",
  "iced_native",
+ "iced_xml",
  "rodio",
  "serde",
  "serde_derive",

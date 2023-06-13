@@ -1,4 +1,5 @@
 use iced::{executor, widget, Application, Command, Length, Renderer};
+use iced_xml::iced_xml;
 
 use crate::{
     config::Config,
@@ -81,7 +82,7 @@ impl Application for UampApp {
                 .collect(),
         )
         .item_height(30)
-        .from_layout_style(&self.theme);
+        .layout_style(&self.theme);
 
         let now_playing =
             widget::button(widget::svg(if self.now_playing.is_playing() {
@@ -97,6 +98,38 @@ impl Application for UampApp {
             list.height(Length::Fill).into(),
             now_playing.into(),
         ]);
+        iced_xml! {
+            <:config theme={ Theme } />
+            <Column>
+                <WrapBox item_height="30" layout_style={ &self.theme }>
+                    [ let mut c = 1; self.library.iter() ] |s| { c += 1; }
+                    <Button style={
+                        if c % 2 == 0 {
+                            Button::ItemEven
+                        } else {
+                            Button::ItemOdd
+                        }
+                    } on_press={ UampMessage::PlaySong(c - 1) } width="Fill"
+                        height="Fill"
+                    >
+                        ( format!("{} - {}", s.artist(), s.title()) )
+                    </Button>
+                </WrapBox>
+                <Button on_press={ UampMessage::PlayPause }
+                    width="30" height="30"
+                >
+                    <Svg>
+                        {
+                            if self.now_playing.is_playing() {
+                                icons::PAUSE
+                            } else {
+                                icons::PLAY
+                            }
+                        }
+                    </Svg>
+                </Button>
+            </Column>
+        };
         app.into()
     }
 

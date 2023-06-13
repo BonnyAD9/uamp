@@ -286,7 +286,7 @@ where
         self
     }
 
-    pub fn from_layout_style(
+    pub fn layout_style(
         mut self,
         style: &impl LayoutStyleSheet<<Renderer::Theme as StyleSheet>::Style>,
     ) -> Self {

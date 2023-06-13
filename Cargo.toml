@@ -15,3 +15,4 @@ rodio = "0.17.1"
 serde = "1.0.163"
 serde_derive = "1.0.163"
 serde_json = "1.0.96"
+iced_xml = { path = "iced_xml" }
