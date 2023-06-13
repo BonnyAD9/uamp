@@ -1,6 +1,4 @@
-use iced::{
-    executor, widget, Application, Command, Element, Length, Renderer,
-};
+use iced::{executor, widget, Application, Command, Length, Renderer};
 
 use crate::{
     config::Config,
@@ -16,6 +14,8 @@ pub struct UampApp {
     config: Config,
     library: Library,
     player: Player,
+
+    theme: Theme,
 
     now_playing: PlayState,
 }
@@ -76,7 +76,7 @@ impl Application for UampApp {
                 .collect(),
         )
         .item_height(30)
-        .spacing_y(5);
+        .from_layout_style(&self.theme);
 
         let now_playing =
             widget::button(widget::svg(if self.now_playing.is_playing() {
@@ -96,7 +96,7 @@ impl Application for UampApp {
     }
 
     fn theme(&self) -> Self::Theme {
-        Theme::default()
+        self.theme.clone()
     }
 }
 
@@ -112,6 +112,7 @@ impl Default for UampApp {
             config: conf,
             library: lib,
             player,
+            theme: Theme::default(),
             now_playing: Stopped,
         }
     }

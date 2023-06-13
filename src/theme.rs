@@ -3,19 +3,19 @@ use iced::{
     overlay::menu,
     widget::{
         button, checkbox, container, pane_grid, pick_list, progress_bar,
-        radio, rule, scrollable, slider, svg, toggler, text, text_input
+        radio, rule, scrollable, slider, svg, text, text_input, toggler,
     },
 };
 use iced_native::{Background, Color};
 
-use crate::fancy_widgets::wrap_box::{WrapBoxStyleSheet, SquareStyle, MousePos, ButtonStyle};
+use crate::fancy_widgets::wrap_box;
 
 macro_rules! const_color {
     ($x:literal) => {
         Color::from_rgb(
             (($x & 0xFF0000) >> 16) as f32 / 255.,
             (($x & 0xFF00) >> 8) as f32 / 255.,
-            (($x & 0xFF)) as f32 / 255.,
+            ($x & 0xFF) as f32 / 255.,
         )
     };
 }
@@ -37,7 +37,7 @@ const CONTRAST_BG: Background = Background::Color(CONTRAST);
 const RADIUS: f32 = 2.;
 const THICKNESS: f32 = 1.;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Theme {}
 
 impl application::StyleSheet for Theme {
@@ -379,7 +379,7 @@ impl text_input::StyleSheet for Theme {
             border_radius: RADIUS,
             border_width: THICKNESS,
             border_color: OUTLINE,
-            icon_color: PRIMARY
+            icon_color: PRIMARY,
         }
     }
 
@@ -414,11 +414,15 @@ impl text_input::StyleSheet for Theme {
     // fn disabled_color(&self, style: &Self::Style) -> Color;
 }
 
-impl WrapBoxStyleSheet for Theme {
+impl wrap_box::StyleSheet for Theme {
     type Style = ();
 
-    fn background(&self, _style: &Self::Style, _pos: MousePos) -> SquareStyle {
-        SquareStyle {
+    fn background(
+        &self,
+        _style: &Self::Style,
+        _pos: wrap_box::MousePos,
+    ) -> wrap_box::SquareStyle {
+        wrap_box::SquareStyle {
             background: Background::Color(Color::TRANSPARENT),
             border: Color::BLACK,
             border_thickness: 0.,
@@ -429,24 +433,24 @@ impl WrapBoxStyleSheet for Theme {
     fn button_style(
         &self,
         style: &Self::Style,
-        pos: MousePos,
+        pos: wrap_box::MousePos,
         pressed: bool,
         is_start: bool,
         relative_scroll: f32,
-    ) -> ButtonStyle {
+    ) -> wrap_box::ButtonStyle {
         let square = self.thumb_style(style, pos, pressed, relative_scroll);
 
         if is_start && relative_scroll == 0.
             || !is_start && relative_scroll == 1.
         {
             // inactive
-            ButtonStyle {
+            wrap_box::ButtonStyle {
                 square,
                 foreground: DARK_FOREGROUND,
             }
         } else {
             // active
-            ButtonStyle {
+            wrap_box::ButtonStyle {
                 square,
                 foreground: FOREGROUND,
             }
@@ -456,11 +460,11 @@ impl WrapBoxStyleSheet for Theme {
     fn thumb_style(
         &self,
         _style: &Self::Style,
-        pos: MousePos,
+        pos: wrap_box::MousePos,
         pressed: bool,
         _relative_scroll: f32,
-    ) -> SquareStyle {
-        let square = SquareStyle {
+    ) -> wrap_box::SquareStyle {
+        let square = wrap_box::SquareStyle {
             background: PRESSED_BG,
             border: OUTLINE,
             border_thickness: 0.,
@@ -468,12 +472,12 @@ impl WrapBoxStyleSheet for Theme {
         };
 
         if pressed {
-            SquareStyle {
+            wrap_box::SquareStyle {
                 background: OUTLINE_BG,
                 ..square
             }
-        } else if pos == MousePos::DirectlyOver {
-            SquareStyle {
+        } else if pos == wrap_box::MousePos::DirectlyOver {
+            wrap_box::SquareStyle {
                 background: SELECTED_BG,
                 ..square
             }
@@ -485,10 +489,16 @@ impl WrapBoxStyleSheet for Theme {
     fn trough_style(
         &self,
         _style: &Self::Style,
-        _pos: MousePos,
+        _pos: wrap_box::MousePos,
         _is_start: bool,
         _relative_scroll: f32,
     ) -> Background {
         PRIMARY_BG
+    }
+}
+
+impl wrap_box::LayoutStyleSheet<()> for Theme {
+    fn layout(&self, _style: &()) -> wrap_box::LayoutStyle {
+        wrap_box::LayoutStyle::default()
     }
 }

@@ -32,7 +32,7 @@ pub const DEFAULT_MIN_THUMB_SIZE: f32 = 20.;
 /// scrolling
 pub struct WrapBox<'a, Message, Renderer: svg::Renderer>
 where
-    Renderer::Theme: WrapBoxStyleSheet,
+    Renderer::Theme: StyleSheet,
 {
     spacing_x: f32,
     spacing_y: f32,
@@ -55,12 +55,12 @@ where
     secondary_scrollbar: Behaviour,
     children: Vec<Element<'a, Message, Renderer>>,
     state: Option<State>,
-    style: <Renderer::Theme as WrapBoxStyleSheet>::Style,
+    style: <Renderer::Theme as StyleSheet>::Style,
 }
 
 impl<'a, Message, Renderer: svg::Renderer> WrapBox<'a, Message, Renderer>
 where
-    Renderer::Theme: WrapBoxStyleSheet,
+    Renderer::Theme: StyleSheet,
 {
     /// creates empty [`WrapBox`]
     pub fn new() -> Self {
@@ -278,6 +278,40 @@ where
         self
     }
 
+    pub fn style(
+        mut self,
+        style: <Renderer::Theme as StyleSheet>::Style,
+    ) -> Self {
+        self.style = style;
+        self
+    }
+
+    pub fn from_layout_style(
+        mut self,
+        style: &impl LayoutStyleSheet<<Renderer::Theme as StyleSheet>::Style>,
+    ) -> Self {
+        let style = style.layout(&self.style);
+        style.spacing.0.set_if(&mut self.spacing_x);
+        style.spacing.1.set_if(&mut self.spacing_y);
+        style.padding.set_if(&mut self.padding);
+        style.item_size.0.set_if(&mut self.item_width);
+        style.item_size.1.set_if(&mut self.item_height);
+        style.scrollbar_width.set_if(&mut self.scrollbar_width);
+        style
+            .scrollbar_button_height
+            .set_if(&mut self.scrollbar_button_height);
+        style.min_thumb_size.set_if(&mut self.min_thumb_size);
+        style.primary_direction.set_if(&mut self.primary_direction);
+        style
+            .secondary_direction
+            .set_if(&mut self.secondary_direction);
+        style.primary_scrollbar.set_if(&mut self.primary_scrollbar);
+        style
+            .secondary_scrollbar
+            .set_if(&mut self.secondary_scrollbar);
+        self
+    }
+
     /// Adds element to the [`WrapBox`]
     pub fn push(
         mut self,
@@ -291,7 +325,7 @@ where
 impl<'a, Message, Renderer: svg::Renderer> Default
     for WrapBox<'a, Message, Renderer>
 where
-    Renderer::Theme: WrapBoxStyleSheet,
+    Renderer::Theme: StyleSheet,
 {
     fn default() -> Self {
         Self::new()
@@ -302,7 +336,7 @@ impl<'a, Message: 'a, Renderer> Widget<Message, Renderer>
     for WrapBox<'a, Message, Renderer>
 where
     Renderer: svg::Renderer + 'a,
-    Renderer::Theme: WrapBoxStyleSheet,
+    Renderer::Theme: StyleSheet,
 {
     fn tag(&self) -> tree::Tag {
         tree::Tag::of::<State>()
@@ -729,7 +763,7 @@ where
 impl<'a, Message: 'a, Renderer: svg::Renderer + 'a>
     From<WrapBox<'a, Message, Renderer>> for Element<'a, Message, Renderer>
 where
-    Renderer::Theme: WrapBoxStyleSheet,
+    Renderer::Theme: StyleSheet,
 {
     fn from(value: WrapBox<'a, Message, Renderer>) -> Self {
         Self::new(value)
@@ -739,7 +773,7 @@ where
 impl<'a, Message: 'a, Renderer: svg::Renderer + 'a>
     WrapBox<'a, Message, Renderer>
 where
-    Renderer::Theme: WrapBoxStyleSheet,
+    Renderer::Theme: StyleSheet,
 {
     fn create_layout(
         &self,
@@ -1142,7 +1176,7 @@ pub fn wrap_box<Message, Renderer: svg::Renderer>(
     childern: Vec<Element<'_, Message, Renderer>>,
 ) -> WrapBox<'_, Message, Renderer>
 where
-    Renderer::Theme: WrapBoxStyleSheet,
+    Renderer::Theme: StyleSheet,
 {
     WrapBox::with_childern(childern)
 }
@@ -1204,6 +1238,7 @@ enum ScrollbarInteraction {
     Thumb { relative: f32, cursor: Point },
 }
 
+#[derive(Clone, Copy)]
 pub enum Behaviour {
     Enabled,
     Disabled,
@@ -1216,7 +1251,7 @@ impl PartialEq for Behaviour {
     }
 }
 
-pub trait WrapBoxStyleSheet {
+pub trait StyleSheet {
     type Style: Default;
 
     fn background(&self, style: &Self::Style, pos: MousePos) -> SquareStyle;
@@ -1304,7 +1339,7 @@ pub struct ButtonStyle {
     pub foreground: Color,
 }
 
-impl WrapBoxStyleSheet for Theme {
+impl StyleSheet for Theme {
     type Style = ();
 
     fn background(&self, _style: &Self::Style, _pos: MousePos) -> SquareStyle {
@@ -1380,5 +1415,76 @@ impl WrapBoxStyleSheet for Theme {
         _relative_scroll: f32,
     ) -> Background {
         Background::Color(color!(0x222222))
+    }
+}
+
+/// Layout Style for [`WrapBox`], None means don't change the value
+pub struct LayoutStyle {
+    pub spacing: (Option<f32>, Option<f32>),
+    pub padding: Option<Padding>,
+    pub item_size: (Option<f32>, Option<f32>),
+    pub scrollbar_width: Option<f32>,
+    pub scrollbar_button_height: Option<f32>,
+    pub min_thumb_size: Option<f32>,
+    pub primary_direction: Option<ItemDirection>,
+    pub secondary_direction: Option<ItemDirection>,
+    pub primary_scrollbar: Option<Behaviour>,
+    pub secondary_scrollbar: Option<Behaviour>,
+}
+
+impl LayoutStyle {
+    pub fn empty() -> Self {
+        LayoutStyle {
+            spacing: (None, None),
+            padding: None,
+            item_size: (None, None),
+            scrollbar_width: None,
+            scrollbar_button_height: None,
+            min_thumb_size: None,
+            primary_direction: None,
+            secondary_direction: None,
+            primary_scrollbar: None,
+            secondary_scrollbar: None,
+        }
+    }
+}
+
+impl Default for LayoutStyle {
+    fn default() -> Self {
+        LayoutStyle {
+            scrollbar_width: Some(DEFAULT_SCROLLBAR_WIDTH),
+            scrollbar_button_height: Some(DEFAULT_SCROLLBAR_BUTTON_HEIGHT),
+            min_thumb_size: Some(DEFAULT_MIN_THUMB_SIZE),
+            ..Self::empty()
+        }
+    }
+}
+
+pub trait LayoutStyleSheet<Style> {
+    fn layout(&self, style: &Style) -> LayoutStyle;
+}
+
+impl<Style> LayoutStyleSheet<Style> for Theme {
+    fn layout(&self, _style: &Style) -> LayoutStyle {
+        LayoutStyle::default()
+    }
+}
+
+/// Extension of Option<T>
+trait OptionCopy<T>
+where
+    T: Copy,
+{
+    fn set_if(&self, field: &mut T);
+}
+
+impl<T> OptionCopy<T> for Option<T>
+where
+    T: Copy,
+{
+    fn set_if(&self, field: &mut T) {
+        if let Some(v) = self {
+            *field = *v;
+        }
     }
 }
