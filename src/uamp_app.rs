@@ -5,7 +5,7 @@ use crate::{
     fancy_widgets::{icons, wrap_box::wrap_box},
     library::Library,
     player::Player,
-    theme::Theme,
+    theme::{Button, Theme},
 };
 
 use self::PlayState::{Paused, Playing, Stopped};
@@ -68,6 +68,11 @@ impl Application for UampApp {
                         s.artist(),
                         s.title()
                     )))
+                    .style(if c % 2 == 0 {
+                        Button::ItemEven
+                    } else {
+                        Button::ItemOdd
+                    })
                     .on_press(UampMessage::PlaySong(c - 1))
                     .width(Length::Fill)
                     .height(Length::Fill)

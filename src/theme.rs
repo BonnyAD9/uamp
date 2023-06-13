@@ -1,12 +1,15 @@
+use std::default;
+
 use iced::{
     application, color,
+    executor::Default,
     overlay::menu,
     widget::{
         button, checkbox, container, pane_grid, pick_list, progress_bar,
         radio, rule, scrollable, slider, svg, text, text_input, toggler,
     },
 };
-use iced_native::{Background, Color};
+use iced_native::{Background, Color, Padding, Vector};
 
 use crate::fancy_widgets::wrap_box;
 
@@ -20,6 +23,7 @@ macro_rules! const_color {
     };
 }
 
+// some default colors to use
 const PRIMARY: Color = const_color!(0x222222);
 const PRIMARY_BG: Background = Background::Color(PRIMARY);
 const SECONDARY: Color = const_color!(0x181818);
@@ -34,7 +38,7 @@ const SELECTED: Color = const_color!(0x444444);
 const SELECTED_BG: Background = Background::Color(SELECTED);
 const CONTRAST: Color = const_color!(0xDDDD00);
 const CONTRAST_BG: Background = Background::Color(CONTRAST);
-const RADIUS: f32 = 2.;
+const RADIUS: f32 = 4.;
 const THICKNESS: f32 = 1.;
 
 #[derive(Default, Clone)]
@@ -45,30 +49,76 @@ impl application::StyleSheet for Theme {
 
     fn appearance(&self, _style: &Self::Style) -> application::Appearance {
         application::Appearance {
-            background_color: color!(0x181818),
-            text_color: color!(0xEEEEEE),
+            background_color: PRIMARY,
+            text_color: FOREGROUND,
         }
     }
 }
 
-impl button::StyleSheet for Theme {
-    type Style = ();
+#[derive(Default, PartialEq)]
+pub enum Button {
+    #[default]
+    Default,
+    ItemOdd,
+    ItemEven,
+}
 
-    fn active(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance::default()
+impl button::StyleSheet for Theme {
+    type Style = Button;
+
+    fn active(&self, style: &Self::Style) -> button::Appearance {
+        let default = button::Appearance {
+            shadow_offset: Vector::ZERO,
+            background: Some(SECONDARY_BG),
+            border_radius: RADIUS,
+            border_width: THICKNESS,
+            border_color: OUTLINE,
+            text_color: FOREGROUND,
+        };
+
+        match style {
+            Button::Default => default,
+            Button::ItemEven => button::Appearance {
+                border_color: PRESSED,
+                ..default
+            },
+            Button::ItemOdd => button::Appearance {
+                background: Some(PRIMARY_BG),
+                border_width: 0.,
+                ..default
+            },
+        }
     }
 
     fn hovered(&self, style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(SELECTED_BG),
+        let base = button::Appearance {
+            background: Some(PRESSED_BG),
+            border_color: CONTRAST,
             ..self.active(style)
+        };
+        match style {
+            Button::ItemOdd => button::Appearance {
+                border_width: THICKNESS,
+                border_color: CONTRAST,
+                ..base
+            },
+            _ => base,
         }
     }
 
     fn pressed(&self, style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(PRESSED_BG),
+        let base = button::Appearance {
+            background: Some(SELECTED_BG),
+            border_color: FOREGROUND,
             ..self.active(style)
+        };
+
+        match style {
+            Button::ItemOdd => button::Appearance {
+                border_width: THICKNESS,
+                ..base
+            },
+            _ => base,
         }
     }
 
@@ -499,6 +549,15 @@ impl wrap_box::StyleSheet for Theme {
 
 impl wrap_box::LayoutStyleSheet<()> for Theme {
     fn layout(&self, _style: &()) -> wrap_box::LayoutStyle {
-        wrap_box::LayoutStyle::default()
+        wrap_box::LayoutStyle {
+            padding: Some(Padding {
+                left: 30.,
+                right: 30.,
+                top: 0.,
+                bottom: 0.,
+            }),
+            spacing: (None, Some(1.)),
+            ..wrap_box::LayoutStyle::default()
+        }
     }
 }
