@@ -2,7 +2,7 @@ use iced::widget::{
     button, checkbox, container, image, mouse_area::MouseArea, pane_grid,
     text, Button, Checkbox, Column, Container, Image, PaneGrid,
 };
-use iced_native::{Element, widget::pane_grid::Pane};
+use iced_native::{widget::pane_grid::Pane, Element};
 
 pub trait Text {
     fn with_text<STR: AsRef<str>>(text: STR) -> Self;
@@ -166,11 +166,12 @@ where
 
 impl<'a, Message, Renderer, T, F> Content<(&'a pane_grid::State<T>, F)>
     for PaneGrid<'a, Message, Renderer>
-    where Renderer: iced_native::Renderer,
+where
+    Renderer: iced_native::Renderer,
     <Renderer as iced_native::Renderer>::Theme: pane_grid::StyleSheet,
     <Renderer as iced_native::Renderer>::Theme: container::StyleSheet,
     T: 'a,
-    F: Fn(Pane, &'a T, bool) -> pane_grid::Content<'a, Message, Renderer>
+    F: Fn(Pane, &'a T, bool) -> pane_grid::Content<'a, Message, Renderer>,
 {
     fn with_content(content: (&'a pane_grid::State<T>, F)) -> Self {
         PaneGrid::<'a, Message, Renderer>::new(content.0, content.1)
