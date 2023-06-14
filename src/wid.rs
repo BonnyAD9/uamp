@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use iced::widget;
+use iced_native::Length::{self, Shrink};
 
 use crate::{fancy_widgets, theme::Theme, uamp_app::UampMessage};
 
@@ -15,6 +16,7 @@ pub type Button<'a> = widget::Button<'a, UampMessage, Renderer>;
 pub type Text<'a> = widget::Text<'a, Renderer>;
 pub type Column<'a> = widget::Column<'a, UampMessage, Renderer>;
 pub type Svg = widget::Svg<Renderer>;
+pub type Space = widget::Space;
 
 pub fn wrap_box<'a>(children: Vec<Element>) -> WrapBox {
     WrapBox::with_childern(children)
@@ -23,15 +25,28 @@ pub fn wrap_box<'a>(children: Vec<Element>) -> WrapBox {
 #[macro_export]
 macro_rules! wrap_box {
     () => (
-        $WrapBox::new()
+        $crate::wid::WrapBox::new()
     );
     ($($x:expr),+ $(,)?) => (
-        $WrapBox::with_children(vec![$($Element::from($x)),+])
+        $crate::wid::wrap_box(vec![$($Element::from($x)),+])
     );
 }
 
 pub fn button<'a>(child: impl Into<Element<'a>>) -> Button<'a> {
     Button::new(child)
+}
+
+#[macro_export]
+macro_rules! button {
+    () => {
+        crate::wid::button(nothing())
+    };
+    ($s:expr) => {
+        crate::wid::button(text!($s))
+    };
+    ($fmt:literal, $($args:expr),+) => {
+        crate::wid::button(text!($fmt, $($args),+))
+    };
 }
 
 pub fn text<'a>(content: impl Into<Cow<'a, str>>) -> Text<'a> {
@@ -43,9 +58,12 @@ macro_rules! text {
     () => {
         crate::wid::text("")
     };
-    ($($fmt:literal),+ $(,)?) => (
-        $crate::wid::text(format!(fmt,+))
-    );
+    ($s:expr) => {
+        $crate::wid::text($s)
+    };
+    ($fmt:literal, $($args:expr),+) => {
+        $crate::wid::text(format!($fmt, $($args),+))
+    };
 }
 
 pub fn column<'a>(children: Vec<Element<'a>>) -> Column<'a> {
@@ -55,13 +73,21 @@ pub fn column<'a>(children: Vec<Element<'a>>) -> Column<'a> {
 #[macro_export]
 macro_rules! col {
     () => (
-        $crate::wid::Column::new()
+        $crate::wid::Column::new(crate::wid::nothing())
     );
     ($($x:expr),+ $(,)?) => (
-        $crate::wid::Column::with_children(vec![$($crate::wid::Element::from($x)),+])
+        $crate::wid::column(vec![$($crate::wid::Element::from($x)),+])
     );
 }
 
 pub fn svg(handle: impl Into<widget::svg::Handle>) -> Svg {
     Svg::new(handle)
+}
+
+pub fn space(width: impl Into<Length>, height: impl Into<Length>) -> Space {
+    Space::new(width, height)
+}
+
+pub fn nothing() -> Space {
+    space(Shrink, Shrink)
 }

@@ -1,8 +1,5 @@
-use std::default;
-
 use iced::{
-    application, color,
-    executor::Default,
+    application,
     overlay::menu,
     widget::{
         button, checkbox, container, pane_grid, pick_list, progress_bar,

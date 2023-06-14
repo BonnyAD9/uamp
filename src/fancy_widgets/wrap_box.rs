@@ -1172,15 +1172,6 @@ where
     }
 }
 
-pub fn wrap_box<Message, Renderer: svg::Renderer>(
-    childern: Vec<Element<'_, Message, Renderer>>,
-) -> WrapBox<'_, Message, Renderer>
-where
-    Renderer::Theme: StyleSheet,
-{
-    WrapBox::with_childern(childern)
-}
-
 #[derive(Copy, Clone)]
 pub enum ItemDirection {
     LeftToRight,

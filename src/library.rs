@@ -9,6 +9,10 @@ pub struct Library {
     songs: Vec<Song>,
 }
 
+pub enum Filter {
+    All,
+}
+
 impl Library {
     pub fn new() -> Self {
         Library { songs: Vec::new() }
@@ -36,6 +40,12 @@ impl Library {
         }
 
         Ok(lib)
+    }
+
+    pub fn filter(&self, filter: Filter) -> Box<dyn Iterator<Item = usize>> {
+        match filter {
+            Filter::All => Box::new((0..self.songs.len()).into_iter()),
+        }
     }
 
     pub fn iter(&self) -> std::slice::Iter<'_, Song> {
