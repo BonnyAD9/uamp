@@ -5,7 +5,7 @@ use crate::{
     library::Library,
     player::Player,
     theme::Theme,
-    wid::{Element, Command}
+    wid::{Command, Element},
 };
 
 use self::PlayState::{Paused, Playing, Stopped};

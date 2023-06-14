@@ -2,14 +2,15 @@ use std::borrow::Cow;
 
 use iced::widget;
 
-use crate::{theme::Theme, uamp_app::UampMessage, fancy_widgets};
+use crate::{fancy_widgets, theme::Theme, uamp_app::UampMessage};
 
 // collection of less generic types
 
 pub type Renderer = iced::Renderer<Theme>;
 pub type Element<'a> = iced::Element<'a, UampMessage, Renderer>;
 pub type Command = iced::Command<UampMessage>;
-pub type WrapBox<'a> = fancy_widgets::wrap_box::WrapBox<'a, UampMessage, Renderer>;
+pub type WrapBox<'a> =
+    fancy_widgets::wrap_box::WrapBox<'a, UampMessage, Renderer>;
 pub type Button<'a> = widget::Button<'a, UampMessage, Renderer>;
 pub type Text<'a> = widget::Text<'a, Renderer>;
 pub type Column<'a> = widget::Column<'a, UampMessage, Renderer>;
