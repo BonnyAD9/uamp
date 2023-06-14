@@ -470,7 +470,7 @@ impl wrap_box::StyleSheet for Theme {
         _pos: wrap_box::MousePos,
     ) -> wrap_box::SquareStyle {
         wrap_box::SquareStyle {
-            background: Background::Color(Color::TRANSPARENT),
+            background: PRIMARY_BG,
             border: Color::BLACK,
             border_thickness: 0.,
             border_radius: 0.0.into(),
@@ -479,24 +479,52 @@ impl wrap_box::StyleSheet for Theme {
 
     fn button_style(
         &self,
-        style: &Self::Style,
+        _style: &Self::Style,
         pos: wrap_box::MousePos,
         pressed: bool,
         is_start: bool,
         relative_scroll: f32,
     ) -> wrap_box::ButtonStyle {
-        let square = self.thumb_style(style, pos, pressed, relative_scroll);
+        let square = wrap_box::SquareStyle {
+            background: PRIMARY_BG,
+            border: OUTLINE,
+            border_thickness: THICKNESS,
+            border_radius: RADIUS.into(),
+        };
 
         if is_start && relative_scroll == 0.
             || !is_start && relative_scroll == 1.
         {
             // inactive
             wrap_box::ButtonStyle {
-                square,
+                square: wrap_box::SquareStyle {
+                    border_thickness: 0.,
+                    ..square
+                },
                 foreground: DARK_FOREGROUND,
             }
         } else {
             // active
+
+            let square = if pressed {
+                wrap_box::SquareStyle {
+                    background: SELECTED_BG,
+                    border: FOREGROUND,
+                    ..square
+                }
+            } else if pos == wrap_box::MousePos::DirectlyOver {
+                wrap_box::SquareStyle {
+                    background: PRESSED_BG,
+                    border: CONTRAST,
+                    ..square
+                }
+            } else {
+                wrap_box::SquareStyle {
+                    border_thickness: 0.,
+                    ..square
+                }
+            };
+
             wrap_box::ButtonStyle {
                 square,
                 foreground: FOREGROUND,
@@ -512,20 +540,22 @@ impl wrap_box::StyleSheet for Theme {
         _relative_scroll: f32,
     ) -> wrap_box::SquareStyle {
         let square = wrap_box::SquareStyle {
-            background: PRESSED_BG,
+            background: PRIMARY_BG,
             border: OUTLINE,
-            border_thickness: 0.,
-            border_radius: 0.0.into(),
+            border_thickness: THICKNESS,
+            border_radius: RADIUS.into(),
         };
 
         if pressed {
             wrap_box::SquareStyle {
-                background: OUTLINE_BG,
+                background: SELECTED_BG,
+                border: FOREGROUND,
                 ..square
             }
         } else if pos == wrap_box::MousePos::DirectlyOver {
             wrap_box::SquareStyle {
-                background: SELECTED_BG,
+                background: PRESSED_BG,
+                border: CONTRAST,
                 ..square
             }
         } else {
@@ -537,14 +567,18 @@ impl wrap_box::StyleSheet for Theme {
         &self,
         _style: &Self::Style,
         _pos: wrap_box::MousePos,
-        _is_start: bool,
+        is_start: bool,
         _relative_scroll: f32,
     ) -> wrap_box::SquareStyle {
         wrap_box::SquareStyle {
-            background: PRIMARY_BG,
-            border: OUTLINE,
-            border_thickness: 0.,
-            border_radius: 0.0.into(),
+            background: SECONDARY_BG,
+            border: PRESSED,
+            border_thickness: THICKNESS,
+            border_radius: if is_start {
+                [RADIUS, RADIUS, 0., 0.].into()
+            } else {
+                [0., 0., RADIUS, RADIUS].into()
+            },
         }
     }
 }
