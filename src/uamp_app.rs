@@ -1,23 +1,23 @@
-use iced::{executor, widget, Application, Command, Length, Renderer};
+use iced::{executor, Application};
 
 use crate::{
     config::Config,
-    fancy_widgets::{icons, wrap_box::wrap_box},
     library::Library,
     player::Player,
-    theme::{Button, Theme},
+    theme::Theme,
+    wid::{Element, Command}
 };
 
 use self::PlayState::{Paused, Playing, Stopped};
 
 pub struct UampApp {
-    config: Config,
-    library: Library,
-    player: Player,
+    pub config: Config,
+    pub library: Library,
+    pub player: Player,
 
-    theme: Theme,
+    pub theme: Theme,
 
-    now_playing: PlayState,
+    pub now_playing: PlayState,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -32,12 +32,12 @@ impl Application for UampApp {
     type Message = UampMessage;
     type Theme = Theme;
 
-    fn new(flags: Self::Flags) -> (Self, iced::Command<Self::Message>) {
+    fn new(flags: Self::Flags) -> (Self, Command) {
         _ = flags;
         (UampApp::default(), Command::none())
     }
 
-    fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
+    fn update(&mut self, message: Self::Message) -> Command {
         match message {
             UampMessage::PlaySong(id) => {
                 _ = self.player.play(&self.library, id);
@@ -55,52 +55,11 @@ impl Application for UampApp {
         "uamp".to_owned()
     }
 
-    fn view(&self) -> iced_native::Element<'_, UampMessage, Renderer<Theme>> {
-        _ = self.config;
-        let mut c = 0;
-        let list = wrap_box::<_, Renderer<Theme>>(
-            self.library
-                .iter()
-                .map(|s| {
-                    c += 1;
-                    widget::button(widget::text(format!(
-                        "{} - {}",
-                        s.artist(),
-                        s.title()
-                    )))
-                    .style(if c % 2 == 0 {
-                        Button::ItemEven
-                    } else {
-                        Button::ItemOdd
-                    })
-                    .on_press(UampMessage::PlaySong(c - 1))
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-                    .into()
-                })
-                .collect(),
-        )
-        .item_height(30)
-        .from_layout_style(&self.theme);
-
-        let now_playing =
-            widget::button(widget::svg(if self.now_playing.is_playing() {
-                icons::PAUSE
-            } else {
-                icons::PLAY
-            }))
-            .on_press(UampMessage::PlayPause)
-            .width(Length::Fixed(30.))
-            .height(Length::Fixed(30.));
-
-        let app = widget::Column::<_, Renderer<Theme>>::with_children(vec![
-            list.height(Length::Fill).into(),
-            now_playing.into(),
-        ]);
-        app.into()
+    fn view(&self) -> Element {
+        self.gui()
     }
 
-    fn theme(&self) -> Self::Theme {
+    fn theme(&self) -> Theme {
         self.theme.clone()
     }
 }

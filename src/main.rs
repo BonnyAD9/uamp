@@ -9,6 +9,8 @@ mod player;
 mod song;
 mod theme;
 mod uamp_app;
+mod uamp_gui;
+mod wid;
 
 fn main() -> Result<()> {
     UampApp::run(Settings::default())?;
