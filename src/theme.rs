@@ -33,8 +33,9 @@ const PRESSED: Color = const_color!(0x333333);
 const PRESSED_BG: Background = Background::Color(PRESSED);
 const SELECTED: Color = const_color!(0x444444);
 const SELECTED_BG: Background = Background::Color(SELECTED);
-const CONTRAST: Color = const_color!(0xDDDD00);
+const CONTRAST: Color = const_color!(0xCCCC00);
 const CONTRAST_BG: Background = Background::Color(CONTRAST);
+const BRIGHT_CONTRAST: Color = const_color!(0xEEEE00);
 const RADIUS: f32 = 4.;
 const THICKNESS: f32 = 1.;
 
@@ -106,7 +107,7 @@ impl button::StyleSheet for Theme {
     fn pressed(&self, style: &Self::Style) -> button::Appearance {
         let base = button::Appearance {
             background: Some(SELECTED_BG),
-            border_color: FOREGROUND,
+            border_color: BRIGHT_CONTRAST,
             ..self.active(style)
         };
 
@@ -509,7 +510,7 @@ impl wrap_box::StyleSheet for Theme {
             let square = if pressed {
                 wrap_box::SquareStyle {
                     background: SELECTED_BG,
-                    border: FOREGROUND,
+                    border: BRIGHT_CONTRAST,
                     ..square
                 }
             } else if pos == wrap_box::MousePos::DirectlyOver {
@@ -549,7 +550,7 @@ impl wrap_box::StyleSheet for Theme {
         if pressed {
             wrap_box::SquareStyle {
                 background: SELECTED_BG,
-                border: FOREGROUND,
+                border: BRIGHT_CONTRAST,
                 ..square
             }
         } else if pos == wrap_box::MousePos::DirectlyOver {
