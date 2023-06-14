@@ -539,8 +539,13 @@ impl wrap_box::StyleSheet for Theme {
         _pos: wrap_box::MousePos,
         _is_start: bool,
         _relative_scroll: f32,
-    ) -> Background {
-        PRIMARY_BG
+    ) -> wrap_box::SquareStyle {
+        wrap_box::SquareStyle {
+            background: PRIMARY_BG,
+            border: OUTLINE,
+            border_thickness: 0.,
+            border_radius: 0.0.into(),
+        }
     }
 }
 

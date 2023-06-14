@@ -1116,16 +1116,13 @@ where
                 mo_scroll,
                 trough.contains(cursor_position),
             );
-            let quad = Quad {
-                bounds: trough,
-                border_radius: 0.0.into(),
-                border_width: 0.,
-                border_color: Color::BLACK,
+            let trough = Rectangle {
+                height: trough.height + thumb_size / 2.,
+                ..trough
             };
-            renderer.fill_quad(
-                quad,
-                theme.trough_style(&self.style, pos, true, offset),
-            );
+            theme
+                .trough_style(&self.style, pos, true, offset)
+                .draw(renderer, trough);
         }
 
         // draw the bottom trough
@@ -1136,16 +1133,14 @@ where
                 mo_scroll,
                 trough.contains(cursor_position),
             );
-            let quad = Quad {
-                bounds: trough,
-                border_radius: 0.0.into(),
-                border_width: 0.,
-                border_color: Color::BLACK,
+            let trough = Rectangle {
+                y: trough.y - thumb_size / 2.,
+                height: trough.height + thumb_size / 2.,
+                ..trough
             };
-            renderer.fill_quad(
-                quad,
-                theme.trough_style(&self.style, pos, false, offset),
-            );
+            theme
+                .trough_style(&self.style, pos, false, offset)
+                .draw(renderer, trough);
         }
 
         // draw the thumb
@@ -1270,7 +1265,7 @@ pub trait StyleSheet {
         pos: MousePos,
         is_start: bool,
         relative_scroll: f32,
-    ) -> Background;
+    ) -> SquareStyle;
 }
 
 pub enum MousePos {
@@ -1404,8 +1399,13 @@ impl StyleSheet for Theme {
         _pos: MousePos,
         _is_start: bool,
         _relative_scroll: f32,
-    ) -> Background {
-        Background::Color(color!(0x222222))
+    ) -> SquareStyle {
+        SquareStyle {
+            background: Background::Color(color!(0x222222)),
+            border: Color::BLACK,
+            border_thickness: 0.,
+            border_radius: 0.0.into(),
+        }
     }
 }
 

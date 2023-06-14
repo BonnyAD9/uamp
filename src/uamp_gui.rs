@@ -63,6 +63,10 @@ impl UampApp {
             icons::PLAY
         };
 
-        button(svg(icon)).height(30).width(30).on_press(Msg::PlayPause).into()
+        button(svg(icon))
+            .height(30)
+            .width(30)
+            .on_press(Msg::PlayPause)
+            .into()
     }
 }
