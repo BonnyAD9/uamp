@@ -15,6 +15,7 @@ impl UampApp {
         col![
             self.song_list(self.library.filter(Filter::All)),
             self.play_menu(),
+            //event_capture(|e, m, c| self.events(e, m, c))
         ]
         .into()
     }

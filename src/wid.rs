@@ -1,7 +1,12 @@
 use std::borrow::Cow;
 
 use iced::widget;
-use iced_native::Length::{self, Shrink};
+use iced_native::{
+    event::Status,
+    Clipboard, Event,
+    Length::{self, Shrink},
+    Point,
+};
 
 use crate::{fancy_widgets, theme::Theme, uamp_app::UampMessage};
 
@@ -17,6 +22,8 @@ pub type Text<'a> = widget::Text<'a, Renderer>;
 pub type Column<'a> = widget::Column<'a, UampMessage, Renderer>;
 pub type Svg = widget::Svg<Renderer>;
 pub type Space = widget::Space;
+pub type EventCapture<'a> =
+    fancy_widgets::event_capture::EventCapture<'a, UampMessage>;
 
 pub fn wrap_box<'a>(children: Vec<Element>) -> WrapBox {
     WrapBox::with_childern(children)
@@ -90,4 +97,11 @@ pub fn space(width: impl Into<Length>, height: impl Into<Length>) -> Space {
 
 pub fn nothing() -> Space {
     space(Shrink, Shrink)
+}
+
+pub fn event_capture<'a>(
+    handle: impl Fn(Event, Point, &mut dyn Clipboard) -> (Option<UampMessage>, Status)
+        + 'a,
+) -> EventCapture<'a> {
+    EventCapture::new(handle)
 }

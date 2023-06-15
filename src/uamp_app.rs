@@ -1,4 +1,5 @@
-use iced::{executor, Application};
+use iced::{clipboard, executor, window, Application};
+use iced_native::{event::Status, Clipboard, Event, Point};
 
 use crate::{
     config::Config,
@@ -105,5 +106,19 @@ impl PlayState {
 
     pub fn is_playing(&self) -> bool {
         matches!(self, Playing(_))
+    }
+}
+
+impl UampApp {
+    pub fn events(
+        &self,
+        event: Event,
+        _cursor: Point,
+        _clipboard: &mut dyn Clipboard,
+    ) -> (Option<UampMessage>, Status) {
+        println!("{event:?}");
+        match event {
+            _ => (None, Status::Ignored),
+        }
     }
 }
