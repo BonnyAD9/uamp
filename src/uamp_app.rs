@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use iced::{executor, Application};
 use iced_native::{event::Status, Clipboard, Event, Point};
 
@@ -6,10 +8,9 @@ use crate::{
     library::Library,
     player::Player,
     theme::Theme,
-    wid::{Command, Element}, uamp_gui::{GuiState, self},
+    uamp_gui::{self, GuiState},
+    wid::{Command, Element, IteratorFn},
 };
-
-use self::PlayState::{Paused, Playing, Stopped};
 
 pub struct UampApp {
     pub config: Config,
@@ -23,11 +24,12 @@ pub struct UampApp {
     pub now_playing: PlayState,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[allow(missing_debug_implementations)]
+#[derive(Clone, Debug)]
 pub enum UampMessage {
-    PlaySong(usize),
+    PlaySong(usize, Arc<dyn IteratorFn>),
     PlayPause,
-    Gui(uamp_gui::Message)
+    Gui(uamp_gui::Message),
 }
 
 impl Application for UampApp {
@@ -43,9 +45,16 @@ impl Application for UampApp {
 
     fn update(&mut self, message: Self::Message) -> Command {
         match message {
-            UampMessage::PlaySong(id) => {
-                _ = self.player.play(&self.library, id);
-                self.now_playing = Playing(id);
+            UampMessage::PlaySong(index, songs) => {
+                self.now_playing.play_new(
+                    &self.library,
+                    songs.as_ref(),
+                    index,
+                );
+                _ = self.player.play(
+                    &self.library,
+                    self.now_playing.now_playing().unwrap(),
+                );
             }
             UampMessage::PlayPause => {
                 self.player.play_pause();
@@ -87,34 +96,67 @@ impl Default for UampApp {
             player,
             theme: Theme::default(),
             gui: GuiState::default(),
-            now_playing: Stopped,
+            now_playing: PlayState::default(),
         }
     }
 }
 
 #[derive(Clone, Copy)]
-pub enum PlayState {
+pub enum Playback {
     Stopped,
     Playing(usize),
-    Paused(usize)
+    Paused(usize),
+}
+
+pub struct PlayState {
+    playback: Playback,
+    playlist: Vec<usize>,
 }
 
 impl PlayState {
-    pub fn play_pause(&mut self) -> Self {
-        match *self {
-            Stopped => {}
-            Playing(id) => {
-                *self = Paused(id);
+    fn new() -> Self {
+        PlayState {
+            playback: Playback::Stopped,
+            playlist: Vec::new(),
+        }
+    }
+
+    pub fn play_pause(&mut self) {
+        match self.playback {
+            Playback::Stopped => {}
+            Playback::Playing(id) => {
+                self.playback = Playback::Paused(id);
             }
-            Paused(id) => {
-                *self = Playing(id);
+            Playback::Paused(id) => {
+                self.playback = Playback::Playing(id);
             }
         };
-        *self
+    }
+
+    pub fn play_new<FI>(&mut self, library: &Library, songs: &FI, index: usize)
+    where
+        FI: IteratorFn + ?Sized,
+    {
+        self.playlist = songs(library).collect();
+        self.playback = Playback::Playing(index);
     }
 
     pub fn is_playing(&self) -> bool {
-        matches!(self, Playing(_))
+        matches!(self.playback, Playback::Playing(_))
+    }
+
+    pub fn now_playing(&self) -> Option<usize> {
+        match self.playback {
+            Playback::Stopped => None,
+            Playback::Paused(s) => Some(self.playlist[s]),
+            Playback::Playing(s) => Some(self.playlist[s]),
+        }
+    }
+}
+
+impl Default for PlayState {
+    fn default() -> Self {
+        PlayState::new()
     }
 }
 

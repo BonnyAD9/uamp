@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use iced_native::Length::Fill;
 
 use crate::{
@@ -7,20 +9,18 @@ use crate::{
     text,
     theme::Button,
     uamp_app::{UampApp, UampMessage as Msg},
-    wid::{button, svg, wrap_box, Element, Command},
+    wid::{button, svg, wrap_box, Command, Element, IteratorFn},
 };
 
 #[derive(Clone, Copy, Debug)]
-pub enum Message {
-
-}
+pub enum Message {}
 
 enum MainPage {
     Songs,
 }
 
 pub struct GuiState {
-    page: MainPage
+    page: MainPage,
 }
 
 impl UampApp {
@@ -39,20 +39,22 @@ impl UampApp {
 
     pub fn main_page(&self) -> Element {
         match self.gui.page {
-            MainPage::Songs => self.song_list(self.library.filter(Filter::All)),
+            MainPage::Songs => self.song_list(|l| l.filter(Filter::All)),
         }
     }
 
     // song list
 
-    fn song_list(&self, songs: impl Iterator<Item = usize>) -> Element {
+    fn song_list(&self, songs: impl IteratorFn + 'static) -> Element {
         let mut i = 0;
 
+        let songs = Arc::new(songs);
+
         wrap_box(
-            songs
+            songs(&self.library)
                 .map(|s| {
                     i += 1;
-                    self.song_list_item(s, s % 2 == 0)
+                    self.song_list_item(s, s % 2 == 0, songs.clone())
                 })
                 .collect(),
         )
@@ -61,7 +63,12 @@ impl UampApp {
         .into()
     }
 
-    fn song_list_item(&self, song: usize, even: bool) -> Element<'static> {
+    fn song_list_item(
+        &self,
+        song: usize,
+        even: bool,
+        songs: Arc<dyn IteratorFn>,
+    ) -> Element<'static> {
         let style = if even {
             Button::ItemEven
         } else {
@@ -71,7 +78,7 @@ impl UampApp {
         let s = &self.library[song];
 
         button!("{} - {}", s.artist(), s.title())
-            .on_press(Msg::PlaySong(song))
+            .on_press(Msg::PlaySong(song, songs))
             .height(Fill)
             .width(Fill)
             .style(style)
@@ -97,7 +104,9 @@ impl UampApp {
 
 impl GuiState {
     pub fn new() -> Self {
-        GuiState { page: MainPage::Songs }
+        GuiState {
+            page: MainPage::Songs,
+        }
     }
 }
 

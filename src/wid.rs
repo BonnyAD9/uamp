@@ -1,5 +1,6 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt::Debug};
 
+use dyn_clone::DynClone;
 use iced::widget;
 use iced_native::{
     event::Status,
@@ -8,7 +9,9 @@ use iced_native::{
     Point,
 };
 
-use crate::{fancy_widgets, theme::Theme, uamp_app::UampMessage};
+use crate::{
+    fancy_widgets, library::Library, theme::Theme, uamp_app::UampMessage,
+};
 
 // collection of less generic types
 
@@ -24,6 +27,23 @@ pub type Svg = widget::Svg<Renderer>;
 pub type Space = widget::Space;
 pub type EventCapture<'a> =
     fancy_widgets::event_capture::EventCapture<'a, UampMessage>;
+
+pub trait IteratorFn:
+    Sync + Send + Fn(&Library) -> Box<dyn Iterator<Item = usize>>
+{
+}
+impl<F> IteratorFn for F where
+    F: Sync
+        + Send
+        + Fn(&Library) -> Box<dyn Iterator<Item = usize>>
+{
+}
+
+impl Debug for dyn IteratorFn {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Err(std::fmt::Error::default())
+    }
+}
 
 pub fn wrap_box<'a>(children: Vec<Element>) -> WrapBox {
     WrapBox::with_childern(children)

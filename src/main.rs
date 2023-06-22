@@ -12,6 +12,7 @@ mod theme;
 mod uamp_app;
 mod uamp_gui;
 mod wid;
+mod transfer_iterator;
 
 fn main() -> Result<()> {
     if let Err(e) = start_logger() {
