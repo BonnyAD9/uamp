@@ -7,9 +7,13 @@ use iced_native::{
 
 // pseoudo-widget used for capturing events
 
-pub struct EventCapture<'a, Message> where Message: 'a {
+pub struct EventCapture<'a, Message>
+where
+    Message: 'a,
+{
     handle: Box<
-        dyn Fn(Event, Point, &mut dyn Clipboard) -> (Option<Message>, Status) + 'a,
+        dyn Fn(Event, Point, &mut dyn Clipboard) -> (Option<Message>, Status)
+            + 'a,
     >,
 }
 
@@ -24,7 +28,8 @@ impl<'a, Message> EventCapture<'a, Message> {
     }
 }
 
-impl<'a, Message, Renderer> Widget<Message, Renderer> for EventCapture<'a, Message>
+impl<'a, Message, Renderer> Widget<Message, Renderer>
+    for EventCapture<'a, Message>
 where
     Renderer: iced_native::Renderer,
 {

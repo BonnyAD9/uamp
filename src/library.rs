@@ -1,8 +1,9 @@
 use crate::config::Config;
 use crate::song::Song;
 use eyre::Result;
-use serde_derive::{Serialize, Deserialize};
-use std::fs::{read_dir, create_dir_all, File};
+use log::{error, info};
+use serde_derive::{Deserialize, Serialize};
+use std::fs::{create_dir_all, read_dir, File};
 use std::ops::Index;
 use std::path::Path;
 
@@ -50,16 +51,22 @@ impl Library {
     }
 
     pub fn from_json(path: impl AsRef<Path>) -> Self {
-        if let Ok(file) = File::open(path) {
+        if let Ok(file) = File::open(path.as_ref()) {
             serde_json::from_reader(file).unwrap_or_default()
         } else {
+            info!("library file {:?} doesn't exist", path.as_ref());
             Self::default()
         }
     }
 
     pub fn get_new_songs(&mut self, conf: &Config) {
         if Self::add_new_songs(&mut self.songs, conf) {
-            _ = self.to_json(&conf.library_path);
+            if let Err(e) = self.to_json(&conf.library_path) {
+                error!(
+                    "failed to save library to file {:?}: {e}",
+                    conf.library_path
+                );
+            }
         }
     }
 
@@ -69,18 +76,26 @@ impl Library {
         for dir in &conf.search_paths {
             let dir = match read_dir(dir) {
                 Ok(dir) => dir,
-                Err(_) => continue
+                Err(_) => continue,
             };
 
             for f in dir {
                 let f = match f {
                     Ok(f) => f,
-                    Err(_) => continue,
+                    Err(e) => {
+                        error!("failed to get directory entry: {e}");
+                        continue;
+                    }
                 };
 
                 let ftype = match f.file_type() {
                     Ok(ft) => ft,
-                    Err(_) => continue,
+                    Err(e) => {
+                        error!(
+                            "failed to get directory entry type of {f:?}: {e}"
+                        );
+                        continue;
+                    }
                 };
 
                 if ftype.is_dir() {
@@ -90,7 +105,8 @@ impl Library {
                 let path = f.path();
 
                 if let Some(fe) = path.extension() {
-                    if !conf.audio_extensions.iter().any(|e| fe == e.as_str()) {
+                    if !conf.audio_extensions.iter().any(|e| fe == e.as_str())
+                    {
                         continue;
                     }
                 } else {

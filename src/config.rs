@@ -1,4 +1,5 @@
-use eyre::{Result};
+use eyre::Result;
+use log::{error, info};
 use serde::Serialize;
 use serde_derive::{Deserialize, Serialize};
 use std::{
@@ -31,10 +32,19 @@ impl Config {
         let file = match File::open(path.as_ref()) {
             Ok(f) => f,
             Err(_) => {
+                info!(
+                    "the config file {:?} doesn't exist, creating default",
+                    path.as_ref()
+                );
                 let conf = Config::new(path.as_ref());
-                _ = conf.to_default_json();
+                if let Err(e) = conf.to_default_json() {
+                    error!(
+                        "failed to save config to file {:?}: {e}",
+                        path.as_ref()
+                    );
+                }
                 return conf;
-            },
+            }
         };
 
         serde_json::from_reader(file).unwrap_or_default()
@@ -50,7 +60,10 @@ impl Config {
         }
 
         let formatter = serde_json::ser::PrettyFormatter::with_indent(b"    ");
-        let mut ser = serde_json::Serializer::with_formatter(File::create(path)?, formatter);
+        let mut ser = serde_json::Serializer::with_formatter(
+            File::create(path)?,
+            formatter,
+        );
         self.serialize(&mut ser)?;
 
         Ok(())
@@ -71,7 +84,7 @@ impl Config {
     }
 }
 
-fn default_config_path() -> PathBuf {
+pub fn default_config_path() -> PathBuf {
     if let Some(dir) = dirs::config_dir() {
         dir.join("uamp")
     } else {
