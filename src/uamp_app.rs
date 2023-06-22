@@ -1,4 +1,4 @@
-use iced::{clipboard, executor, window, Application};
+use iced::{executor, Application};
 use iced_native::{event::Status, Clipboard, Event, Point};
 
 use crate::{
@@ -6,7 +6,7 @@ use crate::{
     library::Library,
     player::Player,
     theme::Theme,
-    wid::{Command, Element},
+    wid::{Command, Element}
 };
 
 use self::PlayState::{Paused, Playing, Stopped};
@@ -67,8 +67,12 @@ impl Application for UampApp {
 
 impl Default for UampApp {
     fn default() -> Self {
-        let conf = Config::default();
-        let lib = Library::from_config(&conf).unwrap_or_default();
+        let conf = Config::from_default_json();
+
+        let mut lib = Library::from_config(&conf);
+        if conf.update_library_on_start {
+            lib.get_new_songs(&conf);
+        }
 
         // XXX: try to avoid unwrap
         let player = Player::try_new().unwrap();

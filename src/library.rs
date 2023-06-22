@@ -1,10 +1,12 @@
 use crate::config::Config;
 use crate::song::Song;
 use eyre::Result;
-use std::fs::read_dir;
+use serde_derive::{Serialize, Deserialize};
+use std::fs::{read_dir, create_dir_all, File};
 use std::ops::Index;
+use std::path::Path;
 
-#[derive(Default)]
+#[derive(Serialize, Deserialize)]
 pub struct Library {
     songs: Vec<Song>,
 }
@@ -13,33 +15,19 @@ pub enum Filter {
     All,
 }
 
+impl Default for Library {
+    fn default() -> Self {
+        Library::new()
+    }
+}
+
 impl Library {
     pub fn new() -> Self {
         Library { songs: Vec::new() }
     }
 
-    pub fn from_config(conf: &Config) -> Result<Self> {
-        let mut lib = Library::new();
-        let dir = read_dir(conf.library_path())?;
-
-        for f in dir {
-            let f = f?;
-            let ftype = f.file_type()?;
-
-            if ftype.is_dir() {
-                continue;
-            }
-
-            if let Ok(song) = Song::from_path(f.path()) {
-                lib.songs.push(song);
-            }
-
-            /*if lib.songs.len() > 100 {
-                break;
-            }*/
-        }
-
-        Ok(lib)
+    pub fn from_config(conf: &Config) -> Self {
+        Self::from_json(&conf.library_path)
     }
 
     pub fn filter(&self, filter: Filter) -> Box<dyn Iterator<Item = usize>> {
@@ -50,6 +38,81 @@ impl Library {
 
     pub fn iter(&self) -> std::slice::Iter<'_, Song> {
         self.songs.iter()
+    }
+
+    pub fn to_json(&self, path: impl AsRef<Path>) -> Result<()> {
+        if let Some(par) = path.as_ref().parent() {
+            create_dir_all(par)?;
+        }
+
+        serde_json::to_writer(File::create(path)?, self)?;
+        Ok(())
+    }
+
+    pub fn from_json(path: impl AsRef<Path>) -> Self {
+        if let Ok(file) = File::open(path) {
+            serde_json::from_reader(file).unwrap_or_default()
+        } else {
+            Self::default()
+        }
+    }
+
+    pub fn get_new_songs(&mut self, conf: &Config) {
+        if Self::add_new_songs(&mut self.songs, conf) {
+            _ = self.to_json(&conf.library_path);
+        }
+    }
+
+    fn add_new_songs(songs: &mut Vec<Song>, conf: &Config) -> bool {
+        let mut new_songs = false;
+
+        for dir in &conf.search_paths {
+            let dir = match read_dir(dir) {
+                Ok(dir) => dir,
+                Err(_) => continue
+            };
+
+            for f in dir {
+                let f = match f {
+                    Ok(f) => f,
+                    Err(_) => continue,
+                };
+
+                let ftype = match f.file_type() {
+                    Ok(ft) => ft,
+                    Err(_) => continue,
+                };
+
+                if ftype.is_dir() {
+                    continue;
+                }
+
+                let path = f.path();
+
+                if let Some(fe) = path.extension() {
+                    if !conf.audio_extensions.iter().any(|e| fe == e.as_str()) {
+                        continue;
+                    }
+                } else {
+                    continue;
+                }
+
+                if songs.iter().any(|s| *s.path() == path) {
+                    continue;
+                }
+
+                new_songs = true;
+
+                println!("{:?}", path);
+
+                if let Ok(song) = Song::from_path(path) {
+                    println!("new song");
+                    songs.push(song);
+                }
+            }
+        }
+
+        new_songs
     }
 }
 

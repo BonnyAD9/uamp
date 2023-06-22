@@ -2,8 +2,9 @@ use std::path::{Path, PathBuf};
 
 use audiotags::Tag;
 use eyre::Result;
+use serde_derive::{Serialize, Deserialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Song {
     path: PathBuf,
     title: String,
