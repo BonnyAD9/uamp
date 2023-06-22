@@ -1,6 +1,5 @@
 use std::{borrow::Cow, fmt::Debug};
 
-use dyn_clone::DynClone;
 use iced::widget;
 use iced_native::{
     event::Status,
@@ -32,6 +31,7 @@ pub trait IteratorFn:
     Sync + Send + Fn(&Library) -> Box<dyn Iterator<Item = usize>>
 {
 }
+
 impl<F> IteratorFn for F where
     F: Sync
         + Send
