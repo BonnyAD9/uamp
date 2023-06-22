@@ -6,7 +6,7 @@ use crate::{
     library::Library,
     player::Player,
     theme::Theme,
-    wid::{Command, Element},
+    wid::{Command, Element}, uamp_gui::{GuiState, self},
 };
 
 use self::PlayState::{Paused, Playing, Stopped};
@@ -18,6 +18,8 @@ pub struct UampApp {
 
     pub theme: Theme,
 
+    pub gui: GuiState,
+
     pub now_playing: PlayState,
 }
 
@@ -25,6 +27,7 @@ pub struct UampApp {
 pub enum UampMessage {
     PlaySong(usize),
     PlayPause,
+    Gui(uamp_gui::Message)
 }
 
 impl Application for UampApp {
@@ -48,6 +51,7 @@ impl Application for UampApp {
                 self.player.play_pause();
                 self.now_playing.play_pause();
             }
+            UampMessage::Gui(msg) => return self.gui_event(msg),
         };
         Command::none()
     }
@@ -82,6 +86,7 @@ impl Default for UampApp {
             library: lib,
             player,
             theme: Theme::default(),
+            gui: GuiState::default(),
             now_playing: Stopped,
         }
     }
@@ -91,7 +96,7 @@ impl Default for UampApp {
 pub enum PlayState {
     Stopped,
     Playing(usize),
-    Paused(usize),
+    Paused(usize)
 }
 
 impl PlayState {

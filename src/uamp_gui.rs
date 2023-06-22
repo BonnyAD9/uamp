@@ -7,17 +7,40 @@ use crate::{
     text,
     theme::Button,
     uamp_app::{UampApp, UampMessage as Msg},
-    wid::{button, svg, wrap_box, Element},
+    wid::{button, svg, wrap_box, Element, Command},
 };
 
+#[derive(Clone, Copy, Debug)]
+pub enum Message {
+
+}
+
+enum MainPage {
+    Songs,
+}
+
+pub struct GuiState {
+    page: MainPage
+}
+
 impl UampApp {
+    pub fn gui_event(&mut self, _message: Message) -> Command {
+        Command::none()
+    }
+
     pub fn gui(&self) -> Element {
         col![
-            self.song_list(self.library.filter(Filter::All)),
+            self.main_page(),
             self.play_menu(),
             //event_capture(|e, m, c| self.events(e, m, c))
         ]
         .into()
+    }
+
+    pub fn main_page(&self) -> Element {
+        match self.gui.page {
+            MainPage::Songs => self.song_list(self.library.filter(Filter::All)),
+        }
     }
 
     // song list
@@ -69,5 +92,17 @@ impl UampApp {
             .width(30)
             .on_press(Msg::PlayPause)
             .into()
+    }
+}
+
+impl GuiState {
+    pub fn new() -> Self {
+        GuiState { page: MainPage::Songs }
+    }
+}
+
+impl Default for GuiState {
+    fn default() -> Self {
+        GuiState::new()
     }
 }
