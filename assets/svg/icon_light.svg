@@ -27,8 +27,8 @@
     <circle cx="35" cy="35" r="4.5" fill="#000" />
     <circle cx="30" cy="85" r="4.5" fill="#000" />
     <!-- black round inward -->
-    <path d="M 53.65 37.65 A 1.5 1.5 0 0 1 51.62 38.28 L 55 45" fill="black"/>
-    <path d="M 46.35 62.35 A 1.5 1.5 0 0 1 48.38 61.72 L 45 55" fill="black"/>
+    <path d="M 53.65 37.65 A 1.5 1.5 0 0 1 51.62 38.28 L 55 45" fill="#000"/>
+    <path d="M 46.35 62.35 A 1.5 1.5 0 0 1 48.38 61.72 L 45 55" fill="#000"/>
 
     <!-- white outline -->
     <line x1="70" y1="15" x2="65" y2="65" stroke="#FFF" stroke-width="6"/>
