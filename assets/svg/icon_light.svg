@@ -4,7 +4,7 @@
 
 <svg viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg">
     <!-- suqre -->
-    <polygon points="50,10 90,50 50,90 10,50" fill="white" />
+    <!--polygon points="50,10 90,50 50,90 10,50" fill="white" /-->
     <line x1="50" y1="23" x2="77" y2="50" stroke="#000" stroke-width="4" />
     <!--line x1="77" y1="50" x2="50" y2="77" stroke="#000" stroke-width="4" /-->
     <line x1="50" y1="77" x2="23" y2="50" stroke="#000" stroke-width="4" />
