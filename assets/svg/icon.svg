@@ -1,5 +1,19 @@
 <?xml version="1.0" standalone="no"?>
+
+<!-- logo coded by hand for the uamp music player -->
+
 <svg viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <!-- suqre -->
+    <!--polygon points="50,10 90,50 50,90 10,50" /-->
+    <line x1="50" y1="23" x2="77" y2="50" stroke="#AAA" stroke-width="4" />
+    <!--line x1="77" y1="50" x2="50" y2="77" stroke="#AAA" stroke-width="4" /-->
+    <line x1="50" y1="77" x2="23" y2="50" stroke="#AAA" stroke-width="4" />
+    <!--line x1="23" y1="50" x2="50" y2="23" stroke="#AAA" stroke-width="4" /-->
+    <circle cx="50" cy="23" r="2" fill="#AAA" />
+    <circle cx="77" cy="50" r="2" fill="#AAA" />
+    <circle cx="50" cy="77" r="2" fill="#AAA" />
+    <circle cx="23" cy="50" r="2" fill="#AAA" />
+
     <!-- white outline -->
     <line x1="70" y1="15" x2="65" y2="65" stroke="white" stroke-width="6"/>
     <line x1="70" y1="15" x2="55" y2="45" stroke="white" stroke-width="6"/>
@@ -36,4 +50,7 @@
     <!-- yellow fill -->
     <polygon points="68,24 61,59 42,48 32,76 39,41 58,52" fill="#eecc00" />
 
+    <!-- suqre over -->
+    <line x1="77" y1="50" x2="50" y2="77" stroke="#AAA" stroke-width="4" />
+    <line x1="23" y1="50" x2="50" y2="23" stroke="#AAA" stroke-width="4" />
 </svg>
