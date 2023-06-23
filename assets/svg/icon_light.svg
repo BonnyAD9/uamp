@@ -4,7 +4,7 @@
 
 <svg viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg">
     <!-- suqre -->
-    <!--polygon points="50,10 90,50 50,90 10,50" fill="white" /-->
+    <polygon points="50,10 90,50 50,90 10,50" fill="white" />
     <line x1="50" y1="23" x2="77" y2="50" stroke="#000" stroke-width="4" />
     <!--line x1="77" y1="50" x2="50" y2="77" stroke="#000" stroke-width="4" /-->
     <line x1="50" y1="77" x2="23" y2="50" stroke="#000" stroke-width="4" />
@@ -27,8 +27,8 @@
     <circle cx="35" cy="35" r="4.5" fill="#000" />
     <circle cx="30" cy="85" r="4.5" fill="#000" />
     <!-- black round inward -->
-    <path d="M 53.9 37.15 A 2 2 0 0 1 51.2 38.07 L 55 45" fill="black"/>
-    <path d="M 46.1 62.85 A 2 2 0 0 1 48.8 61.93 L 45 55" fill="black"/>
+    <path d="M 53.65 37.65 A 1.5 1.5 0 0 1 51.62 38.28 L 55 45" fill="black"/>
+    <path d="M 46.35 62.35 A 1.5 1.5 0 0 1 48.38 61.72 L 45 55" fill="black"/>
 
     <!-- white outline -->
     <line x1="70" y1="15" x2="65" y2="65" stroke="#FFF" stroke-width="6"/>
