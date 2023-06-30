@@ -1,5 +1,5 @@
 use eyre::Result;
-use iced::{Application, Settings};
+use iced::{window, Application, Settings};
 use log::info;
 use uamp_app::UampApp;
 
@@ -20,7 +20,16 @@ fn main() -> Result<()> {
 
     info!("started");
 
-    UampApp::run(Settings::default())?;
+    let mut set = Settings::default();
+    set.window.icon = window::icon::from_rgba(
+        include_bytes!("../assets/raw_img/icon_64.data")
+            .to_owned()
+            .into(),
+        64,
+        64,
+    ).ok();
+
+    UampApp::run(set)?;
     Ok(())
 }
 

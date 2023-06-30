@@ -33,9 +33,7 @@ pub trait IteratorFn:
 }
 
 impl<F> IteratorFn for F where
-    F: Sync
-        + Send
-        + Fn(&Library) -> Box<dyn Iterator<Item = usize>>
+    F: Sync + Send + Fn(&Library) -> Box<dyn Iterator<Item = usize>>
 {
 }
 
