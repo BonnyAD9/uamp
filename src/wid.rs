@@ -27,22 +27,6 @@ pub type Space = widget::Space;
 pub type EventCapture<'a> =
     fancy_widgets::event_capture::EventCapture<'a, UampMessage>;
 
-pub trait IteratorFn:
-    Sync + Send + Fn(&Library) -> Box<dyn Iterator<Item = usize>>
-{
-}
-
-impl<F> IteratorFn for F where
-    F: Sync + Send + Fn(&Library) -> Box<dyn Iterator<Item = usize>>
-{
-}
-
-impl Debug for dyn IteratorFn {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Err(std::fmt::Error::default())
-    }
-}
-
 pub fn wrap_box<'a>(children: Vec<Element>) -> WrapBox {
     WrapBox::with_childern(children)
 }

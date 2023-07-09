@@ -9,7 +9,7 @@ use crate::{
     text,
     theme::Button,
     uamp_app::{UampApp, UampMessage as Msg},
-    wid::{button, svg, wrap_box, Command, Element, IteratorFn},
+    wid::{button, svg, wrap_box, Command, Element},
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -39,22 +39,20 @@ impl UampApp {
 
     pub fn main_page(&self) -> Element {
         match self.gui.page {
-            MainPage::Songs => self.song_list(|l| l.filter(Filter::All)),
+            MainPage::Songs => self.song_list(self.library.filter(Filter::All).collect()),
         }
     }
 
     // song list
 
-    fn song_list(&self, songs: impl IteratorFn + 'static) -> Element {
+    fn song_list(&self, songs: Arc<[usize]>) -> Element {
         let mut i = 0;
 
-        let songs = Arc::new(songs);
-
         wrap_box(
-            songs(&self.library)
+            songs.iter()
                 .map(|s| {
                     i += 1;
-                    self.song_list_item(s, s % 2 == 0, songs.clone())
+                    self.song_list_item(*s, s % 2 == 0, songs.clone())
                 })
                 .collect(),
         )
@@ -67,7 +65,7 @@ impl UampApp {
         &self,
         song: usize,
         even: bool,
-        songs: Arc<dyn IteratorFn>,
+        songs: Arc<[usize]>,
     ) -> Element<'static> {
         let style = if even {
             Button::ItemEven

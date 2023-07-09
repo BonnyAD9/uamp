@@ -9,7 +9,7 @@ use crate::{
     player::Player,
     theme::Theme,
     uamp_gui::{self, GuiState},
-    wid::{Command, Element, IteratorFn},
+    wid::{Command, Element},
 };
 
 pub struct UampApp {
@@ -27,7 +27,7 @@ pub struct UampApp {
 #[allow(missing_debug_implementations)]
 #[derive(Clone, Debug)]
 pub enum UampMessage {
-    PlaySong(usize, Arc<dyn IteratorFn>),
+    PlaySong(usize, Arc<[usize]>),
     PlayPause,
     Gui(uamp_gui::Message),
 }
@@ -48,8 +48,8 @@ impl Application for UampApp {
             UampMessage::PlaySong(index, songs) => {
                 self.now_playing.play_new(
                     &self.library,
-                    songs.as_ref(),
-                    index,
+                    songs,
+                    Some(index),
                 );
                 _ = self.player.play(
                     &self.library,
@@ -104,53 +104,50 @@ impl Default for UampApp {
 #[derive(Clone, Copy)]
 pub enum Playback {
     Stopped,
-    Playing(usize),
-    Paused(usize),
+    Playing,
+    Paused,
 }
 
 pub struct PlayState {
     playback: Playback,
-    playlist: Vec<usize>,
+    playlist: Arc<[usize]>,
+    current: Option<usize>,
 }
 
 impl PlayState {
     fn new() -> Self {
         PlayState {
             playback: Playback::Stopped,
-            playlist: Vec::new(),
+            playlist: [][..].into(),
+            current: None,
         }
     }
 
     pub fn play_pause(&mut self) {
         match self.playback {
             Playback::Stopped => {}
-            Playback::Playing(id) => {
-                self.playback = Playback::Paused(id);
+            Playback::Playing => {
+                self.playback = Playback::Paused;
             }
-            Playback::Paused(id) => {
-                self.playback = Playback::Playing(id);
+            Playback::Paused => {
+                self.playback = Playback::Playing;
             }
         };
     }
 
-    pub fn play_new<FI>(&mut self, library: &Library, songs: &FI, index: usize)
-    where
-        FI: IteratorFn + ?Sized,
+    pub fn play_new(&mut self, library: &Library, songs: Arc<[usize]>, index: Option<usize>)
     {
-        self.playlist = songs(library).collect();
-        self.playback = Playback::Playing(index);
+        self.playlist = songs;
+        self.playback = Playback::Playing;
+        self.current = index;
     }
 
     pub fn is_playing(&self) -> bool {
-        matches!(self.playback, Playback::Playing(_))
+        matches!(self.playback, Playback::Playing)
     }
 
     pub fn now_playing(&self) -> Option<usize> {
-        match self.playback {
-            Playback::Stopped => None,
-            Playback::Paused(s) => Some(self.playlist[s]),
-            Playback::Playing(s) => Some(self.playlist[s]),
-        }
+        self.current
     }
 }
 
