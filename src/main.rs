@@ -1,6 +1,6 @@
 use eyre::Result;
 use iced::{window, Application, Settings};
-use log::info;
+use log::{info, error};
 use uamp_app::UampApp;
 
 mod config;
@@ -20,17 +20,31 @@ fn main() -> Result<()> {
 
     info!("started");
 
-    let mut set = Settings::default();
-    set.window.icon = window::icon::from_rgba(
+    UampApp::run(make_settings())?;
+    Ok(())
+}
+
+fn make_settings() -> Settings<()> {
+    let icon = window::icon::from_rgba(
         include_bytes!("../assets/raw_img/icon_64.data")
             .to_owned()
             .into(),
         64,
         64,
-    ).ok();
+    );
 
-    UampApp::run(set)?;
-    Ok(())
+    if let Err(e) = &icon {
+        error!("Failed to set the icon: {e}");
+    }
+
+    Settings {
+        window: window::Settings {
+            icon: icon.ok(),
+            ..Default::default()
+        },
+        id: Some("uamp".to_owned()),
+        ..Default::default()
+    }
 }
 
 fn start_logger() -> Result<()> {
