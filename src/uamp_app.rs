@@ -47,7 +47,6 @@ impl Application for UampApp {
         match message {
             UampMessage::PlaySong(index, songs) => {
                 self.now_playing.play_new(
-                    &self.library,
                     songs,
                     Some(index),
                 );
@@ -135,7 +134,7 @@ impl PlayState {
         };
     }
 
-    pub fn play_new(&mut self, library: &Library, songs: Arc<[usize]>, index: Option<usize>)
+    pub fn play_new(&mut self, songs: Arc<[usize]>, index: Option<usize>)
     {
         self.playlist = songs;
         self.playback = Playback::Playing;
