@@ -1,6 +1,6 @@
 use eyre::Result;
 use iced::{window, Application, Settings};
-use log::{info, error};
+use log::{error, info};
 use uamp_app::UampApp;
 
 mod config;

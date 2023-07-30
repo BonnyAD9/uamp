@@ -14,7 +14,7 @@ impl Player {
     pub fn try_new() -> Result<Self> {
         Ok(Player {
             current: None,
-            sink: Sink::default_out()?
+            sink: Sink::default_out()?,
         })
     }
 

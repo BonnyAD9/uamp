@@ -39,7 +39,9 @@ impl UampApp {
 
     pub fn main_page(&self) -> Element {
         match self.gui.page {
-            MainPage::Songs => self.song_list(self.library.filter(Filter::All).collect()),
+            MainPage::Songs => {
+                self.song_list(self.library.filter(Filter::All).collect())
+            }
         }
     }
 
@@ -49,7 +51,8 @@ impl UampApp {
         let mut i = 0;
 
         wrap_box(
-            songs.iter()
+            songs
+                .iter()
                 .map(|s| {
                     i += 1;
                     self.song_list_item(*s, s % 2 == 0, songs.clone())

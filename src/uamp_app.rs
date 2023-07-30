@@ -46,10 +46,7 @@ impl Application for UampApp {
     fn update(&mut self, message: Self::Message) -> Command {
         match message {
             UampMessage::PlaySong(index, songs) => {
-                self.now_playing.play_new(
-                    songs,
-                    Some(index),
-                );
+                self.now_playing.play_new(songs, Some(index));
                 _ = self.player.play(
                     &self.library,
                     self.now_playing.now_playing().unwrap(),
@@ -134,8 +131,7 @@ impl PlayState {
         };
     }
 
-    pub fn play_new(&mut self, songs: Arc<[usize]>, index: Option<usize>)
-    {
+    pub fn play_new(&mut self, songs: Arc<[usize]>, index: Option<usize>) {
         self.playlist = songs;
         self.playback = Playback::Playing;
         self.current = index;

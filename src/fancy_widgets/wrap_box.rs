@@ -598,6 +598,11 @@ where
             return iced_native::event::Status::Ignored;
         }
 
+        let (cor_x, cor_y) = self.scroll_offset(state);
+
+        let cursor_position =
+            Point::new(cursor_position.x + cor_x, cursor_position.y + cor_y);
+
         self.visible_mut(view_size, state)
             .zip(child.children())
             .map(|((child, i), layout)| {
@@ -642,6 +647,11 @@ where
         if !view_bounds.contains(cursor_position) {
             return mouse::Interaction::Idle;
         }
+
+        let (cor_x, cor_y) = self.scroll_offset(state);
+
+        let cursor_position =
+            Point::new(cursor_position.x + cor_x, cursor_position.y + cor_y);
 
         self.visible(view_size, state)
             .zip(child.children())
@@ -1032,6 +1042,21 @@ where
         self.min_thumb_size
             .max(trough_height * bounds.height / content.height)
             .min(trough_height / 2.)
+    }
+
+    fn scroll_offset(&self, state: &State) -> (f32, f32) {
+        (
+            if self.item_width == 0. {
+                state.offset_x
+            } else {
+                state.offset_x % (self.item_width + self.spacing_x)
+            },
+            if self.item_height == 0. {
+                state.offset_y
+            } else {
+                state.offset_y % (self.item_height + self.spacing_y)
+            },
+        )
     }
 
     fn draw_scrollbar(
