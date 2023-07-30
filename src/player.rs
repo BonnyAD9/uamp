@@ -1,43 +1,30 @@
-use std::{fs::File, io::BufReader};
+use std::fs::File;
 
 use eyre::Result;
-use rodio::{Decoder, OutputStream, Sink};
+use raplay::{sink::Sink, source::symph::Symph};
 
 use crate::library::Library;
 
 pub struct Player {
     current: Option<usize>,
     sink: Sink,
-    _stream: OutputStream,
 }
 
 impl Player {
     pub fn try_new() -> Result<Self> {
-        let (stream, stream_handle) = OutputStream::try_default()?;
         Ok(Player {
             current: None,
-            sink: Sink::try_new(&stream_handle)?,
-            _stream: stream,
+            sink: Sink::default_out()?
         })
     }
 
     pub fn play(&mut self, lib: &Library, id: usize) -> Result<()> {
-        self.sink.stop();
-        let file = BufReader::new(File::open(lib[id].path())?);
-        self.current = Some(id);
-        let source = Decoder::new(file)?;
-        self.sink.append(source);
-        self.sink.play();
-        Ok(())
+        let file = File::open(lib[id].path())?;
+        let src = Symph::try_new(file)?;
+        self.sink.load(src, true)
     }
 
-    pub fn play_pause(&mut self) -> bool {
-        if self.sink.is_paused() {
-            self.sink.play();
-            true
-        } else {
-            self.sink.pause();
-            false
-        }
+    pub fn play_pause(&mut self) -> Result<()> {
+        self.sink.play(!self.sink.is_playing()?)
     }
 }
