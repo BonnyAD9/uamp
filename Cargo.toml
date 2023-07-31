@@ -10,8 +10,8 @@ audiotags = "0.4.1"
 dirs = "5.0.1"
 eyre = "0.6.8"
 flexi_logger = "0.25.5"
-iced = { version = "0.9.0", features = [ "svg" ] }
-iced_native = "0.10.3"
+iced = { version = "0.10.0", features = [ "svg" ] }
+iced_core = "0.10"
 log = "0.4.19"
 raplay = "0.1.2"
 serde = "1.0.163"

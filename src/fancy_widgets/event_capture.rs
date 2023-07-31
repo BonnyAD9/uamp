@@ -1,8 +1,8 @@
-use iced_native::{
+use iced_core::{
     event::Status,
     layout::{Limits, Node},
     widget::Tree,
-    Clipboard, Element, Event, Layout, Point, Shell, Size, Widget,
+    Clipboard, Element, Event, Layout, Shell, Size, Widget, Rectangle, mouse::Cursor,
 };
 
 // pseoudo-widget used for capturing events
@@ -12,14 +12,14 @@ where
     Message: 'a,
 {
     handle: Box<
-        dyn Fn(Event, Point, &mut dyn Clipboard) -> (Option<Message>, Status)
+        dyn Fn(Event, Cursor, &mut dyn Clipboard) -> (Option<Message>, Status)
             + 'a,
     >,
 }
 
 impl<'a, Message> EventCapture<'a, Message> {
     pub fn new(
-        handle: impl Fn(Event, Point, &mut dyn Clipboard) -> (Option<Message>, Status)
+        handle: impl Fn(Event, Cursor, &mut dyn Clipboard) -> (Option<Message>, Status)
             + 'a,
     ) -> Self {
         EventCapture {
@@ -31,13 +31,13 @@ impl<'a, Message> EventCapture<'a, Message> {
 impl<'a, Message, Renderer> Widget<Message, Renderer>
     for EventCapture<'a, Message>
 where
-    Renderer: iced_native::Renderer,
+    Renderer: iced_core::Renderer,
 {
-    fn width(&self) -> iced_native::Length {
+    fn width(&self) -> iced_core::Length {
         0.into()
     }
 
-    fn height(&self) -> iced_native::Length {
+    fn height(&self) -> iced_core::Length {
         0.into()
     }
 
@@ -50,13 +50,14 @@ where
         _state: &mut Tree,
         event: Event,
         _layout: Layout<'_>,
-        cursor_position: Point,
+        cursor: Cursor,
         _renderer: &Renderer,
         clipboard: &mut dyn Clipboard,
         shell: &mut Shell<'_, Message>,
+        _viewport: &Rectangle
     ) -> Status {
         let (msg, status) =
-            self.handle.as_ref()(event, cursor_position, clipboard);
+            self.handle.as_ref()(event, cursor, clipboard);
         if let Some(msg) = msg {
             shell.publish(msg);
         }
@@ -65,13 +66,13 @@ where
 
     fn draw(
         &self,
-        _state: &iced_native::widget::Tree,
+        _state: &Tree,
         _renderer: &mut Renderer,
-        _theme: &<Renderer as iced_native::Renderer>::Theme,
-        _style: &iced_native::renderer::Style,
-        _layout: iced_native::Layout<'_>,
-        _cursor_position: iced_native::Point,
-        _viewport: &iced_native::Rectangle,
+        _theme: &<Renderer as iced_core::Renderer>::Theme,
+        _style: &iced_core::renderer::Style,
+        _layout: Layout<'_>,
+        _cursor_position: Cursor,
+        _viewport: &Rectangle,
     ) {
         _ = ()
     }
@@ -80,7 +81,7 @@ where
 impl<'a, Message, Renderer> From<EventCapture<'a, Message>>
     for Element<'a, Message, Renderer>
 where
-    Renderer: iced_native::Renderer,
+    Renderer: iced_core::Renderer,
 {
     fn from(value: EventCapture<'a, Message>) -> Self {
         Self::new(value)

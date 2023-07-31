@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use iced::{executor, Application};
-use iced_native::{event::Status, Clipboard, Event, Point};
+use iced_core::{event::Status, Clipboard, Event, Point};
 
 use crate::{
     config::Config,
@@ -53,7 +53,7 @@ impl Application for UampApp {
                 );
             }
             UampMessage::PlayPause => {
-                self.player.play_pause();
+                _ = self.player.play_pause();
                 self.now_playing.play_pause();
             }
             UampMessage::Gui(msg) => return self.gui_event(msg),

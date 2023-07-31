@@ -1,15 +1,15 @@
-use std::{borrow::Cow, fmt::Debug};
+use std::borrow::Cow;
 
 use iced::widget;
-use iced_native::{
+use iced_core::{
     event::Status,
     Clipboard, Event,
     Length::{self, Shrink},
-    Point,
+    mouse::Cursor,
 };
 
 use crate::{
-    fancy_widgets, library::Library, theme::Theme, uamp_app::UampMessage,
+    fancy_widgets, theme::Theme, uamp_app::UampMessage,
 };
 
 // collection of less generic types
@@ -102,7 +102,7 @@ pub fn nothing() -> Space {
 }
 
 pub fn event_capture<'a>(
-    handle: impl Fn(Event, Point, &mut dyn Clipboard) -> (Option<UampMessage>, Status)
+    handle: impl Fn(Event, Cursor, &mut dyn Clipboard) -> (Option<UampMessage>, Status)
         + 'a,
 ) -> EventCapture<'a> {
     EventCapture::new(handle)

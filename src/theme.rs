@@ -6,7 +6,7 @@ use iced::{
         radio, rule, scrollable, slider, svg, text, text_input, toggler,
     },
 };
-use iced_native::{Background, Color, Padding, Vector};
+use iced_core::{Background, Color, Padding, Vector};
 
 use crate::fancy_widgets::wrap_box;
 
@@ -68,7 +68,7 @@ impl button::StyleSheet for Theme {
         let default = button::Appearance {
             shadow_offset: Vector::ZERO,
             background: Some(SECONDARY_BG),
-            border_radius: RADIUS,
+            border_radius: RADIUS.into(),
             border_width: THICKNESS,
             border_color: OUTLINE,
             text_color: FOREGROUND,
@@ -134,7 +134,7 @@ impl checkbox::StyleSheet for Theme {
         checkbox::Appearance {
             background: SECONDARY_BG,
             icon_color: CONTRAST,
-            border_radius: RADIUS,
+            border_radius: RADIUS.into(),
             border_width: THICKNESS,
             border_color: OUTLINE,
             text_color: if is_checked { Some(CONTRAST) } else { None },
@@ -169,6 +169,7 @@ impl slider::StyleSheet for Theme {
             rail: slider::Rail {
                 colors: (OUTLINE, CONTRAST),
                 width: THICKNESS,
+                border_radius: RADIUS.into(),
             },
             handle: slider::Handle {
                 shape: slider::HandleShape::Circle { radius: 5. },
@@ -210,7 +211,7 @@ impl menu::StyleSheet for Theme {
             text_color: FOREGROUND,
             background: PRIMARY_BG,
             border_width: THICKNESS,
-            border_radius: RADIUS,
+            border_radius: RADIUS.into(),
             border_color: OUTLINE,
             selected_text_color: CONTRAST,
             selected_background: SELECTED_BG,
@@ -230,7 +231,7 @@ impl pick_list::StyleSheet for Theme {
             placeholder_color: DARK_FOREGROUND,
             handle_color: CONTRAST,
             background: SECONDARY_BG,
-            border_radius: RADIUS,
+            border_radius: RADIUS.into(),
             border_width: THICKNESS,
             border_color: OUTLINE,
         }
@@ -320,6 +321,15 @@ impl pane_grid::StyleSheet for Theme {
             width: THICKNESS,
         })
     }
+
+    fn hovered_region(&self, _style: &Self::Style) -> pane_grid::Appearance {
+        pane_grid::Appearance {
+            background: SELECTED_BG,
+            border_width: THICKNESS,
+            border_color: OUTLINE,
+            border_radius: RADIUS.into()
+        }
+    }
 }
 
 impl progress_bar::StyleSheet for Theme {
@@ -329,7 +339,7 @@ impl progress_bar::StyleSheet for Theme {
         progress_bar::Appearance {
             background: SECONDARY_BG,
             bar: CONTRAST_BG,
-            border_radius: RADIUS,
+            border_radius: RADIUS.into(),
         }
     }
 }
@@ -341,7 +351,7 @@ impl rule::StyleSheet for Theme {
         rule::Appearance {
             color: SELECTED,
             width: THICKNESS as u16,
-            radius: RADIUS,
+            radius: RADIUS.into(),
             fill_mode: rule::FillMode::Full,
         }
     }
@@ -361,12 +371,12 @@ impl scrollable::StyleSheet for Theme {
     fn active(&self, _style: &Self::Style) -> scrollable::Scrollbar {
         scrollable::Scrollbar {
             background: None,
-            border_radius: RADIUS,
+            border_radius: RADIUS.into(),
             border_width: THICKNESS,
             border_color: OUTLINE,
             scroller: scrollable::Scroller {
                 color: PRIMARY,
-                border_radius: RADIUS,
+                border_radius: RADIUS.into(),
                 border_width: THICKNESS,
                 border_color: OUTLINE,
             },
@@ -424,7 +434,7 @@ impl text_input::StyleSheet for Theme {
     fn active(&self, _style: &Self::Style) -> text_input::Appearance {
         text_input::Appearance {
             background: SECONDARY_BG,
-            border_radius: RADIUS,
+            border_radius: RADIUS.into(),
             border_width: THICKNESS,
             border_color: OUTLINE,
             icon_color: PRIMARY,

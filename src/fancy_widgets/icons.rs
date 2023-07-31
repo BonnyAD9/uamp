@@ -1,4 +1,4 @@
-use iced_native::svg::Handle;
+use iced_core::svg::Handle;
 
 pub const POINT_UP: SvgData =
     SvgData::new(include_bytes!("../../assets/svg/point_up.svg").as_slice());

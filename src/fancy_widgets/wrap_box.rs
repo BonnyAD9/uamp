@@ -1,16 +1,18 @@
 use std::vec;
 
-use iced_native::{
+use iced_core::{
     color, event,
     layout::{Limits, Node},
     mouse::{self, Button, ScrollDelta},
     overlay::Group,
-    renderer::{self, BorderRadius, Quad},
+    renderer::{self, Quad},
     svg,
     widget::{self, tree, Tree},
     Background, Color, Element, Layout, Length, Padding, Pixels, Point,
-    Rectangle, Size, Theme, Vector, Widget,
+    Rectangle, Size, Vector, Widget, BorderRadius, Clipboard, Shell, Event,
 };
+
+use iced::Theme;
 
 use self::ItemDirection::{
     BottomToTop, LeftToRight, RightToLeft, TopToBottom,
@@ -354,11 +356,11 @@ where
         tree.diff_children(&self.children);
     }
 
-    fn width(&self) -> iced_native::Length {
+    fn width(&self) -> iced_core::Length {
         self.width
     }
 
-    fn height(&self) -> iced_native::Length {
+    fn height(&self) -> iced_core::Length {
         self.height
     }
 
@@ -383,7 +385,7 @@ where
     fn operate(
         &self,
         tree: &mut Tree,
-        layout: iced_native::Layout<'_>,
+        layout: iced_core::Layout<'_>,
         renderer: &Renderer,
         operation: &mut dyn widget::Operation<Message>,
     ) {
@@ -395,7 +397,7 @@ where
 
         let view_size = self.pad_size(layout.bounds().size());
 
-        operation.container(None, &mut |operation| {
+        operation.container(None, layout.bounds(), &mut |operation| {
             self.visible(view_size, state)
                 .zip(child.children())
                 .for_each(|((child, i), layout)| {
@@ -412,19 +414,27 @@ where
     fn on_event(
         &mut self,
         tree: &mut Tree,
-        event: iced_native::Event,
+        event: Event,
         layout: Layout<'_>,
-        cursor_position: Point,
+        cursor: iced_core::mouse::Cursor,
         renderer: &Renderer,
-        clipboard: &mut dyn iced_native::Clipboard,
-        shell: &mut iced_native::Shell<'_, Message>,
-    ) -> iced_native::event::Status {
+        clipboard: &mut dyn Clipboard,
+        shell: &mut Shell<'_, Message>,
+        _viewport: &Rectangle,
+    ) -> event::Status {
         let state = tree.state.downcast_mut::<State>();
-        if matches!(event, iced_native::Event::Mouse(_))
+
+        let cursor_position = if let iced_core::mouse::Cursor::Available(cursor_position) = cursor {
+            cursor_position
+        } else {
+            return event::Status::Ignored
+        };
+
+        if matches!(event, Event::Mouse(_))
             && !layout.bounds().contains(cursor_position)
             && matches!(state.pressed, ScrollbarInteraction::None)
         {
-            return iced_native::event::Status::Ignored;
+            return event::Status::Ignored;
         }
 
         let mut owner = Node::default();
@@ -444,7 +454,7 @@ where
         let (first_o, last_o) = self.visible_pos(view_size, state);
 
         // scrolling
-        if let iced_native::Event::Mouse(mouse::Event::WheelScrolled {
+        if let Event::Mouse(mouse::Event::WheelScrolled {
             delta,
         }) = event
         {
@@ -463,7 +473,7 @@ where
         // mouse down
         if matches!(
             event,
-            iced_native::Event::Mouse(mouse::Event::ButtonPressed(
+            Event::Mouse(mouse::Event::ButtonPressed(
                 Button::Left
             ))
         ) {
@@ -523,7 +533,7 @@ where
         // mouse up
         if matches!(
             event,
-            iced_native::Event::Mouse(mouse::Event::ButtonReleased(
+            Event::Mouse(mouse::Event::ButtonReleased(
                 Button::Left
             ))
         ) {
@@ -592,10 +602,10 @@ where
             return event::Status::Captured;
         }
 
-        if matches!(event, iced_native::Event::Mouse(_))
+        if matches!(event, Event::Mouse(_))
             && !view_bounds.contains(cursor_position)
         {
-            return iced_native::event::Status::Ignored;
+            return event::Status::Ignored;
         }
 
         let (cor_x, cor_y) = self.scroll_offset(state);
@@ -610,10 +620,11 @@ where
                     &mut tree.children[i],
                     event.clone(),
                     layout,
-                    cursor_position,
+                    iced_core::mouse::Cursor::Available(cursor_position),
                     renderer,
                     clipboard,
                     shell,
+                    &layout.bounds()
                 )
             })
             .fold(event::Status::Ignored, event::Status::merge)
@@ -623,10 +634,16 @@ where
         &self,
         tree: &Tree,
         layout: Layout<'_>,
-        cursor_position: Point,
+        cursor: iced::mouse::Cursor,
         viewport: &Rectangle,
         renderer: &Renderer,
     ) -> mouse::Interaction {
+        let cursor_position = if let iced_core::mouse::Cursor::Available(cursor_position) = cursor {
+            cursor_position
+        } else {
+            return mouse::Interaction::Idle;
+        };
+
         if !layout.bounds().contains(cursor_position) {
             return mouse::Interaction::Idle;
         }
@@ -659,7 +676,7 @@ where
                 child.as_widget().mouse_interaction(
                     &tree.children[i],
                     layout,
-                    cursor_position,
+                    mouse::Cursor::Available(cursor_position),
                     viewport,
                     renderer,
                 )
@@ -672,10 +689,10 @@ where
         &self,
         tree: &Tree,
         renderer: &mut Renderer,
-        theme: &<Renderer as iced_native::Renderer>::Theme,
+        theme: &<Renderer as iced_core::Renderer>::Theme,
         style: &renderer::Style,
         layout: Layout<'_>,
-        cursor_position: Point,
+        cursor: iced::mouse::Cursor,
         _viewport: &Rectangle,
     ) {
         let state = tree.state.downcast_ref::<State>();
@@ -700,12 +717,18 @@ where
             Vector::new(-state.offset_x, -state.offset_y)
         };
 
-        let mouse_pos = if view_bounds.contains(cursor_position) {
-            cursor_position - offset
-        } else {
-            // don't count with the mouse if it is outside
-            Point::new(f32::INFINITY, f32::INFINITY)
+        let mouse_pos = match cursor {
+            mouse::Cursor::Available(cursor_position) => {
+                if view_bounds.contains(cursor_position) {
+                    mouse::Cursor::Available(cursor_position - offset)
+                } else {
+                    // don't count with the mouse if it is outside
+                    mouse::Cursor::Unavailable
+                }
+            },
+            mouse::Cursor::Unavailable => mouse::Cursor::Unavailable,
         };
+
         let child_viewport = Rectangle {
             x: view_bounds.x - state.offset_x,
             y: view_bounds.y - state.offset_y,
@@ -732,9 +755,10 @@ where
 
         if self.primary_scrollbar == Behaviour::Enabled {
             self.draw_scrollbar(
-                layout,
+                child,
+                layout.bounds(),
                 state,
-                cursor_position,
+                cursor,
                 renderer,
                 theme,
             );
@@ -746,7 +770,7 @@ where
         tree: &'b mut Tree,
         layout: Layout<'_>,
         renderer: &Renderer,
-    ) -> Option<iced_native::overlay::Element<'b, Message, Renderer>> {
+    ) -> Option<iced_core::overlay::Element<'b, Message, Renderer>> {
         let state = tree.state.downcast_ref::<State>();
 
         let mut owner = Node::default();
@@ -1062,26 +1086,25 @@ where
     fn draw_scrollbar(
         &self,
         layout: Layout,
+        bounds: Rectangle,
         state: &State,
-        cursor_position: Point,
+        cursor: mouse::Cursor,
         renderer: &mut Renderer,
         theme: &Renderer::Theme,
     ) {
-        let bounds = layout.bounds();
         // the childern.next will always be Some
         let view_size = self.pad_size(bounds.size());
-        let content_bounds = layout.children().next().unwrap().bounds();
+        let content_bounds = layout.bounds();
         let topleft =
             Point::new(bounds.width - self.scrollbar_width, bounds.y);
         let thumb_size = self.thumb_size(bounds, content_bounds.size());
         let (_, offset) = state.get_relative(view_size, content_bounds.size());
 
-        let mo_wrap = bounds.contains(cursor_position);
-        let mo_scroll = Rectangle::new(
+        let mo_wrap = cursor.is_over(bounds);
+        let mo_scroll = cursor.is_over(Rectangle::new(
             topleft,
             Size::new(self.scrollbar_width, bounds.height),
-        )
-        .contains(cursor_position);
+        ));
 
         // draw the wrap_box background
         theme
@@ -1096,7 +1119,7 @@ where
         let pos = MousePos::from_bools(
             mo_wrap,
             mo_scroll,
-            top_button.contains(cursor_position),
+            cursor.is_over(top_button),
         );
         let b_style = theme.button_style(
             &self.style,
@@ -1117,7 +1140,7 @@ where
         let pos = MousePos::from_bools(
             mo_wrap,
             mo_scroll,
-            bottom_button.contains(cursor_position),
+            cursor.is_over(bottom_button),
         );
         let b_style = theme.button_style(
             &self.style,
@@ -1139,7 +1162,7 @@ where
             let pos = MousePos::from_bools(
                 mo_wrap,
                 mo_scroll,
-                trough.contains(cursor_position),
+                cursor.is_over(trough),
             );
             let trough = Rectangle {
                 height: trough.height + thumb_size / 2.,
@@ -1156,7 +1179,7 @@ where
             let pos = MousePos::from_bools(
                 mo_wrap,
                 mo_scroll,
-                trough.contains(cursor_position),
+                cursor.is_over(trough),
             );
             let trough = Rectangle {
                 y: trough.y - thumb_size / 2.,
@@ -1173,7 +1196,7 @@ where
         let pos = MousePos::from_bools(
             mo_wrap,
             mo_scroll,
-            thumb.contains(cursor_position),
+            cursor.is_over(thumb),
         );
         theme
             .thumb_style(
