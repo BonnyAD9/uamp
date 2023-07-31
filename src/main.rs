@@ -1,5 +1,5 @@
 use eyre::Result;
-use iced::{window, Application, Settings};
+use iced::{window::{self, PlatformSpecific}, Application, Settings};
 use log::{error, info};
 use uamp_app::UampApp;
 
@@ -40,6 +40,9 @@ fn make_settings() -> Settings<()> {
     Settings {
         window: window::Settings {
             icon: icon.ok(),
+            platform_specific: PlatformSpecific {
+                application_id: "uamp".to_owned(),
+            },
             ..Default::default()
         },
         id: Some("uamp".to_owned()),
