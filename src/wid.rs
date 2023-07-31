@@ -52,7 +52,9 @@ macro_rules! button {
         crate::wid::button(text!($s))
     };
     ($fmt:literal, $($args:expr),+) => {
-        crate::wid::button(text!($fmt, $($args),+))
+        crate::wid::button(text!($fmt, $($args),+)
+            .width(iced::Length::Fill)
+            .height(iced::Length::Fill))
     };
 }
 

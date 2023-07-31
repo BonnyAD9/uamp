@@ -59,7 +59,7 @@ impl UampApp {
                 })
                 .collect(),
         )
-        .item_height(30)
+        .item_height(32)
         .from_layout_style(&self.theme)
         .into()
     }
