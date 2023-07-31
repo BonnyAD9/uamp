@@ -27,8 +27,8 @@ impl Player {
         self.sink.load(src, true)
     }
 
-    pub fn play_pause(&mut self) -> Result<()> {
-        self.sink.play(!self.sink.is_playing()?)
+    pub fn play_pause(&mut self, play: bool) -> Result<()> {
+        self.sink.play(play)
     }
 
     pub fn on_song_end<F: FnMut() + Send + 'static>(

@@ -63,8 +63,7 @@ impl Application for UampApp {
                 );
             }
             UampMessage::PlayPause => {
-                _ = self.player.play_pause();
-                self.now_playing.play_pause();
+                _ = self.player.play_pause(self.now_playing.play_pause());
             }
             UampMessage::Gui(msg) => return self.gui_event(msg),
             UampMessage::Async(msg) => return self.async_event(msg),
@@ -137,7 +136,9 @@ impl UampApp {
     fn async_event(&mut self, msg: AsyncMessage) -> Command {
         match msg {
             AsyncMessage::SongEnd => {
-                println!("Song end");
+                if let Some(s) = self.now_playing.play_next() {
+                    _ = self.player.play(&self.library, s);
+                }
             }
         }
 
@@ -167,16 +168,18 @@ impl PlayState {
         }
     }
 
-    pub fn play_pause(&mut self) {
+    pub fn play_pause(&mut self) -> bool {
         match self.playback {
-            Playback::Stopped => {}
+            Playback::Stopped => false,
             Playback::Playing => {
                 self.playback = Playback::Paused;
+                false
             }
             Playback::Paused => {
                 self.playback = Playback::Playing;
+                true
             }
-        };
+        }
     }
 
     pub fn play_new(&mut self, songs: Arc<[usize]>, index: Option<usize>) {
@@ -191,6 +194,28 @@ impl PlayState {
 
     pub fn now_playing(&self) -> Option<usize> {
         self.current
+    }
+
+    pub fn play_next(&mut self) -> Option<usize> {
+        match self.playback {
+            Playback::Stopped => None,
+            Playback::Playing => {
+                if let Some(mut cur) = self.current {
+                    cur += 1;
+                    if cur == self.playlist.len() {
+                        self.playback = Playback::Stopped;
+                        self.current = None;
+                        None
+                    } else {
+                        self.current = Some(cur);
+                        Some(self.playlist[cur])
+                    }
+                } else {
+                    None
+                }
+            },
+            Playback::Paused => todo!(),
+        }
     }
 }
 
