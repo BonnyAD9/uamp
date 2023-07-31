@@ -327,7 +327,7 @@ impl pane_grid::StyleSheet for Theme {
             background: SELECTED_BG,
             border_width: THICKNESS,
             border_color: OUTLINE,
-            border_radius: RADIUS.into()
+            border_radius: RADIUS.into(),
         }
     }
 }

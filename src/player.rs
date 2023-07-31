@@ -1,7 +1,10 @@
 use std::fs::File;
 
 use eyre::Result;
-use raplay::{sink::Sink, source::symph::Symph};
+use raplay::{
+    sink::{CallbackInfo, Sink},
+    source::symph::Symph,
+};
 
 use crate::library::Library;
 
@@ -26,5 +29,18 @@ impl Player {
 
     pub fn play_pause(&mut self) -> Result<()> {
         self.sink.play(!self.sink.is_playing()?)
+    }
+
+    pub fn on_song_end<F: FnMut() + Send + 'static>(
+        &mut self,
+        mut f: F,
+    ) -> Result<()>
+    where
+        &'static F: std::marker::Send,
+    {
+        self.sink.on_callback(Some(move |cb| match cb {
+            CallbackInfo::SourceEnded => f(),
+            _ => {}
+        }))
     }
 }

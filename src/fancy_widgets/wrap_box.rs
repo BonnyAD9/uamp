@@ -8,8 +8,8 @@ use iced_core::{
     renderer::{self, Quad},
     svg,
     widget::{self, tree, Tree},
-    Background, Color, Element, Layout, Length, Padding, Pixels, Point,
-    Rectangle, Size, Vector, Widget, BorderRadius, Clipboard, Shell, Event,
+    Background, BorderRadius, Clipboard, Color, Element, Event, Layout,
+    Length, Padding, Pixels, Point, Rectangle, Shell, Size, Vector, Widget,
 };
 
 use iced::Theme;
@@ -424,11 +424,14 @@ where
     ) -> event::Status {
         let state = tree.state.downcast_mut::<State>();
 
-        let cursor_position = if let iced_core::mouse::Cursor::Available(cursor_position) = cursor {
-            cursor_position
-        } else {
-            return event::Status::Ignored
-        };
+        let cursor_position =
+            if let iced_core::mouse::Cursor::Available(cursor_position) =
+                cursor
+            {
+                cursor_position
+            } else {
+                return event::Status::Ignored;
+            };
 
         if matches!(event, Event::Mouse(_))
             && !layout.bounds().contains(cursor_position)
@@ -454,10 +457,7 @@ where
         let (first_o, last_o) = self.visible_pos(view_size, state);
 
         // scrolling
-        if let Event::Mouse(mouse::Event::WheelScrolled {
-            delta,
-        }) = event
-        {
+        if let Event::Mouse(mouse::Event::WheelScrolled { delta }) = event {
             match delta {
                 ScrollDelta::Lines { x: _, y } => {
                     state.offset_y -= y * self.line_size();
@@ -473,9 +473,7 @@ where
         // mouse down
         if matches!(
             event,
-            Event::Mouse(mouse::Event::ButtonPressed(
-                Button::Left
-            ))
+            Event::Mouse(mouse::Event::ButtonPressed(Button::Left))
         ) {
             let bounds = layout.bounds();
             let (_, offset) = state.get_relative(view_size, content_size);
@@ -533,9 +531,7 @@ where
         // mouse up
         if matches!(
             event,
-            Event::Mouse(mouse::Event::ButtonReleased(
-                Button::Left
-            ))
+            Event::Mouse(mouse::Event::ButtonReleased(Button::Left))
         ) {
             captured = true;
 
@@ -624,7 +620,7 @@ where
                     renderer,
                     clipboard,
                     shell,
-                    &layout.bounds()
+                    &layout.bounds(),
                 )
             })
             .fold(event::Status::Ignored, event::Status::merge)
@@ -638,11 +634,14 @@ where
         viewport: &Rectangle,
         renderer: &Renderer,
     ) -> mouse::Interaction {
-        let cursor_position = if let iced_core::mouse::Cursor::Available(cursor_position) = cursor {
-            cursor_position
-        } else {
-            return mouse::Interaction::Idle;
-        };
+        let cursor_position =
+            if let iced_core::mouse::Cursor::Available(cursor_position) =
+                cursor
+            {
+                cursor_position
+            } else {
+                return mouse::Interaction::Idle;
+            };
 
         if !layout.bounds().contains(cursor_position) {
             return mouse::Interaction::Idle;
@@ -725,7 +724,7 @@ where
                     // don't count with the mouse if it is outside
                     mouse::Cursor::Unavailable
                 }
-            },
+            }
             mouse::Cursor::Unavailable => mouse::Cursor::Unavailable,
         };
 
@@ -1193,11 +1192,8 @@ where
 
         // draw the thumb
         let thumb = self.thumb_bounds(bounds, thumb_size, offset);
-        let pos = MousePos::from_bools(
-            mo_wrap,
-            mo_scroll,
-            cursor.is_over(thumb),
-        );
+        let pos =
+            MousePos::from_bools(mo_wrap, mo_scroll, cursor.is_over(thumb));
         theme
             .thumb_style(
                 &self.style,

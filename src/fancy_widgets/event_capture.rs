@@ -1,8 +1,9 @@
 use iced_core::{
     event::Status,
     layout::{Limits, Node},
+    mouse::Cursor,
     widget::Tree,
-    Clipboard, Element, Event, Layout, Shell, Size, Widget, Rectangle, mouse::Cursor,
+    Clipboard, Element, Event, Layout, Rectangle, Shell, Size, Widget,
 };
 
 // pseoudo-widget used for capturing events
@@ -54,10 +55,9 @@ where
         _renderer: &Renderer,
         clipboard: &mut dyn Clipboard,
         shell: &mut Shell<'_, Message>,
-        _viewport: &Rectangle
+        _viewport: &Rectangle,
     ) -> Status {
-        let (msg, status) =
-            self.handle.as_ref()(event, cursor, clipboard);
+        let (msg, status) = self.handle.as_ref()(event, cursor, clipboard);
         if let Some(msg) = msg {
             shell.publish(msg);
         }

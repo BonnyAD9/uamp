@@ -1,7 +1,8 @@
-use std::sync::Arc;
+use std::{cell::RefCell, sync::Arc};
 
 use iced::{executor, Application};
 use iced_core::{event::Status, Clipboard, Event, Point};
+use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
     config::Config,
@@ -17,6 +18,9 @@ pub struct UampApp {
     pub library: Library,
     pub player: Player,
 
+    pub sender: Arc<UnboundedSender<AsyncMessage>>,
+    pub reciever: RefCell<Option<UnboundedReceiver<AsyncMessage>>>,
+
     pub theme: Theme,
 
     pub gui: GuiState,
@@ -30,6 +34,12 @@ pub enum UampMessage {
     PlaySong(usize, Arc<[usize]>),
     PlayPause,
     Gui(uamp_gui::Message),
+    Async(AsyncMessage),
+}
+
+#[derive(Clone, Debug)]
+pub enum AsyncMessage {
+    SongEnd,
 }
 
 impl Application for UampApp {
@@ -57,6 +67,7 @@ impl Application for UampApp {
                 self.now_playing.play_pause();
             }
             UampMessage::Gui(msg) => return self.gui_event(msg),
+            UampMessage::Async(msg) => return self.async_event(msg),
         };
         Command::none()
     }
@@ -72,6 +83,17 @@ impl Application for UampApp {
     fn theme(&self) -> Theme {
         self.theme.clone()
     }
+
+    fn subscription(&self) -> iced::Subscription<Self::Message> {
+        iced::subscription::unfold(
+            "uamp async messages",
+            self.reciever.take(),
+            |mut reciever| async {
+                let msg = reciever.as_mut().unwrap().recv().await.unwrap();
+                (UampMessage::Async(msg), reciever)
+            },
+        )
+    }
 }
 
 impl Default for UampApp {
@@ -84,16 +106,42 @@ impl Default for UampApp {
         }
 
         // XXX: try to avoid unwrap
-        let player = Player::try_new().unwrap();
+        let mut player = Player::try_new().unwrap();
+
+        let (sender, reciever) = mpsc::unbounded_channel::<AsyncMessage>();
+        let sender = Arc::new(sender);
+
+        let send_clone = sender.clone();
+        _ = player.on_song_end(move || {
+            _ = send_clone.send(AsyncMessage::SongEnd);
+        });
 
         UampApp {
             config: conf,
             library: lib,
             player,
+
+            sender,
+            reciever: RefCell::new(Some(reciever)),
+
             theme: Theme::default(),
+
             gui: GuiState::default(),
+
             now_playing: PlayState::default(),
         }
+    }
+}
+
+impl UampApp {
+    fn async_event(&mut self, msg: AsyncMessage) -> Command {
+        match msg {
+            AsyncMessage::SongEnd => {
+                println!("Song end");
+            }
+        }
+
+        Command::none()
     }
 }
 

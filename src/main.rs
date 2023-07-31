@@ -1,5 +1,8 @@
 use eyre::Result;
-use iced::{window::{self, PlatformSpecific}, Application, Settings};
+use iced::{
+    window::{self, PlatformSpecific},
+    Application, Settings,
+};
 use log::{error, info};
 use uamp_app::UampApp;
 

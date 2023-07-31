@@ -3,14 +3,12 @@ use std::borrow::Cow;
 use iced::widget;
 use iced_core::{
     event::Status,
+    mouse::Cursor,
     Clipboard, Event,
     Length::{self, Shrink},
-    mouse::Cursor,
 };
 
-use crate::{
-    fancy_widgets, theme::Theme, uamp_app::UampMessage,
-};
+use crate::{fancy_widgets, theme::Theme, uamp_app::UampMessage};
 
 // collection of less generic types
 
