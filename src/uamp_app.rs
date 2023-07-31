@@ -213,7 +213,7 @@ impl PlayState {
                 } else {
                     None
                 }
-            },
+            }
             Playback::Paused => todo!(),
         }
     }

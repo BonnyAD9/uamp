@@ -9,14 +9,12 @@ use raplay::{
 use crate::library::Library;
 
 pub struct Player {
-    current: Option<usize>,
     sink: Sink,
 }
 
 impl Player {
     pub fn try_new() -> Result<Self> {
         Ok(Player {
-            current: None,
             sink: Sink::default_out()?,
         })
     }
