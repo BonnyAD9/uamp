@@ -7,7 +7,10 @@ use std::{
 };
 
 #[derive(Clone, Serialize, Deserialize)]
-#[serde(tag = "$schema", rename = "https://raw.githubusercontent.com/BonnyAD9/uamp/master/other/json_schema/config_schema.json")]
+#[serde(
+    tag = "$schema",
+    rename = "https://raw.githubusercontent.com/BonnyAD9/uamp/master/other/json_schema/config_schema.json"
+)]
 pub struct Config {
     #[serde(skip_serializing, default = "default_config_path")]
     config_path: PathBuf,

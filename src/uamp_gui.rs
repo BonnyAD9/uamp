@@ -50,9 +50,7 @@ impl UampApp {
     fn song_list(&self, songs: Arc<[SongId]>) -> Element {
         wrap_box(
             (0..songs.len())
-                .map(|i| {
-                    self.song_list_item(i, songs.clone())
-                })
+                .map(|i| self.song_list_item(i, songs.clone()))
                 .collect(),
         )
         .item_height(32)
