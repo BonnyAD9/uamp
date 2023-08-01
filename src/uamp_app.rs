@@ -11,7 +11,7 @@ use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
     config::{app_id, Config},
-    library::Library,
+    library::{Library, SongId},
     player::Player,
     theme::Theme,
     uamp_gui::{self, GuiState},
@@ -37,7 +37,7 @@ pub struct UampApp {
 #[allow(missing_debug_implementations)]
 #[derive(Clone, Debug)]
 pub enum UampMessage {
-    PlaySong(usize, Arc<[usize]>),
+    PlaySong(usize, Arc<[SongId]>),
     PlayPause,
     Gui(uamp_gui::Message),
     Async(AsyncMessage),
@@ -216,7 +216,7 @@ pub enum Playback {
 
 pub struct PlayState {
     playback: Playback,
-    playlist: Arc<[usize]>,
+    playlist: Arc<[SongId]>,
     current: Option<usize>,
 }
 
@@ -243,7 +243,7 @@ impl PlayState {
         }
     }
 
-    pub fn play_new(&mut self, songs: Arc<[usize]>, index: Option<usize>) {
+    pub fn play_new(&mut self, songs: Arc<[SongId]>, index: Option<usize>) {
         self.playlist = songs;
         self.playback = Playback::Playing;
         self.current = index;
@@ -253,11 +253,11 @@ impl PlayState {
         matches!(self.playback, Playback::Playing)
     }
 
-    pub fn now_playing(&self) -> Option<usize> {
-        self.current
+    pub fn now_playing(&self) -> Option<SongId> {
+        self.current.map(|i| self.playlist[i])
     }
 
-    pub fn play_next(&mut self) -> Option<usize> {
+    pub fn play_next(&mut self) -> Option<SongId> {
         match self.playback {
             Playback::Stopped => None,
             Playback::Playing => {

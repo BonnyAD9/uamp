@@ -6,7 +6,7 @@ use raplay::{
     source::symph::Symph,
 };
 
-use crate::library::Library;
+use crate::library::{Library, SongId};
 
 pub struct Player {
     sink: Sink,
@@ -19,7 +19,7 @@ impl Player {
         })
     }
 
-    pub fn play(&mut self, lib: &Library, id: usize) -> Result<()> {
+    pub fn play(&mut self, lib: &Library, id: SongId) -> Result<()> {
         let file = File::open(lib[id].path())?;
         let src = Symph::try_new(file)?;
         self.sink.load(src, true)

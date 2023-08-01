@@ -5,7 +5,7 @@ use iced_core::Length::Fill;
 use crate::{
     button, col,
     fancy_widgets::icons,
-    library::Filter,
+    library::{Filter, SongId},
     text,
     theme::Button,
     uamp_app::{UampApp, UampMessage as Msg},
@@ -47,15 +47,11 @@ impl UampApp {
 
     // song list
 
-    fn song_list(&self, songs: Arc<[usize]>) -> Element {
-        let mut i = 0;
-
+    fn song_list(&self, songs: Arc<[SongId]>) -> Element {
         wrap_box(
-            songs
-                .iter()
-                .map(|s| {
-                    i += 1;
-                    self.song_list_item(*s, s % 2 == 0, songs.clone())
+            (0..songs.len())
+                .map(|i| {
+                    self.song_list_item(i, songs.clone())
                 })
                 .collect(),
         )
@@ -67,16 +63,15 @@ impl UampApp {
     fn song_list_item(
         &self,
         song: usize,
-        even: bool,
-        songs: Arc<[usize]>,
+        songs: Arc<[SongId]>,
     ) -> Element<'static> {
-        let style = if even {
+        let style = if song % 2 == 0 {
             Button::ItemEven
         } else {
             Button::ItemOdd
         };
 
-        let s = &self.library[song];
+        let s = &self.library[songs[song]];
 
         button!("{} - {}", s.artist(), s.title())
             .on_press(Msg::PlaySong(song, songs))
