@@ -1,4 +1,9 @@
-use std::{cell::RefCell, sync::Arc};
+use std::{
+    cell::RefCell,
+    io::{BufReader, BufWriter, Read},
+    net::TcpListener,
+    sync::Arc,
+};
 
 use eyre::Result;
 use global_hotkey::{
@@ -10,8 +15,9 @@ use iced_core::{event::Status, Clipboard, Event, Point};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
-    config::{app_id, Config},
+    config::{app_id, default_port, Config},
     library::{Library, SongId},
+    messenger::{self, Messenger},
     player::Player,
     theme::Theme,
     uamp_gui::{self, GuiState},
@@ -32,6 +38,7 @@ pub struct UampApp {
     pub now_playing: PlayState,
 
     pub hotkey_mgr: Option<GlobalHotKeyManager>,
+    pub listener: RefCell<Option<TcpListener>>,
 }
 
 #[allow(missing_debug_implementations)]
@@ -101,21 +108,45 @@ impl Application for UampApp {
                     (UampMessage::Async(msg), reciever)
                 },
             ),
-            /*iced::subscription::events_with(|e, s| {
-                match e {
-                    Event::Keyboard(k) => match k {
-                        iced_core::keyboard::Event::KeyPressed { key_code, modifiers } => {
-                            if key_code == KeyCode::Home && modifiers.control() && modifiers.alt() {
-                                Some(UampMessage::PlayPause)
-                            } else {
-                                None
+            iced::subscription::unfold(
+                app_id() + " server",
+                self.listener.take(),
+                |listener| async {
+                    let listener = listener.unwrap();
+
+                    loop {
+                        let stream = listener.accept().unwrap();
+                        let mut msgr = Messenger::try_new(&stream.0).unwrap();
+
+                        let msg = msgr.recieve();
+                        println!("recieve: {msg:?}");
+
+                        let msg = match msg {
+                            Ok(m) => m,
+                            Err(e) => {
+                                _ = msgr.send(messenger::error(
+                                    messenger::ErrorType::DeserializeFailed,
+                                    e.to_string(),
+                                ));
+                                continue;
                             }
-                        },
-                        _ => None,
-                    },
-                    _ => None
-                }
-            })*/
+                        };
+
+                        let msg = if let Some(msg) = msg.control() {
+                            msg
+                        } else {
+                            _ = msgr.send(messenger::Message::new_error(
+                                messenger::ErrorType::ExpectedControl,
+                            ));
+                            continue;
+                        };
+
+                        _ = msgr.send(messenger::Message::Success);
+
+                        break (msg.into(), Some(listener));
+                    }
+                },
+            ),
         ])
     }
 }
@@ -159,8 +190,8 @@ impl Default for UampApp {
 
             now_playing: PlayState::default(),
 
-            // XXX: avoid unwrap
             hotkey_mgr,
+            listener: RefCell::new(Self::start_server().ok()),
         }
     }
 }
@@ -204,6 +235,10 @@ impl UampApp {
         ));
 
         Ok(hotkey_mgr)
+    }
+
+    fn start_server() -> Result<TcpListener> {
+        Ok(TcpListener::bind(format!("127.0.0.1:{}", default_port()))?)
     }
 }
 
@@ -296,6 +331,14 @@ impl UampApp {
         println!("{event:?}");
         match event {
             _ => (None, Status::Ignored),
+        }
+    }
+}
+
+impl From<messenger::Control> for UampMessage {
+    fn from(value: messenger::Control) -> Self {
+        match value {
+            messenger::Control::PlayPause => UampMessage::PlayPause,
         }
     }
 }

@@ -145,3 +145,14 @@ fn default_update_library_on_start() -> bool {
 fn default_register_global_hotkeys() -> bool {
     false
 }
+
+pub fn default_port() -> u16 {
+    #[cfg(not(debug_assertions))]
+    {
+        8267
+    }
+    #[cfg(debug_assertions)]
+    {
+        33284
+    }
+}
