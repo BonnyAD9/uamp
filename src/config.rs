@@ -18,8 +18,8 @@ pub struct Config {
     pub audio_extensions: Vec<String>,
     #[serde(default = "default_update_library_on_start")]
     pub update_library_on_start: bool,
-    #[serde(default = "default_register_global_hotkes")]
-    pub register_global_hotkes: bool,
+    #[serde(default = "default_register_global_hotkeys")]
+    pub register_global_hotkeys: bool,
 }
 
 impl Default for Config {
@@ -81,7 +81,7 @@ impl Config {
             library_path: default_library_path(),
             audio_extensions: default_audio_extensions(),
             update_library_on_start: default_update_library_on_start(),
-            register_global_hotkes: default_register_global_hotkes(),
+            register_global_hotkeys: default_register_global_hotkeys(),
         }
     }
 }
@@ -138,6 +138,6 @@ fn default_update_library_on_start() -> bool {
     false
 }
 
-fn default_register_global_hotkes() -> bool {
+fn default_register_global_hotkeys() -> bool {
     false
 }

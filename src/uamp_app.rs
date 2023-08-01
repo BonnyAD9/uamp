@@ -140,7 +140,7 @@ impl Default for UampApp {
             _ = send_clone.send(AsyncMessage::SongEnd);
         });
 
-        let hotkey_mgr = if conf.register_global_hotkes {
+        let hotkey_mgr = if conf.register_global_hotkeys {
             Self::register_hotkeys(sender.clone()).ok()
         } else {
             None
