@@ -28,6 +28,7 @@ mod wid;
 
 enum Action {
     Message(messenger::Message),
+    Exit,
 }
 
 #[derive(Default)]
@@ -58,6 +59,7 @@ fn main() -> Result<()> {
                     println!("Unexpected result: {res:?}");
                 }
             },
+            Action::Exit => return Ok(()),
         }
     }
 
@@ -101,7 +103,7 @@ fn start_logger() -> Result<()> {
     Ok(())
 }
 
-fn parse_args<'a>(mut args: impl Iterator<Item = &'a str>) -> Result<Args> {
+fn parse_args<'a>(args: impl Iterator<Item = &'a str>) -> Result<Args> {
     let mut res = Args::default();
 
     macro_rules! ret_err {
@@ -110,17 +112,23 @@ fn parse_args<'a>(mut args: impl Iterator<Item = &'a str>) -> Result<Args> {
         };
     }
 
+    macro_rules! next {
+        ($iter:ident, $after:literal) => {
+            match $iter.next() {
+                Some(a) => a,
+                None => {
+                    ret_err!("Expected instance action after '{}'", $after)
+                }
+            }
+        }
+    }
+
     let mut args = args.skip(1);
 
     while let Some(a) = args.next() {
         match a {
-            "instance" => {
-                let a = match args.next() {
-                    Some(a) => a,
-                    None => {
-                        ret_err!("Expected instance action after 'instance'")
-                    }
-                };
+            "i" | "instance" => {
+                let a = next!(args, "instance");
 
                 match a {
                     "play-pause" | "pp" => res.actions.push(Action::Message(
@@ -130,6 +138,10 @@ fn parse_args<'a>(mut args: impl Iterator<Item = &'a str>) -> Result<Args> {
                     )),
                     _ => ret_err!("Invalid argument '{a}' after 'instance'"),
                 }
+            }
+            "h" | "help" | "-h" | "--help" | "-?" => {
+                help();
+                res.actions.push(Action::Exit);
             }
             a => ret_err!("Invalid argument '{a}'"),
         }
@@ -148,4 +160,27 @@ fn send_message(msg: messenger::Message) -> Result<messenger::Message> {
     msgr.send(msg)?;
 
     msgr.recieve()
+}
+
+fn help() {
+    println!("Welcome in uamp by BonnyAD9
+Version 0.1.0
+
+Usage:
+  uamp
+    starts the gui of the player
+
+  uamp [action]
+    does the given action
+
+Actions:
+  i instance [instance action]
+    operates on a running instance of uamp
+
+  h help -h -? --help
+    shows this help
+
+Instance actions:
+  pp play-pause
+    toggle between the states playing and paused")
 }
