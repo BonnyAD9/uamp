@@ -119,10 +119,7 @@ impl Library {
 
                 new_songs = true;
 
-                println!("{:?}", path);
-
                 if let Ok(song) = Song::from_path(path) {
-                    println!("new song");
                     songs.push(song);
                 }
             }

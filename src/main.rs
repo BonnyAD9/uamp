@@ -1,3 +1,4 @@
+use config::app_id;
 use eyre::Result;
 use iced::{
     window::{self, PlatformSpecific},
@@ -44,11 +45,11 @@ fn make_settings() -> Settings<()> {
         window: window::Settings {
             icon: icon.ok(),
             platform_specific: PlatformSpecific {
-                application_id: "uamp".to_owned(),
+                application_id: app_id(),
             },
             ..Default::default()
         },
-        id: Some("uamp".to_owned()),
+        id: Some(app_id()),
         ..Default::default()
     }
 }

@@ -1,11 +1,11 @@
 use std::{cell::RefCell, sync::Arc};
 
 use iced::{executor, Application};
-use iced_core::{event::Status, Clipboard, Event, Point};
+use iced_core::{event::Status, Clipboard, Event, Point, keyboard::{KeyCode, Modifiers}};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
-    config::Config,
+    config::{Config, app_id},
     library::Library,
     player::Player,
     theme::Theme,
@@ -84,14 +84,31 @@ impl Application for UampApp {
     }
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
-        iced::subscription::unfold(
-            "uamp async messages",
-            self.reciever.take(),
-            |mut reciever| async {
-                let msg = reciever.as_mut().unwrap().recv().await.unwrap();
-                (UampMessage::Async(msg), reciever)
-            },
-        )
+        iced::Subscription::batch([
+            iced::subscription::unfold(
+                app_id() + " async msg",
+                self.reciever.take(),
+                |mut reciever| async {
+                    let msg = reciever.as_mut().unwrap().recv().await.unwrap();
+                    (UampMessage::Async(msg), reciever)
+                },
+            ),
+            /*iced::subscription::events_with(|e, s| {
+                match e {
+                    Event::Keyboard(k) => match k {
+                        iced_core::keyboard::Event::KeyPressed { key_code, modifiers } => {
+                            if key_code == KeyCode::Home && modifiers.control() && modifiers.alt() {
+                                Some(UampMessage::PlayPause)
+                            } else {
+                                None
+                            }
+                        },
+                        _ => None,
+                    },
+                    _ => None
+                }
+            })*/
+        ])
     }
 }
 

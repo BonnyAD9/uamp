@@ -84,9 +84,20 @@ impl Config {
     }
 }
 
+pub fn app_id() -> String {
+    #[cfg(not(debug_assertions))]
+    { "uamp".to_owned() }
+    #[cfg(debug_assertions)]
+    { "uamp_debug".to_owned() }
+}
+
 pub fn default_config_path() -> PathBuf {
     if let Some(dir) = dirs::config_dir() {
-        dir.join("uamp")
+        // use different path when debugging to not ruin existing config
+        #[cfg(not(debug_assertions))]
+        { dir.join("uamp") }
+        #[cfg(debug_assertions)]
+        { dir.join("uamp_debug") }
     } else {
         PathBuf::from(".")
     }
