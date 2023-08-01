@@ -1,0 +1,40 @@
+{
+    "$schema": "http://json-schema.org/schema",
+    "$id": "https://raw.githubusercontent.com/BonnyAD9/uamp/master/other/json_schema/config_schema.json",
+    "title": "uamp config file",
+    "description": "Config file for uamp (audio player)",
+    "type": "object",
+    "properties": {
+        "$schema": {
+            "type": "string",
+            "description": "The thing that gives you this description"
+        },
+        "search_paths": {
+            "description": "Paths where to search for music",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "library_path": {
+            "description": "Absolute path to the json file with the library",
+            "type": "string"
+        },
+        "audio_extensions": {
+            "description": "File extensions that are checked as music",
+            "type": "array",
+            "items": {
+                "type": "string",
+                "pattern": "^[^\\.]*$"
+            }
+        },
+        "update_library_on_start": {
+            "description": "when true, uamp will search for new songs every time on start",
+            "type": "boolean"
+        },
+        "register_global_hotkeys": {
+            "description": "When true uamp will try to register global hotkeys (they don't properly work with wayland)",
+            "type": "boolean"
+        }
+    }
+}
