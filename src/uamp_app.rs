@@ -1,11 +1,16 @@
 use std::{cell::RefCell, sync::Arc};
 
+use eyre::Result;
+use global_hotkey::{
+    hotkey::{self, Code, HotKey},
+    GlobalHotKeyEvent, GlobalHotKeyManager,
+};
 use iced::{executor, Application};
-use iced_core::{event::Status, Clipboard, Event, Point, keyboard::{KeyCode, Modifiers}};
+use iced_core::{event::Status, Clipboard, Event, Point};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
-    config::{Config, app_id},
+    config::{app_id, Config},
     library::Library,
     player::Player,
     theme::Theme,
@@ -22,10 +27,11 @@ pub struct UampApp {
     pub reciever: RefCell<Option<UnboundedReceiver<AsyncMessage>>>,
 
     pub theme: Theme,
-
     pub gui: GuiState,
 
     pub now_playing: PlayState,
+
+    pub hotkey_mgr: Option<GlobalHotKeyManager>,
 }
 
 #[allow(missing_debug_implementations)]
@@ -40,6 +46,7 @@ pub enum UampMessage {
 #[derive(Clone, Debug)]
 pub enum AsyncMessage {
     SongEnd,
+    PlayPause,
 }
 
 impl Application for UampApp {
@@ -62,7 +69,8 @@ impl Application for UampApp {
                     self.now_playing.now_playing().unwrap(),
                 );
             }
-            UampMessage::PlayPause => {
+            UampMessage::PlayPause
+            | UampMessage::Async(AsyncMessage::PlayPause) => {
                 _ = self.player.play_pause(self.now_playing.play_pause());
             }
             UampMessage::Gui(msg) => return self.gui_event(msg),
@@ -72,7 +80,7 @@ impl Application for UampApp {
     }
 
     fn title(&self) -> String {
-        "uamp".to_owned()
+        app_id()
     }
 
     fn view(&self) -> Element {
@@ -132,6 +140,12 @@ impl Default for UampApp {
             _ = send_clone.send(AsyncMessage::SongEnd);
         });
 
+        let hotkey_mgr = if conf.register_global_hotkes {
+            Self::register_hotkeys(sender.clone()).ok()
+        } else {
+            None
+        };
+
         UampApp {
             config: conf,
             library: lib,
@@ -141,10 +155,12 @@ impl Default for UampApp {
             reciever: RefCell::new(Some(reciever)),
 
             theme: Theme::default(),
-
             gui: GuiState::default(),
 
             now_playing: PlayState::default(),
+
+            // XXX: avoid unwrap
+            hotkey_mgr,
         }
     }
 }
@@ -157,9 +173,37 @@ impl UampApp {
                     _ = self.player.play(&self.library, s);
                 }
             }
+            _ => {}
         }
 
         Command::none()
+    }
+
+    fn register_hotkeys(
+        sender: Arc<UnboundedSender<AsyncMessage>>,
+    ) -> Result<GlobalHotKeyManager> {
+        let hotkey_mgr = GlobalHotKeyManager::new()?;
+
+        let play_pause = HotKey::new(
+            Some(hotkey::Modifiers::CONTROL | hotkey::Modifiers::ALT),
+            Code::Home,
+        );
+        let play_pause_id = play_pause.id();
+
+        hotkey_mgr.register(play_pause)?;
+
+        GlobalHotKeyEvent::set_event_handler(Some(
+            move |e: GlobalHotKeyEvent| {
+                match e.id {
+                    id if id == play_pause_id => {
+                        _ = sender.send(AsyncMessage::PlayPause);
+                    }
+                    _ => {}
+                };
+            },
+        ));
+
+        Ok(hotkey_mgr)
     }
 }
 

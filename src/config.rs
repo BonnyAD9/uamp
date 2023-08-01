@@ -1,7 +1,6 @@
 use eyre::Result;
 use log::{error, info};
-use serde::Serialize;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::{
     fs::{create_dir_all, File},
     path::{Path, PathBuf},
@@ -19,6 +18,8 @@ pub struct Config {
     pub audio_extensions: Vec<String>,
     #[serde(default = "default_update_library_on_start")]
     pub update_library_on_start: bool,
+    #[serde(default = "default_register_global_hotkes")]
+    pub register_global_hotkes: bool,
 }
 
 impl Default for Config {
@@ -80,24 +81,33 @@ impl Config {
             library_path: default_library_path(),
             audio_extensions: default_audio_extensions(),
             update_library_on_start: default_update_library_on_start(),
+            register_global_hotkes: default_register_global_hotkes(),
         }
     }
 }
 
 pub fn app_id() -> String {
     #[cfg(not(debug_assertions))]
-    { "uamp".to_owned() }
+    {
+        "uamp".to_owned()
+    }
     #[cfg(debug_assertions)]
-    { "uamp_debug".to_owned() }
+    {
+        "uamp_debug".to_owned()
+    }
 }
 
 pub fn default_config_path() -> PathBuf {
     if let Some(dir) = dirs::config_dir() {
         // use different path when debugging to not ruin existing config
         #[cfg(not(debug_assertions))]
-        { dir.join("uamp") }
+        {
+            dir.join("uamp")
+        }
         #[cfg(debug_assertions)]
-        { dir.join("uamp_debug") }
+        {
+            dir.join("uamp_debug")
+        }
     } else {
         PathBuf::from(".")
     }
@@ -125,5 +135,9 @@ fn default_audio_extensions() -> Vec<String> {
 }
 
 fn default_update_library_on_start() -> bool {
+    false
+}
+
+fn default_register_global_hotkes() -> bool {
     false
 }
