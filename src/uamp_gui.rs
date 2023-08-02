@@ -82,7 +82,7 @@ impl UampApp {
     // play menu
 
     fn play_menu(&self) -> Element {
-        let icon = if self.now_playing.is_playing() {
+        let icon = if self.player.is_playing() {
             icons::PAUSE
         } else {
             icons::PLAY
