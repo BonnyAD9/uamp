@@ -74,7 +74,9 @@ impl Application for UampApp {
                 self.player.play_pause();
             }
             UampMessage::Gui(msg) => return self.gui_event(msg),
-            UampMessage::Player(msg) => return self.player.event(&self.library, msg),
+            UampMessage::Player(msg) => {
+                return self.player.event(&self.library, msg)
+            }
         };
         Command::none()
     }

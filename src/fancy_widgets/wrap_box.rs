@@ -454,7 +454,7 @@ where
         };
 
         let content_size = child.bounds().size();
-        let (first_o, last_o) = self.visible_pos(view_size, state);
+        let (start_o, end_o) = self.visible_range(view_size, state);
 
         // scrolling
         if let Event::Mouse(mouse::Event::WheelScrolled { delta }) = event {
@@ -587,8 +587,8 @@ where
             .min(content_size.height - view_size.height)
             .max(0.);
 
-        let (first, last) = self.visible_pos(view_size, state);
-        if first_o != first || last_o != last {
+        let (start, end) = self.visible_range(view_size, state);
+        if start_o != start || end_o != end {
             shell.invalidate_layout();
         }
 
@@ -707,11 +707,11 @@ where
             ..child.bounds()
         };
 
-        let (first, _) = self.visible_pos(view_size, state);
+        let (start, _) = self.visible_range(view_size, state);
 
         let offset = if self.can_optimize() {
             let item_space = self.item_height + self.spacing_y;
-            Vector::new(0., first as f32 * item_space - state.offset_y)
+            Vector::new(0., start as f32 * item_space - state.offset_y)
         } else {
             Vector::new(-state.offset_x, -state.offset_y)
         };
@@ -777,11 +777,11 @@ where
             self.get_layout(renderer, layout, state, &mut owner, || {});
 
         let view_size = self.pad_size(layout.bounds().size());
-        let (first, last) = self.visible_pos(view_size, state);
+        let (start, end) = self.visible_range(view_size, state);
 
         let children = self
             .visible_mut(view_size, state)
-            .zip(&mut tree.children[first..=last])
+            .zip(&mut tree.children[start..end])
             .zip(child.children())
             .filter_map(|(((child, _), state), layout)| {
                 child.as_widget_mut().overlay(state, layout, renderer)
@@ -844,15 +844,16 @@ where
     }
 
     #[inline]
-    fn visible_pos(&self, view_size: Size, state: &State) -> (usize, usize) {
+    fn visible_range(&self, view_size: Size, state: &State) -> (usize, usize) {
         if !self.can_optimize() {
-            (0, self.children.len() - 1)
+            (0, self.children.len())
         } else {
             let item_space = self.item_height + self.spacing_y;
             (
                 (state.offset_y / item_space).max(0.) as usize,
-                (((state.offset_y + view_size.height) / item_space) as usize)
-                    .min(self.children.len() - 1),
+                (((state.offset_y + view_size.height) / item_space).ceil()
+                    as usize)
+                    .min(self.children.len()),
             )
         }
     }
@@ -863,11 +864,11 @@ where
         view_size: Size,
         state: &State,
     ) -> impl Iterator<Item = (&Element<'a, Message, Renderer>, usize)> {
-        let (first, last) = self.visible_pos(view_size, state);
-        self.children[first..=last]
+        let (start, end) = self.visible_range(view_size, state);
+        self.children[start..end]
             .iter()
             .enumerate()
-            .map(move |(i, c)| (c, i + first))
+            .map(move |(i, c)| (c, i + start))
     }
 
     #[inline]
@@ -877,11 +878,11 @@ where
         state: &State,
     ) -> impl Iterator<Item = (&mut Element<'a, Message, Renderer>, usize)>
     {
-        let (first, last) = self.visible_pos(view_size, state);
-        self.children[first..=last]
+        let (start, end) = self.visible_range(view_size, state);
+        self.children[start..end]
             .iter_mut()
             .enumerate()
-            .map(move |(i, c)| (c, i + first))
+            .map(move |(i, c)| (c, i + start))
     }
 
     fn layout_wrap(
