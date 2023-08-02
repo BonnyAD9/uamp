@@ -6,6 +6,8 @@ use std::{
     net::TcpStream,
 };
 
+use crate::uamp_app::{UampApp, UampMessage};
+
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Message {
     Error(Error),
@@ -126,4 +128,16 @@ impl Message {
 
 pub fn error(typ: ErrorType, message: String) -> Message {
     Message::Error(Error::new(typ, message))
+}
+
+impl UampApp {
+    pub fn message_event(msg: Message) -> (Message, Option<UampMessage>) {
+        let msg = if let Some(msg) = msg.control() {
+            msg
+        } else {
+            return (Message::new_error(ErrorType::ExpectedControl), None);
+        };
+
+        (Message::Success, Some(msg.into()))
+    }
 }

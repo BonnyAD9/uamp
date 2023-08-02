@@ -113,10 +113,10 @@ impl Application for UampApp {
                         let stream = listener.accept().unwrap();
                         let mut msgr = Messenger::try_new(&stream.0).unwrap();
 
-                        let msg = msgr.recieve();
-                        println!("recieve: {msg:?}");
+                        let rec = msgr.recieve();
+                        println!("recieve: {rec:?}");
 
-                        let msg = match msg {
+                        let rec = match rec {
                             Ok(m) => m,
                             Err(e) => {
                                 _ = msgr.send(messenger::error(
@@ -127,18 +127,14 @@ impl Application for UampApp {
                             }
                         };
 
-                        let msg = if let Some(msg) = msg.control() {
-                            msg
+                        let (response, msg) = Self::message_event(rec);
+                        _ = msgr.send(response);
+
+                        if let Some(msg) = msg {
+                            break (msg, Some(listener));
                         } else {
-                            _ = msgr.send(messenger::Message::new_error(
-                                messenger::ErrorType::ExpectedControl,
-                            ));
                             continue;
-                        };
-
-                        _ = msgr.send(messenger::Message::Success);
-
-                        break (msg.into(), Some(listener));
+                        }
                     }
                 },
             ),
