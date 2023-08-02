@@ -39,13 +39,7 @@ pub enum UampMessage {
     PlaySong(usize, Arc<[SongId]>),
     PlayPause,
     Gui(uamp_gui::Message),
-    Hotkey(HotkeyMessage),
     Player(PlayerMessage),
-}
-
-#[derive(Clone, Debug)]
-pub enum HotkeyMessage {
-    PlayPause,
 }
 
 impl Application for UampApp {
@@ -69,8 +63,7 @@ impl Application for UampApp {
                     true,
                 );
             }
-            UampMessage::PlayPause
-            | UampMessage::Hotkey(HotkeyMessage::PlayPause) => {
+            UampMessage::PlayPause => {
                 self.player.play_pause();
             }
             UampMessage::Gui(msg) => return self.gui_event(msg),
@@ -197,9 +190,7 @@ impl UampApp {
             move |e: GlobalHotKeyEvent| {
                 match e.id {
                     id if id == play_pause_id => {
-                        _ = sender.send(UampMessage::Hotkey(
-                            HotkeyMessage::PlayPause,
-                        ));
+                        _ = sender.send(UampMessage::PlayPause);
                     }
                     _ => {}
                 };
