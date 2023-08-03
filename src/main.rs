@@ -78,6 +78,7 @@ fn make_settings() -> Settings<()> {
             ..Default::default()
         },
         id: Some(app_id()),
+        exit_on_close_request: false,
         ..Default::default()
     }
 }

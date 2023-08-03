@@ -1,14 +1,22 @@
-use std::{fs::File, sync::Arc};
+use std::{
+    default,
+    fs::{create_dir_all, File},
+    ops::{Index, IndexMut},
+    path::Path,
+    sync::Arc,
+};
 
 use eyre::Result;
-use log::error;
+use log::{error, info};
 use raplay::{
     sink::{CallbackInfo, Sink},
     source::symph::Symph,
 };
+use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{
+    config::Config,
     library::{Library, SongId},
     uamp_app::UampMessage,
     wid::Command,
@@ -59,38 +67,47 @@ pub enum PlayerMessage {
     SongEnd,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub enum Playback {
+    #[default]
     Stopped,
     Playing,
     Paused,
 }
 
+pub enum Playlist {
+    Static(Arc<[SongId]>),
+    Dynamic(Vec<SongId>),
+}
+
+enum MaybeSink {
+    Sink(SinkWrapper),
+    Sender(Arc<UnboundedSender<UampMessage>>),
+}
+
 pub struct Player {
-    inner: Option<SinkWrapper>,
+    inner: MaybeSink,
     state: Playback,
-    playlist: Arc<[SongId]>,
+    playlist: Playlist,
     current: Option<usize>,
+}
+
+#[derive(Default, Deserialize)]
+struct PlayerDataLoad {
+    current: Option<usize>,
+    playlist: Playlist,
+}
+
+#[derive(Serialize)]
+struct PlayerDataSave<'a> {
+    current: Option<usize>,
+    playlist: &'a Playlist,
 }
 
 impl Player {
     pub fn new(sender: Arc<UnboundedSender<UampMessage>>) -> Self {
-        let inner = match SinkWrapper::try_new() {
-            Err(e) => {
-                error!("Failed to create player: {e}");
-                None
-            }
-            Ok(mut i) => {
-                _ = i.on_song_end(move || {
-                    _ = sender
-                        .send(UampMessage::Player(PlayerMessage::SongEnd));
-                });
-                Some(i)
-            }
-        };
-
         Self {
-            inner,
+            inner: MaybeSink::Sender(sender),
             state: Playback::Stopped,
             playlist: [][..].into(),
             current: None,
@@ -105,14 +122,27 @@ impl Player {
     }
 
     fn try_get_player(&mut self) {
-        if self.inner.is_none() {
-            self.inner = SinkWrapper::try_new().ok();
+        if matches!(self.inner, MaybeSink::Sender(_)) {
+            if let Ok(inner) = SinkWrapper::try_new() {
+                let sender =
+                    std::mem::replace(&mut self.inner, MaybeSink::Sink(inner));
+                match (&mut self.inner, sender) {
+                    (MaybeSink::Sink(p), MaybeSink::Sender(s)) => {
+                        _ = p.on_song_end(move || {
+                            _ = s.send(UampMessage::Player(
+                                PlayerMessage::SongEnd,
+                            ));
+                        })
+                    }
+                    _ => {} // this will never happen
+                }
+            }
         }
     }
 
     pub fn play(&mut self, play: bool) {
         self.try_get_player();
-        if let Some(p) = self.inner.as_mut() {
+        if let MaybeSink::Sink(p) = &mut self.inner {
             self.state = if play {
                 Playback::Playing
             } else {
@@ -142,9 +172,9 @@ impl Player {
         self.current = Some(index);
 
         self.try_get_player();
-        let inner = match self.inner.as_mut() {
-            Some(i) => i,
-            None => {
+        let inner = match &mut self.inner {
+            MaybeSink::Sink(i) => i,
+            _ => {
                 self.state = Playback::Stopped;
                 return;
             }
@@ -159,9 +189,13 @@ impl Player {
         _ = inner.play(lib, self.playlist[index], play);
     }
 
-    pub fn play_pause(&mut self) {
+    pub fn play_pause(&mut self, lib: &Library) {
         match self.state {
-            Playback::Stopped => {}
+            Playback::Stopped => {
+                if let Some(id) = self.current {
+                    self.load(lib, id, true);
+                }
+            }
             Playback::Playing => {
                 self.play(false);
             }
@@ -174,11 +208,11 @@ impl Player {
     pub fn play_playlist(
         &mut self,
         lib: &Library,
-        songs: Arc<[SongId]>,
+        songs: impl Into<Playlist>,
         index: Option<usize>,
         play: bool,
     ) {
-        self.playlist = songs;
+        self.playlist = songs.into();
         self.try_load(lib, index, play);
     }
 
@@ -199,6 +233,148 @@ impl Player {
             Playback::Paused => {
                 self.try_load(lib, self.current.map(|i| i + 1), false)
             }
+        }
+    }
+
+    pub fn from_config(sender: Arc<UnboundedSender<UampMessage>>, conf: &Config) -> Self {
+        Self::from_json(sender, &conf.player_path)
+    }
+
+    pub fn to_json(&self, path: impl AsRef<Path>) -> Result<()> {
+        if let Some(par) = path.as_ref().parent() {
+            create_dir_all(par)?;
+        }
+
+        serde_json::to_writer(
+            File::create(path)?,
+            &PlayerDataSave {
+                playlist: &self.playlist,
+                current: self.current,
+            },
+        )?;
+        Ok(())
+    }
+
+    pub fn from_json(
+        sender: Arc<UnboundedSender<UampMessage>>,
+        path: impl AsRef<Path>,
+    ) -> Self {
+        let data = if let Ok(file) = File::open(path.as_ref()) {
+            serde_json::from_reader(file).unwrap_or_default()
+        } else {
+            info!("player file {:?} doesn't exist", path.as_ref());
+            PlayerDataLoad::default()
+        };
+
+        Self {
+            inner: MaybeSink::Sender(sender),
+            state: Playback::Stopped,
+            playlist: data.playlist,
+            current: data.current,
+        }
+    }
+}
+
+impl Playlist {
+    pub fn len(&self) -> usize {
+        match self {
+            Self::Static(s) => s.len(),
+            Self::Dynamic(d) => d.len(),
+        }
+    }
+
+    #[inline]
+    fn make_dynamic(&mut self) {
+        if let Self::Static(s) = self {
+            *self = Self::Dynamic(s.as_ref().into())
+        }
+    }
+}
+
+impl Default for Playlist {
+    fn default() -> Self {
+        [][..].into()
+    }
+}
+
+impl Index<usize> for Playlist {
+    type Output = SongId;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        match self {
+            Self::Static(s) => &s[index],
+            Self::Dynamic(d) => &d[index],
+        }
+    }
+}
+
+impl IndexMut<usize> for Playlist {
+    #[inline]
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        match self {
+            Self::Static(_) => {
+                self.make_dynamic();
+                self.index_mut(index)
+            }
+            Self::Dynamic(d) => &mut d[index],
+        }
+    }
+}
+
+impl From<&[SongId]> for Playlist {
+    fn from(value: &[SongId]) -> Self {
+        Self::Dynamic(value.into())
+    }
+}
+
+impl From<Vec<SongId>> for Playlist {
+    fn from(value: Vec<SongId>) -> Self {
+        Self::Dynamic(value)
+    }
+}
+
+impl From<Arc<[SongId]>> for Playlist {
+    fn from(value: Arc<[SongId]>) -> Self {
+        Self::Static(value)
+    }
+}
+
+impl Serialize for Playlist {
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            Self::Static(s) => s.as_ref().serialize(serializer),
+            Self::Dynamic(v) => v.serialize(serializer),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Playlist {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        Ok(Self::Dynamic(Vec::deserialize(deserializer)?))
+    }
+
+    fn deserialize_in_place<D>(
+        deserializer: D,
+        place: &mut Self,
+    ) -> std::result::Result<(), D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        match place {
+            Playlist::Static(_) => {
+                *place = Self::Dynamic(Vec::deserialize(deserializer)?);
+                Ok(())
+            }
+            Playlist::Dynamic(v) => Vec::deserialize_in_place(deserializer, v),
         }
     }
 }

@@ -5,7 +5,8 @@ use global_hotkey::{
     hotkey::{self, Code, HotKey},
     GlobalHotKeyEvent, GlobalHotKeyManager,
 };
-use iced::{executor, Application};
+use iced::{executor, Application, window};
+use iced_core::Event;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
@@ -40,6 +41,7 @@ pub enum UampMessage {
     PlayPause,
     Gui(uamp_gui::Message),
     Player(PlayerMessage),
+    Close,
 }
 
 impl Application for UampApp {
@@ -64,11 +66,17 @@ impl Application for UampApp {
                 );
             }
             UampMessage::PlayPause => {
-                self.player.play_pause();
+                self.player.play_pause(&self.library);
             }
             UampMessage::Gui(msg) => return self.gui_event(msg),
             UampMessage::Player(msg) => {
                 return self.player.event(&self.library, msg)
+            },
+            UampMessage::Close => {
+                _ = self.library.to_json(&self.config.library_path);
+                _ = self.player.to_json(&self.config.player_path);
+                _ = self.config.to_default_json();
+                return window::close();
             }
         };
         Command::none()
@@ -131,6 +139,12 @@ impl Application for UampApp {
                     }
                 },
             ),
+            iced::subscription::events_with(|e, _| {
+                match e {
+                    Event::Window(window::Event::CloseRequested) => Some(UampMessage::Close),
+                    _ => None
+                }
+            })
         ])
     }
 }
@@ -147,7 +161,7 @@ impl Default for UampApp {
         let (sender, reciever) = mpsc::unbounded_channel::<UampMessage>();
         let sender = Arc::new(sender);
 
-        let player = Player::new(sender.clone());
+        let player = Player::from_config(sender.clone(), &conf);
 
         let hotkey_mgr = if conf.register_global_hotkeys {
             Self::register_hotkeys(sender.clone()).ok()

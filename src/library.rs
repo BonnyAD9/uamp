@@ -12,7 +12,7 @@ pub struct Library {
     songs: Vec<Song>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct SongId(usize);
 
 pub enum Filter {
@@ -65,14 +65,7 @@ impl Library {
     }
 
     pub fn get_new_songs(&mut self, conf: &Config) {
-        if Self::add_new_songs(&mut self.songs, conf) {
-            if let Err(e) = self.to_json(&conf.library_path) {
-                error!(
-                    "failed to save library to file {:?}: {e}",
-                    conf.library_path
-                );
-            }
-        }
+        Self::add_new_songs(&mut self.songs, conf);
     }
 
     fn add_new_songs(songs: &mut Vec<Song>, conf: &Config) -> bool {

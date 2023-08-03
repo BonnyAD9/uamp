@@ -20,6 +20,7 @@ pub type WrapBox<'a> =
 pub type Button<'a> = widget::Button<'a, UampMessage, Renderer>;
 pub type Text<'a> = widget::Text<'a, Renderer>;
 pub type Column<'a> = widget::Column<'a, UampMessage, Renderer>;
+pub type Row<'a> = widget::Row<'a, UampMessage, Renderer>;
 pub type Svg = widget::Svg<Renderer>;
 pub type Space = widget::Space;
 
@@ -84,6 +85,20 @@ macro_rules! col {
     );
     ($($x:expr),+ $(,)?) => (
         $crate::wid::column(vec![$($crate::wid::Element::from($x)),+])
+    );
+}
+
+pub fn row<'a>(children: Vec<Element<'a>>) -> Row<'a> {
+    Row::with_children(children)
+}
+
+#[macro_export]
+macro_rules! row {
+    () => (
+        $crate::wid::Row::new(crate::wid::nothing())
+    );
+    ($($x:expr),+ $(,)?) => (
+        $crate::wid::row(vec![$($crate::wid::Element::from($x)),+])
     );
 }
 

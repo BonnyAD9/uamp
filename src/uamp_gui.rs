@@ -9,7 +9,7 @@ use crate::{
     text,
     theme::Button,
     uamp_app::{UampApp, UampMessage as Msg},
-    wid::{button, svg, wrap_box, Command, Element},
+    wid::{button, svg, wrap_box, Command, Element, nothing}, row,
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -82,6 +82,13 @@ impl UampApp {
     // play menu
 
     fn play_menu(&self) -> Element {
+        row![
+            self.play_pause_button(),
+            self.current_song(),
+        ].into()
+    }
+
+    fn play_pause_button(&self) -> Element {
         let icon = if self.player.is_playing() {
             icons::PAUSE
         } else {
@@ -93,6 +100,15 @@ impl UampApp {
             .width(30)
             .on_press(Msg::PlayPause)
             .into()
+    }
+
+    fn current_song(&self) -> Element {
+        if let Some(s) = self.player.now_playing() {
+            let s = &self.library[s];
+            text!("{} - {}", s.artist(), s.title()).into()
+        } else {
+            nothing().into()
+        }
     }
 }
 

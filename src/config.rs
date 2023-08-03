@@ -18,6 +18,8 @@ pub struct Config {
     pub search_paths: Vec<PathBuf>,
     #[serde(default = "default_library_path")]
     pub library_path: PathBuf,
+    #[serde(default = "default_player_path")]
+    pub player_path: PathBuf,
     #[serde(default = "default_audio_extensions")]
     pub audio_extensions: Vec<String>,
     #[serde(default = "default_update_library_on_start")]
@@ -83,6 +85,7 @@ impl Config {
             config_path: config_path.into(),
             search_paths: default_search_paths(),
             library_path: default_library_path(),
+            player_path: default_player_path(),
             audio_extensions: default_audio_extensions(),
             update_library_on_start: default_update_library_on_start(),
             register_global_hotkeys: default_register_global_hotkeys(),
@@ -127,6 +130,10 @@ fn default_search_paths() -> Vec<PathBuf> {
 
 fn default_library_path() -> PathBuf {
     default_config_path().join("library.json")
+}
+
+fn default_player_path() -> PathBuf {
+    default_config_path().join("player.json")
 }
 
 fn default_audio_extensions() -> Vec<String> {
