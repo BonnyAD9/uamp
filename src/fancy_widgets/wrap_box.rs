@@ -25,6 +25,8 @@ pub const DEFAULT_SCROLLBAR_WIDTH: f32 = 20.;
 pub const DEFAULT_SCROLLBAR_BUTTON_HEIGHT: f32 = 20.;
 pub const DEFAULT_MIN_THUMB_SIZE: f32 = 20.;
 
+// TODO: fix layouting
+
 /// Container that distributes its contents both vertically and horizontaly
 /// and also has a scollbar. Advantage over normal scrollbar combined with
 /// row or column is that this more efficiently handles large amounts of
