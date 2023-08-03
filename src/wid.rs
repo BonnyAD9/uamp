@@ -1,12 +1,7 @@
 use std::borrow::Cow;
 
 use iced::widget;
-use iced_core::{
-    event::Status,
-    mouse::Cursor,
-    Clipboard, Event,
-    Length::{self, Shrink},
-};
+use iced_core::Length::{self, Shrink};
 
 use crate::{fancy_widgets, theme::Theme, uamp_app::UampMessage};
 
@@ -23,6 +18,7 @@ pub type Column<'a> = widget::Column<'a, UampMessage, Renderer>;
 pub type Row<'a> = widget::Row<'a, UampMessage, Renderer>;
 pub type Svg = widget::Svg<Renderer>;
 pub type Space = widget::Space;
+pub type Scrollable<'a> = widget::Scrollable<'a, UampMessage, Renderer>;
 
 pub fn wrap_box<'a>(children: Vec<Element>) -> WrapBox {
     WrapBox::with_childern(children)
@@ -97,9 +93,9 @@ macro_rules! row {
     () => (
         $crate::wid::Row::new(crate::wid::nothing())
     );
-    ($($x:expr),+ $(,)?) => (
+    ($($x:expr),+ $(,)?) => {{
         $crate::wid::row(vec![$($crate::wid::Element::from($x)),+])
-    );
+    }};
 }
 
 pub fn svg(handle: impl Into<widget::svg::Handle>) -> Svg {

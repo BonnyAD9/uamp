@@ -5,7 +5,7 @@ use global_hotkey::{
     hotkey::{self, Code, HotKey},
     GlobalHotKeyEvent, GlobalHotKeyManager,
 };
-use iced::{executor, Application, window};
+use iced::{executor, window, Application};
 use iced_core::Event;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
@@ -37,8 +37,10 @@ pub struct UampApp {
 #[allow(missing_debug_implementations)]
 #[derive(Clone, Debug)]
 pub enum UampMessage {
+    // TODO: move to player
     PlaySong(usize, Arc<[SongId]>),
     PlayPause,
+    Shuffle,
     Gui(uamp_gui::Message),
     Player(PlayerMessage),
     Close,
@@ -71,13 +73,14 @@ impl Application for UampApp {
             UampMessage::Gui(msg) => return self.gui_event(msg),
             UampMessage::Player(msg) => {
                 return self.player.event(&self.library, msg)
-            },
+            }
             UampMessage::Close => {
                 _ = self.library.to_json(&self.config.library_path);
                 _ = self.player.to_json(&self.config.player_path);
                 _ = self.config.to_default_json();
                 return window::close();
             }
+            UampMessage::Shuffle => self.player.shuffle(),
         };
         Command::none()
     }
@@ -139,12 +142,12 @@ impl Application for UampApp {
                     }
                 },
             ),
-            iced::subscription::events_with(|e, _| {
-                match e {
-                    Event::Window(window::Event::CloseRequested) => Some(UampMessage::Close),
-                    _ => None
+            iced::subscription::events_with(|e, _| match e {
+                Event::Window(window::Event::CloseRequested) => {
+                    Some(UampMessage::Close)
                 }
-            })
+                _ => None,
+            }),
         ])
     }
 }

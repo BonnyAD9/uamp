@@ -1,13 +1,14 @@
 use std::{
-    default,
     fs::{create_dir_all, File},
     ops::{Index, IndexMut},
     path::Path,
+    slice::{Iter, SliceIndex},
     sync::Arc,
 };
 
 use eyre::Result;
-use log::{error, info};
+use log::info;
+use rand::{seq::SliceRandom, thread_rng};
 use raplay::{
     sink::{CallbackInfo, Sink},
     source::symph::Symph,
@@ -168,6 +169,7 @@ impl Player {
         }
     }
 
+    /// doesn't check that the index is valid
     fn load(&mut self, lib: &Library, index: usize, play: bool) {
         self.current = Some(index);
 
@@ -236,7 +238,33 @@ impl Player {
         }
     }
 
-    pub fn from_config(sender: Arc<UnboundedSender<UampMessage>>, conf: &Config) -> Self {
+    pub fn playlist(&self) -> &Playlist {
+        &self.playlist
+    }
+
+    pub fn play_at(&mut self, lib: &Library, index: usize, play: bool) {
+        if index >= self.playlist.len() {
+            self.current = None;
+            self.state = Playback::Stopped;
+            return;
+        }
+
+        self.load(lib, index, play);
+    }
+
+    pub fn shuffle(&mut self) {
+        let id = self.now_playing();
+        self.playlist[..].shuffle(&mut thread_rng());
+        // find the currently playing in the shuffled playlist
+        if let Some(id) = id {
+            self.current = self.playlist.iter().position(|i| *i == id);
+        }
+    }
+
+    pub fn from_config(
+        sender: Arc<UnboundedSender<UampMessage>>,
+        conf: &Config,
+    ) -> Self {
         Self::from_json(sender, &conf.player_path)
     }
 
@@ -289,6 +317,26 @@ impl Playlist {
             *self = Self::Dynamic(s.as_ref().into())
         }
     }
+
+    /// This will panic when it is static playlist
+    fn mut_dyn(&mut self) -> &mut Vec<SongId> {
+        match self {
+            Playlist::Static(_) => panic!(),
+            Playlist::Dynamic(d) => d,
+        }
+    }
+
+    pub fn iter<'a>(&'a self) -> Iter<'_, SongId> {
+        self[..].iter()
+    }
+
+    pub fn as_arc(&self) -> Arc<[SongId]> {
+        match self {
+            Playlist::Static(a) => a.clone(),
+            // copy to arc when this is vector
+            Playlist::Dynamic(v) => v[..].into(),
+        }
+    }
 }
 
 impl Default for Playlist {
@@ -297,26 +345,26 @@ impl Default for Playlist {
     }
 }
 
-impl Index<usize> for Playlist {
-    type Output = SongId;
+impl<T: SliceIndex<[SongId]>> Index<T> for Playlist {
+    type Output = T::Output;
 
-    fn index(&self, index: usize) -> &Self::Output {
+    fn index(&self, index: T) -> &Self::Output {
         match self {
-            Self::Static(s) => &s[index],
-            Self::Dynamic(d) => &d[index],
+            Self::Static(s) => s.index(index),
+            Self::Dynamic(d) => d.index(index),
         }
     }
 }
 
-impl IndexMut<usize> for Playlist {
+impl<T: SliceIndex<[SongId]>> IndexMut<T> for Playlist {
     #[inline]
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+    fn index_mut(&mut self, index: T) -> &mut Self::Output {
         match self {
             Self::Static(_) => {
                 self.make_dynamic();
                 self.index_mut(index)
             }
-            Self::Dynamic(d) => &mut d[index],
+            Self::Dynamic(d) => d.index_mut(index),
         }
     }
 }

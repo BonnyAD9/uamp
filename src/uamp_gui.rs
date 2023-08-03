@@ -6,17 +6,21 @@ use crate::{
     button, col,
     fancy_widgets::icons,
     library::{Filter, SongId},
-    text,
-    theme::Button,
+    row, text,
+    theme::{Button, Text},
     uamp_app::{UampApp, UampMessage as Msg},
-    wid::{button, svg, wrap_box, Command, Element, nothing}, row,
+    wid::{self, button, nothing, svg, wrap_box, Command, Element},
 };
 
 #[derive(Clone, Copy, Debug)]
-pub enum Message {}
+pub enum Message {
+    SetPage(MainPage),
+}
 
-enum MainPage {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum MainPage {
     Songs,
+    Playlist,
 }
 
 pub struct GuiState {
@@ -24,12 +28,16 @@ pub struct GuiState {
 }
 
 impl UampApp {
-    pub fn gui_event(&mut self, _message: Message) -> Command {
+    pub fn gui_event(&mut self, message: Message) -> Command {
+        match message {
+            Message::SetPage(page) => self.gui.page = page,
+        }
         Command::none()
     }
 
     pub fn gui(&self) -> Element {
         col![
+            self.menu(),
             self.main_page(),
             self.play_menu(),
             //event_capture(|e, m, c| self.events(e, m, c))
@@ -37,12 +45,47 @@ impl UampApp {
         .into()
     }
 
-    pub fn main_page(&self) -> Element {
+    // menu
+
+    fn menu(&self) -> Element {
+        let make_button =
+            |text: &'static str, page: MainPage| -> wid::Button {
+                button(wid::text(text).style(if self.gui.page == page {
+                    Text::Contrast
+                } else {
+                    Text::Default
+                }))
+                .on_press(Msg::Gui(Message::SetPage(page)))
+                .height(30)
+            };
+
+        row![
+            make_button("Songs", MainPage::Songs),
+            make_button("Playlist", MainPage::Playlist),
+        ]
+        .into()
+    }
+
+    // main page
+
+    fn main_page(&self) -> Element {
         match self.gui.page {
             MainPage::Songs => {
                 self.song_list(self.library.filter(Filter::All).collect())
             }
+            MainPage::Playlist => {
+                self.playlist()
+            }
         }
+    }
+
+    // playlist
+
+    fn playlist(&self) -> Element {
+        col![
+            button!("Shuffle").on_press(Msg::Shuffle),
+            self.song_list(self.player.playlist().as_arc())
+        ].into()
     }
 
     // song list
@@ -51,7 +94,7 @@ impl UampApp {
         wrap_box(
             (0..songs.len())
                 .map(|i| self.song_list_item(i, songs.clone()))
-                .collect(),
+                .collect()
         )
         .item_height(32)
         .from_layout_style(&self.theme)
@@ -82,10 +125,7 @@ impl UampApp {
     // play menu
 
     fn play_menu(&self) -> Element {
-        row![
-            self.play_pause_button(),
-            self.current_song(),
-        ].into()
+        row![self.play_pause_button(), self.current_song(),].into()
     }
 
     fn play_pause_button(&self) -> Element {
@@ -103,19 +143,22 @@ impl UampApp {
     }
 
     fn current_song(&self) -> Element {
-        if let Some(s) = self.player.now_playing() {
+        button(if let Some(s) = self.player.now_playing() {
             let s = &self.library[s];
             text!("{} - {}", s.artist(), s.title()).into()
         } else {
-            nothing().into()
-        }
+            <iced::widget::Space as Into<Element>>::into(nothing())
+        })
+        .height(30)
+        .on_press(Msg::Gui(Message::SetPage(MainPage::Playlist)))
+        .into()
     }
 }
 
 impl GuiState {
     pub fn new() -> Self {
         GuiState {
-            page: MainPage::Songs,
+            page: MainPage::Playlist,
         }
     }
 }

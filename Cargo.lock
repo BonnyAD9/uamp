@@ -3201,6 +3201,7 @@ dependencies = [
  "iced",
  "iced_core",
  "log",
+ "rand",
  "raplay",
  "rmp-serde",
  "serde",

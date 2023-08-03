@@ -1,3 +1,5 @@
+use std::default;
+
 use iced::{
     application,
     overlay::menu,
@@ -418,12 +420,22 @@ impl scrollable::StyleSheet for Theme {
     // ) -> scrollable::Scrollbar;
 }
 
-impl text::StyleSheet for Theme {
-    type Style = ();
+#[derive(Clone, Default)]
+pub enum Text {
+    #[default]
+    Default,
+    Contrast,
+}
 
-    fn appearance(&self, _style: Self::Style) -> text::Appearance {
+impl text::StyleSheet for Theme {
+    type Style = Text;
+
+    fn appearance(&self, style: Self::Style) -> text::Appearance {
         text::Appearance {
-            color: Some(FOREGROUND),
+            color: match style {
+                Text::Default => Some(FOREGROUND),
+                Text::Contrast => Some(CONTRAST),
+            },
         }
     }
 }

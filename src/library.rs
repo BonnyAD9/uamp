@@ -12,7 +12,7 @@ pub struct Library {
     songs: Vec<Song>,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub struct SongId(usize);
 
 pub enum Filter {
