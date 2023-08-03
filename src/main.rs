@@ -6,6 +6,7 @@ use iced::{
     window::{self, PlatformSpecific},
     Application, Settings,
 };
+use iced_core::Size;
 use log::{error, info};
 use uamp_app::UampApp;
 

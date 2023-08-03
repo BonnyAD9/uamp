@@ -834,13 +834,14 @@ where
                 // when the layout is not available, calculate temporary layout
                 // so that there is no dropped event
                 fun();
-                *owner = self.create_layout(
+                let pos = layout.bounds().position();
+                *owner = self.layout_wrap(
                     renderer,
                     layout.bounds().size(),
                     state,
-                );
+                ).translate(Vector::new(pos.x, pos.y));
                 // owner.children().iter().next() is always Some
-                Layout::new(owner.children().iter().next().unwrap())
+                Layout::new(owner)
             }
         }
     }
@@ -1040,7 +1041,7 @@ where
             x: bounds.x + bounds.width - self.scrollbar_width,
             y,
             width: self.scrollbar_width,
-            height: bounds.height - y - self.scrollbar_button_height,
+            height: bounds.height - y - self.scrollbar_button_height + bounds.y,
         }
     }
 

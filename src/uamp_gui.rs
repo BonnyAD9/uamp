@@ -85,7 +85,7 @@ impl UampApp {
         col![
             button!("Shuffle").on_press(Msg::Shuffle),
             self.song_list(self.player.playlist().as_arc())
-        ].into()
+        ].height(Fill).into()
     }
 
     // song list
@@ -158,7 +158,7 @@ impl UampApp {
 impl GuiState {
     pub fn new() -> Self {
         GuiState {
-            page: MainPage::Playlist,
+            page: MainPage::Songs,
         }
     }
 }
