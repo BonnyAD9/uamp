@@ -8,7 +8,7 @@ use crate::{
     library::{Filter, SongId},
     row, text,
     theme::{Button, Text},
-    uamp_app::{UampApp, UampMessage as Msg},
+    uamp_app::{ControlMsg, UampApp, UampMessage as Msg},
     wid::{self, button, nothing, svg, wrap_box, Command, Element},
 };
 
@@ -73,9 +73,7 @@ impl UampApp {
             MainPage::Songs => {
                 self.song_list(self.library.filter(Filter::All).collect())
             }
-            MainPage::Playlist => {
-                self.playlist()
-            }
+            MainPage::Playlist => self.playlist(),
         }
     }
 
@@ -83,9 +81,11 @@ impl UampApp {
 
     fn playlist(&self) -> Element {
         col![
-            button!("Shuffle").on_press(Msg::Shuffle),
+            button!("Shuffle").on_press(Msg::Control(ControlMsg::Shuffle)),
             self.song_list(self.player.playlist().as_arc())
-        ].height(Fill).into()
+        ]
+        .height(Fill)
+        .into()
     }
 
     // song list
@@ -94,7 +94,7 @@ impl UampApp {
         wrap_box(
             (0..songs.len())
                 .map(|i| self.song_list_item(i, songs.clone()))
-                .collect()
+                .collect(),
         )
         .item_height(32)
         .from_layout_style(&self.theme)
@@ -138,7 +138,7 @@ impl UampApp {
         button(svg(icon))
             .height(30)
             .width(30)
-            .on_press(Msg::PlayPause)
+            .on_press(Msg::Control(ControlMsg::PlayPause))
             .into()
     }
 

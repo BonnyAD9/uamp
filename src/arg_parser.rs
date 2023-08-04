@@ -1,4 +1,4 @@
-use crate::messenger;
+use crate::{messenger, uamp_app::ControlMsg};
 use eyre::{Report, Result};
 
 pub enum Action {
@@ -58,7 +58,7 @@ fn instance<'a>(
         "play-pause" | "pp" => {
             res.actions
                 .push(Action::Message(messenger::Message::Control(
-                    messenger::Control::PlayPause,
+                    ControlMsg::PlayPause,
                 )))
         }
         "--" => ret_err!("Expected instance action after 'instance'"),

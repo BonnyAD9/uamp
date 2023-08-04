@@ -835,11 +835,9 @@ where
                 // so that there is no dropped event
                 fun();
                 let pos = layout.bounds().position();
-                *owner = self.layout_wrap(
-                    renderer,
-                    layout.bounds().size(),
-                    state,
-                ).translate(Vector::new(pos.x, pos.y));
+                *owner = self
+                    .layout_wrap(renderer, layout.bounds().size(), state)
+                    .translate(Vector::new(pos.x, pos.y));
                 // owner.children().iter().next() is always Some
                 Layout::new(owner)
             }
@@ -1041,7 +1039,8 @@ where
             x: bounds.x + bounds.width - self.scrollbar_width,
             y,
             width: self.scrollbar_width,
-            height: bounds.height - y - self.scrollbar_button_height + bounds.y,
+            height: bounds.height - y - self.scrollbar_button_height
+                + bounds.y,
         }
     }
 

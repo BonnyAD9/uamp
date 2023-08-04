@@ -57,9 +57,15 @@ impl SinkWrapper {
         &'static F: std::marker::Send,
     {
         self.sink.on_callback(Some(move |cb| match cb {
-            CallbackInfo::SourceEnded => f(),
+            CallbackInfo::SourceEnded => {
+                f();
+            },
             _ => {}
         }))
+    }
+
+    pub fn set_volume(&mut self, volume: f32) -> Result<()> {
+        self.sink.volume(volume)
     }
 }
 
@@ -91,16 +97,24 @@ pub struct Player {
     state: Playback,
     playlist: Playlist,
     current: Option<usize>,
+    volume: f32,
 }
 
 #[derive(Default, Deserialize)]
 struct PlayerDataLoad {
+    #[serde(default = "default_volume")]
+    volume: f32,
     current: Option<usize>,
     playlist: Playlist,
 }
 
+fn default_volume() -> f32 {
+    1.
+}
+
 #[derive(Serialize)]
 struct PlayerDataSave<'a> {
+    volume: f32,
     current: Option<usize>,
     playlist: &'a Playlist,
 }
@@ -112,12 +126,17 @@ impl Player {
             state: Playback::Stopped,
             playlist: [][..].into(),
             current: None,
+            volume: 1.,
         }
     }
 
     pub fn event(&mut self, lib: &Library, msg: PlayerMessage) -> Command {
         match msg {
-            PlayerMessage::SongEnd => self.play_next(lib),
+            PlayerMessage::SongEnd => {
+                println!("doing action");
+                self.play_next(lib);
+                println!("action done");
+            },
         }
         Command::none()
     }
@@ -130,10 +149,12 @@ impl Player {
                 match (&mut self.inner, sender) {
                     (MaybeSink::Sink(p), MaybeSink::Sender(s)) => {
                         _ = p.on_song_end(move || {
+                            println!("sending_message");
                             _ = s.send(UampMessage::Player(
                                 PlayerMessage::SongEnd,
                             ));
-                        })
+                        });
+                        _ = p.set_volume(self.volume * self.volume);
                     }
                     _ => {} // this will never happen
                 }
@@ -207,6 +228,19 @@ impl Player {
         }
     }
 
+    pub fn volume(&self) -> f32 {
+        self.volume
+    }
+
+    pub fn set_volume(&mut self, volume: f32) {
+        self.try_get_player();
+        if let MaybeSink::Sink(s) = &mut self.inner {
+            if matches!(s.set_volume(volume * volume), Ok(_)) {
+                self.volume = volume;
+            }
+        }
+    }
+
     pub fn play_playlist(
         &mut self,
         lib: &Library,
@@ -227,15 +261,15 @@ impl Player {
     }
 
     pub fn play_next(&mut self, lib: &Library) {
-        match self.state {
-            Playback::Stopped => {}
-            Playback::Playing => {
-                self.try_load(lib, self.current.map(|i| i + 1), true);
-            }
-            Playback::Paused => {
-                self.try_load(lib, self.current.map(|i| i + 1), false)
-            }
-        }
+        self.jump_to(lib, self.current.map(|i| i + 1))
+    }
+
+    pub fn play_prev(&mut self, lib: &Library) {
+        self.jump_to(lib, self.current.and_then(|i| i.checked_sub(1)))
+    }
+
+    pub fn jump_to(&mut self, lib: &Library, index: Option<usize>) {
+        self.try_load(lib, index, self.is_playing())
     }
 
     pub fn playlist(&self) -> &Playlist {
@@ -278,6 +312,7 @@ impl Player {
             &PlayerDataSave {
                 playlist: &self.playlist,
                 current: self.current,
+                volume: self.volume,
             },
         )?;
         Ok(())
@@ -299,6 +334,7 @@ impl Player {
             state: Playback::Stopped,
             playlist: data.playlist,
             current: data.current,
+            volume: data.volume,
         }
     }
 }

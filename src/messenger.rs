@@ -6,13 +6,13 @@ use std::{
     net::TcpStream,
 };
 
-use crate::uamp_app::{UampApp, UampMessage};
+use crate::uamp_app::{ControlMsg, UampApp, UampMessage};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Message {
     Error(Error),
     Request(Request),
-    Control(Control),
+    Control(ControlMsg),
     Info(Info),
     Success,
 }
@@ -34,11 +34,6 @@ pub enum ErrorType {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Request {}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum Control {
-    PlayPause,
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Info {}
@@ -69,9 +64,9 @@ impl<'a> Messenger<'a> {
 }
 
 macro_rules! extract {
-    ($fn_name:ident, $type_name:ident) => {
+    ($fn_name:ident, $type_name:ident, $variant:ident) => {
         pub fn $fn_name(self) -> Option<$type_name> {
-            if let Self::$type_name(e) = self {
+            if let Self::$variant(e) = self {
                 Some(e)
             } else {
                 None
@@ -87,10 +82,10 @@ impl Error {
 }
 
 impl Message {
-    extract!(error, Error);
-    extract!(request, Request);
-    extract!(control, Control);
-    extract!(info, Info);
+    extract!(error, Error, Error);
+    extract!(request, Request, Request);
+    extract!(control, ControlMsg, Control);
+    extract!(info, Info, Info);
 
     pub fn is_error(&self) -> bool {
         matches!(self, Message::Error(_))
@@ -138,6 +133,6 @@ impl UampApp {
             return (Message::new_error(ErrorType::ExpectedControl), None);
         };
 
-        (Message::Success, Some(msg.into()))
+        (Message::Success, Some(UampMessage::Control(msg)))
     }
 }

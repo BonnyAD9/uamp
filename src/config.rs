@@ -26,6 +26,8 @@ pub struct Config {
     pub update_library_on_start: bool,
     #[serde(default = "default_register_global_hotkeys")]
     pub register_global_hotkeys: bool,
+    #[serde(default = "default_volume_jump")]
+    pub volume_jump: f32,
 }
 
 impl Default for Config {
@@ -89,6 +91,7 @@ impl Config {
             audio_extensions: default_audio_extensions(),
             update_library_on_start: default_update_library_on_start(),
             register_global_hotkeys: default_register_global_hotkeys(),
+            volume_jump: default_volume_jump(),
         }
     }
 }
@@ -162,4 +165,8 @@ pub fn default_port() -> u16 {
     {
         33284
     }
+}
+
+fn default_volume_jump() -> f32 {
+    0.025
 }

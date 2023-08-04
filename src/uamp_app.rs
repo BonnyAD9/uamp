@@ -7,6 +7,7 @@ use global_hotkey::{
 };
 use iced::{executor, window, Application};
 use iced_core::Event;
+use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
@@ -37,12 +38,23 @@ pub struct UampApp {
 #[allow(missing_debug_implementations)]
 #[derive(Clone, Debug)]
 pub enum UampMessage {
-    // TODO: move to player
     PlaySong(usize, Arc<[SongId]>),
-    PlayPause,
-    Shuffle,
+    Control(ControlMsg),
     Gui(uamp_gui::Message),
     Player(PlayerMessage),
+}
+
+/// only simple messages that can be safely send across threads and copied
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+pub enum ControlMsg {
+    PlayPause,
+    NextSong,
+    PrevSong,
+    SetVolume(f32),
+    VolumeUp,
+    VolumeDown,
+    Shuffle,
+    PlaylistJump(usize),
     Close,
 }
 
@@ -67,20 +79,11 @@ impl Application for UampApp {
                     true,
                 );
             }
-            UampMessage::PlayPause => {
-                self.player.play_pause(&self.library);
-            }
+            UampMessage::Control(msg) => return self.control_event(msg),
             UampMessage::Gui(msg) => return self.gui_event(msg),
             UampMessage::Player(msg) => {
                 return self.player.event(&self.library, msg)
             }
-            UampMessage::Close => {
-                _ = self.library.to_json(&self.config.library_path);
-                _ = self.player.to_json(&self.config.player_path);
-                _ = self.config.to_default_json();
-                return window::close();
-            }
-            UampMessage::Shuffle => self.player.shuffle(),
         };
         Command::none()
     }
@@ -104,6 +107,7 @@ impl Application for UampApp {
                 self.reciever.take(),
                 |mut reciever| async {
                     let msg = reciever.as_mut().unwrap().recv().await.unwrap();
+                    println!("recieve message");
                     (msg, reciever)
                 },
             ),
@@ -144,7 +148,7 @@ impl Application for UampApp {
             ),
             iced::subscription::events_with(|e, _| match e {
                 Event::Window(window::Event::CloseRequested) => {
-                    Some(UampMessage::Close)
+                    Some(UampMessage::Control(ControlMsg::Close))
                 }
                 _ => None,
             }),
@@ -190,42 +194,91 @@ impl Default for UampApp {
 }
 
 impl UampApp {
+    fn control_event(&mut self, msg: ControlMsg) -> Command {
+        match msg {
+            ControlMsg::PlayPause => {
+                self.player.play_pause(&self.library);
+            }
+            ControlMsg::NextSong => self.player.play_next(&self.library),
+            ControlMsg::PrevSong => self.player.play_prev(&self.library),
+            ControlMsg::Close => {
+                _ = self.library.to_json(&self.config.library_path);
+                _ = self.player.to_json(&self.config.player_path);
+                _ = self.config.to_default_json();
+                return window::close();
+            }
+            ControlMsg::Shuffle => self.player.shuffle(),
+            ControlMsg::SetVolume(v) => {
+                self.player.set_volume(v.clamp(0., 1.))
+            }
+            ControlMsg::VolumeUp => self.player.set_volume(
+                (self.player.volume() + self.config.volume_jump).clamp(0., 1.),
+            ),
+            ControlMsg::VolumeDown => self.player.set_volume(
+                (self.player.volume() - self.config.volume_jump).clamp(0., 1.),
+            ),
+            ControlMsg::PlaylistJump(i) => {
+                self.player
+                    .play_at(&self.library, i, self.player.is_playing())
+            }
+        };
+
+        Command::none()
+    }
+
     fn register_hotkeys(
         sender: Arc<UnboundedSender<UampMessage>>,
     ) -> Result<GlobalHotKeyManager> {
-        let hotkey_mgr = GlobalHotKeyManager::new()?;
+        macro_rules! hotkey {
+            ($first:ident + $second:ident $(-$rest:ident)*) => {
+                hotkey!($second - $first $(-$rest)*)
+            };
+            ($first:ident + $second:ident $(+$tail:ident)+ $(-$rest:ident)*) => {
+                hotkey!($second $(+$tail)+ - $first $(-$rest)*)
+            };
+            ($key:ident - $first:ident $(-$tail:ident)*) => {{
+                let key = HotKey::new(Some(hotkey::Modifiers::$first $(| hotkey::Modifiers::$tail)*), Code::$key);
+                let id = key.id();
+                (key, id)
+            }};
+        }
 
-        let play_pause = HotKey::new(
-            Some(hotkey::Modifiers::CONTROL | hotkey::Modifiers::ALT),
-            Code::Home,
-        );
-        let play_pause_id = play_pause.id();
+        macro_rules! make_hotkeys {
+            ($($key:ident $(+$mods:ident)+ -> $name:ident : $action:ident),+ $(,)?) => {{
+                let hotkey_mgr = GlobalHotKeyManager::new()?;
 
-        hotkey_mgr.register(play_pause)?;
+                $(let $name = hotkey!($key $(+$mods)+);)+
 
-        GlobalHotKeyEvent::set_event_handler(Some(
-            move |e: GlobalHotKeyEvent| {
-                match e.id {
-                    id if id == play_pause_id => {
-                        _ = sender.send(UampMessage::PlayPause);
-                    }
-                    _ => {}
-                };
-            },
-        ));
+                hotkey_mgr.register_all(&[
+                    $($name.0),+
+                ])?;
 
-        Ok(hotkey_mgr)
+                GlobalHotKeyEvent::set_event_handler(Some(
+                    move |e: GlobalHotKeyEvent| {
+                        match e.id {$(
+                            id if id == $name.1 => {
+                                _ = sender
+                                    .send(UampMessage::Control(ControlMsg::$action));
+                            })+
+                            _ => {}
+                        };
+                    },
+                ));
+
+                Ok(hotkey_mgr)
+            }};
+        }
+
+        make_hotkeys!(
+            CONTROL + ALT + Home -> play: PlayPause,
+            CONTROL + ALT + PageUp -> next: PrevSong,
+            CONTROL + ALT + PageDown -> prev: NextSong,
+            CONTROL + ALT + ArrowUp -> vol_up: VolumeUp,
+            CONTROL + ALT + ArrowDown -> vol_down: VolumeDown,
+        )
     }
 
     fn start_server() -> Result<TcpListener> {
         Ok(TcpListener::bind(format!("127.0.0.1:{}", default_port()))?)
-    }
-}
-
-impl From<messenger::Control> for UampMessage {
-    fn from(value: messenger::Control) -> Self {
-        match value {
-            messenger::Control::PlayPause => UampMessage::PlayPause,
-        }
     }
 }
