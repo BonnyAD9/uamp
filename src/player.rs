@@ -59,7 +59,7 @@ impl SinkWrapper {
         self.sink.on_callback(Some(move |cb| match cb {
             CallbackInfo::SourceEnded => {
                 f();
-            },
+            }
             _ => {}
         }))
     }
@@ -133,10 +133,8 @@ impl Player {
     pub fn event(&mut self, lib: &Library, msg: PlayerMessage) -> Command {
         match msg {
             PlayerMessage::SongEnd => {
-                println!("doing action");
                 self.play_next(lib);
-                println!("action done");
-            },
+            }
         }
         Command::none()
     }
@@ -149,7 +147,6 @@ impl Player {
                 match (&mut self.inner, sender) {
                     (MaybeSink::Sink(p), MaybeSink::Sender(s)) => {
                         _ = p.on_song_end(move || {
-                            println!("sending_message");
                             _ = s.send(UampMessage::Player(
                                 PlayerMessage::SongEnd,
                             ));

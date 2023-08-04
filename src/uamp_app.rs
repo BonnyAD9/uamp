@@ -1,4 +1,7 @@
-use std::{cell::RefCell, net::TcpListener, sync::Arc};
+use std::{
+    cell::RefCell, hint::black_box, net::TcpListener, sync::Arc,
+    time::Duration,
+};
 
 use eyre::Result;
 use global_hotkey::{
@@ -7,6 +10,7 @@ use global_hotkey::{
 };
 use iced::{executor, window, Application};
 use iced_core::Event;
+use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
@@ -33,6 +37,8 @@ pub struct UampApp {
 
     pub hotkey_mgr: Option<GlobalHotKeyManager>,
     pub listener: RefCell<Option<TcpListener>>,
+
+    cnt: u64,
 }
 
 #[allow(missing_debug_implementations)]
@@ -107,7 +113,6 @@ impl Application for UampApp {
                 self.reciever.take(),
                 |mut reciever| async {
                     let msg = reciever.as_mut().unwrap().recv().await.unwrap();
-                    println!("recieve message");
                     (msg, reciever)
                 },
             ),
@@ -189,6 +194,8 @@ impl Default for UampApp {
 
             hotkey_mgr,
             listener: RefCell::new(Self::start_server().ok()),
+
+            cnt: 0,
         }
     }
 }
