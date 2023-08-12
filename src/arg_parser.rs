@@ -101,8 +101,7 @@ macro_rules! parse {
 
 macro_rules! maybe_parse {
     ($t:ty, $msg:literal, $s:expr) => {
-        match $s.map(|s| s.parse::<$t>())
-        {
+        match $s.map(|s| s.parse::<$t>()) {
             Some(Err(_)) => ret_err!("Expected {}", $msg),
             Some(Ok(a)) => Some(a),
             _ => None,
@@ -110,12 +109,11 @@ macro_rules! maybe_parse {
     };
 
     ($t:ty, $msg:literal, $s:expr, $val:expr) => {
-        match $s.map(|s| s.parse::<$t>())
-        {
+        match $s.map(|s| s.parse::<$t>()) {
             Some(Err(_)) => ret_err!("Expected {}", $msg),
             Some(Ok(a)) if { $val }(&a) => Some(a),
             None => None,
-            _ => ret_err!("Expected {}", $msg)
+            _ => ret_err!("Expected {}", $msg),
         }
     };
 }

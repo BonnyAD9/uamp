@@ -126,17 +126,6 @@ struct PlayerDataSave<'a> {
 }
 
 impl Player {
-    pub fn new(sender: Arc<UnboundedSender<UampMessage>>) -> Self {
-        Self {
-            inner: MaybeSink::Sender(sender),
-            state: Playback::Stopped,
-            playlist: [][..].into(),
-            current: None,
-            volume: 1.,
-            mute: false,
-        }
-    }
-
     pub fn event(&mut self, lib: &Library, msg: PlayerMessage) -> Command {
         match msg {
             PlayerMessage::SongEnd => {
@@ -383,14 +372,6 @@ impl Playlist {
     fn make_dynamic(&mut self) {
         if let Self::Static(s) = self {
             *self = Self::Dynamic(s.as_ref().into())
-        }
-    }
-
-    /// This will panic when it is static playlist
-    fn mut_dyn(&mut self) -> &mut Vec<SongId> {
-        match self {
-            Playlist::Static(_) => panic!(),
-            Playlist::Dynamic(d) => d,
         }
     }
 

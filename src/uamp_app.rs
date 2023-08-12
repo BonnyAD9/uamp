@@ -1,7 +1,4 @@
-use std::{
-    cell::RefCell, hint::black_box, net::TcpListener, sync::Arc,
-    time::Duration,
-};
+use std::{cell::RefCell, net::TcpListener, sync::Arc};
 
 use eyre::Result;
 use global_hotkey::{
@@ -10,7 +7,6 @@ use global_hotkey::{
 };
 use iced::{executor, window, Application};
 use iced_core::Event;
-use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 

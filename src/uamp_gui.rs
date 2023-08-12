@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use iced_core::Length::{Fill, FillPortion};
+use iced_core::Length::Fill;
 
 use crate::{
     button, col,
@@ -10,8 +10,8 @@ use crate::{
     theme::{Button, Text},
     uamp_app::{ControlMsg, UampApp, UampMessage as Msg},
     wid::{
-        self, button, center, center_y, container, nothing, slider, space,
-        svg, wrap_box, Command, Element,
+        self, button, center, center_y, nothing, slider, svg, wrap_box,
+        Command, Element,
     },
 };
 
