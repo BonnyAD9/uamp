@@ -27,6 +27,103 @@ macro_rules! next {
             }
         }
     };
+
+    ($typ:ident, $iter:ident, $after:literal, $what:literal) => {
+        match $iter
+            .next()
+            .ok_or(Report::msg("next is none"))
+            .and_then(|v| v.parse::<$typ>().map_err(|e| e.into()))
+        {
+            Ok(a) => a,
+            Err(_) => {
+                ret_err!("Expected {} action after '{}'", $what, $after)
+            }
+        }
+    };
+
+    ($typ:ident, $iter:ident, $after:literal, $what:literal, $val:expr) => {
+        match $iter
+            .next()
+            .ok_or(Report::msg("next is none"))
+            .and_then(|v| v.parse::<$typ>().map_err(|e| e.into()))
+        {
+            Ok(a) if { $val }(&a) => a,
+            _ => {
+                ret_err!("Expected {} action after '{}'", $what, $after)
+            }
+        }
+    };
+}
+
+macro_rules! starts {
+    ($i:ident, $($s:literal)|+) => {
+        $($i.starts_with($s))||+
+    };
+}
+
+macro_rules! msg_control {
+    ($arg:ident, $msg:ident) => {
+        $arg.actions
+            .push(Action::Message(messenger::Message::Control(
+                ControlMsg::$msg,
+            )))
+    };
+
+    ($arg:ident, $msg:ident $t:tt) => {
+        $arg.actions
+            .push(Action::Message(messenger::Message::Control(
+                ControlMsg::$msg$t,
+            )))
+    };
+}
+
+macro_rules! parse {
+    ($t:ty, $msg:literal, $s:expr) => {
+        match $s
+            .ok_or(Report::msg("none"))
+            .and_then(|s| s.parse::<$t>().map_err(|e| e.into()))
+        {
+            Ok(a) => a,
+            _ => ret_err!("Expected {}", $msg),
+        }
+    };
+
+    ($t:ty, $msg:literal, $s:expr, $val:expr) => {
+        match $s
+            .ok_or(Report::msg("none"))
+            .and_then(|s| s.parse::<$t>().map_err(|e| e.into()))
+        {
+            Ok(a) if { $val }(&a) => a,
+            _ => ret_err!("Expected {}", $msg),
+        }
+    };
+}
+
+macro_rules! maybe_parse {
+    ($t:ty, $msg:literal, $s:expr) => {
+        match $s.map(|s| s.parse::<$t>())
+        {
+            Some(Err(_)) => ret_err!("Expected {}", $msg),
+            Some(Ok(a)) => Some(a),
+            _ => None,
+        }
+    };
+
+    ($t:ty, $msg:literal, $s:expr, $val:expr) => {
+        match $s.map(|s| s.parse::<$t>())
+        {
+            Some(Err(_)) => ret_err!("Expected {}", $msg),
+            Some(Ok(a)) if { $val }(&a) => Some(a),
+            None => None,
+            _ => ret_err!("Expected {}", $msg)
+        }
+    };
+}
+
+fn get_after<'a>(s: &'a str, p: &str) -> Option<&'a str> {
+    let mut i = s.split(p);
+    i.next();
+    i.next()
 }
 
 pub fn parse_args<'a>(args: impl Iterator<Item = &'a str>) -> Result<Args> {
@@ -55,12 +152,21 @@ fn instance<'a>(
     let a = next!(args, "instance", "instance action");
 
     match a {
-        "play-pause" | "pp" => {
-            res.actions
-                .push(Action::Message(messenger::Message::Control(
-                    ControlMsg::PlayPause,
-                )))
+        "play-pause" | "pp" => msg_control!(res, PlayPause),
+        "volume-up" | "vol-up" | "vu" => msg_control!(res, VolumeUp),
+        "volume-down" | "vol-down" | "vd" => msg_control!(res, VolumeDown),
+        "next-song" | "ns" => msg_control!(res, NextSong),
+        "previous-song" | "prev-song" | "ps" => msg_control!(res, PrevSong),
+        v if starts!(v, "volume" | "vol" | "v") => {
+            let vol = parse!(
+                f32,
+                "expected float in range 0..=1",
+                get_after(v, "="),
+                |v| (0.0..=1.).contains(v)
+            );
+            msg_control!(res, SetVolume(vol));
         }
+        "mute" => msg_control!(res, ToggleMute),
         "--" => ret_err!("Expected instance action after 'instance'"),
         _ => ret_err!("Invalid argument '{a}' after 'instance'"),
     }
@@ -122,7 +228,7 @@ fn print_basic_help() {
   uamp
     starts the gui of the player
 
-  uamp [action]
+  uamp [action] [-- action] ...
     does the given action
 
 Actions:
@@ -140,8 +246,23 @@ Actions:
 fn print_instance_help() {
     println!(
         "Instance actions:
-  pp play-pause
+  pp  play-pause
     toggle between the states playing and paused
+
+  volume-up  vol-up  vu
+    increase the volume by the default amount
+
+  volume-down  vol-down  vd
+    decrease the volume by the default amount
+
+  next-song  ns
+    go to the next song
+
+  previous-song  prev-song  ps
+    go to the previous song
+
+  volume  vol  v[=VALUE]
+    set the volume to the given VALUE, VALUE must be in range from 0 to 1
 "
     )
 }

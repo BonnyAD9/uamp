@@ -259,7 +259,7 @@ impl Player {
             let r = if mute {
                 s.set_volume(0.)
             } else {
-                s.set_volume(self.volume)
+                s.set_volume(self.volume * self.volume)
             };
             if r.is_ok() {
                 self.mute = mute;
