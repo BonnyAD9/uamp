@@ -35,6 +35,10 @@
         "register_global_hotkeys": {
             "description": "When true uamp will try to register global hotkeys (they don't properly work with wayland)",
             "type": "boolean"
+        },
+        "volume_jump": {
+            "description": "specifies how much the volume should change with heach volume up/down",
+            "type": "number"
         }
     }
 }

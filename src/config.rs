@@ -64,9 +64,8 @@ impl Config {
     }
 
     pub fn to_json<P: AsRef<Path>>(&self, path: P) -> Result<()> {
-        if let Some(par) = path.as_ref().parent() {
-            create_dir_all(par)?;
-        }
+        create_dir_all(&path)?;
+        let path = path.as_ref().join("config.json");
 
         let formatter = serde_json::ser::PrettyFormatter::with_indent(b"    ");
         let mut ser = serde_json::Serializer::with_formatter(
