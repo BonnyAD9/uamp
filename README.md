@@ -70,6 +70,11 @@ Instance actions:
     set the volume to the given VALUE, VALUE must be in range from 0 to 1
 ```
 
+## How it looks
+The gui is in state: at least there is gui. It looks horrible but it has the necesary elements.
+![image](https://github.com/BonnyAD9/uamp/assets/46282097/02ec639c-9e5d-4c51-b831-e35a668bf53b)
+
+
 ## Links
 - **Author:** [BonnyAD9](https://github.com/BonnyAD9)
 - **GitHub repository:** [BonnyAD9/makemake-rs](https://github.com/BonnyAD9/uamp)
