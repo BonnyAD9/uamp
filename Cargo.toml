@@ -11,7 +11,7 @@ dirs = "5.0.1"
 eyre = "0.6.8"
 flexi_logger = "0.25.5"
 global-hotkey = "0.2.3"
-iced = { version = "0.10.0", features = [ "svg", "tokio" ] }
+iced = { version = "0.10.0", features = [ "svg" ] }
 iced_core = "0.10"
 log = "0.4.19"
 rand = "0.8.5"
