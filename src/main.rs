@@ -1,4 +1,4 @@
-use std::{env::args, net::TcpStream, time::Duration};
+use std::{env::{args, self}, net::TcpStream, time::Duration};
 
 use config::app_id;
 use eyre::Result;
@@ -34,6 +34,10 @@ fn main() -> Result<()> {
     }
 
     info!("started");
+
+    // on wayland, the app freezes when not drawn, this is temprary workaround
+    // until it is fixed
+    env::set_var("WINIT_UNIX_BACKEND", "x11");
 
     let args: Vec<_> = args().collect();
     let args = parse_args(args.iter().map(|a| a.as_ref()))?;
@@ -79,7 +83,7 @@ fn make_settings() -> Settings<()> {
             ..Default::default()
         },
         id: Some(app_id()),
-        exit_on_close_request: false,
+        //exit_on_close_request: false,
         ..Default::default()
     }
 }
