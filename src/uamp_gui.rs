@@ -125,7 +125,19 @@ impl UampApp {
     // play menu
 
     fn play_menu(&self) -> Element {
-        row![self.play_pause_button(), self.current_song(),].into()
+        row![
+            button(svg(icons::PREVIOUS))
+                .height(30)
+                .width(30)
+                .on_press(Msg::Control(ControlMsg::PrevSong)),
+            self.play_pause_button(),
+            button(svg(icons::NEXT))
+                .height(30)
+                .width(30)
+                .on_press(Msg::Control(ControlMsg::NextSong)),
+            self.current_song(),
+        ]
+        .into()
     }
 
     fn play_pause_button(&self) -> Element {
