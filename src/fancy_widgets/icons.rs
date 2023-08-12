@@ -24,6 +24,9 @@ pub const PREVIOUS: SvgData =
 pub const VOLUME: SvgData =
     SvgData::new(include_bytes!("../../assets/svg/volume.svg").as_slice());
 
+pub const NO_VOLUME: SvgData =
+    SvgData::new(include_bytes!("../../assets/svg/no_volume.svg").as_slice());
+
 #[derive(Clone, Copy)]
 pub struct SvgData(&'static [u8]);
 

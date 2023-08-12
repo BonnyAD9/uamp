@@ -1,4 +1,8 @@
-use std::{env::{args, self}, net::TcpStream, time::Duration};
+use std::{
+    env::{self, args},
+    net::TcpStream,
+    time::Duration,
+};
 
 use config::app_id;
 use eyre::Result;

@@ -1,7 +1,7 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, ops::RangeInclusive};
 
 use iced::widget;
-use iced_core::Length::{self, Shrink};
+use iced_core::Length::{self, FillPortion, Shrink};
 
 use crate::{fancy_widgets, theme::Theme, uamp_app::UampMessage};
 
@@ -19,6 +19,8 @@ pub type Row<'a> = widget::Row<'a, UampMessage, Renderer>;
 pub type Svg = widget::Svg<Renderer>;
 pub type Space = widget::Space;
 pub type Scrollable<'a> = widget::Scrollable<'a, UampMessage, Renderer>;
+pub type Slider<'a, T> = widget::Slider<'a, T, UampMessage, Renderer>;
+pub type Container<'a> = widget::Container<'a, UampMessage, Renderer>;
 
 pub fn wrap_box<'a>(children: Vec<Element>) -> WrapBox {
     WrapBox::with_childern(children)
@@ -108,4 +110,36 @@ pub fn space(width: impl Into<Length>, height: impl Into<Length>) -> Space {
 
 pub fn nothing() -> Space {
     space(Shrink, Shrink)
+}
+
+pub fn slider<'a, T: Copy + From<u8> + std::cmp::PartialOrd>(
+    range: RangeInclusive<T>,
+    value: T,
+    on_change: impl Fn(T) -> UampMessage + 'a,
+) -> Slider<'a, T> {
+    widget::slider(range, value, on_change)
+}
+
+pub fn container<'a>(child: impl Into<Element<'a>>) -> Container<'a> {
+    widget::container(child)
+}
+
+pub fn center<'a>(child: impl Into<Element<'a>>) -> Row<'a> {
+    center_x(center_y(child))
+}
+
+pub fn center_x<'a>(child: impl Into<Element<'a>>) -> Row<'a> {
+    row![
+        space(FillPortion(1), Shrink),
+        child.into(),
+        space(FillPortion(1), Shrink)
+    ]
+}
+
+pub fn center_y<'a>(child: impl Into<Element<'a>>) -> Column<'a> {
+    col![
+        space(Shrink, FillPortion(1)),
+        child.into(),
+        space(Shrink, FillPortion(1)),
+    ]
 }

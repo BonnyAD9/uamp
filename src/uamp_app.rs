@@ -37,8 +37,6 @@ pub struct UampApp {
 
     pub hotkey_mgr: Option<GlobalHotKeyManager>,
     pub listener: RefCell<Option<TcpListener>>,
-
-    cnt: u64,
 }
 
 #[allow(missing_debug_implementations)]
@@ -59,6 +57,7 @@ pub enum ControlMsg {
     SetVolume(f32),
     VolumeUp,
     VolumeDown,
+    ToggleMute,
     Shuffle,
     PlaylistJump(usize),
     Close,
@@ -194,8 +193,6 @@ impl Default for UampApp {
 
             hotkey_mgr,
             listener: RefCell::new(Self::start_server().ok()),
-
-            cnt: 0,
         }
     }
 }
@@ -228,6 +225,7 @@ impl UampApp {
                 self.player
                     .play_at(&self.library, i, self.player.is_playing())
             }
+            ControlMsg::ToggleMute => self.player.toggle_mute(),
         };
 
         Command::none()

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use iced_core::Length::Fill;
+use iced_core::Length::{Fill, FillPortion};
 
 use crate::{
     button, col,
@@ -9,7 +9,10 @@ use crate::{
     row, text,
     theme::{Button, Text},
     uamp_app::{ControlMsg, UampApp, UampMessage as Msg},
-    wid::{self, button, nothing, svg, wrap_box, Command, Element},
+    wid::{
+        self, button, center, center_y, container, nothing, slider, space,
+        svg, wrap_box, Command, Element,
+    },
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -136,7 +139,9 @@ impl UampApp {
                 .width(30)
                 .on_press(Msg::Control(ControlMsg::NextSong)),
             self.current_song(),
+            self.volume(),
         ]
+        .height(30)
         .into()
     }
 
@@ -157,12 +162,41 @@ impl UampApp {
     fn current_song(&self) -> Element {
         button(if let Some(s) = self.player.now_playing() {
             let s = &self.library[s];
-            text!("{} - {}", s.artist(), s.title()).into()
+            text!("{} - {}", s.artist(), s.title()).width(Fill).into()
         } else {
             <iced::widget::Space as Into<Element>>::into(nothing())
         })
         .height(30)
+        .width(Fill)
         .on_press(Msg::Gui(Message::SetPage(MainPage::Playlist)))
+        .into()
+    }
+
+    fn volume(&self) -> Element {
+        row![
+            self.mute_button(),
+            center(text!("{:.0}", self.player.volume() * 100.)).width(30),
+            center_y(
+                slider(0.0..=1., self.player.volume(), |v| {
+                    Msg::Control(ControlMsg::SetVolume(v))
+                })
+                .step(0.001),
+            )
+            .width(150)
+            .padding([0, 5])
+        ]
+        .into()
+    }
+
+    fn mute_button(&self) -> Element {
+        button(svg(if self.player.mute() {
+            icons::NO_VOLUME
+        } else {
+            icons::VOLUME
+        }))
+        .width(30)
+        .height(30)
+        .on_press(Msg::Control(ControlMsg::ToggleMute))
         .into()
     }
 }

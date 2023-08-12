@@ -98,13 +98,18 @@ pub struct Player {
     playlist: Playlist,
     current: Option<usize>,
     volume: f32,
+    mute: bool,
 }
 
 #[derive(Default, Deserialize)]
 struct PlayerDataLoad {
+    #[serde(default)]
+    mute: bool,
     #[serde(default = "default_volume")]
     volume: f32,
+    #[serde(default)]
     current: Option<usize>,
+    #[serde(default)]
     playlist: Playlist,
 }
 
@@ -114,6 +119,7 @@ fn default_volume() -> f32 {
 
 #[derive(Serialize)]
 struct PlayerDataSave<'a> {
+    mute: bool,
     volume: f32,
     current: Option<usize>,
     playlist: &'a Playlist,
@@ -127,6 +133,7 @@ impl Player {
             playlist: [][..].into(),
             current: None,
             volume: 1.,
+            mute: false,
         }
     }
 
@@ -151,7 +158,11 @@ impl Player {
                                 PlayerMessage::SongEnd,
                             ));
                         });
-                        _ = p.set_volume(self.volume * self.volume);
+                        if self.mute {
+                            _ = p.set_volume(0.);
+                        } else {
+                            _ = p.set_volume(self.volume * self.volume);
+                        }
                     }
                     _ => {} // this will never happen
                 }
@@ -238,6 +249,28 @@ impl Player {
         }
     }
 
+    pub fn mute(&self) -> bool {
+        self.mute
+    }
+
+    pub fn set_mute(&mut self, mute: bool) {
+        self.try_get_player();
+        if let MaybeSink::Sink(s) = &mut self.inner {
+            let r = if mute {
+                s.set_volume(0.)
+            } else {
+                s.set_volume(self.volume)
+            };
+            if r.is_ok() {
+                self.mute = mute;
+            }
+        }
+    }
+
+    pub fn toggle_mute(&mut self) {
+        self.set_mute(!self.mute)
+    }
+
     pub fn play_playlist(
         &mut self,
         lib: &Library,
@@ -310,6 +343,7 @@ impl Player {
                 playlist: &self.playlist,
                 current: self.current,
                 volume: self.volume,
+                mute: self.mute,
             },
         )?;
         Ok(())
@@ -332,6 +366,7 @@ impl Player {
             playlist: data.playlist,
             current: data.current,
             volume: data.volume,
+            mute: data.mute,
         }
     }
 }

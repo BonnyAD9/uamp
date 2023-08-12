@@ -1,5 +1,3 @@
-use std::default;
-
 use iced::{
     application,
     overlay::menu,
@@ -169,15 +167,15 @@ impl slider::StyleSheet for Theme {
     fn active(&self, _style: &Self::Style) -> slider::Appearance {
         slider::Appearance {
             rail: slider::Rail {
-                colors: (OUTLINE, CONTRAST),
-                width: THICKNESS,
+                colors: (CONTRAST, OUTLINE),
+                width: THICKNESS * 2.,
                 border_radius: RADIUS.into(),
             },
             handle: slider::Handle {
                 shape: slider::HandleShape::Circle { radius: 5. },
                 color: SECONDARY,
                 border_width: THICKNESS,
-                border_color: PRIMARY,
+                border_color: OUTLINE,
             },
         }
     }
@@ -187,6 +185,7 @@ impl slider::StyleSheet for Theme {
         slider::Appearance {
             handle: slider::Handle {
                 color: SELECTED,
+                border_color: CONTRAST,
                 ..base.handle
             },
             ..base
@@ -198,6 +197,7 @@ impl slider::StyleSheet for Theme {
         slider::Appearance {
             handle: slider::Handle {
                 color: PRESSED,
+                border_color: CONTRAST,
                 ..base.handle
             },
             ..base
