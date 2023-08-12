@@ -109,19 +109,25 @@ impl UampApp {
         song: usize,
         songs: Arc<[SongId]>,
     ) -> Element<'static> {
-        let style = if song % 2 == 0 {
+        let button_style = if song % 2 == 0 {
             Button::ItemEven
         } else {
             Button::ItemOdd
         };
 
+        let text_style = if Some(songs[song]) == self.player.now_playing() {
+            Text::Contrast
+        } else {
+            Text::Default
+        };
+
         let s = &self.library[songs[song]];
 
-        button!("{} - {}", s.artist(), s.title())
+        button(text!("{} - {}", s.artist(), s.title()).style(text_style))
             .on_press(Msg::PlaySong(song, songs))
             .height(Fill)
             .width(Fill)
-            .style(style)
+            .style(button_style)
             .into()
     }
 
