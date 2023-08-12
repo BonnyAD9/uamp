@@ -38,14 +38,14 @@ Usage:
   uamp
     starts the gui of the player
 
-  uamp [action] [-- action] ...
+  uamp [action] [--] [action] ...
     does the given action
 
 Actions:
-  i instance [instance action]
+  i  instance <instance-action> [--]
     operates on a running instance of uamp
 
-  h help -h -? --help
+  h  help  -h  -?  --help
     shows help, with no argument whole help, with arguments only help specific
     to the given option.
     Available options are: basic, i instance
@@ -54,18 +54,18 @@ Instance actions:
   pp  play-pause
     toggle between the states playing and paused
 
-  volume-up  vol-up  vu
+  vu  vol-up  volume-up
     increase the volume by the default amount
 
-  volume-down  vol-down  vd
+  vd  vol-down  volume-down
     decrease the volume by the default amount
 
-  next-song  ns
+  ns  next-song
     go to the next song
 
-  previous-song  prev-song  ps
+  ps  prev-song  previous-song
     go to the previous song
 
-  volume  vol  v[=VALUE]
+  v  vol  volume=VALUE
     set the volume to the given VALUE, VALUE must be in range from 0 to 1
 ```
