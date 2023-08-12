@@ -29,7 +29,7 @@ uamp i pp
 ```
 
 ## CLI
-This is the output of help.
+This is the output of help:
 ```
 Welcome in uamp by BonnyAD9
 Version 0.1.0
@@ -69,3 +69,8 @@ Instance actions:
   v  vol  volume=VALUE
     set the volume to the given VALUE, VALUE must be in range from 0 to 1
 ```
+
+## Links
+- **Author:** [BonnyAD9](https://github.com/BonnyAD9)
+- **GitHub repository:** [BonnyAD9/makemake-rs](https://github.com/BonnyAD9/uamp)
+- **My website:** [bonnyad9.github.io](https://bonnyad9.github.io/)
