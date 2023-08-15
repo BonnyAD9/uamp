@@ -25,8 +25,6 @@ pub const DEFAULT_SCROLLBAR_WIDTH: f32 = 20.;
 pub const DEFAULT_SCROLLBAR_BUTTON_HEIGHT: f32 = 20.;
 pub const DEFAULT_MIN_THUMB_SIZE: f32 = 20.;
 
-// TODO: fix layouting
-
 /// Container that distributes its contents both vertically and horizontaly
 /// and also has a scollbar. Advantage over normal scrollbar combined with
 /// row or column is that this more efficiently handles large amounts of
@@ -38,27 +36,49 @@ pub struct WrapBox<'a, Message, Renderer: svg::Renderer>
 where
     Renderer::Theme: StyleSheet,
 {
+    /// amount of space between items on the x axis
     spacing_x: f32,
+    /// amount of space between items on the y axis
     spacing_y: f32,
+    /// padding of the viewport of the items
     padding: Padding,
+    /// width of the whole [`WrapBox`], [`Length::Shrink`] may not work properly
     width: Length,
+    /// height of the [`WrapBox`] [`Length::Shrink`] may not work properly
     height: Length,
+    /// max width of the [`WrapBox`]
     max_width: f32,
+    /// max height of the [`WrapBox`]
     max_height: f32,
+    /// fixed width of items, 0 means that the width is not fixed
     item_width: f32,
+    /// fixed height of items, 0 means that the height is not fixed
     item_height: f32,
+    /// max number of items in line, then it will wrap
     max_wrap: u32,
+    /// min number of items on one line, it will not wrap before
     min_wrap: u32,
+    /// number of pixels per one line scroll
     line_scroll: f32,
+    /// width of the scrollbar
     scrollbar_width: f32,
+    /// height of the buttons on the scrollbar
     scrollbar_button_height: f32,
+    /// min size of the scrollbar
     min_thumb_size: f32,
+    /// primary direction of the items
     primary_direction: ItemDirection,
+    /// secondary direction of the items, lines to wrap
     secondary_direction: ItemDirection,
+    /// when the primary scrollbar should be shown
     primary_scrollbar: Behaviour,
+    /// when the secondary scrollbar should be shown
     secondary_scrollbar: Behaviour,
+    /// the items
     children: Vec<Element<'a, Message, Renderer>>,
+    /// the state of the scrollbar, set only when up to date
     state: Option<State>,
+    /// style of the [`WrapBox`]
     style: <Renderer::Theme as StyleSheet>::Style,
 }
 
