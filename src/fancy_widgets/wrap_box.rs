@@ -830,6 +830,9 @@ impl<'a, Message: 'a, Renderer: svg::Renderer + 'a>
 where
     Renderer::Theme: StyleSheet,
 {
+    /// creates the [`WrapBox`] layout, immidiate node is the bounds of the
+    /// whole [`WrapBox`], it contains node with bounds of the viewport, it
+    /// than contains the childern
     fn create_layout(
         &self,
         renderer: &Renderer,
@@ -840,6 +843,11 @@ where
         Node::with_children(size, vec![node])
     }
 
+    /// gets the layout if it is available, otherwise creates it
+    /// immidiate node is the bounds of the viewport, it
+    /// than contains the childern
+    ///
+    /// owner will contain data referenced in the result
     fn get_layout<'b: 'c, 'c, F: FnOnce()>(
         &self,
         renderer: &Renderer,
@@ -864,6 +872,7 @@ where
         }
     }
 
+    /// gets the range of the visible childern indexes (inclusive - exclusive)
     #[inline]
     fn visible_range(&self, view_size: Size, state: &State) -> (usize, usize) {
         if !self.can_optimize() {
@@ -879,6 +888,7 @@ where
         }
     }
 
+    /// gets iterator over the visible childern
     #[inline]
     fn visible(
         &'a self,
@@ -892,6 +902,7 @@ where
             .map(move |(i, c)| (c, i + start))
     }
 
+    /// gets mutable iterator over the visible children
     #[inline]
     fn visible_mut(
         &mut self,
@@ -906,6 +917,9 @@ where
             .map(move |(i, c)| (c, i + start))
     }
 
+    /// creates the [`WrapBox`] layout, immidiate node is the
+    /// bounds of the viewport, it
+    /// than contains the childern
     fn layout_wrap(
         &self,
         renderer: &Renderer,
