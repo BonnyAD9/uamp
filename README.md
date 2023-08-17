@@ -80,6 +80,12 @@ Instance actions:
 The gui is in state: at least there is gui. It looks horrible but it has the necesary elements.
 ![image](https://github.com/BonnyAD9/uamp/assets/46282097/02ec639c-9e5d-4c51-b831-e35a668bf53b)
 
+## How to get it
+To use the player you have to compile it yourself, but that shouldn't be any problem because all you need is `cargo`:
+```
+cargo build -r
+```
+the binary will be `./target/release/uamp`. It doesn't depend on any other files.
 
 ## Links
 - **Author:** [BonnyAD9](https://github.com/BonnyAD9)
