@@ -218,7 +218,7 @@ fn print_help() {
 }
 
 fn print_help_header() {
-    println!("Welcome in uamp by BonnyAD9\nVersion 0.1.0\n")
+    println!("Welcome in uamp by BonnyAD9\nVersion 0.1.1\n")
 }
 
 fn print_basic_help() {

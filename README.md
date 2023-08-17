@@ -32,7 +32,7 @@ uamp i pp
 This is the output of help:
 ```
 Welcome in uamp by BonnyAD9
-Version 0.1.0
+Version 0.1.1
 
 Usage:
   uamp
