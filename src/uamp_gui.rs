@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use iced_core::Length::Fill;
+use iced_core::Length::{Fill, Shrink};
 
 use crate::{
     button, col,
@@ -10,7 +10,7 @@ use crate::{
     theme::{Button, Text},
     uamp_app::{ControlMsg, UampApp, UampMessage as Msg},
     wid::{
-        self, button, center, center_y, nothing, slider, svg, wrap_box,
+        self, button, center, center_y, nothing, slider, space, svg, wrap_box,
         Command, Element,
     },
 };
@@ -65,6 +65,9 @@ impl UampApp {
         row![
             make_button("Songs", MainPage::Songs),
             make_button("Playlist", MainPage::Playlist),
+            space(Fill, Shrink),
+            button!("Find Songs")
+                .on_press(Msg::Control(ControlMsg::FindSongs))
         ]
         .into()
     }

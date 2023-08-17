@@ -4,7 +4,6 @@
 ///! ```
 ///! let element = iced::widget::svg(icons::ICON);
 ///! ```
-
 use iced_core::svg::Handle;
 
 /// icon similar to '^', it is used for the top button in scrollbar

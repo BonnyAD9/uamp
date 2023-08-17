@@ -68,6 +68,12 @@ Instance actions:
 
   v  vol  volume=VALUE
     set the volume to the given VALUE, VALUE must be in range from 0 to 1
+
+  mute
+    toggle mute/unmute
+
+  fs  find-songs
+    look for new songs
 ```
 
 ## How it looks

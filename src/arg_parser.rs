@@ -165,6 +165,7 @@ fn instance<'a>(
             msg_control!(res, SetVolume(vol));
         }
         "mute" => msg_control!(res, ToggleMute),
+        "find-songs" | "fs" => msg_control!(res, FindSongs),
         "--" => ret_err!("Expected instance action after 'instance'"),
         _ => ret_err!("Invalid argument '{a}' after 'instance'"),
     }
@@ -261,6 +262,12 @@ fn print_instance_help() {
 
   v  vol  volume=VALUE
     set the volume to the given VALUE, VALUE must be in range from 0 to 1
+
+  mute
+    toggle mute/unmute
+
+  fs  find-songs
+    look for new songs
 "
     )
 }

@@ -57,6 +57,7 @@ pub enum ControlMsg {
     Shuffle,
     PlaylistJump(usize),
     Close,
+    FindSongs,
 }
 
 impl Application for UampApp {
@@ -222,6 +223,10 @@ impl UampApp {
                     .play_at(&self.library, i, self.player.is_playing())
             }
             ControlMsg::ToggleMute => self.player.toggle_mute(),
+            ControlMsg::FindSongs => {
+                self.library.get_new_songs(&self.config);
+                _ = self.library.to_json(&self.config.library_path);
+            }
         };
 
         Command::none()
