@@ -181,8 +181,7 @@ impl Player {
         match index {
             Some(i) if i < self.playlist.len() => self.load(lib, i, play),
             _ => {
-                self.current = None;
-                self.state = Playback::Stopped;
+                self.stop()
             }
         }
     }
@@ -297,12 +296,21 @@ impl Player {
 
     pub fn play_at(&mut self, lib: &Library, index: usize, play: bool) {
         if index >= self.playlist.len() {
-            self.current = None;
-            self.state = Playback::Stopped;
+            self.stop();
             return;
         }
 
         self.load(lib, index, play);
+    }
+
+    pub fn stop(&mut self) {
+        self.try_get_player();
+        if let MaybeSink::Sink(p) = &self.inner {
+            if p.sink.play(false).is_ok() {
+                self.current = None;
+                self.state = Playback::Stopped;
+            }
+        }
     }
 
     pub fn shuffle(&mut self) {
