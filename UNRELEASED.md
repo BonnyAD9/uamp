@@ -1,5 +1,7 @@
 # Unreleased changes
 
-## new features
+## New features
 - recursive search option
-- fixed next on last
+
+## Bugfixes
+- next on last song in playlist wouldn't stop playback
