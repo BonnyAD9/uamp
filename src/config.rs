@@ -12,7 +12,7 @@ use std::{
     rename = "https://raw.githubusercontent.com/BonnyAD9/uamp/master/other/json_schema/config_schema.json"
 )]
 pub struct Config {
-    #[serde(skip_serializing, default = "default_config_path")]
+    #[serde(skip_serializing, default = "default_config_path_json")]
     config_path: PathBuf,
     #[serde(default = "default_search_paths")]
     pub search_paths: Vec<PathBuf>,
@@ -64,8 +64,9 @@ impl Config {
     }
 
     pub fn to_json<P: AsRef<Path>>(&self, path: P) -> Result<()> {
-        create_dir_all(&path)?;
-        let path = path.as_ref().join("config.json");
+        if let Some(par) = path.as_ref().parent() {
+            create_dir_all(par)?;
+        }
 
         let formatter = serde_json::ser::PrettyFormatter::with_indent(b"    ");
         let mut ser = serde_json::Serializer::with_formatter(
@@ -120,6 +121,10 @@ pub fn default_config_path() -> PathBuf {
     } else {
         PathBuf::from(".")
     }
+}
+
+fn default_config_path_json() -> PathBuf {
+    default_config_path().join("config.json")
 }
 
 fn default_search_paths() -> Vec<PathBuf> {
