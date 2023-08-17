@@ -3,7 +3,7 @@ use std::{
     ops::{Index, IndexMut},
     path::Path,
     slice::{Iter, SliceIndex},
-    sync::Arc,
+    sync::Arc
 };
 
 use eyre::Result;
@@ -101,7 +101,7 @@ pub struct Player {
     mute: bool,
 }
 
-#[derive(Default, Deserialize)]
+#[derive(Deserialize)]
 struct PlayerDataLoad {
     #[serde(default)]
     mute: bool,
@@ -480,6 +480,17 @@ impl<'de> Deserialize<'de> for Playlist {
                 Ok(())
             }
             Playlist::Dynamic(v) => Vec::deserialize_in_place(deserializer, v),
+        }
+    }
+}
+
+impl Default for PlayerDataLoad {
+    fn default() -> Self {
+        Self {
+            mute: false,
+            volume: default_volume(),
+            current: None,
+            playlist: [].as_slice().into()
         }
     }
 }
