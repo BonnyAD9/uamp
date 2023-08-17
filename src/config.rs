@@ -16,6 +16,8 @@ pub struct Config {
     config_path: PathBuf,
     #[serde(default = "default_search_paths")]
     pub search_paths: Vec<PathBuf>,
+    #[serde(default = "default_recursive_search")]
+    pub recursive_search: bool,
     #[serde(default = "default_library_path")]
     pub library_path: PathBuf,
     #[serde(default = "default_player_path")]
@@ -86,6 +88,7 @@ impl Config {
         Config {
             config_path: config_path.into(),
             search_paths: default_search_paths(),
+            recursive_search: default_recursive_search(),
             library_path: default_library_path(),
             player_path: default_player_path(),
             audio_extensions: default_audio_extensions(),
@@ -133,6 +136,10 @@ fn default_search_paths() -> Vec<PathBuf> {
     } else {
         vec![PathBuf::from(".")]
     }
+}
+
+fn default_recursive_search() -> bool {
+    true
 }
 
 fn default_library_path() -> PathBuf {

@@ -16,6 +16,10 @@
                 "type": "string"
             }
         },
+        "recursive_search": {
+            "description": "if true, the directories will be searched recursively",
+            "type": "boolean"
+        },
         "library_path": {
             "description": "Absolute path to the json file with the library",
             "type": "string"

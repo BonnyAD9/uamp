@@ -70,8 +70,13 @@ impl Library {
 
     fn add_new_songs(songs: &mut Vec<Song>, conf: &Config) -> bool {
         let mut new_songs = false;
+        let mut paths = conf.search_paths.clone();
+        let mut i = 0;
 
-        for dir in &conf.search_paths {
+        while i < paths.len() {
+            let dir = &paths[i];
+            i += 1;
+
             let dir = match read_dir(dir) {
                 Ok(dir) => dir,
                 Err(_) => continue,
@@ -97,6 +102,9 @@ impl Library {
                 };
 
                 if ftype.is_dir() {
+                    if conf.recursive_search {
+                        paths.push(f.path())
+                    }
                     continue;
                 }
 
