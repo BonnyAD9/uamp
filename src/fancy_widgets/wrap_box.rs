@@ -933,6 +933,9 @@ where
         }
     }
 
+    /// creates the [`WrapBox`] layout in a optimized way, immidiate node is
+    /// the bounds of the viewport, it than contains the childern. Works only
+    /// if `can_optimize()` returns true.
     fn layout_wrap_optimized(
         &self,
         renderer: &Renderer,
@@ -964,6 +967,9 @@ where
         .translate(Vector::new(self.padding.left, self.padding.top))
     }
 
+    /// creates the [`WrapBox`] layout in a general way, immidiate node is
+    /// the bounds of the viewport, it than contains the childern. It may be
+    /// very slow, use `layout_wrap_optimized` when possible.
     fn layout_wrap_general(&self, renderer: &Renderer, size: Size) -> Node {
         let size = self.pad_size(size);
         let item_lim =
@@ -990,6 +996,7 @@ where
         .translate(Vector::new(self.padding.left, self.padding.top))
     }
 
+    /// Returns the size of object with the the padding
     fn pad_size(&self, size: Size) -> Size {
         let mut size = Size::new(
             size.width - self.padding.left - self.padding.right,
@@ -1007,10 +1014,12 @@ where
         size
     }
 
+    /// Returns true when actions such as layouting can be optimized
     fn can_optimize(&self) -> bool {
         self.item_height > 0.
     }
 
+    /// gets the size of line when scrolling
     fn line_size(&self) -> f32 {
         if self.line_scroll == 0. {
             if self.item_height == 0. {
@@ -1023,6 +1032,8 @@ where
         }
     }
 
+    /// Calculates the bounds of the top scrollbar buttion from the [`WrapBox`]
+    /// bounds.
     fn top_button_bounds(&self, bounds: Rectangle) -> Rectangle {
         Rectangle {
             x: bounds.x + bounds.width - self.scrollbar_width,
@@ -1032,6 +1043,8 @@ where
         }
     }
 
+    /// Calculates the bounds of the bottom scrollbar buttion from the
+    /// [`WrapBox`] bounds.
     fn bot_button_bounds(&self, bounds: Rectangle) -> Rectangle {
         Rectangle {
             x: bounds.x + bounds.width - self.scrollbar_width,
@@ -1041,6 +1054,8 @@ where
         }
     }
 
+    /// Calculates the bounds of the top trough from the [`WrapBox`] bounds and
+    /// thumb offset and size
     fn top_trough_bounds(
         &self,
         bounds: Rectangle,
@@ -1058,6 +1073,8 @@ where
         }
     }
 
+    /// Calculates the bounds of the bottom trough from the [`WrapBox`] bounds
+    /// and thumb offset and size
     fn bot_trough_bounds(
         &self,
         bounds: Rectangle,
@@ -1078,6 +1095,8 @@ where
         }
     }
 
+    /// Calculates the thumb bounds from the [`WrapBox`] bounds, thumb size and
+    /// its offset
     fn thumb_bounds(
         &self,
         bounds: Rectangle,
@@ -1097,6 +1116,8 @@ where
         }
     }
 
+    /// Callculates the thumb size from the [`WrapBox`] bounds and size of the
+    /// contents
     fn thumb_size(&self, bounds: Rectangle, content: Size) -> f32 {
         let trough_height = bounds.height - self.scrollbar_button_height * 2.;
         self.min_thumb_size
@@ -1104,6 +1125,7 @@ where
             .min(trough_height / 2.)
     }
 
+    /// Calculates the scroll offset of the contents in pixels
     fn scroll_offset(&self, state: &State) -> (f32, f32) {
         (
             if self.item_width == 0. {
@@ -1119,6 +1141,7 @@ where
         )
     }
 
+    /// Draws the scrollbar of a [`WrapBox`]
     fn draw_scrollbar(
         &self,
         layout: Layout,
@@ -1248,6 +1271,7 @@ where
     }
 }
 
+/// Determines the direction of layouting the items in [`WrapBox`]
 #[derive(Copy, Clone)]
 pub enum ItemDirection {
     LeftToRight,
@@ -1256,6 +1280,7 @@ pub enum ItemDirection {
     BottomToTop,
 }
 
+/// Contains the state of a [`WrapBox`]
 #[derive(Copy, Clone)]
 struct State {
     /// Absolute offset on the x axis
@@ -1266,6 +1291,7 @@ struct State {
 }
 
 impl State {
+    /// Creates new [`WrapBox`] state, (not scrolled and not pressed)
     fn new() -> Self {
         Self {
             offset_x: 0.,
@@ -1274,6 +1300,7 @@ impl State {
         }
     }
 
+    /// Gets the relative offset of the scrollbars
     fn get_relative(&self, view_size: Size, content_size: Size) -> (f32, f32) {
         (
             self.offset_x / (content_size.width - view_size.width),
@@ -1281,6 +1308,9 @@ impl State {
         )
     }
 
+    /// scrolls to the given relative position of the scrollbar
+    ///
+    /// Pos should be value in range `0..=1`
     fn scroll_relative_y(
         &mut self,
         view_size: Size,
@@ -1292,23 +1322,38 @@ impl State {
 }
 
 impl Default for State {
+    /// Creates the default [`WrapBox`] state (not scrolled and not pressed)
     fn default() -> Self {
         Self::new()
     }
 }
 
+/// Defines how the mouse interacts with the scrollbar
 #[derive(Clone, Copy)]
 enum ScrollbarInteraction {
+    /// Mouse doesn't interact with the scrollbar
     None,
+    /// Mouse is over the scrollbar but not pressed
     Up,
+    /// Mouse is over the scrollbar and is pressed
     Down,
-    Thumb { relative: f32, cursor: Point },
+    /// Mouse is dragging the thumb
+    Thumb {
+        /// Last relative offset of the scrollbar
+        relative: f32,
+        /// Last position of the mouse
+        cursor: Point
+    },
 }
 
+/// Defines the behaviour of the scrollbar (its visibility)
 #[derive(Clone, Copy)]
 pub enum Behaviour {
+    /// Scrollbar is always visible
     Enabled,
+    /// Scrollbar is never visible
     Disabled,
+    /// Scrollbar is visible only when necesary
     Hidden,
 }
 
@@ -1318,11 +1363,15 @@ impl PartialEq for Behaviour {
     }
 }
 
+/// Defines the style of a [`WrapBox`]
 pub trait StyleSheet {
+    /// Type identifying the style
     type Style: Default;
 
+    /// Determines how should be the background drawn
     fn background(&self, style: &Self::Style, pos: MousePos) -> SquareStyle;
 
+    /// Defines how should the scrollbar buttons be drawn
     fn button_style(
         &self,
         style: &Self::Style,
@@ -1332,6 +1381,7 @@ pub trait StyleSheet {
         relative_scroll: f32,
     ) -> ButtonStyle;
 
+    /// Defines the style of the thumb
     fn thumb_style(
         &self,
         style: &Self::Style,
@@ -1340,6 +1390,7 @@ pub trait StyleSheet {
         relative_scroll: f32,
     ) -> SquareStyle;
 
+    /// Defines the style of the troughs
     fn trough_style(
         &self,
         style: &Self::Style,
@@ -1349,14 +1400,21 @@ pub trait StyleSheet {
     ) -> SquareStyle;
 }
 
+/// Shows mouse position relative to the scrollbar element
 pub enum MousePos {
+    /// Mouse is directly over the element
     DirectlyOver,
+    /// Mouse is not directly over the element, but is somwhere over the
+    /// scrollbar
     OverScrollbar,
+    /// Mouse is not over the scrollbarm, but is somewhere over the [`WrapBox`]
     OverWrapBox,
+    /// Mouse is not over the [`WrapBox`]
     None,
 }
 
 impl MousePos {
+    /// Creates [`MousePos`] from the parts over which the mouse is
     fn from_bools(wrap: bool, scroll: bool, directly: bool) -> Self {
         if directly {
             Self::DirectlyOver
@@ -1376,14 +1434,20 @@ impl PartialEq for MousePos {
     }
 }
 
+/// Defines how a square area should be drawn
 pub struct SquareStyle {
+    /// background of the area
     pub background: Background,
+    /// Color of the border of the area
     pub border: Color,
+    /// Thickness of the border around the area
     pub border_thickness: f32,
+    /// Radious of the border corners
     pub border_radius: BorderRadius,
 }
 
 impl SquareStyle {
+    /// Draws the square on the given position based on its style
     fn draw<Renderer: svg::Renderer>(
         &self,
         renderer: &mut Renderer,
@@ -1401,11 +1465,15 @@ impl SquareStyle {
     }
 }
 
+/// Style of a button
 pub struct ButtonStyle {
+    /// How the containing rectangle should be drawn
     pub square: SquareStyle,
+    /// Color of the text of the button
     pub foreground: Color,
 }
 
+/// Default style of [`WrapBox`]
 impl StyleSheet for Theme {
     type Style = ();
 
@@ -1492,19 +1560,30 @@ impl StyleSheet for Theme {
 
 /// Layout Style for [`WrapBox`], None means don't change the value
 pub struct LayoutStyle {
+    /// horizontal and vertical spacing of the items
     pub spacing: (Option<f32>, Option<f32>),
+    /// Padding of the items viewport
     pub padding: Option<Padding>,
+    /// Size of the items
     pub item_size: (Option<f32>, Option<f32>),
+    /// Width of the scrollbar
     pub scrollbar_width: Option<f32>,
+    /// height of the scrollbar buttons
     pub scrollbar_button_height: Option<f32>,
+    /// Minimal thumb size
     pub min_thumb_size: Option<f32>,
+    /// primary direction of the items
     pub primary_direction: Option<ItemDirection>,
+    /// secondary direction of the items
     pub secondary_direction: Option<ItemDirection>,
+    /// Visibility of the primary scrollbar
     pub primary_scrollbar: Option<Behaviour>,
+    /// Visibility of the secondary scrollbar
     pub secondary_scrollbar: Option<Behaviour>,
 }
 
 impl LayoutStyle {
+    /// Default layout style
     pub fn empty() -> Self {
         LayoutStyle {
             spacing: (None, None),
@@ -1532,21 +1611,25 @@ impl Default for LayoutStyle {
     }
 }
 
+/// Can create the [`LayoutStyle`] of [`WrapBox`]
 pub trait LayoutStyleSheet<Style> {
+    /// Creates the [`LayoutStyle`] of [`WrapBox`]
     fn layout(&self, style: &Style) -> LayoutStyle;
 }
 
+/// Default layout style implementation
 impl<Style> LayoutStyleSheet<Style> for Theme {
     fn layout(&self, _style: &Style) -> LayoutStyle {
         LayoutStyle::default()
     }
 }
 
-/// Extension of Option<T>
+/// Extension of [`Option<T>`]
 trait OptionCopy<T>
 where
     T: Copy,
 {
+    /// Sets field if the option is [`Some`]
     fn set_if(&self, field: &mut T);
 }
 

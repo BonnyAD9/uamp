@@ -1,10 +1,12 @@
 use crate::{messenger, uamp_app::ControlMsg};
 use eyre::{Report, Result};
 
+/// Action that can be done with cli
 pub enum Action {
     Message(messenger::Message),
 }
 
+/// Contains the CLI arguments values
 #[derive(Default)]
 pub struct Args {
     pub actions: Vec<Action>,
@@ -12,12 +14,37 @@ pub struct Args {
     pub should_run: bool,
 }
 
+/// Returns error with the given message
 macro_rules! ret_err {
     ($($arg:tt)*) => {
         return Err(Report::msg(format!($($arg)*)))
     };
 }
 
+/// Gets the next value from a iterator, returns error when there is no value.
+/// The two last arguments are used to produce the error message
+/// - the first argument says the option after which the error occured
+/// - the second argument explains what value was expected
+///
+/// It can also parse and validate the value
+///
+/// # Usage
+/// ```
+/// // gets the next value from iterator
+/// let val = next!(iterator, "option", "name");
+///
+/// // gets the value and parses it into f32
+/// let val = next!(f32, iterator, "option", "f32");
+///
+/// // gets the value, parses it into f32 and validates it
+/// let val = next!(
+///     f32,
+///     iterator,
+///     "option",
+///     "f32 in range 0..=1",
+///     |v| (0.0..=1.).contains(v)
+/// );
+/// ```
 macro_rules! next {
     ($iter:ident, $after:literal, $what:literal) => {
         match $iter.next() {
@@ -55,12 +82,23 @@ macro_rules! next {
     };
 }
 
+/// creates expression that checks whether a variable starts with any of the
+/// strings
+///
+/// # Example
+/// ```
+/// let val = "arg2=hi";
+/// if starts!(val, "arg1" | "arg2") {
+///     // now we know that `val` starts either with `"arg1"` or `"arg2"`
+/// }
+/// ```
 macro_rules! starts {
-    ($i:ident, $($s:literal)|+) => {
+    ($i:ident, $($s:literal)|+) => {{
         $($i.starts_with($s))||+
-    };
+    }};
 }
 
+/// Adds control message as action to be sent to existing instance
 macro_rules! msg_control {
     ($arg:ident, $msg:ident) => {
         $arg.actions
@@ -77,6 +115,24 @@ macro_rules! msg_control {
     };
 }
 
+/// Parses the string value, returns error if it cannot be parsed. The second
+/// argument is used to produce the error message
+///
+/// It can also validate the value
+///
+/// # Examples
+/// ```
+/// // parses the `&str` to `f32`
+/// let val = parse!(f32, "f32", "3.1415");
+///
+/// // parses the `&str` to `f32` and validates it
+/// let val = parse!(
+///     f32,
+///     "f32 in range 0..=1",
+///     "3.1415",
+///     |v| (0.0..=1.).contains(v)
+/// );
+/// ```
 macro_rules! parse {
     ($t:ty, $msg:literal, $s:expr) => {
         match $s
@@ -99,6 +155,25 @@ macro_rules! parse {
     };
 }
 
+/// Parses the string value, returns None if the passed value is none, returns
+/// error if it cannot be parsed. The second argument is used to produce the
+/// error message.
+///
+/// It can also validate the value
+///
+/// # Examples
+/// ```
+/// // parses the `&str` to `f32`
+/// let val = parse!(f32, "f32", Some("3.1415"));
+///
+/// // parses the `&str` to `f32` and validates it
+/// let val = parse!(
+///     f32,
+///     "f32 in range 0..=1",
+///     None,
+///     |v| (0.0..=1.).contains(v)
+/// );
+/// ```
 macro_rules! maybe_parse {
     ($t:ty, $msg:literal, $s:expr) => {
         match $s.map(|s| s.parse::<$t>()) {
@@ -118,12 +193,14 @@ macro_rules! maybe_parse {
     };
 }
 
+/// Gets supstring immidietly following the substring `p` in `s`
 fn get_after<'a>(s: &'a str, p: &str) -> Option<&'a str> {
     let mut i = s.split(p);
     i.next();
     i.next()
 }
 
+/// Parses the CLI arguments and returns the parsed arguments
 pub fn parse_args<'a>(args: impl Iterator<Item = &'a str>) -> Result<Args> {
     let mut res = Args::default();
 
@@ -142,6 +219,7 @@ pub fn parse_args<'a>(args: impl Iterator<Item = &'a str>) -> Result<Args> {
     Ok(res)
 }
 
+/// Parses the instance action arguments
 fn instance<'a>(
     args: &mut impl Iterator<Item = &'a str>,
     res: &mut Args,
@@ -175,6 +253,7 @@ fn instance<'a>(
 
 //==================================<< HELP >>===============================//
 
+/// Parses help arguments
 fn help<'a>(
     args: &mut impl Iterator<Item = &'a str>,
     res: &mut Args,
@@ -211,16 +290,19 @@ fn help<'a>(
     Ok(())
 }
 
+/// Prints all of help
 fn print_help() {
     print_help_header();
     print_basic_help();
     print_instance_help();
 }
 
+/// Prints the help header
 fn print_help_header() {
     println!("Welcome in uamp by BonnyAD9\nVersion 0.1.1\n")
 }
 
+/// Prints the basic usage help
 fn print_basic_help() {
     println!(
         "Usage:
@@ -242,6 +324,7 @@ Actions:
     )
 }
 
+/// Prints the instance help
 fn print_instance_help() {
     println!(
         "Instance actions:
