@@ -10,6 +10,12 @@ use iced_core::{Background, Color, Padding, Vector};
 
 use crate::fancy_widgets::wrap_box;
 
+/// Creates const color from hex
+///
+/// # Example
+/// ```
+/// const col: Color = const_color!(0x123456);
+/// ```
 macro_rules! const_color {
     ($x:literal) => {
         Color::from_rgb(
@@ -21,24 +27,43 @@ macro_rules! const_color {
 }
 
 // some default colors to use
+
+/// The primary color
 const PRIMARY: Color = const_color!(0x222222);
+/// Primary color as background
 const PRIMARY_BG: Background = Background::Color(PRIMARY);
+/// Secondary color
 const SECONDARY: Color = const_color!(0x181818);
+/// Secondary color as background
 const SECONDARY_BG: Background = Background::Color(SECONDARY);
+/// The outline color
 const OUTLINE: Color = const_color!(0x555555);
+/// The outline color as background
 const OUTLINE_BG: Background = Background::Color(OUTLINE);
+/// The foreground color
 const FOREGROUND: Color = const_color!(0xEEEEEE);
+/// The inactice foreground color
 const DARK_FOREGROUND: Color = const_color!(0x777777);
+/// The color of pressed button
 const PRESSED: Color = const_color!(0x333333);
+/// The color of pressed button as background
 const PRESSED_BG: Background = Background::Color(PRESSED);
+/// The color of selected button
 const SELECTED: Color = const_color!(0x444444);
+/// The color of selected button as background
 const SELECTED_BG: Background = Background::Color(SELECTED);
+/// The contras color
 const CONTRAST: Color = const_color!(0xCCCC00);
+/// The contras color as background
 const CONTRAST_BG: Background = Background::Color(CONTRAST);
+/// Brighter version of contrast color
 const BRIGHT_CONTRAST: Color = const_color!(0xEEEE00);
+/// The border radius
 const RADIUS: f32 = 4.;
+/// The border thickness
 const THICKNESS: f32 = 1.;
 
+/// The theme of uamp app
 #[derive(Default, Clone)]
 pub struct Theme {}
 
@@ -53,11 +78,15 @@ impl application::StyleSheet for Theme {
     }
 }
 
+/// The types of styles of buttons
 #[derive(Default, PartialEq)]
 pub enum Button {
+    /// Default button style
     #[default]
     Default,
+    /// Odd items in list
     ItemOdd,
+    /// Even items in list
     ItemEven,
 }
 
@@ -420,10 +449,13 @@ impl scrollable::StyleSheet for Theme {
     // ) -> scrollable::Scrollbar;
 }
 
+/// The text styles
 #[derive(Clone, Default)]
 pub enum Text {
+    /// The default text style
     #[default]
     Default,
+    /// Text with contrast color as foreground
     Contrast,
 }
 

@@ -64,6 +64,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+/// Creates the settings for the uamp app
 fn make_settings() -> Settings<()> {
     let icon = window::icon::from_rgba(
         include_bytes!("../assets/raw_img/icon_64.data")
@@ -91,6 +92,11 @@ fn make_settings() -> Settings<()> {
     }
 }
 
+/// Tries to start the logger with env
+///
+/// # Errors
+/// - cannot load from env
+/// - cannot start the logger
 fn start_logger() -> Result<()> {
     flexi_logger::Logger::try_with_env()?
         .log_to_file(
@@ -102,6 +108,7 @@ fn start_logger() -> Result<()> {
     Ok(())
 }
 
+/// Sends message to a existing uamp instance
 fn send_message(msg: messenger::Message) -> Result<messenger::Message> {
     let stream = TcpStream::connect(format!("127.0.0.1:{}", default_port()))?;
     _ = stream.set_read_timeout(Some(Duration::from_secs(5)));

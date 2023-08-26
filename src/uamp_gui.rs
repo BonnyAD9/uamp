@@ -15,22 +15,30 @@ use crate::{
     },
 };
 
+/// A gui message
 #[derive(Clone, Copy, Debug)]
 pub enum Message {
+    /// Jump to the main page
     SetPage(MainPage),
 }
 
+/// Available main menu pages
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum MainPage {
+    /// All songs page
     Songs,
+    /// Current playlist page
     Playlist,
 }
 
+/// The state of the gui
 pub struct GuiState {
+    /// The current page
     page: MainPage,
 }
 
 impl UampApp {
+    /// handles gui events
     pub fn gui_event(&mut self, message: Message) -> Command {
         match message {
             Message::SetPage(page) => self.gui.page = page,
@@ -38,6 +46,7 @@ impl UampApp {
         Command::none()
     }
 
+    /// Generates the gui
     pub fn gui(&self) -> Element {
         col![
             self.menu(),
@@ -50,6 +59,7 @@ impl UampApp {
 
     // menu
 
+    /// Creates the menu
     fn menu(&self) -> Element {
         let make_button =
             |text: &'static str, page: MainPage| -> wid::Button {
@@ -74,6 +84,7 @@ impl UampApp {
 
     // main page
 
+    /// Creates the main page
     fn main_page(&self) -> Element {
         match self.gui.page {
             MainPage::Songs => {
@@ -85,6 +96,7 @@ impl UampApp {
 
     // playlist
 
+    /// Creates the playlist page
     fn playlist(&self) -> Element {
         col![
             button!("Shuffle").on_press(Msg::Control(ControlMsg::Shuffle)),
@@ -96,6 +108,7 @@ impl UampApp {
 
     // song list
 
+    /// Creates a song list
     fn song_list(&self, songs: Arc<[SongId]>) -> Element {
         wrap_box(
             (0..songs.len())
@@ -107,6 +120,7 @@ impl UampApp {
         .into()
     }
 
+    /// Creates a song list item
     fn song_list_item(
         &self,
         song: usize,
@@ -136,6 +150,7 @@ impl UampApp {
 
     // play menu
 
+    /// Creates the play menu
     fn play_menu(&self) -> Element {
         row![
             button(svg(icons::PREVIOUS))
@@ -154,6 +169,7 @@ impl UampApp {
         .into()
     }
 
+    /// Creates the play/pause button
     fn play_pause_button(&self) -> Element {
         let icon = if self.player.is_playing() {
             icons::PAUSE
@@ -168,6 +184,7 @@ impl UampApp {
             .into()
     }
 
+    /// Shows the current song
     fn current_song(&self) -> Element {
         button(if let Some(s) = self.player.now_playing() {
             let s = &self.library[s];
@@ -181,6 +198,7 @@ impl UampApp {
         .into()
     }
 
+    /// Creates the volume controls
     fn volume(&self) -> Element {
         row![
             self.mute_button(),
@@ -197,6 +215,7 @@ impl UampApp {
         .into()
     }
 
+    /// Creates the mute button
     fn mute_button(&self) -> Element {
         button(svg(if self.player.mute() {
             icons::NO_VOLUME
@@ -211,6 +230,7 @@ impl UampApp {
 }
 
 impl GuiState {
+    /// Creates default gui state
     pub fn new() -> Self {
         GuiState {
             page: MainPage::Songs,

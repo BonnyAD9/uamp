@@ -20,43 +20,70 @@ use crate::{
     wid::{Command, Element},
 };
 
+/// The uamp app state
 pub struct UampApp {
+    /// The configuration
     pub config: Config,
+    /// The song library
     pub library: Library,
+    /// The song player
     pub player: Player,
 
+    /// Sender for async messages to be synchronized with the main message
+    /// handler
     pub sender: Arc<UnboundedSender<UampMessage>>,
+    /// Reciever of the async messages
     pub reciever: RefCell<Option<UnboundedReceiver<UampMessage>>>,
 
+    /// The visual style/theme of the app
     pub theme: Theme,
+    /// The state of gui
     pub gui: GuiState,
 
+    /// hotkey manager
     pub hotkey_mgr: Option<GlobalHotKeyManager>,
+    /// The server listener
     pub listener: RefCell<Option<TcpListener>>,
 }
 
+/// Event messages in uamp
 #[allow(missing_debug_implementations)]
 #[derive(Clone, Debug)]
 pub enum UampMessage {
+    /// Play song song at the given index in the playlist
     PlaySong(usize, Arc<[SongId]>),
+    /// Some simple messages
     Control(ControlMsg),
+    /// Gui messages handled by the gui
     Gui(uamp_gui::Message),
+    /// Player messges handled by the player
     Player(PlayerMessage),
 }
 
 /// only simple messages that can be safely send across threads and copied
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 pub enum ControlMsg {
+    /// Toggle between play/pause
     PlayPause,
+    /// Jump to the next song
     NextSong,
+    /// Jump to the previous song
     PrevSong,
+    /// Set the volume
     SetVolume(f32),
+    /// Increase the volume
     VolumeUp,
+    /// Decrease the volume
     VolumeDown,
+    /// Toggle the mute control
     ToggleMute,
+    /// Shuffle the current playlist
     Shuffle,
+    /// Jump to the given index in the playlist
     PlaylistJump(usize),
+    /// Exit the app
     Close,
+    /// Search for new songs
     FindSongs,
 }
 
@@ -195,6 +222,7 @@ impl Default for UampApp {
 }
 
 impl UampApp {
+    /// handles the control events
     fn control_event(&mut self, msg: ControlMsg) -> Command {
         match msg {
             ControlMsg::PlayPause => {
@@ -232,6 +260,7 @@ impl UampApp {
         Command::none()
     }
 
+    /// Registers hotkeys
     fn register_hotkeys(
         sender: Arc<UnboundedSender<UampMessage>>,
     ) -> Result<GlobalHotKeyManager> {
@@ -284,6 +313,7 @@ impl UampApp {
         )
     }
 
+    /// Starts the tcp server
     fn start_server() -> Result<TcpListener> {
         Ok(TcpListener::bind(format!("127.0.0.1:{}", default_port()))?)
     }

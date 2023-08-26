@@ -6,28 +6,38 @@ use std::{
     path::{Path, PathBuf},
 };
 
+/// Configuration of uamp
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(
     tag = "$schema",
     rename = "https://raw.githubusercontent.com/BonnyAD9/uamp/master/other/json_schema/config_schema.json"
 )]
 pub struct Config {
+    /// Where the configuration should be saved
     #[serde(skip_serializing, default = "default_config_path_json")]
     config_path: PathBuf,
+    /// Where to search for songs
     #[serde(default = "default_search_paths")]
     pub search_paths: Vec<PathBuf>,
+    /// Determines wheter the search for songs should be recursive
     #[serde(default = "default_recursive_search")]
     pub recursive_search: bool,
+    /// Where to save/load library from
     #[serde(default = "default_library_path")]
     pub library_path: PathBuf,
+    /// Where to save/load player state from
     #[serde(default = "default_player_path")]
     pub player_path: PathBuf,
+    /// What are the file extensions for audio files
     #[serde(default = "default_audio_extensions")]
     pub audio_extensions: Vec<String>,
+    /// When true, library will search for new songs on startup
     #[serde(default = "default_update_library_on_start")]
     pub update_library_on_start: bool,
+    /// When true, uamp will register global shortcuts
     #[serde(default = "default_register_global_hotkeys")]
     pub register_global_hotkeys: bool,
+    /// Determines how much should the volume change with volume up/down
     #[serde(default = "default_volume_jump")]
     pub volume_jump: f32,
 }
@@ -39,6 +49,8 @@ impl Default for Config {
 }
 
 impl Config {
+    /// Loads config from the given json file. If the loading fails, creates
+    /// default config.
     pub fn from_json<P: AsRef<Path>>(path: P) -> Self {
         let file = match File::open(path.as_ref()) {
             Ok(f) => f,
@@ -61,10 +73,18 @@ impl Config {
         serde_json::from_reader(file).unwrap_or_default()
     }
 
+    /// Loads config from the default json file. If the loading fails, creates
+    /// default config.
     pub fn from_default_json() -> Self {
         Config::from_json(default_config_path().join("config.json"))
     }
 
+    /// Saves the config to the given json file.
+    ///
+    /// # Errors
+    /// - Fails to create parent directory
+    /// - Fails to write to file
+    /// - Fails to serialize
     pub fn to_json<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         if let Some(par) = path.as_ref().parent() {
             create_dir_all(par)?;
@@ -80,10 +100,16 @@ impl Config {
         Ok(())
     }
 
+    /// Saves the config to the default json file.
+    ///
+    /// # Errors
+    /// - Fails to create parent directory
+    /// - Fails to write to fi
     pub fn to_default_json(&self) -> Result<()> {
         self.to_json(&self.config_path)
     }
 
+    /// Creates new config with the given config path
     pub fn new(config_path: impl Into<PathBuf>) -> Self {
         Config {
             config_path: config_path.into(),
@@ -99,6 +125,7 @@ impl Config {
     }
 }
 
+/// Gets the unique app identifier, it is different when debugging
 pub fn app_id() -> String {
     #[cfg(not(debug_assertions))]
     {
@@ -110,6 +137,7 @@ pub fn app_id() -> String {
     }
 }
 
+/// Gets the default path for configuration, it is different when debugging
 pub fn default_config_path() -> PathBuf {
     if let Some(dir) = dirs::config_dir() {
         // use different path when debugging to not ruin existing config
@@ -126,10 +154,12 @@ pub fn default_config_path() -> PathBuf {
     }
 }
 
+/// Gets the default path to json configuration, it is different when debugging
 fn default_config_path_json() -> PathBuf {
     default_config_path().join("config.json")
 }
 
+/// Gets the default search paths.
 fn default_search_paths() -> Vec<PathBuf> {
     if let Some(dir) = dirs::audio_dir() {
         vec![dir]
@@ -138,18 +168,23 @@ fn default_search_paths() -> Vec<PathBuf> {
     }
 }
 
+/// Gets the default value for recursive_search
 fn default_recursive_search() -> bool {
     true
 }
 
+/// Gets the default path to library json file, it is different when debugging
 fn default_library_path() -> PathBuf {
     default_config_path().join("library.json")
 }
 
+/// Gets the default path to player state json file, it is different when
+/// debugging
 fn default_player_path() -> PathBuf {
     default_config_path().join("player.json")
 }
 
+/// Gets the default audio file extensions
 fn default_audio_extensions() -> Vec<String> {
     vec![
         "flac".to_owned(),
@@ -159,14 +194,17 @@ fn default_audio_extensions() -> Vec<String> {
     ]
 }
 
+/// Gets the default value for update_library_on_start
 fn default_update_library_on_start() -> bool {
     false
 }
 
+/// Gets the default value for register_global_hotkeys
 fn default_register_global_hotkeys() -> bool {
     false
 }
 
+/// Gets the default port for the server, it is defferent when debugging
 pub fn default_port() -> u16 {
     #[cfg(not(debug_assertions))]
     {
@@ -178,6 +216,7 @@ pub fn default_port() -> u16 {
     }
 }
 
+/// Gets the default volume jump.
 fn default_volume_jump() -> f32 {
     0.025
 }
