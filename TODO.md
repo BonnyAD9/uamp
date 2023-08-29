@@ -1,6 +1,7 @@
 unless separated with newline, they are not in particular order
 
 # TODO
+- Custom error type (also update raplay)
 - More actions to CLI
     - all control messages
 - Change control message jump to specify jump amount
