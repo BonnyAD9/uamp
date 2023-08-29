@@ -350,8 +350,8 @@ fn print_instance_help() {
     go to the previous song
 
   {'y}v  vol  volume{'bold w}=<value>{'_}
-    set the volume to the given {'bold w}value{'_}, {'bold w}value{'_} must be in range
-    from 0 to 1
+    set the volume to the given {'bold w}value{'_}, {'bold w}value{'_} must be
+    in range from 0 to 1
 
   {'y}mute{'_}
     toggle mute/unmute
