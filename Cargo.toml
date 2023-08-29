@@ -20,4 +20,5 @@ rmp-serde = "1.1.2"
 serde = "1.0.163"
 serde_derive = "1.0.163"
 serde_json = "1.0.96"
+termal = "0.1.0"
 tokio = { version = "1.29.1", features = ["sync"]}

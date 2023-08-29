@@ -1,5 +1,6 @@
 use crate::{messenger, uamp_app::ControlMsg};
 use eyre::{Report, Result};
+use termal::{gradient, printcln};
 
 /// Action that can be done with cli
 pub enum Action {
@@ -299,57 +300,63 @@ fn print_help() {
 
 /// Prints the help header
 fn print_help_header() {
-    println!("Welcome in uamp by BonnyAD9\nVersion 0.1.1\n")
+    printcln!(
+        "Welcome in {'i g}uamp{'_} by {}{'_}
+Version 0.1.1
+",
+        gradient("BonnyAD9", (250, 50, 170), (180, 50, 240))
+    )
 }
 
 /// Prints the basic usage help
 fn print_basic_help() {
-    println!(
-        "Usage:
-  uamp
+    printcln!(
+        "{'g}Usage:{'_}
+  {'w bold}uamp{'_}
     starts the gui of the player
 
-  uamp [action] [--] [action] ...
+  {'w bold}uamp{'_} {'gr}[action] [--] [action] ...{'_}
     does the given action
 
-Actions:
-  i  instance <instance-action> [--]
+{'g}Actions:{'_}
+  {'y}i  instance {'bold w}<instance-action>{'_} {'gr}[--]{'_}
     operates on a running instance of uamp
 
-  h  help  -h  -?  --help
+  {'y}h  help  -h  -?  --help{'_}
     shows help, with no argument whole help, with arguments only help specific
     to the given option.
-    Available options are: basic, i instance
+    Available options are: {'bold w}basic{'_}, {'bold w}i instance{'_}
 "
     )
 }
 
 /// Prints the instance help
 fn print_instance_help() {
-    println!(
-        "Instance actions:
-  pp  play-pause
+    printcln!(
+        "{'g}Instance actions:
+  {'y}pp  play-pause{'_}
     toggle between the states playing and paused
 
-  vu  vol-up  volume-up
+  {'y}vu  vol-up  volume-up{'_}
     increase the volume by the default amount
 
-  vd  vol-down  volume-down
+  {'y}vd  vol-down  volume-down{'_}
     decrease the volume by the default amount
 
-  ns  next-song
+  {'y}ns  next-song{'_}
     go to the next song
 
-  ps  prev-song  previous-song
+  {'y}ps  prev-song  previous-song{'_}
     go to the previous song
 
-  v  vol  volume=VALUE
-    set the volume to the given VALUE, VALUE must be in range from 0 to 1
+  {'y}v  vol  volume{'bold w}=<value>{'_}
+    set the volume to the given {'bold w}value{'_}, {'bold w}value{'_} must be in range
+    from 0 to 1
 
-  mute
+  {'y}mute{'_}
     toggle mute/unmute
 
-  fs  find-songs
+  {'y}fs  find-songs{'_}
     look for new songs
 "
     )

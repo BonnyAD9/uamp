@@ -123,7 +123,6 @@ impl Error {
 }
 
 impl Message {
-
     extract!(error, Error, Error);
     extract!(request, Request, Request);
     extract!(control, ControlMsg, Control);

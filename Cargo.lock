@@ -1587,6 +1587,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef53942eb7bf7ff43a617b3e2c1c4a5ecf5944a7c1bc12d7ee39bbb15e5c1519"
 
 [[package]]
+name = "litrs"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f17c3668f3cc1132437cdadc93dab05e52d592f06948d3f64828430c36e4a70"
+dependencies = [
+ "proc-macro2",
+]
+
+[[package]]
 name = "lock_api"
 version = "0.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3044,6 +3053,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "termal"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d68f5a57554758d26e39d8dacd89542a7b0827c0380977988b9fa6b6966c13f"
+dependencies = [
+ "termal_codes",
+ "termal_macros",
+]
+
+[[package]]
+name = "termal_codes"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e5a4d434c8597c081593cbbf9c2318d5dbad7acbdf46b0875a1ed7ab00defd3b"
+
+[[package]]
+name = "termal_macros"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8118c712cd2e325a8281eed6bbd8275742b05dfbee6e69de85ae1041890130b1"
+dependencies = [
+ "litrs",
+ "termal_codes",
+]
+
+[[package]]
 name = "termcolor"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3207,6 +3242,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
+ "termal",
  "tokio",
 ]
 

@@ -1342,7 +1342,7 @@ enum ScrollbarInteraction {
         /// Last relative offset of the scrollbar
         relative: f32,
         /// Last position of the mouse
-        cursor: Point
+        cursor: Point,
     },
 }
 

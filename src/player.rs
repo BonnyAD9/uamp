@@ -3,7 +3,7 @@ use std::{
     ops::{Index, IndexMut},
     path::Path,
     slice::{Iter, SliceIndex},
-    sync::Arc
+    sync::Arc,
 };
 
 use eyre::Result;
@@ -234,9 +234,7 @@ impl Player {
     ) {
         match index {
             Some(i) if i < self.playlist.len() => self.load(lib, i, play),
-            _ => {
-                self.stop()
-            }
+            _ => self.stop(),
         }
     }
 
@@ -575,7 +573,7 @@ impl Default for PlayerDataLoad {
             mute: false,
             volume: default_volume(),
             current: None,
-            playlist: [].as_slice().into()
+            playlist: [].as_slice().into(),
         }
     }
 }
