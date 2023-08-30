@@ -19,4 +19,5 @@ unless separated with newline, they are not in particular order
 - Config port and address
 - Load config without gui
 - CLI port and address
+- regural saves
 + Proper gui
