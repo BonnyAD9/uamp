@@ -9,7 +9,7 @@ use std::ops::Index;
 use std::path::Path;
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use tokio::sync::mpsc::UnboundedSender;
 
 /// A song library
