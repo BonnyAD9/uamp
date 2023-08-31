@@ -35,7 +35,7 @@ impl SinkWrapper {
     /// - Failed to create the [`Sink`]
     pub fn try_new() -> Result<Self> {
         Ok(Self {
-            sink: Sink::default_out()?,
+            sink: Sink::default(),
         })
     }
 
@@ -50,8 +50,9 @@ impl SinkWrapper {
         play: bool,
     ) -> Result<()> {
         let file = File::open(lib[id].path())?;
-        let src = Symph::try_new(file)?;
-        self.sink.load(src, play)
+        let src = Symph::try_new(file, &Default::default())?;
+        self.sink.load(src, play)?;
+        Ok(())
     }
 
     /// Sets the play state
@@ -59,7 +60,8 @@ impl SinkWrapper {
     /// # Errors
     /// - only with synchronization, shouldn't happen
     pub fn play_pause(&mut self, play: bool) -> Result<()> {
-        self.sink.play(play)
+        self.sink.play(play)?;
+        Ok(())
     }
 
     /// Sets callback for when a song ends
@@ -78,7 +80,8 @@ impl SinkWrapper {
                 f();
             }
             _ => {}
-        }))
+        }))?;
+        Ok(())
     }
 
     /// Sets the playback volume
@@ -86,7 +89,8 @@ impl SinkWrapper {
     /// # Errors
     /// - only with synchronization, shouldn't happen
     pub fn set_volume(&mut self, volume: f32) -> Result<()> {
-        self.sink.volume(volume * volume)
+        self.sink.volume(volume * volume)?;
+        Ok(())
     }
 }
 
@@ -288,7 +292,7 @@ impl Player {
     pub fn set_volume(&mut self, volume: f32) {
         self.try_get_player();
         if let MaybeSink::Sink(s) = &mut self.inner {
-            if matches!(s.set_volume(volume * volume), Ok(_)) {
+            if matches!(s.set_volume(volume), Ok(_)) {
                 self.volume = volume;
             }
         }
