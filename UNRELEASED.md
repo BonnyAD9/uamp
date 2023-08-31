@@ -2,6 +2,7 @@
 
 ## New features
 - recursive search option
+- don't block when saving songs
 
 ## Bugfixes
 - next on last song in playlist wouldn't stop playback
@@ -12,3 +13,4 @@
 - stability and performace improvements
 - better error messages
 - log is now more used
+- change default value of `update_library_on_start` to `true`

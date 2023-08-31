@@ -6,14 +6,14 @@ use global_hotkey::{
 };
 use iced::{executor, window, Application};
 use iced_core::Event;
-use log::{error, warn};
+use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
     config::{app_id, default_port, Config},
-    err::Result,
-    library::{Library, SongId},
+    err::{Error, Result},
+    library::{Library, LibraryMessage, SongId},
     messenger::{self, Messenger},
     player::{Player, PlayerMessage},
     theme::Theme,
@@ -59,6 +59,8 @@ pub enum UampMessage {
     Gui(uamp_gui::Message),
     /// Player messges handled by the player
     Player(PlayerMessage),
+    /// Library messages handled by the library
+    Library(LibraryMessage),
 }
 
 /// only simple messages that can be safely send across threads and copied
@@ -112,6 +114,9 @@ impl Application for UampApp {
             UampMessage::Gui(msg) => return self.gui_event(msg),
             UampMessage::Player(msg) => {
                 return self.player.event(&self.library, msg)
+            }
+            UampMessage::Library(msg) => {
+                return self.library.event(msg, &self.config)
             }
         };
         Command::none()
@@ -194,12 +199,15 @@ impl Default for UampApp {
         let conf = Config::from_default_json();
 
         let mut lib = Library::from_config(&conf);
-        if conf.update_library_on_start {
-            lib.get_new_songs(&conf);
-        }
 
         let (sender, reciever) = mpsc::unbounded_channel::<UampMessage>();
         let sender = Arc::new(sender);
+
+        if conf.update_library_on_start {
+            if let Err(e) = lib.start_get_new_songs(&conf, sender.clone()) {
+                error!("Failed to start library load: {e}");
+            }
+        }
 
         let player = Player::from_config(sender.clone(), &conf);
 
@@ -264,10 +272,15 @@ impl UampApp {
             }
             ControlMsg::ToggleMute => self.player.toggle_mute(),
             ControlMsg::FindSongs => {
-                self.library.get_new_songs(&self.config);
-                if let Err(e) = self.library.to_json(&self.config.library_path)
+                match self
+                    .library
+                    .start_get_new_songs(&self.config, self.sender.clone())
                 {
-                    warn!("Failed to save library: {e}");
+                    Err(e) if matches!(e, Error::InvalidOperation(_)) => {
+                        info!("Cannot load new songs: {e}")
+                    }
+                    Err(e) => error!("Cannot load new songs: {e}"),
+                    _ => {}
                 }
             }
         };

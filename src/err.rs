@@ -8,6 +8,10 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Error, Debug)]
 pub enum Error {
+    #[error("Operation is invalid: {0}")]
+    InvalidOperation(&'static str),
+    #[error("A spawned thread panicked")]
+    ThreadPanicked,
     #[error(transparent)]
     ArgParse(#[from] arg_parser::Error),
     #[error(transparent)]

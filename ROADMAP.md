@@ -1,7 +1,7 @@
 # Roadmap
 
 ## v0.1.2
-- Don't block when loading songs
+- don't save when unncecesary
 - More actions to CLI
     - all control messages
 - Fade play/puse
@@ -19,10 +19,12 @@
 - CLI port and address
 - Scroll playlist to show the currently playing song
 - Delete old logs
+- Action info
 
 ## v0.2.0
 - Proper gui
 - no warnings
+- Don't block on large IO (library save)
 
 ## v1.0.0
 - Languages

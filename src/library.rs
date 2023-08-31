@@ -1,14 +1,23 @@
+use crate::err::Error;
+use crate::uamp_app::UampMessage;
+use crate::wid::Command;
 use crate::{config::Config, err::Result, song::Song};
-use log::{error, info};
+use log::{error, info, warn};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::{create_dir_all, read_dir, File};
 use std::ops::Index;
 use std::path::Path;
+use std::sync::Arc;
+use std::thread::{self, JoinHandle};
+use std::time::{Duration, Instant};
+use tokio::sync::mpsc::UnboundedSender;
 
 /// A song library
 #[derive(Serialize, Deserialize)]
 pub struct Library {
     songs: Vec<Song>,
+    #[serde(skip)]
+    load_process: Option<LibraryLoad>,
 }
 
 /// Id of song in a [`Library`]
@@ -29,7 +38,10 @@ impl Default for Library {
 impl Library {
     /// Creates empty library
     pub fn new() -> Self {
-        Library { songs: Vec::new() }
+        Library {
+            songs: Vec::new(),
+            load_process: None,
+        }
     }
 
     /// Loads library according to config, returns empty library on fail
@@ -80,6 +92,74 @@ impl Library {
     /// Finds new songs to the library
     pub fn get_new_songs(&mut self, conf: &Config) {
         Self::add_new_songs(&mut self.songs, conf);
+    }
+
+    /// Loads new songs on another thread
+    pub fn start_get_new_songs(
+        &mut self,
+        conf: &Config,
+        sender: Arc<UnboundedSender<UampMessage>>,
+    ) -> Result<()> {
+        if self.load_process.is_some() {
+            return Err(Error::InvalidOperation(
+                "Library load is already in progress",
+            ));
+        }
+
+        let conf = conf.clone();
+        let mut songs = self.songs.clone();
+
+        let handle = thread::spawn(move || {
+            let conf = conf;
+            let songs = if Self::add_new_songs(&mut songs, &conf) {
+                Some(songs)
+            } else {
+                None
+            };
+
+            if let Err(e) =
+                sender.send(UampMessage::Library(LibraryMessage::LoadEnded))
+            {
+                error!("Library load failed to send message: {e}");
+            }
+
+            LibraryLoadResult {
+                new_song_vec: songs,
+            }
+        });
+
+        self.load_process = Some(LibraryLoad {
+            handle,
+            time_started: Instant::now(),
+        });
+
+        Ok(())
+    }
+
+    fn finish_get_new_songs(&mut self) -> Result<()> {
+        if let Some(p) = self.load_process.take() {
+            let r = p.handle.join().map_err(|_| Error::ThreadPanicked)?;
+            if let Some(s) = r.new_song_vec {
+                self.songs = s;
+            }
+            Ok(())
+        } else {
+            Err(Error::InvalidOperation("No load was running"))
+        }
+    }
+
+    pub fn event(&mut self, msg: LibraryMessage, config: &Config) -> Command {
+        match msg {
+            LibraryMessage::LoadEnded => {
+                if let Err(e) = self.finish_get_new_songs() {
+                    error!("Failed to finsih getting new songs: {e}")
+                }
+                if let Err(e) = self.to_json(&config.library_path) {
+                    warn!("Failed to save library: {e}");
+                }
+            }
+        }
+        Command::none()
     }
 
     /// Adds new songs to the given vector of songs
@@ -155,4 +235,18 @@ impl Index<SongId> for Library {
     fn index(&self, index: SongId) -> &Self::Output {
         &self.songs[index.0]
     }
+}
+
+struct LibraryLoad {
+    handle: JoinHandle<LibraryLoadResult>,
+    time_started: Instant,
+}
+
+struct LibraryLoadResult {
+    new_song_vec: Option<Vec<Song>>,
+}
+
+#[derive(Clone, Debug)]
+pub enum LibraryMessage {
+    LoadEnded,
 }

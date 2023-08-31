@@ -197,7 +197,7 @@ fn default_audio_extensions() -> Vec<String> {
 
 /// Gets the default value for update_library_on_start
 fn default_update_library_on_start() -> bool {
-    false
+    true
 }
 
 /// Gets the default value for register_global_hotkeys
