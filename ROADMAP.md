@@ -1,8 +1,6 @@
 # Roadmap
 
 ## v0.1.2
-- Improve WrapBox
-    - Scrollbar with only few elements
 - Don't block when loading songs
 - More actions to CLI
     - all control messages

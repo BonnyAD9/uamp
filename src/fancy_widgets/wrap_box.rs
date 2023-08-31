@@ -1069,7 +1069,7 @@ where
         let trough_height = bounds.height - self.scrollbar_button_height * 2.;
         self.min_thumb_size
             .max(trough_height * bounds.height / content.height)
-            .min(trough_height / 2.)
+            .min(trough_height)
     }
 
     /// Calculates the scroll offset of the contents in pixels
