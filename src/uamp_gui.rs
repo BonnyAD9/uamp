@@ -6,12 +6,12 @@ use crate::{
     button, col,
     fancy_widgets::icons,
     library::{Filter, SongId},
-    row, text,
+    make_ids, row, text,
     theme::{Button, Text},
     uamp_app::{ControlMsg, UampApp, UampMessage as Msg},
     wid::{
         self, button, center, center_y, nothing, slider, space, svg, wrap_box,
-        Command, Element,
+        Command, Element, WrapBoxState,
     },
 };
 
@@ -35,6 +35,8 @@ pub enum MainPage {
 pub struct GuiState {
     /// The current page
     page: MainPage,
+    /// States of WrapBoxes
+    wb_states: Vec<WrapBoxState>,
 }
 
 impl UampApp {
@@ -87,9 +89,10 @@ impl UampApp {
     /// Creates the main page
     fn main_page(&self) -> Element {
         match self.gui.page {
-            MainPage::Songs => {
-                self.song_list(self.library.filter(Filter::All).collect())
-            }
+            MainPage::Songs => self.song_list(
+                self.library.filter(Filter::All).collect(),
+                &self.gui.wb_states[WB_SONGS],
+            ),
             MainPage::Playlist => self.playlist(),
         }
     }
@@ -100,7 +103,10 @@ impl UampApp {
     fn playlist(&self) -> Element {
         col![
             button!("Shuffle").on_press(Msg::Control(ControlMsg::Shuffle)),
-            self.song_list(self.player.playlist().as_arc())
+            self.song_list(
+                self.player.playlist().as_arc(),
+                &self.gui.wb_states[WB_PLAYLIST]
+            )
         ]
         .height(Fill)
         .into()
@@ -109,11 +115,16 @@ impl UampApp {
     // song list
 
     /// Creates a song list
-    fn song_list(&self, songs: Arc<[SongId]>) -> Element {
+    fn song_list<'a>(
+        &'a self,
+        songs: Arc<[SongId]>,
+        state: &'a WrapBoxState,
+    ) -> Element {
         wrap_box(
             (0..songs.len())
                 .map(|i| self.song_list_item(i, songs.clone()))
                 .collect(),
+            state,
         )
         .item_height(32)
         .from_layout_style(&self.theme)
@@ -234,6 +245,7 @@ impl GuiState {
     pub fn new() -> Self {
         GuiState {
             page: MainPage::Songs,
+            wb_states: vec![WrapBoxState::default(); WB_STATE_COUNT],
         }
     }
 }
@@ -243,3 +255,6 @@ impl Default for GuiState {
         GuiState::new()
     }
 }
+
+// Wrapbox state ids
+make_ids!(WB_SONGS, WB_PLAYLIST, WB_STATE_COUNT,);

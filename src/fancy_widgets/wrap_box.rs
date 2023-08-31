@@ -1,4 +1,8 @@
-use std::vec;
+use std::{
+    cell::{Cell, RefCell},
+    rc::Rc,
+    vec,
+};
 
 use iced_core::{
     color, event,
@@ -77,7 +81,7 @@ where
     /// the items
     children: Vec<Element<'a, Message, Renderer>>,
     /// the state of the scrollbar, set only when up to date
-    state: Option<State>,
+    state: &'a Cell<State>,
     /// style of the [`WrapBox`]
     style: <Renderer::Theme as StyleSheet>::Style,
 }
@@ -87,13 +91,14 @@ where
     Renderer::Theme: StyleSheet,
 {
     /// creates empty [`WrapBox`]
-    pub fn new() -> Self {
-        Self::with_childern(Vec::new())
+    pub fn new(state: &'a Cell<State>) -> Self {
+        Self::with_childern(Vec::new(), state)
     }
 
     /// creates a [`WrapBox`] with the given elements
     pub fn with_childern(
         childern: Vec<Element<'a, Message, Renderer>>,
+        state: &'a Cell<State>,
     ) -> Self {
         WrapBox {
             spacing_x: 0.,
@@ -116,7 +121,7 @@ where
             primary_scrollbar: Behaviour::Enabled,
             secondary_scrollbar: Behaviour::Disabled,
             children: childern,
-            state: None,
+            state,
             style: Default::default(),
         }
     }
@@ -346,7 +351,7 @@ where
     }
 }
 
-impl<'a, Message, Renderer: svg::Renderer> Default
+/*impl<'a, Message, Renderer: svg::Renderer> Default
     for WrapBox<'a, Message, Renderer>
 where
     Renderer::Theme: StyleSheet,
@@ -354,7 +359,7 @@ where
     fn default() -> Self {
         Self::new()
     }
-}
+}*/
 
 impl<'a, Message: 'a, Renderer> Widget<Message, Renderer>
     for WrapBox<'a, Message, Renderer>
@@ -364,10 +369,6 @@ where
 {
     fn tag(&self) -> tree::Tag {
         tree::Tag::of::<State>()
-    }
-
-    fn state(&self) -> tree::State {
-        tree::State::new(State::new())
     }
 
     fn children(&self) -> Vec<Tree> {
@@ -395,13 +396,7 @@ where
 
         let size = limits.fill();
 
-        // skip the layout if it cannot be calculated efficiently
-        // the nearest event will allow and trigger efficient layout
-        if let Some(state) = self.state {
-            self.create_layout(renderer, limits.fill(), &state)
-        } else {
-            Node::new(size)
-        }
+        self.create_layout(renderer, limits.fill(), &self.state.get())
     }
 
     fn operate(
@@ -411,16 +406,13 @@ where
         renderer: &Renderer,
         operation: &mut dyn widget::Operation<Message>,
     ) {
-        let state = tree.state.downcast_ref();
-
-        let mut owner = Node::default();
-        let child =
-            self.get_layout(renderer, layout, state, &mut owner, || {});
+        let state = self.state.get();
 
         let view_size = self.pad_size(layout.bounds().size());
+        let child = layout.children().next().unwrap();
 
         operation.container(None, layout.bounds(), &mut |operation| {
-            self.visible(view_size, state)
+            self.visible(view_size, &state)
                 .zip(child.children())
                 .for_each(|((child, i), layout)| {
                     child.as_widget().operate(
@@ -444,7 +436,7 @@ where
         shell: &mut Shell<'_, Message>,
         _viewport: &Rectangle,
     ) -> event::Status {
-        let state = tree.state.downcast_mut::<State>();
+        let mut state = self.state.get();
 
         let cursor_position =
             if let iced_core::mouse::Cursor::Available(cursor_position) =
@@ -463,10 +455,7 @@ where
         }
 
         let mut owner = Node::default();
-        let child =
-            self.get_layout(renderer, layout, state, &mut owner, || {
-                shell.invalidate_layout();
-            });
+        let child = layout.children().next().unwrap();
 
         let view_size = self.pad_size(layout.bounds().size());
         let view_bounds = Rectangle {
@@ -476,7 +465,7 @@ where
         };
 
         let content_size = child.bounds().size();
-        let (start_o, end_o) = self.visible_range(view_size, state);
+        let (start_o, end_o) = self.visible_range(view_size, &state);
 
         // scrolling
         if let Event::Mouse(mouse::Event::WheelScrolled { delta }) = event {
@@ -609,12 +598,12 @@ where
             .min(content_size.height - view_size.height)
             .max(0.);
 
-        let (start, end) = self.visible_range(view_size, state);
+        let (start, end) = self.visible_range(view_size, &state);
         if start_o != start || end_o != end {
             shell.invalidate_layout();
         }
 
-        self.state = Some(*state);
+        self.state.set(state);
 
         if captured {
             return event::Status::Captured;
@@ -626,12 +615,12 @@ where
             return event::Status::Ignored;
         }
 
-        let (cor_x, cor_y) = self.scroll_offset(state);
+        let (cor_x, cor_y) = self.scroll_offset(&state);
 
         let cursor_position =
             Point::new(cursor_position.x + cor_x, cursor_position.y + cor_y);
 
-        self.visible_mut(view_size, state)
+        self.visible_mut(view_size, &state)
             .zip(child.children())
             .map(|((child, i), layout)| {
                 child.as_widget_mut().on_event(
@@ -669,11 +658,10 @@ where
             return mouse::Interaction::Idle;
         }
 
-        let state = tree.state.downcast_ref();
+        let state = self.state.get();
 
         let mut owner = Node::default();
-        let child =
-            self.get_layout(renderer, layout, state, &mut owner, || {});
+        let child = layout.children().next().unwrap();
 
         let view_size = self.pad_size(layout.bounds().size());
         let view_bounds = Rectangle {
@@ -686,12 +674,12 @@ where
             return mouse::Interaction::Idle;
         }
 
-        let (cor_x, cor_y) = self.scroll_offset(state);
+        let (cor_x, cor_y) = self.scroll_offset(&state);
 
         let cursor_position =
             Point::new(cursor_position.x + cor_x, cursor_position.y + cor_y);
 
-        self.visible(view_size, state)
+        self.visible(view_size, &state)
             .zip(child.children())
             .map(|((child, i), layout)| {
                 child.as_widget().mouse_interaction(
@@ -716,11 +704,10 @@ where
         cursor: iced::mouse::Cursor,
         _viewport: &Rectangle,
     ) {
-        let state = tree.state.downcast_ref::<State>();
+        let state = self.state.get();
 
         let mut owner = Node::default();
-        let child =
-            self.get_layout(renderer, layout, state, &mut owner, || {});
+        let child = layout.children().next().unwrap();
 
         let view_size = self.pad_size(layout.bounds().size());
         let view_bounds = Rectangle {
@@ -729,7 +716,7 @@ where
             ..child.bounds()
         };
 
-        let (start, _) = self.visible_range(view_size, state);
+        let (start, _) = self.visible_range(view_size, &state);
 
         let offset = if self.can_optimize() {
             let item_space = self.item_height + self.spacing_y;
@@ -759,7 +746,7 @@ where
         renderer.with_layer(view_bounds, |renderer| {
             renderer.with_translation(offset, |renderer| {
                 for ((child, i), layout) in
-                    self.visible(view_size, state).zip(child.children())
+                    self.visible(view_size, &state).zip(child.children())
                 {
                     child.as_widget().draw(
                         &tree.children[i],
@@ -778,7 +765,7 @@ where
             self.draw_scrollbar(
                 child,
                 layout.bounds(),
-                state,
+                &state,
                 cursor,
                 renderer,
                 theme,
@@ -792,17 +779,16 @@ where
         layout: Layout<'_>,
         renderer: &Renderer,
     ) -> Option<iced_core::overlay::Element<'b, Message, Renderer>> {
-        let state = tree.state.downcast_ref::<State>();
+        let state = self.state.get();
 
         let mut owner = Node::default();
-        let child =
-            self.get_layout(renderer, layout, state, &mut owner, || {});
+        let child = layout.children().next().unwrap();
 
         let view_size = self.pad_size(layout.bounds().size());
-        let (start, end) = self.visible_range(view_size, state);
+        let (start, end) = self.visible_range(view_size, &state);
 
         let children = self
-            .visible_mut(view_size, state)
+            .visible_mut(view_size, &state)
             .zip(&mut tree.children[start..end])
             .zip(child.children())
             .filter_map(|(((child, _), state), layout)| {
@@ -841,35 +827,6 @@ where
     ) -> Node {
         let node = self.layout_wrap(renderer, size, state);
         Node::with_children(size, vec![node])
-    }
-
-    /// gets the layout if it is available, otherwise creates it
-    /// immidiate node is the bounds of the viewport, it
-    /// than contains the childern
-    ///
-    /// owner will contain data referenced in the result
-    fn get_layout<'b: 'c, 'c, F: FnOnce()>(
-        &self,
-        renderer: &Renderer,
-        layout: Layout<'b>,
-        state: &State,
-        owner: &'c mut Node,
-        fun: F,
-    ) -> Layout<'c> {
-        match layout.children().next() {
-            Some(c) => c,
-            None => {
-                // when the layout is not available, calculate temporary layout
-                // so that there is no dropped event
-                fun();
-                let pos = layout.bounds().position();
-                *owner = self
-                    .layout_wrap(renderer, layout.bounds().size(), state)
-                    .translate(Vector::new(pos.x, pos.y));
-                // owner.children().iter().next() is always Some
-                Layout::new(owner)
-            }
-        }
     }
 
     /// gets the range of the visible childern indexes (inclusive - exclusive)
@@ -1282,7 +1239,7 @@ pub enum ItemDirection {
 
 /// Contains the state of a [`WrapBox`]
 #[derive(Copy, Clone)]
-struct State {
+pub struct State {
     /// Absolute offset on the x axis
     offset_x: f32,
     /// Absolute offset on the y axis

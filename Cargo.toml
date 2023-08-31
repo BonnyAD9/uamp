@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.75"
 audiotags = "0.4.1"
+count-macro = "0.2.2"
 dirs = "5.0.1"
 flexi_logger = "0.25.5"
 global-hotkey = "0.2.3"

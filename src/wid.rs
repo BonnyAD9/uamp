@@ -1,4 +1,4 @@
-use std::{borrow::Cow, ops::RangeInclusive};
+use std::{borrow::Cow, cell::Cell, ops::RangeInclusive};
 
 use iced::widget;
 use iced_core::Length::{self, FillPortion, Shrink};
@@ -35,9 +35,14 @@ pub type Slider<'a, T> = widget::Slider<'a, T, UampMessage, Renderer>;
 /// Container widget as used in uamp
 pub type Container<'a> = widget::Container<'a, UampMessage, Renderer>;
 
+pub type WrapBoxState = Cell<fancy_widgets::wrap_box::State>;
+
 /// creates wrap_box widhet with the given children
-pub fn wrap_box<'a>(children: Vec<Element>) -> WrapBox {
-    WrapBox::with_childern(children)
+pub fn wrap_box<'a>(
+    children: Vec<Element<'a>>,
+    state: &'a WrapBoxState,
+) -> WrapBox<'a> {
+    WrapBox::with_childern(children, state)
 }
 
 /// creates wrap_box widhet with the list of children
@@ -51,11 +56,11 @@ pub fn wrap_box<'a>(children: Vec<Element>) -> WrapBox {
 /// ```
 #[macro_export]
 macro_rules! wrap_box {
-    () => (
-        $crate::wid::WrapBox::new()
+    ($s:expr) => (
+        $crate::wid::WrapBox::new($s)
     );
-    ($($x:expr),+ $(,)?) => (
-        $crate::wid::wrap_box(vec![$($Element::from($x)),+])
+    ($s:expr, $($x:expr),+ $(,)?) => (
+        $crate::wid::wrap_box(vec![$($Element::from($x)),+], $s)
     );
 }
 
@@ -215,4 +220,12 @@ pub fn center_y<'a>(child: impl Into<Element<'a>>) -> Column<'a> {
         child.into(),
         space(Shrink, FillPortion(1)),
     ]
+}
+
+/// Can be used to generate consecutive ids
+#[macro_export]
+macro_rules! make_ids {
+    ($($i:ident),+ $(,)?) => {
+        count_macro::count!{$(const $i: usize = _int_;)+}
+    };
 }
