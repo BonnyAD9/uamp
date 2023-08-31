@@ -1,4 +1,5 @@
 # Unreleased changes
+- stability and performace improvements
 
 ## New features
 - recursive search option
