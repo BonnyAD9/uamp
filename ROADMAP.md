@@ -2,9 +2,6 @@
 
 ## v0.1.2
 - Improve WrapBox
-    - Use RefCell
-    - Properly save states
-    - Properly implement operate
     - Scrollbar with only few elements
 - Don't block when loading songs
 - More actions to CLI
