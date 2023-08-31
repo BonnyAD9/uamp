@@ -1,8 +1,4 @@
-use std::{
-    cell::{Cell, RefCell},
-    rc::Rc,
-    vec,
-};
+use std::{cell::Cell, vec};
 
 use iced_core::{
     color, event,
@@ -394,8 +390,6 @@ where
             .width(self.width)
             .height(self.height);
 
-        let size = limits.fill();
-
         self.create_layout(renderer, limits.fill(), &self.state.get())
     }
 
@@ -454,7 +448,6 @@ where
             return event::Status::Ignored;
         }
 
-        let mut owner = Node::default();
         let child = layout.children().next().unwrap();
 
         let view_size = self.pad_size(layout.bounds().size());
@@ -660,7 +653,6 @@ where
 
         let state = self.state.get();
 
-        let mut owner = Node::default();
         let child = layout.children().next().unwrap();
 
         let view_size = self.pad_size(layout.bounds().size());
@@ -706,7 +698,6 @@ where
     ) {
         let state = self.state.get();
 
-        let mut owner = Node::default();
         let child = layout.children().next().unwrap();
 
         let view_size = self.pad_size(layout.bounds().size());
@@ -781,7 +772,6 @@ where
     ) -> Option<iced_core::overlay::Element<'b, Message, Renderer>> {
         let state = self.state.get();
 
-        let mut owner = Node::default();
         let child = layout.children().next().unwrap();
 
         let view_size = self.pad_size(layout.bounds().size());

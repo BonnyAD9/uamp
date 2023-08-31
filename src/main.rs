@@ -9,7 +9,7 @@ use iced::{
     window::{self, PlatformSpecific},
     Application, Settings,
 };
-use log::{error, info, warn};
+use log::{error, info};
 use uamp_app::UampApp;
 
 use crate::{
