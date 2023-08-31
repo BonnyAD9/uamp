@@ -7,21 +7,23 @@
     - Properly save states
     - Properly implement operate
     - Scrollbar with only few elements
-
-## v0.2.0
+- Don't block when loading songs
 - More actions to CLI
     - all control messages
+- Fade play/puse
+- regural saves
+
+## v0.2.0
+- Add tests
 - Change control message jump to specify jump amount
-- Don't block when loading songs
 - Configureable hotkeys
 - Seeking
-- Fade play/puse
 - Gapless
 - System for removing songs
 - Config port and address
 - Load config without gui
 - CLI port and address
-- regural saves
+- Scroll playlist to show the currently playing song
 
-## Future
+## v0.3.0
 + Proper gui
