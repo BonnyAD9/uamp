@@ -6,6 +6,7 @@ use global_hotkey::{
 };
 use iced::{executor, window, Application};
 use iced_core::Event;
+use log::{error, warn};
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
@@ -93,8 +94,7 @@ impl Application for UampApp {
     type Message = UampMessage;
     type Theme = Theme;
 
-    fn new(flags: Self::Flags) -> (Self, Command) {
-        _ = flags;
+    fn new(_flags: Self::Flags) -> (Self, Command) {
         (UampApp::default(), Command::none())
     }
 
@@ -155,16 +155,21 @@ impl Application for UampApp {
                         let rec = match rec {
                             Ok(m) => m,
                             Err(e) => {
-                                _ = msgr.send(messenger::error(
+                                warn!("Failed to recieve message: {e}");
+                                if let Err(e) = msgr.send(messenger::error(
                                     messenger::ErrorType::DeserializeFailed,
                                     e.to_string(),
-                                ));
+                                )) {
+                                    warn!("Failed to send error message: {e}");
+                                }
                                 continue;
                             }
                         };
 
                         let (response, msg) = Self::message_event(rec);
-                        _ = msgr.send(response);
+                        if let Err(e) = msgr.send(response) {
+                            warn!("Failed to send response {e}");
+                        }
 
                         if let Some(msg) = msg {
                             break (msg, Some(listener));
@@ -231,9 +236,16 @@ impl UampApp {
             ControlMsg::NextSong => self.player.play_next(&self.library),
             ControlMsg::PrevSong => self.player.play_prev(&self.library),
             ControlMsg::Close => {
-                _ = self.library.to_json(&self.config.library_path);
-                _ = self.player.to_json(&self.config.player_path);
-                _ = self.config.to_default_json();
+                if let Err(e) = self.library.to_json(&self.config.library_path)
+                {
+                    error!("Failed to save library: {e}");
+                }
+                if let Err(e) = self.player.to_json(&self.config.player_path) {
+                    error!("Failed to save play state: {e}");
+                }
+                if let Err(e) = self.config.to_default_json() {
+                    error!("Failed to save config: {e}");
+                }
                 return window::close();
             }
             ControlMsg::Shuffle => self.player.shuffle(),
@@ -253,7 +265,10 @@ impl UampApp {
             ControlMsg::ToggleMute => self.player.toggle_mute(),
             ControlMsg::FindSongs => {
                 self.library.get_new_songs(&self.config);
-                _ = self.library.to_json(&self.config.library_path);
+                if let Err(e) = self.library.to_json(&self.config.library_path)
+                {
+                    warn!("Failed to save library: {e}");
+                }
             }
         };
 
@@ -268,18 +283,29 @@ impl UampApp {
             ($first:ident + $second:ident $(-$rest:ident)*) => {
                 hotkey!($second - $first $(-$rest)*)
             };
-            ($first:ident + $second:ident $(+$tail:ident)+ $(-$rest:ident)*) => {
+            (
+                $first:ident
+                + $second:ident
+                $(+$tail:ident)+
+                $(-$rest:ident)*
+            ) => {
                 hotkey!($second $(+$tail)+ - $first $(-$rest)*)
             };
             ($key:ident - $first:ident $(-$tail:ident)*) => {{
-                let key = HotKey::new(Some(hotkey::Modifiers::$first $(| hotkey::Modifiers::$tail)*), Code::$key);
+                let key = HotKey::new(Some(
+                    hotkey::Modifiers::$first $(| hotkey::Modifiers::$tail)*),
+                    Code::$key
+                );
                 let id = key.id();
                 (key, id)
             }};
         }
 
         macro_rules! make_hotkeys {
-            ($($key:ident $(+$mods:ident)+ -> $name:ident : $action:ident),+ $(,)?) => {{
+            (
+                $($key:ident $(+$mods:ident)+ -> $name:ident : $action:ident),+
+                $(,)?
+            ) => {{
                 let hotkey_mgr = GlobalHotKeyManager::new()?;
 
                 $(let $name = hotkey!($key $(+$mods)+);)+
@@ -292,8 +318,13 @@ impl UampApp {
                     move |e: GlobalHotKeyEvent| {
                         match e.id {$(
                             id if id == $name.1 => {
-                                _ = sender
-                                    .send(UampMessage::Control(ControlMsg::$action));
+                                if let Err(e) = sender.send(
+                                    UampMessage::Control(ControlMsg::$action)
+                                ) {
+                                    error!(
+                                        "Failed to send hotkey message: {e}"
+                                    );
+                                }
                             })+
                             _ => {}
                         };

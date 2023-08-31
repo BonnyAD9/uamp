@@ -9,7 +9,7 @@ use iced::{
     window::{self, PlatformSpecific},
     Application, Settings,
 };
-use log::{error, info};
+use log::{error, info, warn};
 use uamp_app::UampApp;
 
 use crate::{
@@ -59,7 +59,10 @@ fn main() -> Result<()> {
 
     // should run has more power - in case both run and exit are true, run wins
     if args.should_run || !args.should_exit {
-        UampApp::run(make_settings())?;
+        if let Err(e) = UampApp::run(make_settings()) {
+            error!("Uamp exited unexpectidly: {e}");
+            Err(e)?;
+        }
     }
 
     Ok(())
@@ -112,7 +115,9 @@ fn start_logger() -> Result<()> {
 /// Sends message to a existing uamp instance
 fn send_message(msg: messenger::Message) -> Result<messenger::Message> {
     let stream = TcpStream::connect(format!("127.0.0.1:{}", default_port()))?;
-    _ = stream.set_read_timeout(Some(Duration::from_secs(5)));
+    if let Err(e) = stream.set_read_timeout(Some(Duration::from_secs(5))) {
+        error!("failed to send message: {}", e);
+    }
 
     let mut msgr = Messenger::try_new(&stream)?;
 

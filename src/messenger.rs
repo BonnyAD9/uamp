@@ -1,3 +1,4 @@
+use log::warn;
 use rmp_serde::Serializer;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -86,7 +87,9 @@ impl<'a> Messenger<'a> {
     pub fn send(&mut self, msg: Message) -> Result<()> {
         let mut ser = Serializer::new(&mut self.writer);
         msg.serialize(&mut ser)?;
-        _ = self.writer.flush();
+        if let Err(e) = self.writer.flush() {
+            warn!("Failed to flush message: {}", e);
+        }
         Ok(())
     }
 

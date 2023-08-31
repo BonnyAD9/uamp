@@ -1,4 +1,5 @@
 use flexi_logger::FlexiLoggerError;
+use log::error;
 use thiserror::Error;
 
 use crate::arg_parser;

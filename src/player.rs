@@ -4,9 +4,10 @@ use std::{
     path::Path,
     slice::{Iter, SliceIndex},
     sync::Arc,
+    time::Duration,
 };
 
-use log::info;
+use log::{error, info, warn};
 use rand::{seq::SliceRandom, thread_rng};
 use raplay::{
     sink::{CallbackInfo, Sink},
@@ -23,115 +24,10 @@ use crate::{
     wid::Command,
 };
 
-/// Wrapps the sink
-struct SinkWrapper {
-    sink: Sink,
-}
-
-impl SinkWrapper {
-    /// Try to create new [`SinkWrapper`]
-    ///
-    /// # Errors
-    /// - Failed to create the [`Sink`]
-    pub fn try_new() -> Result<Self> {
-        Ok(Self {
-            sink: Sink::default(),
-        })
-    }
-
-    /// Plays the given song
-    ///
-    /// # Errors
-    /// - only with synchronization, shouldn't happen
-    pub fn play(
-        &mut self,
-        lib: &Library,
-        id: SongId,
-        play: bool,
-    ) -> Result<()> {
-        let file = File::open(lib[id].path())?;
-        let src = Symph::try_new(file, &Default::default())?;
-        self.sink.load(src, play)?;
-        Ok(())
-    }
-
-    /// Sets the play state
-    ///
-    /// # Errors
-    /// - only with synchronization, shouldn't happen
-    pub fn play_pause(&mut self, play: bool) -> Result<()> {
-        self.sink.play(play)?;
-        Ok(())
-    }
-
-    /// Sets callback for when a song ends
-    ///
-    /// # Errors
-    /// - only with synchronization, shouldn't happen
-    pub fn on_song_end<F: FnMut() + Send + 'static>(
-        &mut self,
-        mut f: F,
-    ) -> Result<()>
-    where
-        &'static F: std::marker::Send,
-    {
-        self.sink.on_callback(Some(move |cb| match cb {
-            CallbackInfo::SourceEnded => {
-                f();
-            }
-            _ => {}
-        }))?;
-        Ok(())
-    }
-
-    /// Sets the playback volume
-    ///
-    /// # Errors
-    /// - only with synchronization, shouldn't happen
-    pub fn set_volume(&mut self, volume: f32) -> Result<()> {
-        self.sink.volume(volume * volume)?;
-        Ok(())
-    }
-}
-
-/// Messages sent by the player
-#[derive(Clone, Copy, Debug)]
-pub enum PlayerMessage {
-    SongEnd,
-}
-
-/// State of the player playback
-#[derive(Clone, Copy, Default)]
-pub enum Playback {
-    /// No song is playing
-    #[default]
-    Stopped,
-    /// Song is playing
-    Playing,
-    /// Song is paused
-    Paused,
-}
-
-/// A playlist, lazily cloned
-pub enum Playlist {
-    /// There is static immutable reference to the playlist
-    Static(Arc<[SongId]>),
-    /// There is owned vector with the playlist
-    Dynamic(Vec<SongId>),
-}
-
-/// Contains either sink or a sender for callbacks
-enum MaybeSink {
-    /// It is initialized sink
-    Sink(SinkWrapper),
-    /// It is only the sender
-    Sender(Arc<UnboundedSender<UampMessage>>),
-}
-
 /// Player for uamp, manages playlist
 pub struct Player {
     /// The inner player if initialized
-    inner: MaybeSink,
+    inner: SinkWrapper,
     /// The playback state
     state: Playback,
     /// The current playlist
@@ -142,41 +38,6 @@ pub struct Player {
     volume: f32,
     /// True when the sound is muted, doesn't affect volume
     mute: bool,
-}
-
-/// Used for deserializing the data of the [`Player`]
-#[derive(Deserialize)]
-struct PlayerDataLoad {
-    /// True when the sound is muted, doesn't affect volume
-    #[serde(default)]
-    mute: bool,
-    /// The volume of the playback, doesn't affect mute
-    #[serde(default = "default_volume")]
-    volume: f32,
-    /// The current song or [`None`]
-    #[serde(default)]
-    current: Option<usize>,
-    /// The current playlist
-    #[serde(default)]
-    playlist: Playlist,
-}
-
-/// returns the default volume
-fn default_volume() -> f32 {
-    1.
-}
-
-/// Used for serializing the data of the [`Player`]
-#[derive(Serialize)]
-struct PlayerDataSave<'a> {
-    /// True when the sound is muted, doesn't affect volume
-    mute: bool,
-    /// The volume of the playback, doesn't affect mute
-    volume: f32,
-    /// The current song or [`None`]
-    current: Option<usize>,
-    /// The current playlist
-    playlist: &'a Playlist,
 }
 
 impl Player {
@@ -190,42 +51,25 @@ impl Player {
         Command::none()
     }
 
-    /// Tries the create inner player if it is not created
-    fn try_get_player(&mut self) {
-        if matches!(self.inner, MaybeSink::Sender(_)) {
-            if let Ok(inner) = SinkWrapper::try_new() {
-                let sender =
-                    std::mem::replace(&mut self.inner, MaybeSink::Sink(inner));
-                match (&mut self.inner, sender) {
-                    (MaybeSink::Sink(p), MaybeSink::Sender(s)) => {
-                        _ = p.on_song_end(move || {
-                            _ = s.send(UampMessage::Player(
-                                PlayerMessage::SongEnd,
-                            ));
-                        });
-                        if self.mute {
-                            _ = p.set_volume(0.);
-                        } else {
-                            _ = p.set_volume(self.volume);
-                        }
-                    }
-                    _ => {} // this will never happen
-                }
-            }
-        }
-    }
-
     /// Sets the playback state to play/pause
     pub fn play(&mut self, play: bool) {
-        self.try_get_player();
-        if let MaybeSink::Sink(p) = &mut self.inner {
-            self.state = if play {
-                Playback::Playing
-            } else {
-                Playback::Paused
-            };
+        if !self.state.is_stopped() {
+            match self.inner.play(play) {
+                Ok(_) => {
+                    self.state = Playback::play(play);
+                }
+                Err(e) => error!("Failed to play/pause: {}", e),
+            }
+            return;
+        }
 
-            _ = p.play_pause(play);
+        match self
+            .inner
+            .seek_to(Duration::ZERO)
+            .and_then(|_| self.inner.play(play))
+        {
+            Ok(_) => self.state = Playback::play(play),
+            Err(e) => warn!("Failed to resume from stop: {}", e),
         }
     }
 
@@ -247,22 +91,10 @@ impl Player {
     fn load(&mut self, lib: &Library, index: usize, play: bool) {
         self.current = Some(index);
 
-        self.try_get_player();
-        let inner = match &mut self.inner {
-            MaybeSink::Sink(i) => i,
-            _ => {
-                self.state = Playback::Stopped;
-                return;
-            }
-        };
-
-        self.state = if play {
-            Playback::Playing
-        } else {
-            Playback::Paused
-        };
-
-        _ = inner.play(lib, self.playlist[index], play);
+        match self.inner.load(lib, self.playlist[index], play) {
+            Ok(_) => self.state = Playback::play(play),
+            Err(e) => error!("Failed to load song: {e}"),
+        }
     }
 
     /// Toggles the states play/pause, also plays if the state is Stopped and
@@ -290,11 +122,9 @@ impl Player {
 
     /// Sets the playback volume. It is not set on error.
     pub fn set_volume(&mut self, volume: f32) {
-        self.try_get_player();
-        if let MaybeSink::Sink(s) = &mut self.inner {
-            if matches!(s.set_volume(volume), Ok(_)) {
-                self.volume = volume;
-            }
+        match self.inner.set_volume(volume) {
+            Ok(_) => self.volume = volume,
+            Err(e) => error!("Failed to set volume: {}", e),
         }
     }
 
@@ -305,16 +135,11 @@ impl Player {
 
     /// Sets the mute state. It is not set on error.
     pub fn set_mute(&mut self, mute: bool) {
-        self.try_get_player();
-        if let MaybeSink::Sink(s) = &mut self.inner {
-            let r = if mute {
-                s.set_volume(0.)
-            } else {
-                s.set_volume(self.volume)
-            };
-            if r.is_ok() {
-                self.mute = mute;
-            }
+        let vol = if mute { 0. } else { self.volume };
+
+        match self.inner.set_volume(vol) {
+            Ok(_) => self.mute = mute,
+            Err(e) => error!("Failed to mute: {}", e),
         }
     }
 
@@ -377,12 +202,9 @@ impl Player {
 
     /// Changes the state to [`Playback::Stopped`]
     pub fn stop(&mut self) {
-        self.try_get_player();
-        if let MaybeSink::Sink(p) = &self.inner {
-            if p.sink.play(false).is_ok() {
-                self.current = None;
-                self.state = Playback::Stopped;
-            }
+        match self.inner.play(false) {
+            Ok(_) => self.state = Playback::Stopped,
+            Err(e) => error!("Failed to stop playback: {}", e),
         }
     }
 
@@ -440,15 +262,109 @@ impl Player {
             PlayerDataLoad::default()
         };
 
+        let mut sink = SinkWrapper::new();
+        if let Err(e) = sink.on_song_end(move || {
+            if let Err(e) =
+                sender.send(UampMessage::Player(PlayerMessage::SongEnd))
+            {
+                error!("Failed to inform song end: {e}");
+            }
+        }) {
+            error!("Failed to set the song end callback: {e}");
+        }
+        let volume = if let Err(e) = sink.set_volume(data.volume) {
+            error!("Failed to set the initial volume: {e}");
+            1. // 1 is the default volume of the player
+        } else {
+            data.volume
+        };
+
         Self {
-            inner: MaybeSink::Sender(sender),
+            inner: sink,
             state: Playback::Stopped,
             playlist: data.playlist,
             current: data.current,
-            volume: data.volume,
+            volume,
             mute: data.mute,
         }
     }
+}
+
+/// Wrapps the sink
+struct SinkWrapper(Sink);
+
+impl SinkWrapper {
+    /// Create new [`SinkWrapper`]
+    pub fn new() -> Self {
+        Self(Sink::default())
+    }
+
+    /// Plays the given song
+    ///
+    /// # Errors
+    /// - only with synchronization, shouldn't happen
+    pub fn load(
+        &mut self,
+        lib: &Library,
+        id: SongId,
+        play: bool,
+    ) -> Result<()> {
+        let file = File::open(lib[id].path())?;
+        let src = Symph::try_new(file, &Default::default())?;
+        self.0.load(src, play)?;
+        Ok(())
+    }
+
+    /// Sets the play state
+    ///
+    /// # Errors
+    /// - only with synchronization, shouldn't happen
+    pub fn play(&mut self, play: bool) -> Result<()> {
+        self.0.play(play)?;
+        Ok(())
+    }
+
+    /// Sets callback for when a song ends
+    ///
+    /// # Errors
+    /// - only with synchronization, shouldn't happen
+    pub fn on_song_end<F: FnMut() + Send + 'static>(
+        &mut self,
+        mut f: F,
+    ) -> Result<()>
+    where
+        &'static F: std::marker::Send,
+    {
+        self.0.on_callback(Some(move |cb| match cb {
+            CallbackInfo::SourceEnded => {
+                f();
+            }
+            _ => {}
+        }))?;
+        Ok(())
+    }
+
+    /// Sets the playback volume
+    ///
+    /// # Errors
+    /// - only with synchronization, shouldn't happen
+    pub fn set_volume(&mut self, volume: f32) -> Result<()> {
+        self.0.volume(volume * volume)?;
+        Ok(())
+    }
+
+    pub fn seek_to(&mut self, pos: Duration) -> Result<()> {
+        self.0.seek_to(pos)?;
+        Ok(())
+    }
+}
+
+/// A playlist, lazily cloned
+pub enum Playlist {
+    /// There is static immutable reference to the playlist
+    Static(Arc<[SongId]>),
+    /// There is owned vector with the playlist
+    Dynamic(Vec<SongId>),
 }
 
 impl Playlist {
@@ -571,6 +487,55 @@ impl<'de> Deserialize<'de> for Playlist {
     }
 }
 
+/// Messages sent by the player
+#[derive(Clone, Copy, Debug)]
+pub enum PlayerMessage {
+    SongEnd,
+}
+
+/// State of the player playback
+#[derive(Clone, Copy, Default)]
+pub enum Playback {
+    /// No song is playing
+    #[default]
+    Stopped,
+    /// Song is playing
+    Playing,
+    /// Song is paused
+    Paused,
+}
+
+impl Playback {
+    pub fn play(play: bool) -> Self {
+        if play {
+            Self::Playing
+        } else {
+            Self::Paused
+        }
+    }
+
+    pub fn is_stopped(&self) -> bool {
+        matches!(self, Playback::Stopped)
+    }
+}
+
+/// Used for deserializing the data of the [`Player`]
+#[derive(Deserialize)]
+struct PlayerDataLoad {
+    /// True when the sound is muted, doesn't affect volume
+    #[serde(default)]
+    mute: bool,
+    /// The volume of the playback, doesn't affect mute
+    #[serde(default = "default_volume")]
+    volume: f32,
+    /// The current song or [`None`]
+    #[serde(default)]
+    current: Option<usize>,
+    /// The current playlist
+    #[serde(default)]
+    playlist: Playlist,
+}
+
 impl Default for PlayerDataLoad {
     fn default() -> Self {
         Self {
@@ -580,4 +545,22 @@ impl Default for PlayerDataLoad {
             playlist: [].as_slice().into(),
         }
     }
+}
+
+/// Used for serializing the data of the [`Player`]
+#[derive(Serialize)]
+struct PlayerDataSave<'a> {
+    /// True when the sound is muted, doesn't affect volume
+    mute: bool,
+    /// The volume of the playback, doesn't affect mute
+    volume: f32,
+    /// The current song or [`None`]
+    current: Option<usize>,
+    /// The current playlist
+    playlist: &'a Playlist,
+}
+
+/// returns the default volume
+fn default_volume() -> f32 {
+    1.
 }
