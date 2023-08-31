@@ -1,7 +1,6 @@
-# TODO
+# Roadmap
 
 ## v0.1.2
-- better error handling (use log, better messages)
 - Improve WrapBox
     - Use RefCell
     - Properly save states
@@ -24,6 +23,7 @@
 - Load config without gui
 - CLI port and address
 - Scroll playlist to show the currently playing song
+- Delete old logs
 
 ## v0.3.0
 + Proper gui
