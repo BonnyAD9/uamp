@@ -25,5 +25,13 @@
 - Scroll playlist to show the currently playing song
 - Delete old logs
 
-## v0.3.0
-+ Proper gui
+## v0.2.0
+- Proper gui
+- no warnings
+
+## v1.0.0
+- Languages
+- Themes
+
+## Future
+- Skins
