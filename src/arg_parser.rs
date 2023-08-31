@@ -1,6 +1,8 @@
 use crate::{messenger, uamp_app::ControlMsg};
-use eyre::{Report, Result};
 use termal::{gradient, printcln};
+use thiserror::Error;
+
+pub type Result<T> = std::result::Result<T, Error>;
 
 /// Action that can be done with cli
 pub enum Action {
@@ -15,13 +17,6 @@ pub struct Args {
     pub should_run: bool,
 }
 
-/// Returns error with the given message
-macro_rules! ret_err {
-    ($($arg:tt)*) => {
-        return Err(Report::msg(format!($($arg)*)))
-    };
-}
-
 /// Gets the next value from a iterator, returns error when there is no value.
 /// The two last arguments are used to produce the error message
 /// - the first argument says the option after which the error occured
@@ -32,54 +27,53 @@ macro_rules! ret_err {
 /// # Usage
 /// ```
 /// // gets the next value from iterator
-/// let val = next!(iterator, "option", "name");
+/// let val = next!(iterator);
 ///
 /// // gets the value and parses it into f32
-/// let val = next!(f32, iterator, "option", "f32");
+/// let val = next!(f32, iterator, None);
 ///
 /// // gets the value, parses it into f32 and validates it
 /// let val = next!(
 ///     f32,
 ///     iterator,
-///     "option",
-///     "f32 in range 0..=1",
-///     |v| (0.0..=1.).contains(v)
+///     |v| (0.0..=1.).contains(v),
+///     None
 /// );
 /// ```
 macro_rules! next {
-    ($iter:ident, $after:literal, $what:literal) => {
+    ($iter:ident) => {
         match $iter.next() {
             Some(a) => a,
             None => {
-                ret_err!("Expected {} action after '{}'", $what, $after)
+                return Err(Error::UnexpectedEnd(None));
             }
         }
     };
 
-    ($typ:ident, $iter:ident, $after:literal, $what:literal) => {
-        match $iter
+    ($typ:ident, $iter:ident, $id:expr) => {
+        $iter
             .next()
-            .ok_or(Report::msg("next is none"))
-            .and_then(|v| v.parse::<$typ>().map_err(|e| e.into()))
-        {
-            Ok(a) => a,
-            Err(_) => {
-                ret_err!("Expected {} action after '{}'", $what, $after)
-            }
-        }
+            .ok_or(Error::UnexpectedEnd)?
+            .parse::<$typ>()
+            .map_err(|_| Error::ParseError { id: $id, typ: stringify!($typ)})?
     };
 
-    ($typ:ident, $iter:ident, $after:literal, $what:literal, $val:expr) => {
-        match $iter
+    ($typ:ident, $iter:ident, $val:expr, $id:expr) => {
+        $iter
             .next()
-            .ok_or(Report::msg("next is none"))
-            .and_then(|v| v.parse::<$typ>().map_err(|e| e.into()))
-        {
-            Ok(a) if { $val }(&a) => a,
-            _ => {
-                ret_err!("Expected {} action after '{}'", $what, $after)
-            }
-        }
+            .ok_or(Error::UnexpectedEnd)?
+            .parse::<$typ>()
+            .map_err(|_| Error::ParseError { id: $id, typ: stringify!($typ)})?
+            .and_then(|v| {
+                if { $val }() {
+                    Ok(v)
+                } else {
+                    Err(Error::ParseError {
+                        id: $id,
+                        typ: stringify!($typ that satysfies: $val),
+                    })
+                }
+            })?
     };
 }
 
@@ -95,7 +89,7 @@ macro_rules! next {
 /// ```
 macro_rules! starts {
     ($i:ident, $($s:literal)|+) => {{
-        $($i.starts_with($s))||+
+        $($i.starts_with(concat!($s, "=")))||+ || matches!($i, $($s)|+)
     }};
 }
 
@@ -124,73 +118,66 @@ macro_rules! msg_control {
 /// # Examples
 /// ```
 /// // parses the `&str` to `f32`
-/// let val = parse!(f32, "f32", "3.1415");
+/// let val = parse!(f32, "3.1415", None);
 ///
 /// // parses the `&str` to `f32` and validates it
 /// let val = parse!(
 ///     f32,
-///     "f32 in range 0..=1",
 ///     "3.1415",
-///     |v| (0.0..=1.).contains(v)
+///     |v| (0.0..=1.).contains(v),
+///     None
 /// );
 /// ```
 macro_rules! parse {
-    ($t:ty, $msg:literal, $s:expr) => {
-        match $s
-            .ok_or(Report::msg("none"))
-            .and_then(|s| s.parse::<$t>().map_err(|e| e.into()))
-        {
-            Ok(a) => a,
-            _ => ret_err!("Expected {}", $msg),
-        }
+    ($t:ty, $s:expr, $id:expr) => {
+        $s
+        .parse::<$t>()
+        .map_err(|_| Error::ParseError { id: $id, typ: stringify!($t)})?
     };
 
-    ($t:ty, $msg:literal, $s:expr, $val:expr) => {
-        match $s
-            .ok_or(Report::msg("none"))
-            .and_then(|s| s.parse::<$t>().map_err(|e| e.into()))
-        {
-            Ok(a) if { $val }(&a) => a,
-            _ => ret_err!("Expected {}", $msg),
-        }
+    ($t:ty, $s:expr, $val:expr, $id:expr) => {
+        $s
+            .parse::<$t>()
+            .map_err(|_| Error::ParseError { id: $id, typ: stringify!($t)})
+            .and_then(|v| {
+                if { $val }(&v) {
+                    Ok(v)
+                } else {
+                    Err(Error::ParseError {
+                        id: $id,
+                        typ: stringify!($typ that satysfies: $val),
+                    })
+                }
+            })?
     };
 }
 
-/// Parses the string value, returns None if the passed value is none, returns
-/// error if it cannot be parsed. The second argument is used to produce the
-/// error message.
-///
-/// It can also validate the value
+/// Gets the value from a string parameter with `=`
 ///
 /// # Examples
 /// ```
-/// // parses the `&str` to `f32`
-/// let val = parse!(f32, "f32", Some("3.1415"));
+/// let v = get_param!(f32, "vol=0.5");
 ///
-/// // parses the `&str` to `f32` and validates it
-/// let val = parse!(
-///     f32,
-///     "f32 in range 0..=1",
-///     None,
-///     |v| (0.0..=1.).contains(v)
-/// );
+/// let v = get_param!(f32, "vol=0.5", |v| (0.0..1.).contains(v)));
 /// ```
-macro_rules! maybe_parse {
-    ($t:ty, $msg:literal, $s:expr) => {
-        match $s.map(|s| s.parse::<$t>()) {
-            Some(Err(_)) => ret_err!("Expected {}", $msg),
-            Some(Ok(a)) => Some(a),
-            _ => None,
-        }
+macro_rules! get_param {
+    ($t:ty, $v:expr) => {
+        parse!(
+            $t,
+            get_after($v, "=")
+                .ok_or(Error::MissingParameter(Some(format!("{}", $v))))?,
+            None
+        )
     };
 
-    ($t:ty, $msg:literal, $s:expr, $val:expr) => {
-        match $s.map(|s| s.parse::<$t>()) {
-            Some(Err(_)) => ret_err!("Expected {}", $msg),
-            Some(Ok(a)) if { $val }(&a) => Some(a),
-            None => None,
-            _ => ret_err!("Expected {}", $msg),
-        }
+    ($t:ty, $v:expr, $val:expr) => {
+        parse!(
+            $t,
+            get_after($v, "=")
+                .ok_or(Error::MissingParameter(Some(format!("{}", $v))))?,
+            $val,
+            None
+        )
     };
 }
 
@@ -213,7 +200,7 @@ pub fn parse_args<'a>(args: impl Iterator<Item = &'a str>) -> Result<Args> {
             "h" | "help" | "-h" | "--help" | "-?" => {
                 help(&mut args, &mut res)?
             }
-            a => ret_err!("Invalid argument '{a}'"),
+            a => return Err(Error::UnknownArgument(Some(a.to_owned()))),
         }
     }
 
@@ -226,7 +213,7 @@ fn instance<'a>(
     res: &mut Args,
 ) -> Result<()> {
     res.should_exit = true;
-    let a = next!(args, "instance", "instance action");
+    let a = next!(args);
 
     match a {
         "play-pause" | "pp" => msg_control!(res, PlayPause),
@@ -235,21 +222,39 @@ fn instance<'a>(
         "next-song" | "ns" => msg_control!(res, NextSong),
         "previous-song" | "prev-song" | "ps" => msg_control!(res, PrevSong),
         v if starts!(v, "volume" | "vol" | "v") => {
-            let vol = parse!(
-                f32,
-                "expected float in range 0..=1",
-                get_after(v, "="),
-                |v| (0.0..=1.).contains(v)
-            );
+            let vol = get_param!(f32, v);
             msg_control!(res, SetVolume(vol));
         }
         "mute" => msg_control!(res, ToggleMute),
         "find-songs" | "fs" => msg_control!(res, FindSongs),
-        "--" => ret_err!("Expected instance action after 'instance'"),
-        _ => ret_err!("Invalid argument '{a}' after 'instance'"),
+        "--" => return Err(Error::UnexpectedEnd(Some("instance".to_owned()))),
+        _ => return Err(Error::UnknownArgument(Some(a.to_owned()))),
     }
 
     Ok(())
+}
+
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error(
+        "Expected more arguments{} (the last argument requires that more follow)",
+        if let Some(i) = .0 { format!(" after '{}'", i) } else { "".to_owned() }
+    )]
+    UnexpectedEnd(Option<String>),
+    #[error(
+        "Failed to parse argument{}, the argument must be {typ}",
+        if let Some(i) = .id { i.as_str() } else { "" }
+    )]
+    ParseError {
+        id: Option<String>,
+        typ: &'static str,
+    },
+    #[error("Unknown option{}", .0.as_ref().map(|i| i.as_str()).unwrap_or(""))]
+    UnknownArgument(Option<String>),
+    #[error(
+        "Missing parameter{}",
+        if let Some(i) = .0 { format!(" for argument '{}'", i) } else { "".to_owned() })]
+    MissingParameter(Option<String>),
 }
 
 //==================================<< HELP >>===============================//

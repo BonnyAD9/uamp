@@ -1,10 +1,11 @@
-use eyre::Result;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::{
     fs::{create_dir_all, File},
     path::{Path, PathBuf},
 };
+
+use crate::err::Result;
 
 /// Configuration of uamp
 #[derive(Clone, Serialize, Deserialize)]

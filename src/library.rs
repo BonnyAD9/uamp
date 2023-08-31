@@ -1,6 +1,4 @@
-use crate::config::Config;
-use crate::song::Song;
-use eyre::Result;
+use crate::{config::Config, err::Result, song::Song};
 use log::{error, info};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::{create_dir_all, read_dir, File};

@@ -6,7 +6,6 @@ use std::{
     sync::Arc,
 };
 
-use eyre::Result;
 use log::info;
 use rand::{seq::SliceRandom, thread_rng};
 use raplay::{
@@ -18,6 +17,7 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{
     config::Config,
+    err::Result,
     library::{Library, SongId},
     uamp_app::UampMessage,
     wid::Command,

@@ -1,8 +1,9 @@
 use std::path::{Path, PathBuf};
 
 use audiotags::Tag;
-use eyre::Result;
 use serde_derive::{Deserialize, Serialize};
+
+use crate::err::Result;
 
 /// Describes song
 #[derive(Debug, Clone, Serialize, Deserialize)]

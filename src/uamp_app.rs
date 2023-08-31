@@ -1,6 +1,5 @@
 use std::{cell::RefCell, net::TcpListener, sync::Arc};
 
-use eyre::Result;
 use global_hotkey::{
     hotkey::{self, Code, HotKey},
     GlobalHotKeyEvent, GlobalHotKeyManager,
@@ -12,6 +11,7 @@ use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
     config::{app_id, default_port, Config},
+    err::Result,
     library::{Library, SongId},
     messenger::{self, Messenger},
     player::{Player, PlayerMessage},

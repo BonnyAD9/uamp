@@ -1,4 +1,3 @@
-use eyre::Result;
 use rmp_serde::Serializer;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -6,7 +5,10 @@ use std::{
     net::TcpStream,
 };
 
-use crate::uamp_app::{ControlMsg, UampApp, UampMessage};
+use crate::{
+    err::Result,
+    uamp_app::{ControlMsg, UampApp, UampMessage},
+};
 
 /// Messages passed between uamp instances
 #[derive(Debug, Serialize, Deserialize)]

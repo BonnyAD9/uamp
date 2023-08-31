@@ -777,16 +777,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "eyre"
-version = "0.6.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c2b6b5a29c02cdc822728b7d7b8ae1bab3e3b05d44522770ddd49722eeac7eb"
-dependencies = [
- "indenter",
- "once_cell",
-]
-
-[[package]]
 name = "fast-srgb8"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1395,12 +1385,6 @@ name = "imagesize"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "029d73f573d8e8d63e6d5020011d3255b28c3ba85d6cf870a07184ed23de9284"
-
-[[package]]
-name = "indenter"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce23b50ad8242c51a442f3ff322d56b02f08852c77e4c0b4d3fd684abc89c683"
 
 [[package]]
 name = "indexmap"
@@ -2411,9 +2395,9 @@ checksum = "8b9283c6b06096b47afc7109834fdedab891175bb5241ee5d4f7d2546549f263"
 
 [[package]]
 name = "raplay"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "945c374389714313e5cd0712eda1d44e7454504cfc9bab6d37304da1659f89ab"
+checksum = "9d3531897e9ac340ca725d82f4330506203e2eca6c06bb59c5ec9fb89dfd5a3c"
 dependencies = [
  "anyhow",
  "cpal",
@@ -3235,9 +3219,9 @@ dependencies = [
 name = "uamp"
 version = "0.1.1"
 dependencies = [
+ "anyhow",
  "audiotags",
  "dirs",
- "eyre",
  "flexi_logger",
  "global-hotkey",
  "iced",
@@ -3250,6 +3234,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "termal",
+ "thiserror",
  "tokio",
 ]
 

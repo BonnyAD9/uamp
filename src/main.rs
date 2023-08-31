@@ -5,7 +5,6 @@ use std::{
 };
 
 use config::app_id;
-use eyre::Result;
 use iced::{
     window::{self, PlatformSpecific},
     Application, Settings,
@@ -16,11 +15,13 @@ use uamp_app::UampApp;
 use crate::{
     arg_parser::{parse_args, Action},
     config::default_port,
+    err::Result,
     messenger::Messenger,
 };
 
 mod arg_parser;
 mod config;
+mod err;
 mod fancy_widgets;
 mod library;
 mod messenger;
