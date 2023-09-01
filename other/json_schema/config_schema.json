@@ -47,6 +47,10 @@
         "save_timeout": {
             "description": "When not null, saves all the data every number of seconds specified here",
             "type": ["null", "number"]
+        },
+        "fade_play_pause": {
+            "description": "Sets the fade play/pause. Set to 0 to disable fading.",
+            "type": "number"
         }
     }
 }

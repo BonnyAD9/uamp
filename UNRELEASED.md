@@ -4,6 +4,7 @@
 - recursive search option
 - don't block when saving songs
 - Option to save every N seconds (60 by default)
+- Option to set fade play/pause duration (0.15 by default)
 
 ## Bugfixes
 - Scroll widgets now remember their position while the app is runung

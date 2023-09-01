@@ -219,7 +219,8 @@ impl Default for UampApp {
             }
         }
 
-        let player = Player::from_config(sender.clone(), &conf);
+        let mut player = Player::from_config(sender.clone(), &conf);
+        player.fade_play_pause(conf.fade_play_pause());
 
         let hotkey_mgr = if conf.register_global_hotkeys() {
             Self::register_hotkeys(sender.clone()).ok()

@@ -55,6 +55,8 @@ gen_struct! {
 
         save_timeout: Option<f32> { pub, pub } => () Some(60.),
 
+        fade_play_pause: f32 { pub, pub } => () 0.15,
+
         ; // fields that aren't serialized
 
         #[serde(skip_serializing, default = "default_config_path_json")]
@@ -96,6 +98,10 @@ impl Config {
         serde_json::from_reader(file).unwrap_or_default()
     }
 
+    pub fn changed(&self) -> bool {
+        self.change.get()
+    }
+
     /// Loads config from the default json file. If the loading fails, creates
     /// default config.
     pub fn from_default_json() -> Self {
@@ -130,8 +136,10 @@ impl Config {
     /// - Fails to create parent directory
     /// - Fails to write to fi
     pub fn to_default_json(&self) -> Result<()> {
-        self.to_json(&self.config_path)?;
-        self.change.set(false);
+        if self.changed() {
+            self.to_json(&self.config_path)?;
+            self.change.set(false);
+        }
         Ok(())
     }
 
@@ -148,6 +156,7 @@ impl Config {
             register_global_hotkeys: default_register_global_hotkeys(),
             volume_jump: default_volume_jump(),
             save_timeout: default_save_timeout(),
+            fade_play_pause: default_fade_play_pause(),
             change: Cell::new(true),
         }
     }

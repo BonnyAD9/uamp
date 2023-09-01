@@ -288,6 +288,13 @@ impl Player {
             change: Cell::new(false),
         }
     }
+
+    /// Sets the fade duration for play/pause
+    pub fn fade_play_pause(&mut self, secs: f32) {
+        if let Err(e) = self.inner.fade_play_pause(secs.abs()) {
+            error!("Failed to set the fade duration: {e}");
+        }
+    }
 }
 
 /// Wrapps the sink
@@ -355,6 +362,11 @@ impl SinkWrapper {
 
     pub fn seek_to(&mut self, pos: Duration) -> Result<()> {
         self.0.seek_to(pos)?;
+        Ok(())
+    }
+
+    pub fn fade_play_pause(&mut self, secs: f32) -> Result<()> {
+        self.0.set_fade_len(Duration::from_secs_f32(secs))?;
         Ok(())
     }
 }

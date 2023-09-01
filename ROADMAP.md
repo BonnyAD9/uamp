@@ -3,7 +3,6 @@
 ## v0.1.2
 - More actions to CLI
     - all control messages
-- Fade play/puse
 
 ## v0.2.0
 - Add tests
