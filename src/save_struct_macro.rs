@@ -1,4 +1,3 @@
-
 /// Generates that can be paresed by serde
 ///
 /// # Examples:
@@ -12,12 +11,12 @@
 ///         ref_field: FieldType {
 ///             /* getter visibility */ pub,
 ///             /* setter visibility */ pub
-///         } /* default function visibility */ pub :: default_value_expr(),
+///         } => /* default function visibility */ pub default_value_expr(),
 ///         // ...
 ///         ; // Fields passed by value
 ///         #[attributes]
 ///         // ...
-///         value_field: FieldType { pub, pub } :: default_value_expr(),
+///         value_field: FieldType { pub, pub } => pub () default_value_expr(),
 ///         // ...
 ///         ; // Other fields that are not parsed by serde
 ///         #[serde(ignore)] // the serde ignore is optional, but it should be
@@ -29,7 +28,7 @@
 ///     }
 /// }
 /// ```
-/// The part after the setters (`pub :: ...`) is optional.
+/// The part after the setters (`=> pub () ...`) is optional.
 ///
 /// All the visibility modifiers can be omited to make it private.
 /// The setters and getters are generated in the following shape:
@@ -58,18 +57,18 @@ macro_rules! gen_struct {
         $sv:vis $t:ident {
             $(
                 $(#$at:tt)*
-                $fv:vis $fi:ident: $ft:ty { $gfv:vis, $sfv:vis }
-                    $($defv:vis :: $def:expr)?
-            ),* $(,)?
+                $fv:vis $fi:ident: $ft:ty { $gfv:vis $(pri)?, $sfv:vis $(pri)? }
+                    $( => $defv:vis $(pri)? ($($n:literal)?) $def:expr)?,
+            )*
             ;$(
                 $(#$dat:tt)*
                 $dfv:vis $dfi:ident: $dft:ty { $dgfv:vis, $dsfv:vis }
-                    $($ddefv:vis :: $ddef:expr )?
-            ),* $(,)?
+                    $( => $ddefv:vis $(pri)? ($($dn:literal)?) $ddef:expr )?,
+            )*
             ;$(
                 $(#$rat:tt)*
-                $rfv:vis $rfi:ident: $rft:ty
-            ),* $(,)?
+                $rfv:vis $rfi:ident: $rft:ty,
+            )*
         }
     ) => {
         paste::paste!{
@@ -78,12 +77,12 @@ macro_rules! gen_struct {
             $sv struct $t {
                 $(
                     $(#$at)*
-                    #[serde(default = "default_" $fi)]
+                    $(#[serde(default = "default_" $fi $($n)?)])?
                     $fv $fi: $ft,
                 )*
                 $(
                     $(#$dat)*
-                    #[serde(default = "default_" $dfi)]
+                    $(#[serde(default = "default_" $dfi $($dn)?)])?
                     $dfv $dfi: $dft,
                 )*
                 $(

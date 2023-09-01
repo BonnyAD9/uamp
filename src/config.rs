@@ -17,7 +17,7 @@ gen_struct! {
     pub Config {
         // Fields passed by reference
 
-        search_paths: Vec<PathBuf> { pub, pub } :: {
+        search_paths: Vec<PathBuf> { pub, pub } => () {
             if let Some(dir) = dirs::audio_dir() {
                 vec![dir]
             } else {
@@ -25,15 +25,15 @@ gen_struct! {
             }
         },
 
-        library_path: PathBuf { pub, pub } :: {
+        library_path: PathBuf { pub, pub } => () {
             default_config_path().join("library.json")
         },
 
-        player_path: PathBuf { pub, pub } :: {
+        player_path: PathBuf { pub, pub } => () {
             default_config_path().join("player.json")
         },
 
-        audio_extensions: Vec<String> { pub, pub } :: {
+        audio_extensions: Vec<String> { pub, pub } => () {
             vec![
                 "flac".to_owned(),
                 "mp3".to_owned(),
@@ -44,13 +44,13 @@ gen_struct! {
 
         ; // fields passed by value:
 
-        recursive_search: bool { pub, pub } :: true,
+        recursive_search: bool { pub, pub } => () true,
 
-        update_library_on_start: bool { pub, pub } :: true,
+        update_library_on_start: bool { pub, pub } => () true,
 
-        register_global_hotkeys: bool { pub, pub } :: true,
+        register_global_hotkeys: bool { pub, pub } => () true,
 
-        volume_jump: f32 { pub, pub } :: 0.025
+        volume_jump: f32 { pub, pub } => () 0.025,
 
         ; // fields that aren't serialized
 

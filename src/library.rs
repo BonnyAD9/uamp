@@ -1,4 +1,5 @@
 use crate::err::Error;
+use crate::gen_struct;
 use crate::uamp_app::UampMessage;
 use crate::wid::Command;
 use crate::{config::Config, err::Result, song::Song};
@@ -13,15 +14,15 @@ use std::thread::{self, JoinHandle};
 use std::time::Instant;
 use tokio::sync::mpsc::UnboundedSender;
 
-/// A song library
-#[derive(Serialize, Deserialize)]
-pub struct Library {
-    /// The songs, to get the songs use methods `songs()` and `songs_mut()`
-    songs: Vec<Song>,
-    #[serde(skip)]
-    load_process: Option<LibraryLoad>,
-    #[serde(skip)]
-    change: Cell<bool>,
+gen_struct! {
+    pub Library {
+        // Fields passed by reference
+        songs: Vec<Song> { pri , pri },
+        ; // Fields passed by value
+        ; // Other fields
+        #[serde(skip)]
+        load_process: Option<LibraryLoad>,
+    }
 }
 
 /// Id of song in a [`Library`]
@@ -40,15 +41,6 @@ impl Default for Library {
 }
 
 impl Library {
-    fn songs(&self) -> &Vec<Song> {
-        &self.songs
-    }
-
-    fn songs_mut(&mut self) -> &mut Vec<Song> {
-        self.change.set(true);
-        &mut self.songs
-    }
-
     /// Creates empty library
     pub fn new() -> Self {
         Library {
