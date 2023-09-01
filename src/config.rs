@@ -17,8 +17,7 @@ gen_struct! {
     pub Config {
         // Fields passed by reference
 
-        search_paths: Vec<PathBuf> { pub, pub }
-        fn "default_search_paths": {
+        search_paths: Vec<PathBuf> { pub, pub } :: {
             if let Some(dir) = dirs::audio_dir() {
                 vec![dir]
             } else {
@@ -26,14 +25,15 @@ gen_struct! {
             }
         },
 
-        library_path: PathBuf { pub, pub }
-        fn "default_library_path": default_config_path().join("library.json"),
+        library_path: PathBuf { pub, pub } :: {
+            default_config_path().join("library.json")
+        },
 
-        player_path: PathBuf { pub, pub }
-        fn "default_player_path": default_config_path().join("player.json"),
+        player_path: PathBuf { pub, pub } :: {
+            default_config_path().join("player.json")
+        },
 
-        audio_extensions: Vec<String> { pub, pub }
-        fn "default_audio_extensions": {
+        audio_extensions: Vec<String> { pub, pub } :: {
             vec![
                 "flac".to_owned(),
                 "mp3".to_owned(),
@@ -44,17 +44,13 @@ gen_struct! {
 
         ; // fields passed by value:
 
-        recursive_search: bool { pub, pub }
-        fn "default_recursive_search": true,
+        recursive_search: bool { pub, pub } :: true,
 
-        update_library_on_start: bool { pub, pub }
-        fn "default_update_library_on_start": true,
+        update_library_on_start: bool { pub, pub } :: true,
 
-        register_global_hotkeys: bool { pub, pub }
-        fn "default_register_global_hotkeys": true,
+        register_global_hotkeys: bool { pub, pub } :: true,
 
-        volume_jump: f32 { pub, pub }
-        fn "default_volume_jump": 0.025
+        volume_jump: f32 { pub, pub } :: 0.025
 
         ; // fields that aren't serialized
 
