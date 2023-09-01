@@ -2,7 +2,9 @@
 
 ## v0.2.0
 - Add tests
-- Change control message jump to specify jump amount
+- Change jump message to specify jump amount
+- Change volume up message to specify multiplier
+- Change play/pause to specify state/toggle
 - Configureable hotkeys
 - Seeking
 - Gapless
