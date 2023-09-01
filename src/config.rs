@@ -23,17 +23,19 @@ gen_struct! {
             } else {
                 vec![PathBuf::from(".")]
             }
-        },
-
+        }
+    ,
     library_path: PathBuf { pub library_path, pub library_path_mut } =>
         default_library_path "default_library_path":
-            default_config_path().join("library.json"),
-
+            default_config_path().join("library.json")
+    ,
     player_path: PathBuf { pub player_path, pub player_path_mut } =>
         default_player_path "default_player_path":
-            default_config_path().join("player.json"),
-
-    audio_extensions: Vec<String> { pub audio_extensions, pub audio_extensions_mut } =>
+            default_config_path().join("player.json")
+    ,
+    audio_extensions: Vec<String> {
+        pub audio_extensions, pub audio_extensions_mut
+    } =>
         default_audio_extensions "default_audio_extensions": {
             vec![
                 "flac".to_owned(),
@@ -44,14 +46,18 @@ gen_struct! {
         },
     ;
     recursive_search: bool { pub recursive_search, pub search_paths_set } =>
-        default_recursive_search "default_recursive_search": true,
-
-    update_library_on_start: bool { pub update_library_on_start, pub update_library_on_start_set } =>
-        default_update_library_on_start "default_update_library_on_start": true,
-
-    register_global_hotkeys: bool { pub register_global_hotkeys, pub register_global_hotkeys_set } =>
-        default_register_global_hotkeys "default_register_global_hotkeys": true,
-
+        default_recursive_search "default_recursive_search": true
+    ,
+    update_library_on_start: bool {
+        pub update_library_on_start, pub update_library_on_start_set
+    } =>
+        default_update_library_on_start "default_update_library_on_start": true
+    ,
+    register_global_hotkeys: bool {
+        pub register_global_hotkeys, pub register_global_hotkeys_set
+    } =>
+        default_register_global_hotkeys "default_register_global_hotkeys": true
+    ,
     volume_jump: f32 { pub volume_jump, pub volume_jump_set } =>
         default_volume_jump "default_volume_jump": 0.025
     ;

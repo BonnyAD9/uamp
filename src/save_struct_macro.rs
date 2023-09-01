@@ -5,11 +5,15 @@ macro_rules! gen_struct {
         $sv:vis $t:ident;
         $(
             $(#$at:tt)*
-            $fv:vis $fi:ident: $ft:ty { $gfv:vis $gffi:ident, $sfv:vis $sffi:ident } $(=> $defv:vis $defi:ident $defl:literal: $def:expr)?
+            $fv:vis $fi:ident: $ft:ty {
+                $gfv:vis $gffi:ident, $sfv:vis $sffi:ident
+            } $(=> $defv:vis $defi:ident $defl:literal: $def:expr)?
         ),* $(,)?
         ;$(
             $(#$dat:tt)*
-            $dfv:vis $dfi:ident: $dft:ty { $dgfv:vis $dgffi:ident, $dsfv:vis $dsffi:ident } $(=> $ddefv:vis $ddefi:ident $ddefl:literal: $ddef:expr)?
+            $dfv:vis $dfi:ident: $dft:ty {
+                $dgfv:vis $dgffi:ident, $dsfv:vis $dsffi:ident
+            } $(=> $ddefv:vis $ddefi:ident $ddefl:literal: $ddef:expr)?
         ),* $(,)?
         ;$(
             $(#$rat:tt)*
