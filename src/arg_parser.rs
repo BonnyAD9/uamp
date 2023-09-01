@@ -311,11 +311,13 @@ fn print_help() {
 
 /// Prints the help header
 fn print_help_header() {
+    let v: Option<&str> = option_env!("CARGO_PKG_VERSION");
     printcln!(
         "Welcome in {'i g}uamp{'_} by {}{'_}
-Version 0.1.1
+Version {}
 ",
-        gradient("BonnyAD9", (250, 50, 170), (180, 50, 240))
+        gradient("BonnyAD9", (250, 50, 170), (180, 50, 240)),
+        v.unwrap_or("unknown")
     )
 }
 

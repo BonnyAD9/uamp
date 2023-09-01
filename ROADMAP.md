@@ -1,7 +1,5 @@
 # Roadmap
 
-## v0.1.2
-
 ## v0.2.0
 - Add tests
 - Change control message jump to specify jump amount
