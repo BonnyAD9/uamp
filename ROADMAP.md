@@ -1,8 +1,7 @@
 # Roadmap
 
 ## v0.2.0
-- Add tests
-- Change jump message to specify jump amount
+- Change next/prev message to specify jump amount
 - Change volume up message to specify multiplier
 - Change play/pause to specify state/toggle
 - Configureable hotkeys

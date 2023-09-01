@@ -79,7 +79,7 @@ impl UampApp {
             make_button("Playlist", MainPage::Playlist),
             space(Fill, Shrink),
             button!("Find Songs")
-                .on_press(Msg::Control(ControlMsg::FindSongs))
+                .on_press(Msg::Control(ControlMsg::LoadNewSongs))
         ]
         .into()
     }
@@ -167,12 +167,12 @@ impl UampApp {
             button(svg(icons::PREVIOUS))
                 .height(30)
                 .width(30)
-                .on_press(Msg::Control(ControlMsg::PrevSong)),
+                .on_press(Msg::Control(ControlMsg::PrevSong(1))),
             self.play_pause_button(),
             button(svg(icons::NEXT))
                 .height(30)
                 .width(30)
-                .on_press(Msg::Control(ControlMsg::NextSong)),
+                .on_press(Msg::Control(ControlMsg::NextSong(1))),
             self.current_song(),
             self.volume(),
         ]
@@ -191,7 +191,7 @@ impl UampApp {
         button(svg(icon))
             .height(30)
             .width(30)
-            .on_press(Msg::Control(ControlMsg::PlayPause))
+            .on_press(Msg::Control(ControlMsg::PlayPause(None)))
             .into()
     }
 
@@ -235,7 +235,7 @@ impl UampApp {
         }))
         .width(30)
         .height(30)
-        .on_press(Msg::Control(ControlMsg::ToggleMute))
+        .on_press(Msg::Control(ControlMsg::Mute(None)))
         .into()
     }
 }

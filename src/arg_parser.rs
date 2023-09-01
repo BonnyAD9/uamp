@@ -216,22 +216,22 @@ fn instance<'a>(
     let a = next!(args);
 
     match a {
-        "play-pause" | "pp" => msg_control!(res, PlayPause),
-        "volume-up" | "vol-up" | "vu" => msg_control!(res, VolumeUp),
-        "volume-down" | "vol-down" | "vd" => msg_control!(res, VolumeDown),
-        "next-song" | "ns" => msg_control!(res, NextSong),
-        "previous-song" | "prev-song" | "ps" => msg_control!(res, PrevSong),
+        "play-pause" | "pp" => msg_control!(res, PlayPause(None)),
+        "volume-up" | "vol-up" | "vu" => msg_control!(res, VolumeUp(1.)),
+        "volume-down" | "vol-down" | "vd" => msg_control!(res, VolumeDown(1.)),
+        "next-song" | "ns" => msg_control!(res, NextSong(1)),
+        "previous-song" | "prev-song" | "ps" => msg_control!(res, PrevSong(1)),
         v if starts!(v, "volume" | "vol" | "v") => {
             let vol = get_param!(f32, v, |v| (0.0..1.).contains(v));
             msg_control!(res, SetVolume(vol));
         }
-        "mute" => msg_control!(res, ToggleMute),
-        "load-songs" => msg_control!(res, FindSongs),
+        "mute" => msg_control!(res, Mute(None)),
+        "load-songs" => msg_control!(res, LoadNewSongs),
         "shuffle-playlist" | "shuffle" => msg_control!(res, Shuffle),
         v if starts!(v, "playlist-jump" | "pj") => {
             let v = get_param!(usize, v);
             msg_control!(res, PlaylistJump(v));
-        },
+        }
         "exit" | "close" | "x" => msg_control!(res, Close),
         "--" => return Err(Error::UnexpectedEnd(Some("instance".to_owned()))),
         _ => return Err(Error::UnknownArgument(Some(a.to_owned()))),

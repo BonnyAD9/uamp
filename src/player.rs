@@ -44,7 +44,7 @@ impl Player {
     pub fn event(&mut self, lib: &Library, msg: PlayerMessage) -> Command {
         match msg {
             PlayerMessage::SongEnd => {
-                self.play_next(lib);
+                self.play_next(lib, 1);
             }
         }
         Command::none()
@@ -159,14 +159,14 @@ impl Player {
         self.current.map(|i| self.playlist()[i])
     }
 
-    /// Plays the next song in the playlist
-    pub fn play_next(&mut self, lib: &Library) {
-        self.jump_to(lib, self.current().map(|i| i + 1))
+    /// Plays the `n`th next song in the playlist
+    pub fn play_next(&mut self, lib: &Library, n: usize) {
+        self.jump_to(lib, self.current().map(|i| i + n))
     }
 
-    /// Plays the previous song in the playlist
-    pub fn play_prev(&mut self, lib: &Library) {
-        self.jump_to(lib, self.current().and_then(|i| i.checked_sub(1)))
+    /// Plays the `n`th previous song in the playlist
+    pub fn play_prev(&mut self, lib: &Library, n: usize) {
+        self.jump_to(lib, self.current().and_then(|i| i.checked_sub(n)))
     }
 
     /// Jumps to the given index in the playlist if set.

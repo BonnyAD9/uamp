@@ -69,20 +69,20 @@ pub enum UampMessage {
 /// only simple messages that can be safely send across threads and copied
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 pub enum ControlMsg {
-    /// Toggle between play/pause
-    PlayPause,
-    /// Jump to the next song
-    NextSong,
-    /// Jump to the previous song
-    PrevSong,
+    /// Toggle/set between play/pause, [`None`] to toggle, [`Some`] to set
+    PlayPause(Option<bool>),
+    /// Jump to the Nth next song
+    NextSong(usize),
+    /// Jump to the Nth previous song
+    PrevSong(usize),
     /// Set the volume
     SetVolume(f32),
-    /// Increase the volume
-    VolumeUp,
-    /// Decrease the volume
-    VolumeDown,
-    /// Toggle the mute control
-    ToggleMute,
+    /// Increase the volume by `vol_jump * .0`
+    VolumeUp(f32),
+    /// Decrease the volume by `vol_jump * .0`
+    VolumeDown(f32),
+    /// Toggle/set the mute control, [`None`] to toggle, [`Some`] to set
+    Mute(Option<bool>),
     /// Shuffle the current playlist
     Shuffle,
     /// Jump to the given index in the playlist
@@ -90,7 +90,7 @@ pub enum ControlMsg {
     /// Exit the app
     Close,
     /// Search for new songs
-    FindSongs,
+    LoadNewSongs,
 }
 
 impl Application for UampApp {
@@ -251,11 +251,11 @@ impl UampApp {
     /// handles the control events
     fn control_event(&mut self, msg: ControlMsg) -> Command {
         match msg {
-            ControlMsg::PlayPause => {
-                self.player.play_pause(&self.library);
+            ControlMsg::PlayPause(p) => {
+                self.player.play(p.unwrap_or(!self.player.is_playing()));
             }
-            ControlMsg::NextSong => self.player.play_next(&self.library),
-            ControlMsg::PrevSong => self.player.play_prev(&self.library),
+            ControlMsg::NextSong(n) => self.player.play_next(&self.library, n),
+            ControlMsg::PrevSong(n) => self.player.play_prev(&self.library, n),
             ControlMsg::Close => {
                 self.save_all();
                 return window::close();
@@ -264,20 +264,22 @@ impl UampApp {
             ControlMsg::SetVolume(v) => {
                 self.player.set_volume(v.clamp(0., 1.))
             }
-            ControlMsg::VolumeUp => self.player.set_volume(
-                (self.player.volume() + self.config.volume_jump())
+            ControlMsg::VolumeUp(m) => self.player.set_volume(
+                (self.player.volume() + self.config.volume_jump() * m)
                     .clamp(0., 1.),
             ),
-            ControlMsg::VolumeDown => self.player.set_volume(
-                (self.player.volume() - self.config.volume_jump())
+            ControlMsg::VolumeDown(m) => self.player.set_volume(
+                (self.player.volume() - self.config.volume_jump() * m)
                     .clamp(0., 1.),
             ),
             ControlMsg::PlaylistJump(i) => {
                 self.player
                     .play_at(&self.library, i, self.player.is_playing())
             }
-            ControlMsg::ToggleMute => self.player.toggle_mute(),
-            ControlMsg::FindSongs => {
+            ControlMsg::Mute(b) => {
+                self.player.set_mute(b.unwrap_or(!self.player.mute()))
+            }
+            ControlMsg::LoadNewSongs => {
                 match self
                     .library
                     .start_get_new_songs(&self.config, self.sender.clone())
@@ -337,7 +339,7 @@ impl UampApp {
 
         macro_rules! make_hotkeys {
             (
-                $($key:ident $(+$mods:ident)+ -> $name:ident : $action:ident),+
+                $($key:ident $(+$mods:ident)+ -> $name:ident : $action:ident $(($t:expr))?),+
                 $(,)?
             ) => {{
                 let hotkey_mgr = GlobalHotKeyManager::new()?;
@@ -353,7 +355,7 @@ impl UampApp {
                         match e.id {$(
                             id if id == $name.1 => {
                                 if let Err(e) = sender.send(
-                                    UampMessage::Control(ControlMsg::$action)
+                                    UampMessage::Control(ControlMsg::$action$(($t))?)
                                 ) {
                                     error!(
                                         "Failed to send hotkey message: {e}"
@@ -370,11 +372,11 @@ impl UampApp {
         }
 
         make_hotkeys!(
-            CONTROL + ALT + Home -> play: PlayPause,
-            CONTROL + ALT + PageUp -> next: PrevSong,
-            CONTROL + ALT + PageDown -> prev: NextSong,
-            CONTROL + ALT + ArrowUp -> vol_up: VolumeUp,
-            CONTROL + ALT + ArrowDown -> vol_down: VolumeDown,
+            CONTROL + ALT + Home -> play: PlayPause(None),
+            CONTROL + ALT + PageUp -> next: PrevSong(1),
+            CONTROL + ALT + PageDown -> prev: NextSong(1),
+            CONTROL + ALT + ArrowUp -> vol_up: VolumeUp(1.),
+            CONTROL + ALT + ArrowDown -> vol_down: VolumeDown(1.),
         )
     }
 
