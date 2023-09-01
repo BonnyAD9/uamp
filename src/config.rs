@@ -4,6 +4,7 @@ use std::{
     cell::Cell,
     fs::{create_dir_all, File},
     path::{Path, PathBuf},
+    time::Duration,
 };
 
 use crate::{err::Result, gen_struct};
@@ -51,6 +52,8 @@ gen_struct! {
         register_global_hotkeys: bool { pub, pub } => () true,
 
         volume_jump: f32 { pub, pub } => () 0.025,
+
+        save_timeout: Option<f32> { pub, pub } => () Some(60.),
 
         ; // fields that aren't serialized
 
@@ -144,6 +147,7 @@ impl Config {
             update_library_on_start: default_update_library_on_start(),
             register_global_hotkeys: default_register_global_hotkeys(),
             volume_jump: default_volume_jump(),
+            save_timeout: default_save_timeout(),
             change: Cell::new(true),
         }
     }

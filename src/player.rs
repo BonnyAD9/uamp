@@ -20,9 +20,10 @@ use tokio::sync::mpsc::UnboundedSender;
 use crate::{
     config::Config,
     err::Result,
+    gen_struct,
     library::{Library, SongId},
     uamp_app::UampMessage,
-    wid::Command, gen_struct,
+    wid::Command,
 };
 
 gen_struct! {

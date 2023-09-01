@@ -1,4 +1,4 @@
-use std::{cell::RefCell, net::TcpListener, sync::Arc};
+use std::{cell::RefCell, net::TcpListener, sync::Arc, time::Instant};
 
 use global_hotkey::{
     hotkey::{self, Code, HotKey},
@@ -45,6 +45,9 @@ pub struct UampApp {
     pub hotkey_mgr: Option<GlobalHotKeyManager>,
     /// The server listener
     pub listener: RefCell<Option<TcpListener>>,
+
+    /// When was last save
+    pub last_save: Instant,
 }
 
 /// Event messages in uamp
@@ -101,7 +104,7 @@ impl Application for UampApp {
     }
 
     fn update(&mut self, message: Self::Message) -> Command {
-        match message {
+        let com = match message {
             UampMessage::PlaySong(index, songs) => {
                 self.player.play_playlist(
                     &self.library,
@@ -109,17 +112,24 @@ impl Application for UampApp {
                     Some(index),
                     true,
                 );
+                Command::none()
             }
-            UampMessage::Control(msg) => return self.control_event(msg),
-            UampMessage::Gui(msg) => return self.gui_event(msg),
-            UampMessage::Player(msg) => {
-                return self.player.event(&self.library, msg)
-            }
-            UampMessage::Library(msg) => {
-                return self.library.event(msg, &self.config)
-            }
+            UampMessage::Control(msg) => self.control_event(msg),
+            UampMessage::Gui(msg) => self.gui_event(msg),
+            UampMessage::Player(msg) => self.player.event(&self.library, msg),
+            UampMessage::Library(msg) => self.library.event(msg, &self.config),
         };
-        Command::none()
+
+        if self
+            .config
+            .save_timeout()
+            .map(|t| (Instant::now() - self.last_save).as_secs_f32() >= t)
+            .unwrap_or_default()
+        {
+            self.save_all()
+        }
+
+        com
     }
 
     fn title(&self) -> String {
@@ -230,6 +240,8 @@ impl Default for UampApp {
 
             hotkey_mgr,
             listener: RefCell::new(Self::start_server().ok()),
+
+            last_save: Instant::now(),
         }
     }
 }
@@ -244,15 +256,7 @@ impl UampApp {
             ControlMsg::NextSong => self.player.play_next(&self.library),
             ControlMsg::PrevSong => self.player.play_prev(&self.library),
             ControlMsg::Close => {
-                if let Err(e) = self.library.to_default_json(&self.config) {
-                    error!("Failed to save library: {e}");
-                }
-                if let Err(e) = self.player.to_default_json(&self.config) {
-                    error!("Failed to save play state: {e}");
-                }
-                if let Err(e) = self.config.to_default_json() {
-                    error!("Failed to save config: {e}");
-                }
+                self.save_all();
                 return window::close();
             }
             ControlMsg::Shuffle => self.player.shuffle(),
@@ -287,6 +291,21 @@ impl UampApp {
         };
 
         Command::none()
+    }
+
+    /// Saves all the data that is saved by uamp
+    fn save_all(&mut self) {
+        if let Err(e) = self.library.to_default_json(&self.config) {
+            error!("Failed to save library: {e}");
+        }
+        if let Err(e) = self.player.to_default_json(&self.config) {
+            error!("Failed to save play state: {e}");
+        }
+        if let Err(e) = self.config.to_default_json() {
+            error!("Failed to save config: {e}");
+        }
+
+        self.last_save = Instant::now();
     }
 
     /// Registers hotkeys

@@ -4,7 +4,6 @@
 - More actions to CLI
     - all control messages
 - Fade play/puse
-- regular saves
 
 ## v0.2.0
 - Add tests

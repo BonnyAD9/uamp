@@ -43,6 +43,10 @@
         "volume_jump": {
             "description": "specifies how much the volume should change with heach volume up/down",
             "type": "number"
+        },
+        "save_timeout": {
+            "description": "When not null, saves all the data every number of seconds specified here",
+            "type": ["null", "number"]
         }
     }
 }
