@@ -15,6 +15,7 @@ use std::time::Instant;
 use tokio::sync::mpsc::UnboundedSender;
 
 gen_struct! {
+    #[derive(Serialize, Deserialize)]
     pub Library {
         // Fields passed by reference
         songs: Vec<Song> { pri , pri },
@@ -22,6 +23,9 @@ gen_struct! {
         ; // Other fields
         #[serde(skip)]
         load_process: Option<LibraryLoad>,
+
+        ; // attributes for the auto field
+        #[serde(skip)]
     }
 }
 

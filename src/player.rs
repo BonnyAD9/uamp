@@ -22,64 +22,23 @@ use crate::{
     err::Result,
     library::{Library, SongId},
     uamp_app::UampMessage,
-    wid::Command,
+    wid::Command, gen_struct,
 };
 
-/// Player for uamp, manages playlist
-pub struct Player {
-    /// The inner player if initialized
-    inner: SinkWrapper,
-    /// The playback state
-    state: Playback,
-    /// The current playlist
-    playlist: Playlist,
-    /// The current song or [`None`]
-    current: Option<usize>,
-    /// The volume of the playback, doesn't affect mute
-    volume: f32,
-    /// True when the sound is muted, doesn't affect volume
-    mute: bool,
-    /// True when some of the saved data has changed from the last save
-    change: Cell<bool>,
+gen_struct! {
+    pub Player {
+        playlist: Playlist { pub, pri },
+        ;
+        current: Option<usize> { pri, pri },
+        volume: f32 { pub, pri },
+        mute: bool { pub, pri },
+        ;
+        state: Playback,
+        inner: SinkWrapper,
+    }
 }
 
 impl Player {
-    pub fn playlist(&self) -> &Playlist {
-        &self.playlist
-    }
-
-    fn playlist_mut(&mut self) -> &mut Playlist {
-        self.change.set(true);
-        &mut self.playlist
-    }
-
-    fn current(&self) -> Option<usize> {
-        self.current
-    }
-
-    fn current_mut(&mut self) -> &mut Option<usize> {
-        self.change.set(true);
-        &mut self.current
-    }
-
-    pub fn volume(&self) -> f32 {
-        self.volume
-    }
-
-    fn volume_mut(&mut self) -> &mut f32 {
-        self.change.set(true);
-        &mut self.volume
-    }
-
-    pub fn mute(&self) -> bool {
-        self.mute
-    }
-
-    fn mute_mut(&mut self) -> &mut bool {
-        self.change.set(true);
-        &mut self.mute
-    }
-
     /// Handles player event messages
     pub fn event(&mut self, lib: &Library, msg: PlayerMessage) -> Command {
         match msg {
@@ -128,7 +87,7 @@ impl Player {
     /// Loads a song into the player.
     /// doesn't check that the index is valid
     fn load(&mut self, lib: &Library, index: usize, play: bool) {
-        *self.current_mut() = Some(index);
+        self.current_set(Some(index));
 
         match self.inner.load(lib, self.playlist()[index], play) {
             Ok(_) => self.state = Playback::play(play),
@@ -157,7 +116,7 @@ impl Player {
     /// Sets the playback volume. It is not set on error.
     pub fn set_volume(&mut self, volume: f32) {
         match self.inner.set_volume(volume) {
-            Ok(_) => *self.volume_mut() = volume,
+            Ok(_) => self.volume_set(volume),
             Err(e) => error!("Failed to set volume: {}", e),
         }
     }
@@ -167,7 +126,7 @@ impl Player {
         let vol = if mute { 0. } else { self.volume() };
 
         match self.inner.set_volume(vol) {
-            Ok(_) => *self.mute_mut() = mute,
+            Ok(_) => self.mute_set(mute),
             Err(e) => error!("Failed to mute: {}", e),
         }
     }

@@ -9,7 +9,7 @@ use std::{
 use crate::{err::Result, gen_struct};
 
 gen_struct! {
-    #[derive(Clone)]
+    #[derive(Clone, Serialize, Deserialize)]
     #[serde(
         tag = "$schema",
         rename = "https://raw.githubusercontent.com/BonnyAD9/uamp/master/other/json_schema/config_schema.json"
@@ -56,6 +56,9 @@ gen_struct! {
 
         #[serde(skip_serializing, default = "default_config_path_json")]
         config_path: PathBuf,
+
+        ; // attributes for the auto field
+        #[serde(skip)]
     }
 }
 

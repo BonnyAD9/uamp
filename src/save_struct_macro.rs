@@ -1,4 +1,6 @@
-/// Generates that can be paresed by serde
+/// Generates struct with setters and getters.
+///
+/// The default values are used with serde.
 ///
 /// # Examples:
 /// ```
@@ -62,17 +64,17 @@ macro_rules! gen_struct {
             )*
             ;$(
                 $(#$dat:tt)*
-                $dfv:vis $dfi:ident: $dft:ty { $dgfv:vis, $dsfv:vis }
+                $dfv:vis $dfi:ident: $dft:ty { $dgfv:vis $(pri)?, $dsfv:vis $(pri)? }
                     $( => $ddefv:vis $(pri)? ($($dn:literal)?) $ddef:expr )?,
             )*
             ;$(
                 $(#$rat:tt)*
                 $rfv:vis $rfi:ident: $rft:ty,
             )*
+            $(;$(#$skipat:tt)*)?
         }
     ) => {
         paste::paste!{
-            #[derive(Serialize, Deserialize)]
             $(#$sat)*
             $sv struct $t {
                 $(
@@ -89,7 +91,7 @@ macro_rules! gen_struct {
                     $(#$rat)*
                     $rfv $rfi: $rft,
                 )*
-                #[serde(skip)]
+                $($(#$skipat)*)?
                 change: std::cell::Cell<bool>,
             }
         }
