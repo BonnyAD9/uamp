@@ -98,19 +98,14 @@ impl Player {
 
     /// Toggles the states play/pause, also plays if the state is Stopped and
     /// current is [`Some`]
-    pub fn play_pause(&mut self, lib: &Library) {
+    pub fn play_pause(&mut self, lib: &Library, play: bool) {
         match self.state {
             Playback::Stopped => {
                 if let Some(id) = self.current {
-                    self.load(lib, id, true);
+                    self.load(lib, id, play);
                 }
             }
-            Playback::Playing => {
-                self.play(false);
-            }
-            Playback::Paused => {
-                self.play(true);
-            }
+            _ => self.play(play),
         }
     }
 

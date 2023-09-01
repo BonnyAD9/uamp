@@ -89,7 +89,7 @@ macro_rules! next {
 /// ```
 macro_rules! starts {
     ($i:ident, $($s:literal)|+) => {{
-        $($i.starts_with(concat!($s, "=")))||+ || matches!($i, $($s)|+)
+        matches!($i, $($s)|+) || $($i.starts_with(concat!($s, "=")))||+
     }};
 }
 
@@ -181,6 +181,31 @@ macro_rules! get_param {
     };
 }
 
+/// Gets the value from a string parameter with `=`, returns none if there is
+/// no value
+///
+/// # Examples
+/// ```
+/// let v = may_get_param!(f32, "vol=0.5");
+///
+/// let v = may_get_param!(f32, "vol=0.5", |v| (0.0..1.).contains(v)));
+/// ```
+macro_rules! may_get_param {
+    ($t:ty, $v:expr) => {
+        match get_after($v, "=") {
+            Some(v) => Some(parse!($t, v, None)),
+            None => None,
+        }
+    };
+
+    ($t:ty, $v:expr, $val:expr) => {
+        match get_after($v, "=") {
+            Some(v) => Some(parse!($t, v, $val, None)),
+            None => None,
+        }
+    };
+}
+
 /// Gets supstring immidietly following the substring `p` in `s`
 fn get_after<'a>(s: &'a str, p: &str) -> Option<&'a str> {
     let mut i = s.split(p);
@@ -216,16 +241,44 @@ fn instance<'a>(
     let a = next!(args);
 
     match a {
-        "play-pause" | "pp" => msg_control!(res, PlayPause(None)),
-        "volume-up" | "vol-up" | "vu" => msg_control!(res, VolumeUp(1.)),
-        "volume-down" | "vol-down" | "vd" => msg_control!(res, VolumeDown(1.)),
-        "next-song" | "ns" => msg_control!(res, NextSong(1)),
-        "previous-song" | "prev-song" | "ps" => msg_control!(res, PrevSong(1)),
+        v if starts!(v, "play-pause" | "pp") => {
+            let v = match get_after(v, "=") {
+                Some("play") => Some(true),
+                Some("pause") => Some(false),
+                None => None,
+                r => {
+                    return Err(Error::ParseError {
+                        id: Some(v.to_owned()),
+                        typ: "play or pause",
+                    })
+                }
+            };
+            msg_control!(res, PlayPause(v));
+        }
+        v if starts!(v, "volume-up" | "vol-up" | "vu") => {
+            let v = may_get_param!(f32, v).unwrap_or(1.);
+            msg_control!(res, VolumeUp(v));
+        }
+        v if starts!(v, "volume-down" | "vol-down" | "vd") => {
+            let v = may_get_param!(f32, v).unwrap_or(1.);
+            msg_control!(res, VolumeDown(v));
+        }
+        v if starts!(v, "next-song" | "ns") => {
+            let v = may_get_param!(usize, v).unwrap_or(1);
+            msg_control!(res, NextSong(v));
+        }
+        v if starts!(v, "previous-song" | "prev-song" | "ps") => {
+            let v = may_get_param!(usize, v).unwrap_or(1);
+            msg_control!(res, PrevSong(v));
+        }
         v if starts!(v, "volume" | "vol" | "v") => {
             let vol = get_param!(f32, v, |v| (0.0..1.).contains(v));
             msg_control!(res, SetVolume(vol));
         }
-        "mute" => msg_control!(res, Mute(None)),
+        v if starts!(v, "mute") => {
+            let v = may_get_param!(bool, v);
+            msg_control!(res, Mute(v));
+        }
         "load-songs" => msg_control!(res, LoadNewSongs),
         "shuffle-playlist" | "shuffle" => msg_control!(res, Shuffle),
         v if starts!(v, "playlist-jump" | "pj") => {
@@ -347,27 +400,32 @@ fn print_basic_help() {
 fn print_instance_help() {
     printcln!(
         "{'g}Instance actions:
-  {'y}pp  play-pause{'_}
-    toggle between the states playing and paused
+  {'y}pp  play-pause{'gr}[=(play | pause)]{'_}
+    play or pause, when without argument, toggle between the states playing and
+    paused
 
-  {'y}vu  vol-up  volume-up{'_}
-    increase the volume by the default amount
+  {'y}vu  vol-up  volume-up{'gr}[=<mul>]{'_}
+    increase the volume by the default amount, when {'bold w}mul{'_} is
+    specified, multiply the volume increase by that number
 
-  {'y}vd  vol-down  volume-down{'_}
-    decrease the volume by the default amount
+  {'y}vd  vol-down  volume-down{'gr}[=<mul>]{'_}
+    decrease the volume by the default amount, when {'bold w}mul{'_} is
+    specified, multiply the volume decrease by that number
 
-  {'y}ns  next-song{'_}
-    go to the next song
+  {'y}ns  next-song{'gr}[=<N>]{'_}
+    jump to the {'bold w}N{'_}th next song in the playlist. By default,
+    {'bold w}N{'_} is 1.
 
-  {'y}ps  prev-song  previous-song{'_}
-    go to the previous song
+  {'y}ps  prev-song  previous-song{'gr}[=<N>]{'_}
+    jump to the {'bold w}N{'_}th previous song in the playlist. By default,
+    {'bold w}N{'_} is 1.
 
   {'y}v  vol  volume{'bold w}=<value>{'_}
     set the volume to the given {'bold w}value{'_}, {'bold w}value{'_} must be
     in range from 0 to 1
 
-  {'y}mute{'_}
-    toggle mute/unmute
+  {'y}mute{'gr}[=(true | false)]{'_}
+    mute/unmute, if the value is not specified, toggles between the states
 
   {'y}load-songs{'_}
     look for new songs

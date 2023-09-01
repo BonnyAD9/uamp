@@ -1,9 +1,6 @@
 # Roadmap
 
 ## v0.2.0
-- Change next/prev message to specify jump amount
-- Change volume up message to specify multiplier
-- Change play/pause to specify state/toggle
 - Configureable hotkeys
 - Seeking
 - Gapless

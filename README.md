@@ -51,27 +51,32 @@ Actions:
     Available options are: basic, i instance
 
 Instance actions:
-  pp  play-pause
-    toggle between the states playing and paused
+  pp  play-pause[=(play | pause)]
+    play or pause, when without argument, toggle between the states playing and
+    paused
 
-  vu  vol-up  volume-up
-    increase the volume by the default amount
+  vu  vol-up  volume-up[=<mul>]
+    increase the volume by the default amount, when mul is
+    specified, multiply the volume increase by that number
 
-  vd  vol-down  volume-down
-    decrease the volume by the default amount
+  vd  vol-down  volume-down[=<mul>]
+    decrease the volume by the default amount, when mul is
+    specified, multiply the volume decrease by that number
 
-  ns  next-song
-    go to the next song
+  ns  next-song[=<N>]
+    jump to the Nth next song in the playlist. By default,
+    N is 1.
 
-  ps  prev-song  previous-song
-    go to the previous song
+  ps  prev-song  previous-song[=<N>]
+    jump to the Nth previous song in the playlist. By default,
+    N is 1.
 
   v  vol  volume=<value>
     set the volume to the given value, value must be
     in range from 0 to 1
 
-  mute
-    toggle mute/unmute
+  mute[=(true | false)]
+    mute/unmute, if the value is not specified, toggles between the states
 
   load-songs
     look for new songs

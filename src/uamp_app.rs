@@ -165,7 +165,6 @@ impl Application for UampApp {
                         let mut msgr = Messenger::try_new(&stream.0).unwrap();
 
                         let rec = msgr.recieve();
-                        println!("recieve: {rec:?}");
 
                         let rec = match rec {
                             Ok(m) => m,
@@ -252,7 +251,10 @@ impl UampApp {
     fn control_event(&mut self, msg: ControlMsg) -> Command {
         match msg {
             ControlMsg::PlayPause(p) => {
-                self.player.play(p.unwrap_or(!self.player.is_playing()));
+                self.player.play_pause(
+                    &self.library,
+                    p.unwrap_or(!self.player.is_playing()),
+                );
             }
             ControlMsg::NextSong(n) => self.player.play_next(&self.library, n),
             ControlMsg::PrevSong(n) => self.player.play_prev(&self.library, n),
