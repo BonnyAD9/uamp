@@ -5,6 +5,7 @@
 - don't block when saving songs
 
 ## Bugfixes
+- Scroll widgets now remember their position while the app is runung
 - next on last song in playlist wouldn't stop playback
 - default volume is now always 1
 - Scrollbar thumb size is not limited
@@ -14,3 +15,4 @@
 - better error messages
 - log is now more used
 - change default value of `update_library_on_start` to `true`
+- reduce IO operations

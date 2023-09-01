@@ -1,7 +1,6 @@
 # Roadmap
 
 ## v0.1.2
-- don't save when unncecesary
 - More actions to CLI
     - all control messages
 - Fade play/puse

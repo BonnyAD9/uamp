@@ -203,7 +203,7 @@ impl Default for UampApp {
         let (sender, reciever) = mpsc::unbounded_channel::<UampMessage>();
         let sender = Arc::new(sender);
 
-        if conf.update_library_on_start {
+        if conf.update_library_on_start() {
             if let Err(e) = lib.start_get_new_songs(&conf, sender.clone()) {
                 error!("Failed to start library load: {e}");
             }
@@ -211,7 +211,7 @@ impl Default for UampApp {
 
         let player = Player::from_config(sender.clone(), &conf);
 
-        let hotkey_mgr = if conf.register_global_hotkeys {
+        let hotkey_mgr = if conf.register_global_hotkeys() {
             Self::register_hotkeys(sender.clone()).ok()
         } else {
             None
@@ -244,11 +244,11 @@ impl UampApp {
             ControlMsg::NextSong => self.player.play_next(&self.library),
             ControlMsg::PrevSong => self.player.play_prev(&self.library),
             ControlMsg::Close => {
-                if let Err(e) = self.library.to_json(&self.config.library_path)
+                if let Err(e) = self.library.to_default_json(&self.config)
                 {
                     error!("Failed to save library: {e}");
                 }
-                if let Err(e) = self.player.to_json(&self.config.player_path) {
+                if let Err(e) = self.player.to_default_json(&self.config) {
                     error!("Failed to save play state: {e}");
                 }
                 if let Err(e) = self.config.to_default_json() {
@@ -261,10 +261,10 @@ impl UampApp {
                 self.player.set_volume(v.clamp(0., 1.))
             }
             ControlMsg::VolumeUp => self.player.set_volume(
-                (self.player.volume() + self.config.volume_jump).clamp(0., 1.),
+                (self.player.volume() + self.config.volume_jump()).clamp(0., 1.),
             ),
             ControlMsg::VolumeDown => self.player.set_volume(
-                (self.player.volume() - self.config.volume_jump).clamp(0., 1.),
+                (self.player.volume() - self.config.volume_jump()).clamp(0., 1.),
             ),
             ControlMsg::PlaylistJump(i) => {
                 self.player

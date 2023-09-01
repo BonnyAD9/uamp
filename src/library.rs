@@ -4,6 +4,7 @@ use crate::wid::Command;
 use crate::{config::Config, err::Result, song::Song};
 use log::{error, info, warn};
 use serde_derive::{Deserialize, Serialize};
+use std::cell::Cell;
 use std::fs::{create_dir_all, read_dir, File};
 use std::ops::Index;
 use std::path::Path;
@@ -15,9 +16,12 @@ use tokio::sync::mpsc::UnboundedSender;
 /// A song library
 #[derive(Serialize, Deserialize)]
 pub struct Library {
+    /// The songs, to get the songs use methods `songs()` and `songs_mut()`
     songs: Vec<Song>,
     #[serde(skip)]
     load_process: Option<LibraryLoad>,
+    #[serde(skip)]
+    change: Cell<bool>,
 }
 
 /// Id of song in a [`Library`]
@@ -36,31 +40,41 @@ impl Default for Library {
 }
 
 impl Library {
+    fn songs(&self) -> &Vec<Song> {
+        &self.songs
+    }
+
+    fn songs_mut(&mut self) -> &mut Vec<Song> {
+        self.change.set(true);
+        &mut self.songs
+    }
+
     /// Creates empty library
     pub fn new() -> Self {
         Library {
             songs: Vec::new(),
             load_process: None,
+            change: Cell::new(true),
         }
     }
 
     /// Loads library according to config, returns empty library on fail
     pub fn from_config(conf: &Config) -> Self {
-        Self::from_json(&conf.library_path)
+        Self::from_json(conf.library_path())
     }
 
     /// Filters songs in the library
     pub fn filter(&self, filter: Filter) -> Box<dyn Iterator<Item = SongId>> {
         match filter {
             Filter::All => {
-                Box::new((0..self.songs.len()).into_iter().map(|n| SongId(n)))
+                Box::new((0..self.songs().len()).into_iter().map(|n| SongId(n)))
             }
         }
     }
 
     /// Iterates over all of the songs in the library
     pub fn iter(&self) -> std::slice::Iter<'_, Song> {
-        self.songs.iter()
+        self.songs().iter()
     }
 
     /// Saves the library to the specified path.
@@ -69,12 +83,28 @@ impl Library {
     /// - Fails to create the parent directory
     /// - Fails to write file
     /// - Fails to serialize
-    pub fn to_json(&self, path: impl AsRef<Path>) -> Result<()> {
+    fn to_json(&self, path: impl AsRef<Path>) -> Result<()> {
         if let Some(par) = path.as_ref().parent() {
             create_dir_all(par)?;
         }
 
         serde_json::to_writer(File::create(path)?, self)?;
+        Ok(())
+    }
+
+    /// Saves the library to the default path. Save doesn't happen if
+    /// the library didn't change from the last time.
+    ///
+    /// # Errors
+    /// - Fails to create the parent directory
+    /// - Fails to write file
+    /// - Fails to serialize
+    pub fn to_default_json(&self, conf: &Config) -> Result<()> {
+        if !self.change.get() {
+            return Ok(());
+        }
+        self.to_json(conf.library_path())?;
+        self.change.set(false);
         Ok(())
     }
 
@@ -91,7 +121,7 @@ impl Library {
 
     /// Finds new songs to the library
     pub fn get_new_songs(&mut self, conf: &Config) {
-        Self::add_new_songs(&mut self.songs, conf);
+        Self::add_new_songs(&mut self.songs_mut(), conf);
     }
 
     /// Loads new songs on another thread
@@ -107,7 +137,7 @@ impl Library {
         }
 
         let conf = conf.clone();
-        let mut songs = self.songs.clone();
+        let mut songs = self.songs().clone();
 
         let handle = thread::spawn(move || {
             let conf = conf;
@@ -140,7 +170,7 @@ impl Library {
         if let Some(p) = self.load_process.take() {
             let r = p.handle.join().map_err(|_| Error::ThreadPanicked)?;
             if let Some(s) = r.new_song_vec {
-                self.songs = s;
+                *self.songs_mut() = s;
             }
             Ok(())
         } else {
@@ -154,7 +184,7 @@ impl Library {
                 if let Err(e) = self.finish_get_new_songs() {
                     error!("Failed to finsih getting new songs: {e}")
                 }
-                if let Err(e) = self.to_json(&config.library_path) {
+                if let Err(e) = self.to_default_json(&config) {
                     warn!("Failed to save library: {e}");
                 }
             }
@@ -165,7 +195,7 @@ impl Library {
     /// Adds new songs to the given vector of songs
     fn add_new_songs(songs: &mut Vec<Song>, conf: &Config) -> bool {
         let mut new_songs = false;
-        let mut paths = conf.search_paths.clone();
+        let mut paths = conf.search_paths().clone();
         let mut i = 0;
 
         while i < paths.len() {
@@ -197,7 +227,7 @@ impl Library {
                 };
 
                 if ftype.is_dir() {
-                    if conf.recursive_search {
+                    if conf.recursive_search() {
                         paths.push(f.path())
                     }
                     continue;
@@ -206,7 +236,7 @@ impl Library {
                 let path = f.path();
 
                 if let Some(fe) = path.extension() {
-                    if !conf.audio_extensions.iter().any(|e| fe == e.as_str())
+                    if !conf.audio_extensions().iter().any(|e| fe == e.as_str())
                     {
                         continue;
                     }
@@ -233,7 +263,7 @@ impl Library {
 impl Index<SongId> for Library {
     type Output = Song;
     fn index(&self, index: SongId) -> &Self::Output {
-        &self.songs[index.0]
+        &self.songs()[index.0]
     }
 }
 

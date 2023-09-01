@@ -4,7 +4,7 @@ use std::{
     path::Path,
     slice::{Iter, SliceIndex},
     sync::Arc,
-    time::Duration,
+    time::Duration, cell::Cell,
 };
 
 use log::{error, info, warn};
@@ -38,9 +38,47 @@ pub struct Player {
     volume: f32,
     /// True when the sound is muted, doesn't affect volume
     mute: bool,
+    /// True when some of the saved data has changed from the last save
+    change: Cell<bool>
 }
 
 impl Player {
+    pub fn playlist(&self) -> &Playlist {
+        &self.playlist
+    }
+
+    fn playlist_mut(&mut self) -> &mut Playlist {
+        self.change.set(true);
+        &mut self.playlist
+    }
+
+    fn current(&self) -> Option<usize> {
+        self.current
+    }
+
+    fn current_mut(&mut self) -> &mut Option<usize> {
+        self.change.set(true);
+        &mut self.current
+    }
+
+    pub fn volume(&self) -> f32 {
+        self.volume
+    }
+
+    fn volume_mut(&mut self) -> &mut f32 {
+        self.change.set(true);
+        &mut self.volume
+    }
+
+    pub fn mute(&self)-> bool {
+        self.mute
+    }
+
+    fn mute_mut(&mut self) -> &mut bool {
+        self.change.set(true);
+        &mut self.mute
+    }
+
     /// Handles player event messages
     pub fn event(&mut self, lib: &Library, msg: PlayerMessage) -> Command {
         match msg {
@@ -81,7 +119,7 @@ impl Player {
         play: bool,
     ) {
         match index {
-            Some(i) if i < self.playlist.len() => self.load(lib, i, play),
+            Some(i) if i < self.playlist().len() => self.load(lib, i, play),
             _ => self.stop(),
         }
     }
@@ -89,9 +127,9 @@ impl Player {
     /// Loads a song into the player.
     /// doesn't check that the index is valid
     fn load(&mut self, lib: &Library, index: usize, play: bool) {
-        self.current = Some(index);
+        *self.current_mut() = Some(index);
 
-        match self.inner.load(lib, self.playlist[index], play) {
+        match self.inner.load(lib, self.playlist()[index], play) {
             Ok(_) => self.state = Playback::play(play),
             Err(e) => error!("Failed to load song: {e}"),
         }
@@ -115,37 +153,27 @@ impl Player {
         }
     }
 
-    /// Gets the current volume.
-    pub fn volume(&self) -> f32 {
-        self.volume
-    }
-
     /// Sets the playback volume. It is not set on error.
     pub fn set_volume(&mut self, volume: f32) {
         match self.inner.set_volume(volume) {
-            Ok(_) => self.volume = volume,
+            Ok(_) => *self.volume_mut() = volume,
             Err(e) => error!("Failed to set volume: {}", e),
         }
     }
 
-    /// Gets the mute state
-    pub fn mute(&self) -> bool {
-        self.mute
-    }
-
     /// Sets the mute state. It is not set on error.
     pub fn set_mute(&mut self, mute: bool) {
-        let vol = if mute { 0. } else { self.volume };
+        let vol = if mute { 0. } else { self.volume() };
 
         match self.inner.set_volume(vol) {
-            Ok(_) => self.mute = mute,
+            Ok(_) => *self.mute_mut() = mute,
             Err(e) => error!("Failed to mute: {}", e),
         }
     }
 
     /// Toggle mute, not toggled on error.
     pub fn toggle_mute(&mut self) {
-        self.set_mute(!self.mute)
+        self.set_mute(!self.mute())
     }
 
     /// Loads the given playlist at the given index
@@ -156,7 +184,7 @@ impl Player {
         index: Option<usize>,
         play: bool,
     ) {
-        self.playlist = songs.into();
+        *self.playlist_mut() = songs.into();
         self.try_load(lib, index, play);
     }
 
@@ -167,17 +195,17 @@ impl Player {
 
     /// gets the now playing song if available
     pub fn now_playing(&self) -> Option<SongId> {
-        self.current.map(|i| self.playlist[i])
+        self.current.map(|i| self.playlist()[i])
     }
 
     /// Plays the next song in the playlist
     pub fn play_next(&mut self, lib: &Library) {
-        self.jump_to(lib, self.current.map(|i| i + 1))
+        self.jump_to(lib, self.current().map(|i| i + 1))
     }
 
     /// Plays the previous song in the playlist
     pub fn play_prev(&mut self, lib: &Library) {
-        self.jump_to(lib, self.current.and_then(|i| i.checked_sub(1)))
+        self.jump_to(lib, self.current().and_then(|i| i.checked_sub(1)))
     }
 
     /// Jumps to the given index in the playlist if set.
@@ -185,14 +213,9 @@ impl Player {
         self.try_load(lib, index, self.is_playing())
     }
 
-    /// Gets the playlist
-    pub fn playlist(&self) -> &Playlist {
-        &self.playlist
-    }
-
     /// Jumps to the given index in the playlist.
     pub fn play_at(&mut self, lib: &Library, index: usize, play: bool) {
-        if index >= self.playlist.len() {
+        if index >= self.playlist().len() {
             self.stop();
             return;
         }
@@ -211,10 +234,10 @@ impl Player {
     /// Shuffles the playlist, the current song is still the same song
     pub fn shuffle(&mut self) {
         let id = self.now_playing();
-        self.playlist[..].shuffle(&mut thread_rng());
+        self.playlist_mut()[..].shuffle(&mut thread_rng());
         // find the currently playing in the shuffled playlist
         if let Some(id) = id {
-            self.current = self.playlist.iter().position(|i| *i == id);
+            self.current = self.playlist().iter().position(|i| *i == id);
         }
     }
 
@@ -224,7 +247,7 @@ impl Player {
         sender: Arc<UnboundedSender<UampMessage>>,
         conf: &Config,
     ) -> Self {
-        Self::from_json(sender, &conf.player_path)
+        Self::from_json(sender, conf.player_path())
     }
 
     /// Saves the playback state to the given json file
@@ -232,7 +255,7 @@ impl Player {
     /// # Errors
     /// - cannot create parrent directory
     /// - Failed to serialize
-    pub fn to_json(&self, path: impl AsRef<Path>) -> Result<()> {
+    fn to_json(&self, path: impl AsRef<Path>) -> Result<()> {
         if let Some(par) = path.as_ref().parent() {
             create_dir_all(par)?;
         }
@@ -240,12 +263,27 @@ impl Player {
         serde_json::to_writer(
             File::create(path)?,
             &PlayerDataSave {
-                playlist: &self.playlist,
-                current: self.current,
-                volume: self.volume,
-                mute: self.mute,
+                playlist: self.playlist(),
+                current: self.current(),
+                volume: self.volume(),
+                mute: self.mute(),
             },
         )?;
+        Ok(())
+    }
+
+    /// Saves the playback state to the default json directory. It doesn't
+    /// save the data if it didn't change since the last save.
+    ///
+    /// # Errors
+    /// - cannot create parrent directory
+    /// - Failed to serialize
+    pub fn to_default_json(&self, conf: &Config) -> Result<()> {
+        if !self.change.get() {
+            return Ok(());
+        }
+        self.to_json(conf.player_path())?;
+        self.change.set(false);
         Ok(())
     }
 
@@ -286,6 +324,7 @@ impl Player {
             current: data.current,
             volume,
             mute: data.mute,
+            change: Cell::new(false),
         }
     }
 }
