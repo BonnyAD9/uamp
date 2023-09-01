@@ -23,6 +23,7 @@ mod arg_parser;
 mod config;
 mod err;
 mod fancy_widgets;
+mod hotkeys;
 mod library;
 mod messenger;
 mod player;
