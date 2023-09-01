@@ -3238,6 +3238,7 @@ dependencies = [
  "iced",
  "iced_core",
  "log",
+ "paste",
  "rand",
  "raplay",
  "rmp-serde",
