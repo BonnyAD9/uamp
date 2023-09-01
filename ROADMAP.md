@@ -14,7 +14,7 @@
 - Delete old logs
 - Action info
 
-## v0.2.0
+## v0.3.0
 - Proper gui
 - no warnings
 - Don't block on large IO (library save)
