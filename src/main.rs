@@ -26,6 +26,7 @@ mod fancy_widgets;
 mod library;
 mod messenger;
 mod player;
+mod save_struct_macro;
 mod song;
 mod theme;
 mod uamp_app;

@@ -1,10 +1,11 @@
 use std::{
+    cell::Cell,
     fs::{create_dir_all, File},
     ops::{Index, IndexMut},
     path::Path,
     slice::{Iter, SliceIndex},
     sync::Arc,
-    time::Duration, cell::Cell,
+    time::Duration,
 };
 
 use log::{error, info, warn};
@@ -39,7 +40,7 @@ pub struct Player {
     /// True when the sound is muted, doesn't affect volume
     mute: bool,
     /// True when some of the saved data has changed from the last save
-    change: Cell<bool>
+    change: Cell<bool>,
 }
 
 impl Player {
@@ -70,7 +71,7 @@ impl Player {
         &mut self.volume
     }
 
-    pub fn mute(&self)-> bool {
+    pub fn mute(&self) -> bool {
         self.mute
     }
 

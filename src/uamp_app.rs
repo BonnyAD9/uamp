@@ -244,8 +244,7 @@ impl UampApp {
             ControlMsg::NextSong => self.player.play_next(&self.library),
             ControlMsg::PrevSong => self.player.play_prev(&self.library),
             ControlMsg::Close => {
-                if let Err(e) = self.library.to_default_json(&self.config)
-                {
+                if let Err(e) = self.library.to_default_json(&self.config) {
                     error!("Failed to save library: {e}");
                 }
                 if let Err(e) = self.player.to_default_json(&self.config) {
@@ -261,10 +260,12 @@ impl UampApp {
                 self.player.set_volume(v.clamp(0., 1.))
             }
             ControlMsg::VolumeUp => self.player.set_volume(
-                (self.player.volume() + self.config.volume_jump()).clamp(0., 1.),
+                (self.player.volume() + self.config.volume_jump())
+                    .clamp(0., 1.),
             ),
             ControlMsg::VolumeDown => self.player.set_volume(
-                (self.player.volume() - self.config.volume_jump()).clamp(0., 1.),
+                (self.player.volume() - self.config.volume_jump())
+                    .clamp(0., 1.),
             ),
             ControlMsg::PlaylistJump(i) => {
                 self.player

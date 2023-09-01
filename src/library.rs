@@ -66,9 +66,9 @@ impl Library {
     /// Filters songs in the library
     pub fn filter(&self, filter: Filter) -> Box<dyn Iterator<Item = SongId>> {
         match filter {
-            Filter::All => {
-                Box::new((0..self.songs().len()).into_iter().map(|n| SongId(n)))
-            }
+            Filter::All => Box::new(
+                (0..self.songs().len()).into_iter().map(|n| SongId(n)),
+            ),
         }
     }
 
@@ -236,7 +236,10 @@ impl Library {
                 let path = f.path();
 
                 if let Some(fe) = path.extension() {
-                    if !conf.audio_extensions().iter().any(|e| fe == e.as_str())
+                    if !conf
+                        .audio_extensions()
+                        .iter()
+                        .any(|e| fe == e.as_str())
                     {
                         continue;
                     }
