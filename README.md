@@ -32,7 +32,7 @@ uamp i pp
 This is the output of help:
 ```
 Welcome in uamp by BonnyAD9
-Version 0.1.1
+Version 0.1.2
 
 Usage:
   uamp
@@ -66,14 +66,25 @@ Instance actions:
   ps  prev-song  previous-song
     go to the previous song
 
-  v  vol  volume=VALUE
-    set the volume to the given VALUE, VALUE must be in range from 0 to 1
+  v  vol  volume=<value>
+    set the volume to the given value, value must be
+    in range from 0 to 1
 
   mute
     toggle mute/unmute
 
-  fs  find-songs
+  load-songs
     look for new songs
+
+  shuffle  shuffle-playlist
+    shuffles the current playlist
+
+  pj  playlist-jump=<index>
+    jumps to the given index in playlist, stops the playback if
+    the index is out of range
+
+  x  exit  close
+    exits the instance
 ```
 
 ## How it looks
