@@ -2,24 +2,25 @@
 macro_rules! gen_struct {
     (
         $(#$sat:tt)*
-        $sv:vis $t:ident;
-        $(
-            $(#$at:tt)*
-            $fv:vis $fi:ident: $ft:ty { $gfv:vis, $sfv:vis }
-                $($defv:vis is $defl:literal: $def:expr)?
-        ),* $(,)?
-        ;$(
-            $(#$dat:tt)*
-            $dfv:vis $dfi:ident: $dft:ty { $dgfv:vis, $dsfv:vis }
-                $($ddefv:vis is $ddefl:literal: $ddef:expr)?
-        ),* $(,)?
-        ;$(
-            $(#$rat:tt)*
-            $rfv:vis $rfi:ident: $rft:ty
-        ),* $(,)?
+        $sv:vis $t:ident {
+            $(
+                $(#$at:tt)*
+                $fv:vis $fi:ident: $ft:ty { $gfv:vis, $sfv:vis }
+                    $($defv:vis fn $defl:literal: $def:expr)?
+            ),* $(,)?
+            ;$(
+                $(#$dat:tt)*
+                $dfv:vis $dfi:ident: $dft:ty { $dgfv:vis, $dsfv:vis }
+                    $($ddefv:vis fn $ddefl:literal: $ddef:expr)?
+            ),* $(,)?
+            ;$(
+                $(#$rat:tt)*
+                $rfv:vis $rfi:ident: $rft:ty
+            ),* $(,)?
+        }
     ) => {
-        $(#$sat)*
         #[derive(Serialize, Deserialize)]
+        $(#$sat)*
         $sv struct $t {
             $(
                 $(#$at)*
@@ -45,7 +46,7 @@ macro_rules! gen_struct {
                     &self.$fi
                 }
 
-                paste::item! {
+                paste::paste! {
                     $sfv fn [<$fi _mut>](&mut self) -> &mut $ft {
                         self.change.set(true);
                         &mut self.$fi
@@ -58,7 +59,7 @@ macro_rules! gen_struct {
                     self.$dfi
                 }
 
-                paste::item! {
+                paste::paste! {
                     $dsfv fn [<$dfi _set>](&mut self, v: $dft) {
                         if self.$dfi != v {
                             self.change.set(true);
@@ -69,12 +70,12 @@ macro_rules! gen_struct {
             )*
         }
 
-        $($(paste::item! {
+        $($(paste::paste! {
             $defv fn [<default_ $fi>]() -> $ft {
                 $def
             }
         })?)*
-        $($(paste::item! {
+        $($(paste::paste! {
             $ddefv fn [<default_ $dfi>]() -> $dft {
                 $ddef
             }

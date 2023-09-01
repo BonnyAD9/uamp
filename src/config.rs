@@ -14,51 +14,53 @@ gen_struct! {
         tag = "$schema",
         rename = "https://raw.githubusercontent.com/BonnyAD9/uamp/master/other/json_schema/config_schema.json"
     )]
-    pub Config
+    pub Config {
+        // Fields passed by reference
 
-    ;
+        search_paths: Vec<PathBuf> { pub, pub }
+        fn "default_search_paths": {
+            if let Some(dir) = dirs::audio_dir() {
+                vec![dir]
+            } else {
+                vec![PathBuf::from(".")]
+            }
+        },
 
-    search_paths: Vec<PathBuf> { pub, pub } is "default_search_paths": {
-        if let Some(dir) = dirs::audio_dir() {
-            vec![dir]
-        } else {
-            vec![PathBuf::from(".")]
-        }
-    },
+        library_path: PathBuf { pub, pub }
+        fn "default_library_path": default_config_path().join("library.json"),
 
-    library_path: PathBuf { pub, pub } is "default_library_path": {
-        default_config_path().join("library.json")
-    },
+        player_path: PathBuf { pub, pub }
+        fn "default_player_path": default_config_path().join("player.json"),
 
-    player_path: PathBuf { pub, pub } is "default_player_path": {
-        default_config_path().join("player.json")
-    },
+        audio_extensions: Vec<String> { pub, pub }
+        fn "default_audio_extensions": {
+            vec![
+                "flac".to_owned(),
+                "mp3".to_owned(),
+                "m4a".to_owned(),
+                "mp4".to_owned(),
+            ]
+        },
 
-    audio_extensions: Vec<String> { pub, pub } is "default_audio_extensions": {
-        vec![
-            "flac".to_owned(),
-            "mp3".to_owned(),
-            "m4a".to_owned(),
-            "mp4".to_owned(),
-        ]
-    },
+        ; // fields passed by value:
 
-    ;
+        recursive_search: bool { pub, pub }
+        fn "default_recursive_search": true,
 
-    recursive_search: bool { pub, pub } is "default_recursive_search": true,
+        update_library_on_start: bool { pub, pub }
+        fn "default_update_library_on_start": true,
 
-    update_library_on_start: bool { pub, pub } is
-        "default_update_library_on_start": true,
+        register_global_hotkeys: bool { pub, pub }
+        fn "default_register_global_hotkeys": true,
 
-    register_global_hotkeys: bool { pub, pub } is
-        "default_register_global_hotkeys": true,
+        volume_jump: f32 { pub, pub }
+        fn "default_volume_jump": 0.025
 
-    volume_jump: f32 { pub, pub } is "default_volume_jump": 0.025
+        ; // fields that aren't serialized
 
-    ;
-
-    #[serde(skip_serializing, default = "default_config_path_json")]
-    config_path: PathBuf,
+        #[serde(skip_serializing, default = "default_config_path_json")]
+        config_path: PathBuf,
+    }
 }
 
 impl Default for Config {
