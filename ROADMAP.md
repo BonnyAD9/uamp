@@ -1,8 +1,6 @@
 # Roadmap
 
 ## v0.1.2
-- More actions to CLI
-    - all control messages
 
 ## v0.2.0
 - Add tests

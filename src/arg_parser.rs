@@ -222,11 +222,17 @@ fn instance<'a>(
         "next-song" | "ns" => msg_control!(res, NextSong),
         "previous-song" | "prev-song" | "ps" => msg_control!(res, PrevSong),
         v if starts!(v, "volume" | "vol" | "v") => {
-            let vol = get_param!(f32, v);
+            let vol = get_param!(f32, v, |v| (0.0..1.).contains(v));
             msg_control!(res, SetVolume(vol));
         }
         "mute" => msg_control!(res, ToggleMute),
-        "find-songs" | "fs" => msg_control!(res, FindSongs),
+        "load-songs" => msg_control!(res, FindSongs),
+        "shuffle-playlist" | "shuffle" => msg_control!(res, Shuffle),
+        v if starts!(v, "playlist-jump" | "pj") => {
+            let v = get_param!(usize, v);
+            msg_control!(res, PlaylistJump(v));
+        },
+        "exit" | "close" | "x" => msg_control!(res, Close),
         "--" => return Err(Error::UnexpectedEnd(Some("instance".to_owned()))),
         _ => return Err(Error::UnknownArgument(Some(a.to_owned()))),
     }
@@ -361,8 +367,18 @@ fn print_instance_help() {
   {'y}mute{'_}
     toggle mute/unmute
 
-  {'y}fs  find-songs{'_}
+  {'y}load-songs{'_}
     look for new songs
+
+  {'y}shuffle  shuffle-playlist{'_}
+    shuffles the current playlist
+
+  {'y}pj  playlist-jump{'bold w}=<index>{'_}
+    jumps to the given {'bold w}index{'_} in playlist, stops the playback if
+    the {'bold w}index{'_} is out of range
+
+  {'y}x  exit  close{'_}
+    exits the instance
 "
     )
 }
