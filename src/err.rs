@@ -2,7 +2,7 @@ use flexi_logger::FlexiLoggerError;
 use log::error;
 use thiserror::Error;
 
-use crate::arg_parser;
+use crate::{arg_parser, hotkeys};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -15,7 +15,7 @@ pub enum Error {
     #[error(transparent)]
     ArgParse(#[from] arg_parser::Error),
     #[error(transparent)]
-    Hotkey(#[from] global_hotkey::Error),
+    Hotkey(#[from] hotkeys::Error),
     #[error(transparent)]
     AudioTag(#[from] audiotags::Error),
     #[error(transparent)]
