@@ -259,9 +259,11 @@ macro_rules! control_args {
         $( { $($optoneof:ident)? = $($($osel:literal)|+ -> $oseldef:expr),+ } )?
         $(   $($req     :ident)? =     $rt :ty                                )?
         $( [ $($opt     :ident)? =     $ot :ty                              ] )?
-        => $msg:ident $(($def:expr))?
+        => $msg:ident $(($def:expr))? $(: $val:expr)?
     );* $(;)?) => {
         pub fn parse_control_message(v: &str) -> Result<ControlMsg> {
+            #[allow(unused_variables)]
+            let s = v;
             #[allow(unused_parens)]
             let res = match v {
                 $(
@@ -299,16 +301,20 @@ macro_rules! control_args {
                                     typ: concat!($($($osel),+),+),
                                 })
                             }
-                        })?
-                        $(let v = get_param!($rt, v))?
-                        $(let v = may_get_param!($ot, v))?
+                        };)?
+                        $(let v = get_param!($rt, v);)?
+                        $(let v = may_get_param!($ot, v);)?
 
-                        $(.unwrap_or($def))?
+                        $(let v = v.unwrap_or($def);)?
 
-                        $($($oneof   )? ; )?
-                        $($($req     )? ; )?
-                        $($($opt     )? ; )?
-                        $($($optoneof)? ; )?
+                        $(
+                            if !{ $val }(&v) {
+                                return Err(Error::ParseError {
+                                    id: Some(s.to_owned()),
+                                    typ: stringify!(value that satysfies $val),
+                                })
+                            }
+                        )?
 
                         ControlMsg::$msg
                         $($($oneof   )? (v) )?
@@ -322,6 +328,14 @@ macro_rules! control_args {
 
             Ok(res)
         }
+
+        /*fn auto_instance_help() {
+            print!(
+                concat!(
+
+                )
+            );
+        }*/
     };
 }
 
@@ -336,7 +350,7 @@ control_args! {
 
     "previous-song" | "ps" [=usize] => PrevSong(1);
 
-    "volume" | "vol" | "v" =f32 => SetVolume;
+    "volume" | "vol" | "v" =f32 => SetVolume: |v| (0.0..0.).contains(v);
 
     "mute" [=bool] => Mute;
 
@@ -346,59 +360,6 @@ control_args! {
 
     "exit" | "close" | "x" => Close;
 }
-
-/*pub fn parse_control_message(s: &str) -> Result<ControlMsg> {
-    let res = match s {
-        v if starts!(v, "play-pause" | "pp") => {
-            let v = match get_after(v, "=") {
-                Some("play") => Some(true),
-                Some("pause") => Some(false),
-                None => None,
-                r => {
-                    return Err(Error::ParseError {
-                        id: Some(v.to_owned()),
-                        typ: "play or pause",
-                    })
-                }
-            };
-            ControlMsg::PlayPause(v)
-        }
-        v if starts!(v, "volume-up" | "vol-up" | "vu") => {
-            let v = may_get_param!(f32, v).unwrap_or(1.);
-            ControlMsg::VolumeUp(v)
-        }
-        v if starts!(v, "volume-down" | "vol-down" | "vd") => {
-            let v = may_get_param!(f32, v).unwrap_or(1.);
-            ControlMsg::VolumeDown(v)
-        }
-        v if starts!(v, "next-song" | "ns") => {
-            let v = may_get_param!(usize, v).unwrap_or(1);
-            ControlMsg::NextSong(v)
-        }
-        v if starts!(v, "previous-song" | "prev-song" | "ps") => {
-            let v = may_get_param!(usize, v).unwrap_or(1);
-            ControlMsg::PrevSong(v)
-        }
-        v if starts!(v, "volume" | "vol" | "v") => {
-            let vol = get_param!(f32, v, |v| (0.0..1.).contains(v));
-            ControlMsg::SetVolume(vol)
-        }
-        v if starts!(v, "mute") => {
-            let v = may_get_param!(bool, v);
-            ControlMsg::Mute(v)
-        }
-        "load-songs" => ControlMsg::LoadNewSongs,
-        "shuffle-playlist" | "shuffle" => ControlMsg::Shuffle,
-        v if starts!(v, "playlist-jump" | "pj") => {
-            let v = get_param!(usize, v);
-            ControlMsg::PlaylistJump(v)
-        }
-        "exit" | "close" | "x" => ControlMsg::Close,
-        _ => return Err(Error::UnknownArgument(Some(s.to_owned()))),
-    };
-
-    Ok(res)
-}*/
 
 #[derive(Error, Debug)]
 pub enum Error {
