@@ -251,7 +251,103 @@ fn instance<'a>(
     Ok(())
 }
 
-pub fn parse_control_message(s: &str) -> Result<ControlMsg> {
+macro_rules! control_args {
+    ($(
+        $(?$help:literal)?
+        $($alias:literal)|+
+        $( ( $($oneof   :ident)? = $($($sel :literal)|+ -> $seldef :expr),+ ) )?
+        $( { $($optoneof:ident)? = $($($osel:literal)|+ -> $oseldef:expr),+ } )?
+        $(   $($req     :ident)? =     $rt :ty                                )?
+        $( [ $($opt     :ident)? =     $ot :ty                              ] )?
+        => $msg:ident $(($def:expr))?
+    );* $(;)?) => {
+        pub fn parse_control_message(v: &str) -> Result<ControlMsg> {
+            #[allow(unused_parens)]
+            let res = match v {
+                $(
+                    $($($oneof   )? v if starts!)?
+                    $($($req     )? v if starts!)?
+                    $($($opt     )? v if starts!)?
+                    $($($optoneof)? v if starts!)?
+                    (
+                        $($($oneof   )? v, )?
+                        $($($req     )? v, )?
+                        $($($opt     )? v, )?
+                        $($($optoneof)? v, )?
+                        $($alias)|+
+                    ) => {
+                        #[allow(redundant_semicolons)]
+                        $(let v = match get_after(v, "=") {
+                            $(
+                                Some($($sel)|+) => $seldef
+                            ),+
+                            _ => {
+                                return Err(Error::ParseError {
+                                    id: Some(v.to_owned()),
+                                    typ: concat!($($($sel),+),+),
+                                })
+                            }
+                        })?
+                        $(let v = match get_after(v, "=") {
+                            $(
+                                Some($($osel)|+) => Some($oseldef),
+                            )+
+                            None => None,
+                            _ => {
+                                return Err(Error::ParseError {
+                                    id: Some(v.to_owned()),
+                                    typ: concat!($($($osel),+),+),
+                                })
+                            }
+                        })?
+                        $(let v = get_param!($rt, v))?
+                        $(let v = may_get_param!($ot, v))?
+
+                        $(.unwrap_or($def))?
+
+                        $($($oneof   )? ; )?
+                        $($($req     )? ; )?
+                        $($($opt     )? ; )?
+                        $($($optoneof)? ; )?
+
+                        ControlMsg::$msg
+                        $($($oneof   )? (v) )?
+                        $($($req     )? (v) )?
+                        $($($opt     )? (v) )?
+                        $($($optoneof)? (v) )?
+                    }
+                ),*
+                _ => return Err(Error::UnknownArgument(Some(v.to_owned()))),
+            };
+
+            Ok(res)
+        }
+    };
+}
+
+control_args! {
+    "play-pause" | "pp" {= "play" -> true, "pause" -> false} => PlayPause;
+
+    "volume-up" | "vol-up" | "vu" [=f32] => VolumeUp(1.);
+
+    "volume-down" | "vol-down" | "vd" [=f32] => VolumeDown(1.);
+
+    "next-song" | "ns" [=usize] => NextSong(1);
+
+    "previous-song" | "ps" [=usize] => PrevSong(1);
+
+    "volume" | "vol" | "v" =f32 => SetVolume;
+
+    "mute" [=bool] => Mute;
+
+    "load-songs" => LoadNewSongs;
+
+    "shuffle-playlist" | "shuffle" => Shuffle;
+
+    "exit" | "close" | "x" => Close;
+}
+
+/*pub fn parse_control_message(s: &str) -> Result<ControlMsg> {
     let res = match s {
         v if starts!(v, "play-pause" | "pp") => {
             let v = match get_after(v, "=") {
@@ -302,7 +398,7 @@ pub fn parse_control_message(s: &str) -> Result<ControlMsg> {
     };
 
     Ok(res)
-}
+}*/
 
 #[derive(Error, Debug)]
 pub enum Error {

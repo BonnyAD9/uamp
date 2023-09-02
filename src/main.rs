@@ -34,7 +34,13 @@ mod uamp_app;
 mod uamp_gui;
 mod wid;
 
-fn main() -> Result<()> {
+fn main() {
+    if let Err(e) = start() {
+        println!("{e}");
+    }
+}
+
+fn start() -> Result<()> {
     if let Err(e) = start_logger() {
         eprintln!("failed to start logger: {e}");
     }
