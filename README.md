@@ -54,27 +54,27 @@ Instance actions:
     Play or pause, when without argument, toggle between the states
     playing and paused.
 
-  volume-up  vol-up  vu[=f32]
+  volume-up  vol-up  vu[=<f32>]
     Increase the volume by the default amount, when argument is
     present, multiply the volume increase with it.
 
-  volume-down  vol-down  vd[=f32]
+  volume-down  vol-down  vd[=<f32>]
     Decrease the volume by the default amount, when argument is
     present, multiply the volume decrease with it.
 
-  next-song  ns[=usize]
+  next-song  ns[=<usize>]
     Jump to the next song, arguments specifies how much to jump (e.g.
     with argument '2' skips one song and plays the next).
 
-  previous-song  ps[=usize]
+  previous-song  ps[=<usize>]
     Jump to the previous song, arguments specifies how much to jump
     (e.g. with argument '2' skips the previous song and plays the
     second previous song).
 
-  volume  vol  v=f32
+  volume  vol  v=<f32>
     Set the volume to the given value. Value must be in range from 0 to 1
 
-  mute[=bool]
+  mute[=<bool>]
     Mute/Unmute, if the argument is not specified, toggles between
     the states
 
