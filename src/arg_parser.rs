@@ -253,12 +253,12 @@ fn instance<'a>(
 
 macro_rules! control_args {
     ($(
-        $(?$help:literal)?
+        $(? $($ishelp:ident)? $help:literal)?
         $($alias:literal)|+
-        $( ( $($oneof   :ident)? = $($($sel :literal)|+ -> $seldef :expr),+ ) )?
-        $( { $($optoneof:ident)? = $($($osel:literal)|+ -> $oseldef:expr),+ } )?
-        $(   $($req     :ident)? =     $rt :ty                                )?
-        $( [ $($opt     :ident)? =     $ot :ty                              ] )?
+        $(($($oneof   :ident)? = $($($sel :literal)|+ -> $seldef :expr),+))?
+        $({$($optoneof:ident)? = $($($osel:literal)|+ -> $oseldef:expr),+})?
+        $( $($req     :ident)? =     $rt :ty                              )?
+        $([$($opt     :ident)? =     $ot :ty                             ])?
         => $msg:ident $(($def:expr))? $(: $val:expr)?
     );* $(;)?) => {
         pub fn parse_control_message(v: &str) -> Result<ControlMsg> {
@@ -329,35 +329,110 @@ macro_rules! control_args {
             Ok(res)
         }
 
-        /*fn auto_instance_help() {
+        fn auto_instance_help() {
             print!(
                 concat!(
-
-                )
+                    $(
+                        "{}",
+                        $("  ", $alias,)+
+                        "{}",
+                        $(
+                            "{}{}=<(",
+                            $($($sel, "|",)+)+
+                            "{}",
+                            ")>{}",
+                        )?
+                        $(
+                            "{}[=(",
+                            $($($osel, "|",)+)+
+                            "{}",
+                            ")]{}",
+                        )?
+                        $(
+                            "{}{}=",
+                            stringify!($rt),
+                            "{}",
+                        )?
+                        $(
+                            "{}[=",
+                            stringify!($ot),
+                            "]{}",
+                        )?
+                        $("\n    {}", $($ishelp)?)?
+                        "\n\n",
+                    )+
+                ),
+                $(
+                    $($($ishelp)?)?
+                    termal::codes::YELLOW_FG,
+                    termal::codes::RESET,
+                    $(
+                        $($oneof)?
+                        termal::codes::BOLD,
+                        termal::codes::WHITE_FG,
+                        termal::codes::BACKSPACE,
+                        termal::codes::RESET,
+                    )?
+                    $(
+                        $($optoneof)?
+                        termal::codes::GRAY_FG,
+                        termal::codes::BACKSPACE,
+                        termal::codes::RESET,
+                    )?
+                    $(
+                        $($req)?
+                        termal::codes::BOLD,
+                        termal::codes::WHITE_FG,
+                        termal::codes::RESET,
+                    )?
+                    $(
+                        $($opt)?
+                        termal::codes::GRAY_FG,
+                        termal::codes::RESET,
+                    )?
+                    $(termal::formatc!($help),)?
+                )+
             );
-        }*/
+        }
     };
 }
 
 control_args! {
+    ? "Play or pause, when without argument, toggle between the states\n    \
+       playing and paused."
     "play-pause" | "pp" {= "play" -> true, "pause" -> false} => PlayPause;
 
+    ? "Increase the volume by the default amount, when argument is\n    \
+       present, multiply the volume increase with it."
     "volume-up" | "vol-up" | "vu" [=f32] => VolumeUp(1.);
 
+    ? "Decrease the volume by the default amount, when argument is\n    \
+       present, multiply the volume decrease with it."
     "volume-down" | "vol-down" | "vd" [=f32] => VolumeDown(1.);
 
+    ? "Jump to the next song, arguments specifies how much to jump (e.g.\n    \
+       with argument '2' skips one song and plays the next)."
     "next-song" | "ns" [=usize] => NextSong(1);
 
+    ? "Jump to the previous song, arguments specifies how much to jump\n    \
+       (e.g. with argument '2' skips the previous song and plays the\n    \
+       second previous song)."
     "previous-song" | "ps" [=usize] => PrevSong(1);
 
+    ? "Set the volume to the given value. Value must be in range from 0 to 1"
     "volume" | "vol" | "v" =f32 => SetVolume: |v| (0.0..0.).contains(v);
 
+    ? "Mute/Unmute, if the argument is not specified, toggles between\n    \
+       the states"
     "mute" [=bool] => Mute;
 
+    ? "Look for new songs."
     "load-songs" => LoadNewSongs;
 
+    ? "Shuffles the current playlist."
     "shuffle-playlist" | "shuffle" => Shuffle;
 
+    ? "Exits the instance"
     "exit" | "close" | "x" => Close;
 }
 
@@ -466,47 +541,6 @@ fn print_basic_help() {
 
 /// Prints the instance help
 fn print_instance_help() {
-    printcln!(
-        "{'g}Instance actions:
-  {'y}pp  play-pause{'gr}[=(play | pause)]{'_}
-    play or pause, when without argument, toggle between the states playing and
-    paused
-
-  {'y}vu  vol-up  volume-up{'gr}[=<mul>]{'_}
-    increase the volume by the default amount, when {'bold w}mul{'_} is
-    specified, multiply the volume increase by that number
-
-  {'y}vd  vol-down  volume-down{'gr}[=<mul>]{'_}
-    decrease the volume by the default amount, when {'bold w}mul{'_} is
-    specified, multiply the volume decrease by that number
-
-  {'y}ns  next-song{'gr}[=<N>]{'_}
-    jump to the {'bold w}N{'_}th next song in the playlist. By default,
-    {'bold w}N{'_} is 1.
-
-  {'y}ps  prev-song  previous-song{'gr}[=<N>]{'_}
-    jump to the {'bold w}N{'_}th previous song in the playlist. By default,
-    {'bold w}N{'_} is 1.
-
-  {'y}v  vol  volume{'bold w}=<value>{'_}
-    set the volume to the given {'bold w}value{'_}, {'bold w}value{'_} must be
-    in range from 0 to 1
-
-  {'y}mute{'gr}[=(true | false)]{'_}
-    mute/unmute, if the value is not specified, toggles between the states
-
-  {'y}load-songs{'_}
-    look for new songs
-
-  {'y}shuffle  shuffle-playlist{'_}
-    shuffles the current playlist
-
-  {'y}pj  playlist-jump{'bold w}=<index>{'_}
-    jumps to the given {'bold w}index{'_} in playlist, stops the playback if
-    the {'bold w}index{'_} is out of range
-
-  {'y}x  exit  close{'_}
-    exits the instance
-"
-    )
+    printcln!("{'g}Instance actions:");
+    auto_instance_help();
 }
