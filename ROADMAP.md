@@ -1,7 +1,6 @@
 # Roadmap
 
 ## v0.2.0
-- Configureable hotkeys
 - Seeking
 - Gapless
 - System for removing songs

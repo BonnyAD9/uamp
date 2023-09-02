@@ -205,7 +205,7 @@ impl Application for UampApp {
 
 impl Default for UampApp {
     fn default() -> Self {
-        let conf = Config::from_default_json();
+        let mut conf = Config::from_default_json();
 
         let mut lib = Library::from_config(&conf);
 
@@ -221,10 +221,12 @@ impl Default for UampApp {
         let mut player = Player::from_config(sender.clone(), &conf);
         player.fade_play_pause(conf.fade_play_pause());
 
-        let hotkey_mgr = if conf.register_global_hotkeys() {
-            Self::register_hotkeys(sender.clone()).ok()
-        } else {
-            None
+        let hotkey_mgr = match conf.register_hotkeys(sender.clone()) {
+            Ok(r) => r,
+            Err(e) => {
+                error!("Failed to register global hotkeys: {e}");
+                None
+            }
         };
 
         UampApp {
@@ -311,75 +313,6 @@ impl UampApp {
         }
 
         self.last_save = Instant::now();
-    }
-
-    /// Registers hotkeys
-    fn register_hotkeys(
-        sender: Arc<UnboundedSender<UampMessage>>,
-    ) -> Result<GlobalHotKeyManager> {
-        macro_rules! hotkey {
-            ($first:ident + $second:ident $(-$rest:ident)*) => {
-                hotkey!($second - $first $(-$rest)*)
-            };
-            (
-                $first:ident
-                + $second:ident
-                $(+$tail:ident)+
-                $(-$rest:ident)*
-            ) => {
-                hotkey!($second $(+$tail)+ - $first $(-$rest)*)
-            };
-            ($key:ident - $first:ident $(-$tail:ident)*) => {{
-                let key = HotKey::new(Some(
-                    hotkey::Modifiers::$first $(| hotkey::Modifiers::$tail)*),
-                    Code::$key
-                );
-                let id = key.id();
-                (key, id)
-            }};
-        }
-
-        macro_rules! make_hotkeys {
-            (
-                $($key:ident $(+$mods:ident)+ -> $name:ident : $action:ident $(($t:expr))?),+
-                $(,)?
-            ) => {{
-                let hotkey_mgr = GlobalHotKeyManager::new()?;
-
-                $(let $name = hotkey!($key $(+$mods)+);)+
-
-                hotkey_mgr.register_all(&[
-                    $($name.0),+
-                ])?;
-
-                GlobalHotKeyEvent::set_event_handler(Some(
-                    move |e: GlobalHotKeyEvent| {
-                        match e.id {$(
-                            id if id == $name.1 => {
-                                if let Err(e) = sender.send(
-                                    UampMessage::Control(ControlMsg::$action$(($t))?)
-                                ) {
-                                    error!(
-                                        "Failed to send hotkey message: {e}"
-                                    );
-                                }
-                            })+
-                            _ => {}
-                        };
-                    },
-                ));
-
-                Ok(hotkey_mgr)
-            }};
-        }
-
-        make_hotkeys!(
-            CONTROL + ALT + Home -> play: PlayPause(None),
-            CONTROL + ALT + PageUp -> next: PrevSong(1),
-            CONTROL + ALT + PageDown -> prev: NextSong(1),
-            CONTROL + ALT + ArrowUp -> vol_up: VolumeUp(1.),
-            CONTROL + ALT + ArrowDown -> vol_down: VolumeDown(1.),
-        )
     }
 
     /// Starts the tcp server

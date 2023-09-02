@@ -1,22 +1,198 @@
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr, sync::Arc};
 
-use global_hotkey::hotkey::{Code, Modifiers};
+use global_hotkey::{
+    hotkey::{Code, HotKey, Modifiers},
+    GlobalHotKeyEvent, GlobalHotKeyManager,
+};
 use itertools::Itertools;
+use log::{error, warn};
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use tokio::sync::mpsc::UnboundedSender;
 
-use crate::uamp_app::ControlMsg;
+use crate::{
+    arg_parser::parse_control_message,
+    err,
+    uamp_app::{ControlMsg, UampMessage},
+};
 
-pub enum HotkeyAction {
-    Control(ControlMsg),
+#[derive(Clone)]
+pub struct HotkeyMgr {
+    unparsed: HashMap<String, String>,
+    parsed: HashMap<Hotkey, HotkeyAction>,
 }
 
-/// Manages keyboard shortcuts
-pub struct Hotkey {
+impl HotkeyMgr {
+    pub fn new() -> Self {
+        Self {
+            unparsed: HashMap::new(),
+            parsed: HashMap::new(),
+        }
+    }
+
+    fn parse(&mut self) {
+        self.parsed.clear();
+        for (h, ha) in self.unparsed.iter() {
+            let h = match Hotkey::from_str(h) {
+                Ok(r) => r,
+                Err(e) => {
+                    error!("Failed to parse hotkey: {e}");
+                    continue;
+                }
+            };
+            let ha = match HotkeyAction::from_str(ha) {
+                Ok(r) => r,
+                Err(e) => {
+                    error!("Failed to parse hotkey action: {e}");
+                    continue;
+                }
+            };
+
+            // If the hotkey is present, combine them
+            if let Some(a) = self.parsed.get_mut(&h) {
+                a.join(ha);
+            } else {
+                self.parsed.insert(h, ha);
+            }
+        }
+    }
+
+    pub fn register(
+        &mut self,
+        sender: Arc<UnboundedSender<UampMessage>>,
+    ) -> Result<GlobalHotKeyManager, err::Error> {
+        self.parse();
+
+        let res = GlobalHotKeyManager::new()?;
+
+        let mut hotkeys = HashMap::new();
+
+        for (h, a) in self.parsed.iter() {
+            let h = h.as_hot_key();
+            hotkeys.insert(h.id(), a.clone());
+            res.register(h)?;
+        }
+
+        GlobalHotKeyEvent::set_event_handler(Some(
+            move |e: GlobalHotKeyEvent| {
+                let a = match hotkeys.get(&e.id) {
+                    Some(a) => a,
+                    None => return,
+                };
+
+                for m in &a.controls {
+                    if let Err(e) = sender.send(UampMessage::Control(*m)) {
+                        error!("Failed to send hotkey message: {e}")
+                    }
+                }
+            },
+        ));
+
+        Ok(res)
+    }
+
+    /// Adds hotkey
+    pub fn add_hotkey<S>(&mut self, hotkey: S, action: S)
+    where
+        S: Into<String>,
+    {
+        self.unparsed.insert(hotkey.into(), action.into());
+    }
+}
+
+impl Serialize for HotkeyMgr {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.unparsed.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for HotkeyMgr {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        HashMap::deserialize(deserializer).map(|r| Self {
+            unparsed: r,
+            parsed: HashMap::new(),
+        })
+    }
+}
+
+#[derive(Clone)]
+struct HotkeyAction {
+    controls: Vec<ControlMsg>,
+}
+
+impl HotkeyAction {
+    fn join(&mut self, mut other: HotkeyAction) {
+        self.controls.append(&mut other.controls);
+    }
+}
+
+impl ToString for HotkeyAction {
+    fn to_string(&self) -> String {
+        self.controls
+            .iter()
+            .map(|c| get_control_string(c))
+            .join(" ")
+    }
+}
+
+impl FromStr for HotkeyAction {
+    type Err = err::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let res = s
+            .split(char::is_whitespace)
+            .filter(|s| !s.is_empty())
+            .map(|s| parse_control_message(s))
+            .try_collect()?;
+        Ok(Self { controls: res })
+    }
+}
+
+#[derive(Hash, PartialEq, Clone)]
+struct Hotkey {
     code: Code,
     modifiers: Modifiers,
 }
 
-// s.to_lowercase().replace('-', "_").as_str()
+impl Eq for Hotkey {}
+
+impl Hotkey {
+    pub fn new(modifiers: Modifiers, code: Code) -> Self {
+        Self { code, modifiers }
+    }
+
+    fn as_hot_key(&self) -> HotKey {
+        HotKey::new(Some(self.modifiers), self.code)
+    }
+}
+
+#[macro_export]
+macro_rules! hotkey {
+    ($first:ident + $second:ident $(-$rest:ident)*) => {
+        hotkey!($second - $first $(-$rest)*)
+    };
+    (
+        $first:ident
+        + $second:ident
+        $(+$tail:ident)+
+        $(-$rest:ident)*
+    ) => {
+        hotkey!($second $(+$tail)+ - $first $(-$rest)*)
+    };
+    ($key:ident - $first:ident $(-$tail:ident)*) => {{
+        crate::hotkeys::Hotkey::new(
+            global_hotkey::hotkey::Modifiers::$first
+                $(| global_hotkey::hotkey::Modifiers::$tail)*,
+            global_hotkey::hotkey::Code::$key
+        )
+    }};
+}
 
 impl ToString for Hotkey {
     fn to_string(&self) -> String {
@@ -73,7 +249,27 @@ pub enum Error {
     #[error("You must have at least one key")]
     NoKey,
     #[error(transparent)]
-    GlobalHotKey(#[from] global_hotkey::Error)
+    GlobalHotKey(#[from] global_hotkey::Error),
+}
+
+fn get_control_string(m: &ControlMsg) -> String {
+    match m {
+        ControlMsg::PlayPause(None) => "pp".to_owned(),
+        ControlMsg::PlayPause(Some(v)) => {
+            if *v { "pp=play" } else { "pp=pause" }.to_owned()
+        }
+        ControlMsg::NextSong(v) => format!("ns={v}"),
+        ControlMsg::PrevSong(v) => format!("ps={v}"),
+        ControlMsg::SetVolume(v) => format!("v={v}"),
+        ControlMsg::VolumeUp(v) => format!("vu={v}"),
+        ControlMsg::VolumeDown(v) => format!("vd={v}"),
+        ControlMsg::Mute(None) => "mute".to_owned(),
+        ControlMsg::Mute(Some(v)) => format!("mute={v}"),
+        ControlMsg::Shuffle => "shuffle".to_owned(),
+        ControlMsg::PlaylistJump(v) => format!("pj={v}"),
+        ControlMsg::Close => "x".to_owned(),
+        ControlMsg::LoadNewSongs => "load-songs".to_owned(),
+    }
 }
 
 fn get_modifier_string(m: &Modifiers) -> String {

@@ -1,13 +1,18 @@
+use global_hotkey::GlobalHotKeyManager;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::{
     cell::Cell,
     fs::{create_dir_all, File},
     path::{Path, PathBuf},
+    sync::Arc,
     time::Duration,
 };
+use tokio::sync::mpsc::UnboundedSender;
 
-use crate::{err::Result, gen_struct};
+use crate::{
+    err::Result, gen_struct, hotkeys::HotkeyMgr, uamp_app::UampMessage,
+};
 
 gen_struct! {
     #[derive(Clone, Serialize, Deserialize)]
@@ -41,6 +46,16 @@ gen_struct! {
                 "m4a".to_owned(),
                 "mp4".to_owned(),
             ]
+        },
+
+        global_hotkeys: HotkeyMgr { pub, pub } => () {
+            let mut hm = HotkeyMgr::new();
+            hm.add_hotkey("ctrl+alt+home", "pp");
+            hm.add_hotkey("ctrl+alt+pg_down", "ns");
+            hm.add_hotkey("ctrl+alt+pg_up", "ps");
+            hm.add_hotkey("ctrl+alt+up", "vu");
+            hm.add_hotkey("ctrl+alt+down", "vd");
+            hm
         },
 
         ; // fields passed by value:
@@ -96,6 +111,18 @@ impl Config {
         };
 
         serde_json::from_reader(file).unwrap_or_default()
+    }
+
+    pub fn register_hotkeys(
+        &mut self,
+        sender: Arc<UnboundedSender<UampMessage>>,
+    ) -> Result<Option<GlobalHotKeyManager>> {
+        if self.register_global_hotkeys() {
+            // Intentionaly mutate the global_hotkeys without the setter
+            Ok(Some(self.global_hotkeys.register(sender)?))
+        } else {
+            Ok(None)
+        }
     }
 
     pub fn changed(&self) -> bool {
@@ -157,6 +184,7 @@ impl Config {
             volume_jump: default_volume_jump(),
             save_timeout: default_save_timeout(),
             fade_play_pause: default_fade_play_pause(),
+            global_hotkeys: default_global_hotkeys(),
             change: Cell::new(true),
         }
     }

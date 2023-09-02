@@ -240,7 +240,19 @@ fn instance<'a>(
     res.should_exit = true;
     let a = next!(args);
 
-    match a {
+    if a == "--" {
+        return Err(Error::UnexpectedEnd(Some("instance".to_owned())));
+    }
+
+    let msg = parse_control_message(a)?;
+    res.actions
+        .push(Action::Message(messenger::Message::Control(msg)));
+
+    Ok(())
+}
+
+pub fn parse_control_message(s: &str) -> Result<ControlMsg> {
+    let res = match s {
         v if starts!(v, "play-pause" | "pp") => {
             let v = match get_after(v, "=") {
                 Some("play") => Some(true),
@@ -253,44 +265,43 @@ fn instance<'a>(
                     })
                 }
             };
-            msg_control!(res, PlayPause(v));
+            ControlMsg::PlayPause(v)
         }
         v if starts!(v, "volume-up" | "vol-up" | "vu") => {
             let v = may_get_param!(f32, v).unwrap_or(1.);
-            msg_control!(res, VolumeUp(v));
+            ControlMsg::VolumeUp(v)
         }
         v if starts!(v, "volume-down" | "vol-down" | "vd") => {
             let v = may_get_param!(f32, v).unwrap_or(1.);
-            msg_control!(res, VolumeDown(v));
+            ControlMsg::VolumeDown(v)
         }
         v if starts!(v, "next-song" | "ns") => {
             let v = may_get_param!(usize, v).unwrap_or(1);
-            msg_control!(res, NextSong(v));
+            ControlMsg::NextSong(v)
         }
         v if starts!(v, "previous-song" | "prev-song" | "ps") => {
             let v = may_get_param!(usize, v).unwrap_or(1);
-            msg_control!(res, PrevSong(v));
+            ControlMsg::PrevSong(v)
         }
         v if starts!(v, "volume" | "vol" | "v") => {
             let vol = get_param!(f32, v, |v| (0.0..1.).contains(v));
-            msg_control!(res, SetVolume(vol));
+            ControlMsg::SetVolume(vol)
         }
         v if starts!(v, "mute") => {
             let v = may_get_param!(bool, v);
-            msg_control!(res, Mute(v));
+            ControlMsg::Mute(v)
         }
-        "load-songs" => msg_control!(res, LoadNewSongs),
-        "shuffle-playlist" | "shuffle" => msg_control!(res, Shuffle),
+        "load-songs" => ControlMsg::LoadNewSongs,
+        "shuffle-playlist" | "shuffle" => ControlMsg::Shuffle,
         v if starts!(v, "playlist-jump" | "pj") => {
             let v = get_param!(usize, v);
-            msg_control!(res, PlaylistJump(v));
+            ControlMsg::PlaylistJump(v)
         }
-        "exit" | "close" | "x" => msg_control!(res, Close),
-        "--" => return Err(Error::UnexpectedEnd(Some("instance".to_owned()))),
-        _ => return Err(Error::UnknownArgument(Some(a.to_owned()))),
-    }
+        "exit" | "close" | "x" => ControlMsg::Close,
+        _ => return Err(Error::UnknownArgument(Some(s.to_owned()))),
+    };
 
-    Ok(())
+    Ok(res)
 }
 
 #[derive(Error, Debug)]
