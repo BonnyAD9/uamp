@@ -58,6 +58,7 @@ impl_from!(
     serde_json::Error => Serde,
     rmp_serde::encode::Error => Serde,
     rmp_serde::decode::Error => Serde,
+    global_hotkey::Error => Hotkey,
 );
 
 #[derive(Error, Debug)]

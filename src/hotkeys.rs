@@ -72,6 +72,8 @@ pub enum Error {
     MultipleKeys,
     #[error("You must have at least one key")]
     NoKey,
+    #[error(transparent)]
+    GlobalHotKey(#[from] global_hotkey::Error)
 }
 
 fn get_modifier_string(m: &Modifiers) -> String {
