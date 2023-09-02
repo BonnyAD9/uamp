@@ -16,8 +16,7 @@ If you enable shortcuts in the configuration, this is what they are:
 - **`Ctrl` + `Alt` + `PgDown`:** Next song
 - **`Ctrl` + `Alt` + `Up`:** Volume up
 - **`Ctrl` + `Alt` + `Down`:** Volume down
-For now you cannot customize the shortcuts, so if you want tu use different
-shortcuts you need to set global shortcuts to execute commands with the CLI.
+You can customize the shortcuts in `config.json`
 
 For example to play/pause you can use the command:
 ```
@@ -51,57 +50,57 @@ Actions:
     Available options are: basic, i instance
 
 Instance actions:
-  pp  play-pause[=(play | pause)]
-    play or pause, when without argument, toggle between the states playing and
-    paused
+  play-pause  pp[=(play|pause)]
+    Play or pause, when without argument, toggle between the states
+    playing and paused.
 
-  vu  vol-up  volume-up[=<mul>]
-    increase the volume by the default amount, when mul is
-    specified, multiply the volume increase by that number
+  volume-up  vol-up  vu[=f32]
+    Increase the volume by the default amount, when argument is
+    present, multiply the volume increase with it.
 
-  vd  vol-down  volume-down[=<mul>]
-    decrease the volume by the default amount, when mul is
-    specified, multiply the volume decrease by that number
+  volume-down  vol-down  vd[=f32]
+    Decrease the volume by the default amount, when argument is
+    present, multiply the volume decrease with it.
 
-  ns  next-song[=<N>]
-    jump to the Nth next song in the playlist. By default,
-    N is 1.
+  next-song  ns[=usize]
+    Jump to the next song, arguments specifies how much to jump (e.g.
+    with argument '2' skips one song and plays the next).
 
-  ps  prev-song  previous-song[=<N>]
-    jump to the Nth previous song in the playlist. By default,
-    N is 1.
+  previous-song  ps[=usize]
+    Jump to the previous song, arguments specifies how much to jump
+    (e.g. with argument '2' skips the previous song and plays the
+    second previous song).
 
-  v  vol  volume=<value>
-    set the volume to the given value, value must be
-    in range from 0 to 1
+  volume  vol  v=f32
+    Set the volume to the given value. Value must be in range from 0 to 1
 
-  mute[=(true | false)]
-    mute/unmute, if the value is not specified, toggles between the states
+  mute[=bool]
+    Mute/Unmute, if the argument is not specified, toggles between
+    the states
 
   load-songs
-    look for new songs
+    Look for new songs.
 
-  shuffle  shuffle-playlist
-    shuffles the current playlist
+  shuffle-playlist  shuffle
+    Shuffles the current playlist.
 
-  pj  playlist-jump=<index>
-    jumps to the given index in playlist, stops the playback if
-    the index is out of range
-
-  x  exit  close
-    exits the instance
+  exit  close  x
+    Exits the instance
 ```
 
 ## How it looks
-The gui is in state: at least there is gui. It looks horrible but it has the necesary elements.
+The gui is in state: at least there is gui. It looks horrible but it has the
+necesary elements.
 ![image](https://github.com/BonnyAD9/uamp/assets/46282097/02ec639c-9e5d-4c51-b831-e35a668bf53b)
 
 ## How to get it
-To use the player you have to compile it yourself, but that shouldn't be any problem because all you need is `cargo`:
+To use the player you have to compile it yourself, but that shouldn't be any
+problem because all you need is `cargo`:
 ```
 cargo build -r
 ```
-the binary will be `./target/release/uamp`. It doesn't depend on any other files.
+the binary will be `./target/release/uamp`. It doesn't depend on any other
+files.
 
 ## Links
 - **Author:** [BonnyAD9](https://github.com/BonnyAD9)
