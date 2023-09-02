@@ -58,7 +58,7 @@
             "additionalProperties": {
                 "description": "Defines what a global shortcut will do. It can by any of the CLI instance actions separated by whitespace.",
                 "type": "string",
-                "pattern": "((play-pause|pp)(=(play|pause))?|(volume-up|vol-up|vu|volume-down|vol-down|vd)(=[0-9]+(\\.[0-9]+)?)?|(next-song|ns|previous-song|prev-song|ps)(=[0-9]+)?|(volume|vol)=[0-9]+(\\.[0-9])?|mute(=(true|false))?|load-sogs|shuffle-playlist|shuffle|exit|close|x|(playlist-jump|pj)=[0-9]+)(\\s+((play-pause|pp)(=(play|pause))?|(volume-up|vol-up|vu|volume-down|vol-down|vd)(=[0-9]+(\\.[0-9]+)?)?|(next-song|ns|previous-song|prev-song|ps)(=[0-9]+)?|(volume|vol)=[0-9]+(\\.[0-9])?|mute(=(true|false))?|load-sogs|shuffle-playlist|shuffle|exit|close|x(playlist-jump|pj)=[0-9]+))*"
+                "pattern": "^((play-pause|pp)(=(play|pause))?|(volume-up|vol-up|vu|volume-down|vol-down|vd)(=[0-9]+(\\.[0-9]+)?)?|(next-song|ns|previous-song|prev-song|ps)(=[0-9]+)?|(volume|vol)=[0-9]+(\\.[0-9])?|mute(=(true|false))?|load-sogs|shuffle-playlist|shuffle|exit|close|x|(playlist-jump|pj)=[0-9]+)(\\s+((play-pause|pp)(=(play|pause))?|(volume-up|vol-up|vu|volume-down|vol-down|vd)(=[0-9]+(\\.[0-9]+)?)?|(next-song|ns|previous-song|prev-song|ps)(=[0-9]+)?|(volume|vol)=[0-9]+(\\.[0-9])?|mute(=(true|false))?|load-sogs|shuffle-playlist|shuffle|exit|close|x|(playlist-jump|pj)=[0-9]+))*$"
             }
         }
     }
