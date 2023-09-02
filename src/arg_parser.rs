@@ -251,6 +251,35 @@ fn instance<'a>(
     Ok(())
 }
 
+/// Generates function that parses arguments and help for it.
+///
+/// # Usage:
+/// ```
+/// control_args! {
+///     ? "optional help for the argument, can have {'y}colors{'_}"
+///     "one-of-required-option" | "oro"
+///         (=
+///             "arg-value" | "av" -> type::generate(),
+///             "arg2" -> type::generate2()
+///         ) => ControlMsgVariant:
+///             |v| type::optional_validator(v);
+///
+///     "one-of-optional-option" | "ooo"
+///         {=
+///             "arg-value" | "av" -> type::generate(),
+///             "arg2" -> type::generate2()
+///         } => ControlMsgVariant(type::optional_default_value):
+///             |v| type::optional_validator(v);
+///
+///     "optional-option" [=type] =>
+///         ControlMsgVariant(type::optional_default_value);
+///
+///     ? "optional documentation of required-option"
+///     "required-option" | "ro" =type => ControlMsgVariant;
+///
+///     "just-flag" => ControlMsgVariant;
+/// }
+/// ```
 macro_rules! control_args {
     ($(
         $(? $($ishelp:ident)? $help:literal)?
