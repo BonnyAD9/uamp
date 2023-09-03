@@ -74,17 +74,17 @@ macro_rules! gen_struct {
             $(;$(#$skipat:tt)*)?
         }
     ) => {
-        paste::paste!{
+        place_macro::place!{
             $(#$sat)*
             $sv struct $t {
                 $(
                     $(#$at)*
-                    $(#[serde(default = "default_" $fi $($n)?)])?
+                    $(#[serde(default = __string__("default_" $fi $($n)?))])?
                     $fv $fi: $ft,
                 )*
                 $(
                     $(#$dat)*
-                    $(#[serde(default = "default_" $dfi $($dn)?)])?
+                    $(#[serde(default = __string__("default_" $dfi $($dn)?))])?
                     $dfv $dfi: $dft,
                 )*
                 $(
@@ -102,8 +102,8 @@ macro_rules! gen_struct {
                     &self.$fi
                 }
 
-                paste::paste! {
-                    $sfv fn [<$fi _mut>](&mut self) -> &mut $ft {
+                place_macro::place! {
+                    $sfv fn __ident__($fi _mut)(&mut self) -> &mut $ft {
                         self.change.set(true);
                         &mut self.$fi
                     }
@@ -115,8 +115,8 @@ macro_rules! gen_struct {
                     self.$dfi
                 }
 
-                paste::paste! {
-                    $dsfv fn [<$dfi _set>](&mut self, v: $dft) {
+                place_macro::place! {
+                    $dsfv fn __ident__($dfi _set)(&mut self, v: $dft) {
                         if self.$dfi != v {
                             self.change.set(true);
                             self.$dfi = v;
@@ -126,13 +126,13 @@ macro_rules! gen_struct {
             )*
         }
 
-        $($(paste::paste! {
-            $defv fn [<default_ $fi>]() -> $ft {
+        $($(place_macro::place! {
+            $defv fn __ident__(default_ $fi)() -> $ft {
                 $def
             }
         })?)*
-        $($(paste::paste! {
-            $ddefv fn [<default_ $dfi>]() -> $dft {
+        $($(place_macro::place! {
+            $ddefv fn __ident__(default_ $dfi)() -> $dft {
                 $ddef
             }
         })?)*

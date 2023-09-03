@@ -2315,6 +2315,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ac9a59f73473f1b8d852421e59e64809f025994837ef743615c6d0c5b305160"
 
 [[package]]
+name = "place_macro"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "070b24f6dd44c5ee2825e5411e892687b1134108ee0c74d923ad735283a64c8f"
+dependencies = [
+ "litrs",
+]
+
+[[package]]
 name = "png"
 version = "0.17.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3254,7 +3263,7 @@ dependencies = [
  "iced_core",
  "itertools",
  "log",
- "paste",
+ "place_macro",
  "rand",
  "raplay",
  "rmp-serde",
