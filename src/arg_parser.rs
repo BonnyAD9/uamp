@@ -282,29 +282,30 @@ fn instance<'a>(
 /// ```
 macro_rules! control_args {
     ($(
-        $(? $($ishelp:ident)? $help:literal)?
+        $(? $help:literal)?
         $($alias:literal)|+
-        $(($($oneof   :ident)? = $($($sel :literal)|+ -> $seldef :expr),+))?
-        $({$($optoneof:ident)? = $($($osel:literal)|+ -> $oseldef:expr),+})?
-        $( $($req     :ident)? =     $rt :ty                              )?
-        $([$($opt     :ident)? =     $ot :ty                             ])?
+        $( ( = $($($sel :literal)|+ -> $seldef :expr),+ ) )?
+        $( { = $($($osel:literal)|+ -> $oseldef:expr),+ } )?
+        $(   =     $rt :ty                                )?
+        $( [ =     $ot :ty                              ] )?
         => $msg:ident $(($def:expr))? $(: $val:expr)?
-    );* $(;)?) => {
+    );* $(;)?) => {place_macro::place! {
         pub fn parse_control_message(v: &str) -> Result<ControlMsg> {
             #[allow(unused_variables)]
             let s = v;
+
             #[allow(unused_parens)]
             let res = match v {
                 $(
-                    $($($oneof   )? v if starts!)?
-                    $($($req     )? v if starts!)?
-                    $($($opt     )? v if starts!)?
-                    $($($optoneof)? v if starts!)?
+                    $(__ignore__($($seldef )+) v if starts!)?
+                    $(__ignore__($($oseldef)+) v if starts!)?
+                    $(__ignore__(  $rt       ) v if starts!)?
+                    $(__ignore__(  $ot       ) v if starts!)?
                     (
-                        $($($oneof   )? v, )?
-                        $($($req     )? v, )?
-                        $($($opt     )? v, )?
-                        $($($optoneof)? v, )?
+                        $(__ignore__($($seldef )+) v,)?
+                        $(__ignore__($($oseldef)+) v,)?
+                        $(__ignore__(  $rt       ) v,)?
+                        $(__ignore__(  $ot       ) v,)?
                         $($alias)|+
                     ) => {
                         #[allow(redundant_semicolons)]
@@ -327,7 +328,7 @@ macro_rules! control_args {
                             _ => {
                                 return Err(Error::ParseError {
                                     id: Some(v.to_owned()),
-                                    typ: concat!($($($osel),+),+),
+                                    typ: __str__(__start__($(__start__($($osel " or ")+) " or ")+)),
                                 })
                             }
                         };)?
@@ -340,16 +341,16 @@ macro_rules! control_args {
                             if !{ $val }(&v) {
                                 return Err(Error::ParseError {
                                     id: Some(s.to_owned()),
-                                    typ: stringify!(value that satysfies $val),
+                                    typ: __strfy__(value that satysfies $val),
                                 })
                             }
                         )?
 
                         ControlMsg::$msg
-                        $($($oneof   )? (v) )?
-                        $($($req     )? (v) )?
-                        $($($opt     )? (v) )?
-                        $($($optoneof)? (v) )?
+                        $(__ignore__($($seldef )+) (v))?
+                        $(__ignore__($($oseldef)+) (v))?
+                        $(__ignore__(  $rt       ) (v))?
+                        $(__ignore__(  $ot       ) (v))?
                     }
                 ),*
                 _ => return Err(Error::UnknownArgument(Some(v.to_owned()))),
@@ -359,71 +360,40 @@ macro_rules! control_args {
         }
 
         fn auto_instance_help() {
-            print!(
-                concat!(
+            termal::printc!(
+                __str__(
                     $(
-                        "{}",
-                        $("  ", $alias,)+
-                        "{}",
+                        "{'y}"
+                        $("  " $alias)+
+                        "{'_}"
                         $(
-                            "{}{}=<(",
-                            $($($sel, "|",)+)+
-                            "{}",
-                            ")>{}",
+                            "{'bold w}=<(",
+                            __start__($($($sel "|")+)+)
+                            ")>{'_}"
                         )?
                         $(
-                            "{}[=(",
-                            $($($osel, "|",)+)+
-                            "{}",
-                            ")]{}",
+                            "{'gr}[=("
+                            __start__($($($osel "|")+)+)
+                            ")]{'_}"
                         )?
                         $(
-                            "{}{}=<",
-                            stringify!($rt),
-                            ">{}",
+                            "{'bold w}=<"
+                            __strfy__($rt)
+                            ">{'_}"
                         )?
                         $(
-                            "{}[=<",
-                            stringify!($ot),
-                            ">]{}",
+                            "{'gr}[=<"
+                            __strfy__($ot)
+                            ">]{'_}"
                         )?
-                        $("\n    {}", $($ishelp)?)?
+                        $("\n    {}" __ignore__($help))?
                         "\n\n",
                     )+
                 ),
-                $(
-                    $($($ishelp)?)?
-                    termal::codes::YELLOW_FG,
-                    termal::codes::RESET,
-                    $(
-                        $($oneof)?
-                        termal::codes::BOLD,
-                        termal::codes::WHITE_FG,
-                        termal::codes::BACKSPACE,
-                        termal::codes::RESET,
-                    )?
-                    $(
-                        $($optoneof)?
-                        termal::codes::GRAY_FG,
-                        termal::codes::BACKSPACE,
-                        termal::codes::RESET,
-                    )?
-                    $(
-                        $($req)?
-                        termal::codes::BOLD,
-                        termal::codes::WHITE_FG,
-                        termal::codes::RESET,
-                    )?
-                    $(
-                        $($opt)?
-                        termal::codes::GRAY_FG,
-                        termal::codes::RESET,
-                    )?
-                    $(termal::formatc!($help),)?
-                )+
+                __start__($($(termal::formatc!($help),)?)+)
             );
         }
-    };
+    }};
 }
 
 control_args! {
