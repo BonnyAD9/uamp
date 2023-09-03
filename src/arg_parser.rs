@@ -390,38 +390,40 @@ macro_rules! control_args {
                         "\n\n",
                     )+
                 ),
-                __start__($($(termal::formatc!($help),)?)+)
+                __start__($($(place_macro::place!(
+                    termal::formatc!(__id__(__repnl__)($help, "\n    "))
+                ),)?)+)
             );
         }
     }};
 }
 
 control_args! {
-    ? "Play or pause, when without argument, toggle between the states\n    \
+    ? "Play or pause, when without argument, toggle between the states
        playing and paused."
     "play-pause" | "pp" {= "play" -> true, "pause" -> false} => PlayPause;
 
-    ? "Increase the volume by the default amount, when argument is\n    \
+    ? "Increase the volume by the default amount, when argument is
        present, multiply the volume increase with it."
     "volume-up" | "vol-up" | "vu" [=f32] => VolumeUp(1.);
 
-    ? "Decrease the volume by the default amount, when argument is\n    \
+    ? "Decrease the volume by the default amount, when argument is
        present, multiply the volume decrease with it."
     "volume-down" | "vol-down" | "vd" [=f32] => VolumeDown(1.);
 
-    ? "Jump to the next song, arguments specifies how much to jump (e.g.\n    \
+    ? "Jump to the next song, arguments specifies how much to jump (e.g.
        with argument '2' skips one song and plays the next)."
     "next-song" | "ns" [=usize] => NextSong(1);
 
-    ? "Jump to the previous song, arguments specifies how much to jump\n    \
-       (e.g. with argument '2' skips the previous song and plays the\n    \
+    ? "Jump to the previous song, arguments specifies how much to jump
+       (e.g. with argument '2' skips the previous song and plays the
        second previous song)."
     "previous-song" | "ps" [=usize] => PrevSong(1);
 
     ? "Set the volume to the given value. Value must be in range from 0 to 1"
     "volume" | "vol" | "v" =f32 => SetVolume: |v| (0.0..0.).contains(v);
 
-    ? "Mute/Unmute, if the argument is not specified, toggles between\n    \
+    ? "Mute/Unmute, if the argument is not specified, toggles between
        the states"
     "mute" [=bool] => Mute;
 
