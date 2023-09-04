@@ -23,7 +23,6 @@ use crate::{
     gen_struct,
     library::{Library, SongId},
     uamp_app::{ComMsg, UampMessage},
-    wid::Command,
 };
 
 gen_struct! {

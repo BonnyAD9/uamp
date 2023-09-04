@@ -1,8 +1,4 @@
-use std::{
-    cell::Cell,
-    sync::Arc,
-    time::{Duration, Instant},
-};
+use std::{sync::Arc, time::Duration};
 
 use iced_core::Length::{Fill, Shrink};
 

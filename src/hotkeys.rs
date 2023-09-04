@@ -5,7 +5,7 @@ use global_hotkey::{
     GlobalHotKeyEvent, GlobalHotKeyManager,
 };
 use itertools::Itertools;
-use log::{error, warn};
+use log::error;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::sync::mpsc::UnboundedSender;

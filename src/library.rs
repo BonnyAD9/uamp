@@ -1,7 +1,6 @@
 use crate::err::Error;
 use crate::gen_struct;
 use crate::uamp_app::{ComMsg, UampMessage};
-use crate::wid::Command;
 use crate::{config::Config, err::Result, song::Song};
 use log::{error, info, warn};
 use serde_derive::{Deserialize, Serialize};
