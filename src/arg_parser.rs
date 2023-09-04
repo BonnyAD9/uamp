@@ -290,8 +290,8 @@ macro_rules! control_args {
         $($alias:literal)|+
         $( ( = $($($sel :literal)|+ -> $seldef :expr),+ ) )?
         $( { = $($($osel:literal)|+ -> $oseldef:expr),+ } )?
-        $(   =     $rt :ty                                )?
-        $( [ =     $ot :ty                              ] )?
+        $(   =     $rt :ty $( : $rtn:literal)?            )?
+        $( [ =     $ot :ty $( : $otn:literal)?          ] )?
         => $msg:ident $(($def:expr))? $(: $val:expr)?
     );* $(;)?) => {place_macro::place! {
         pub fn parse_control_message(v: &str) -> Result<ControlMsg> {
@@ -381,22 +381,19 @@ macro_rules! control_args {
                             ")]{'_}"
                         )?
                         $(
-                            "{'bold w}=<"
-                            __strfy__($rt)
-                            ">{'_}"
+                            "{'bold w}="
+                            $($rtn __ignore__)?("<" __strfy__($rt) ">")
+                            "{'_}"
                         )?
                         $(
                             "{'gr}[=<"
-                            __strfy__($ot)
+                            $($otn __ignore__)?(__strfy__($ot))
                             ">]{'_}"
                         )?
-                        $("\n    {}" __ignore__($help))?
+                        $("\n    " __repnl__($help, "\n    "))?
                         "\n\n",
                     )+
-                ),
-                __start__($($(place_macro::place!(
-                    termal::formatc!(__id__(__repnl__)($help, "\n    "))
-                ),)?)+)
+                )
             );
         }
     }};
@@ -440,8 +437,9 @@ control_args! {
     ? "Exits the instance"
     "exit" | "close" | "x" => Close;
 
-    ? "Seeks to the given timestamp. Timestamp is in format 'hh:mm:ss'."
-    "seek-to" | "seek" =ParsableDuration => SeekTo;
+    ? "Seeks to the given timestamp. Timestamp is in format 'h:m:s'."
+    "seek-to" | "seek" =ParsableDuration: "{'_ gr}[[[<h>]:][<m>]:][<s>[.<s>]]"
+        => SeekTo;
 }
 
 #[derive(Error, Debug)]

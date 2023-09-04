@@ -87,8 +87,8 @@ Instance actions:
   exit  close  x
     Exits the instance
 
-  seek-to  seek=<ParsableDuration>
-    Seeks to the given timestamp. Timestamp is in format 'hh:mm:ss'.
+  seek-to  seek=[[[<h>]:][<m>]:][<s>[.<s>]]
+    Seeks to the given timestamp. Timestamp is in format 'h:m:s'.
 ```
 
 ## How it looks

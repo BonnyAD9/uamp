@@ -2316,9 +2316,9 @@ checksum = "6ac9a59f73473f1b8d852421e59e64809f025994837ef743615c6d0c5b305160"
 
 [[package]]
 name = "place_macro"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5cf55f587f42b84cf6bd101d788a5c89bf9c0a77493fb9ba45b10ab5cf5ae694"
+checksum = "0c7ded16878b4f979b3bbd7c68798c74241c93c31050513630d6aaf8434f3015"
 dependencies = [
  "litrs",
 ]
