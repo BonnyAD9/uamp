@@ -280,6 +280,7 @@ impl UampApp {
         .into()
     }
 
+    /// Creates seek slider that updates with tick
     fn seek_slider(&self) -> Element {
         let mut ts = match self.gui.song_timestamp {
             Some(ts) => ts,

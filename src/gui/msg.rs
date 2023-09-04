@@ -11,6 +11,6 @@ pub enum Message {
     SeekSliderMove(Duration),
     /// The user stopped dragging the slider
     SeekSliderEnd,
-    /// Ticks every set amount of time
+    /// Ticks every set amount of time (used for example for the seek slider)
     Tick,
 }

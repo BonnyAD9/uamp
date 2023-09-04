@@ -71,6 +71,7 @@ macro_rules! extract {
     };
 }
 
+/// Messanger message
 impl Message {
     extract!(error, Error, Error);
     extract!(request, Request, Request);

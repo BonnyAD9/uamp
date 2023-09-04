@@ -1,7 +1,7 @@
 use super::parsable::Duration;
-use crate::parse_arg;
+use crate::{parse_arg, core::msg::ControlMsg};
 
-parse_arg! { parse_control_message, auto_instance_help:
+parse_arg! {ControlMsg as parse_control_message, auto_instance_help:
     ? "Play or pause, when without argument, toggle between the states
        playing and paused."
     "play-pause" | "pp" {= "play" -> true, "pause" -> false} => PlayPause;

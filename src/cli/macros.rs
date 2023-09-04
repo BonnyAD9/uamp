@@ -106,7 +106,7 @@ macro_rules! parse {
     ($t:ty, $s:expr, $id:expr) => {
         $s
         .parse::<$t>()
-        .map_err(|_| $crate::cli::Error::ParseError { id: $id, typ: stringify!($t)})?
+        .map_err(|_| $crate::cli::CliError::ParseError { id: $id, typ: stringify!($t)})?
     };
 
     ($t:ty, $s:expr, $val:expr, $id:expr) => {
@@ -140,7 +140,7 @@ macro_rules! get_param {
         $crate::parse!(
             $t,
             $crate::cli::macros::get_after($v, "=").ok_or(
-                $crate::cli::Error::MissingParameter(Some(format!("{}", $v)))
+                $crate::cli::CliError::MissingParameter(Some(format!("{}", $v)))
             )?,
             None
         )
@@ -187,7 +187,7 @@ macro_rules! may_get_param {
 ///
 /// # Usage:
 /// ```
-/// control_args! {
+/// control_args! { EnumToUse as parse_fn_name, help_fn_name:
 ///     ? "optional help for the argument, can have {'y}colors{'_}"
 ///     "one-of-required-option" | "oro"
 ///         (=
@@ -214,7 +214,7 @@ macro_rules! may_get_param {
 /// ```
 #[macro_export]
 macro_rules! parse_arg {
-    ($pfun:ident, $hfun:ident: $(
+    ($enm:path as $pfun:ident, $hfun:ident: $(
         $(? $help:literal)?
         $($alias:literal)|+
         $( ( = $($($sel :literal)|+ -> $seldef :expr),+ ) )?
@@ -223,7 +223,7 @@ macro_rules! parse_arg {
         $( [ =     $ot :ty $( : $otn:literal)?          ] )?
         => $msg:ident $(($def:expr))? $(: $val:expr)?
     );* $(;)?) => {place_macro::place! {
-        pub fn $pfun(v: &str) -> $crate::cli::Result<$crate::core::msg::ControlMsg> {
+        pub fn $pfun(v: &str) -> $crate::cli::CliResult<$enm> {
             #[allow(unused_variables)]
             let s = v;
 
@@ -259,7 +259,7 @@ macro_rules! parse_arg {
                             )+
                             None => None,
                             _ => {
-                                return Err($crate::cli::Error::ParseError {
+                                return Err($crate::cli::CliError::ParseError {
                                     id: Some(v.to_owned()),
                                     typ: __str__(__start__($(__start__($($osel " or ")+) " or ")+)),
                                 })
@@ -272,21 +272,21 @@ macro_rules! parse_arg {
 
                         $(
                             if !{ $val }(&v) {
-                                return Err($crate::cli::Error::ParseError {
+                                return Err($crate::cli::CliError::ParseError {
                                     id: Some(s.to_owned()),
                                     typ: __strfy__(value that satysfies $val),
                                 })
                             }
                         )?
 
-                        $crate::core::msg::ControlMsg::$msg
+                        $enm::$msg
                         $(__ignore__($($seldef )+) (v.into()))?
                         $(__ignore__($($oseldef)+) (v.into()))?
                         $(__ignore__(  $rt       ) (v.into()))?
                         $(__ignore__(  $ot       ) (v.into()))?
                     }
                 ),*
-                _ => return Err($crate::cli::Error::UnknownArgument(Some(v.to_owned()))),
+                _ => return Err($crate::cli::CliError::UnknownArgument(Some(v.to_owned()))),
             };
 
             Ok(res)

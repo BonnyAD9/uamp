@@ -46,10 +46,12 @@ pub const NO_VOLUME: SvgData = SvgData::new(
     include_bytes!("../../../assets/svg/no_volume.svg").as_slice(),
 );
 
+/// Icon signifying fast forward, '||>|>'
 pub const FAST_FORWARD: SvgData = SvgData::new(
     include_bytes!("../../../assets/svg/fast_forward.svg").as_slice(),
 );
 
+/// Icon signifying fast rewind, '<|<||'
 pub const REWIND: SvgData =
     SvgData::new(include_bytes!("../../../assets/svg/rewind.svg").as_slice());
 

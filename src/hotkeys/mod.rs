@@ -5,5 +5,4 @@ mod hotkey;
 mod mgr;
 mod modifier;
 
-pub use err::*;
-pub use mgr::*;
+pub use self::{mgr::*, err::Error as HotkeyError};

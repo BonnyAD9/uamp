@@ -6,9 +6,10 @@ use itertools::Itertools;
 use super::{
     code::{get_code_string, string_to_code},
     modifier::{get_modifier_string, string_to_modifier},
-    Error,
+    err::Error,
 };
 
+/// Represents hotkey
 #[derive(Hash, PartialEq, Clone)]
 pub struct Hotkey {
     code: Code,
@@ -18,6 +19,7 @@ pub struct Hotkey {
 impl Eq for Hotkey {}
 
 impl Hotkey {
+    /// Creates [`HotKey`] from this hotkey
     pub fn as_hot_key(&self) -> HotKey {
         HotKey::new(Some(self.modifiers), self.code)
     }

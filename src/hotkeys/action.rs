@@ -3,16 +3,18 @@ use std::str::FromStr;
 use itertools::Itertools;
 
 use crate::{
-    cli::{parse::parse_control_message, Error as CliError},
+    cli::{parse::parse_control_message, CliError},
     core::msg::{get_control_string, ControlMsg},
 };
 
+/// Contains action that produces sed of control messages
 #[derive(Clone)]
 pub struct Action {
     pub controls: Vec<ControlMsg>,
 }
 
 impl Action {
+    /// Appends this action with the other action
     pub fn join(&mut self, mut other: Action) {
         self.controls.append(&mut other.controls);
     }

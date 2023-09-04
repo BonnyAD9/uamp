@@ -15,7 +15,9 @@ use super::TimeStamp;
 
 /// Wrapps the sink
 pub struct SinkWrapper {
+    /// The inner player
     sink: Sink,
+    /// Configuration for symph sources
     symph: SymphOptions,
 }
 
@@ -82,20 +84,25 @@ impl SinkWrapper {
         Ok(())
     }
 
+    /// Seeks to the given position
     pub fn seek_to(&mut self, pos: Duration) -> Result<()> {
         self.sink.seek_to(pos)?;
         Ok(())
     }
 
+    /// Sets the fade play/pause duration in seconds
     pub fn fade_play_pause(&mut self, secs: f32) -> Result<()> {
         self.sink.set_fade_len(Duration::from_secs_f32(secs))?;
         Ok(())
     }
 
+    /// Enables/disables gapless playback (applies only for the following calls
+    /// to load)
     pub fn set_gapless(&mut self, v: bool) {
         self.symph.format.enable_gapless = v;
     }
 
+    /// Gets the current timestamp of the playing source
     pub fn get_timestamp(&self) -> Result<TimeStamp> {
         Ok(self
             .sink

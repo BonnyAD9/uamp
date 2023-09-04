@@ -152,6 +152,23 @@ impl Default for Library {
     }
 }
 
+impl UampApp {
+    /// handles library events
+    pub fn library_event(&mut self, msg: Message) -> ComMsg {
+        match msg {
+            Message::LoadEnded => {
+                if let Err(e) = self.library.finish_get_new_songs() {
+                    error!("Failed to finsih getting new songs: {e}")
+                }
+                if let Err(e) = self.library.to_default_json(&self.config) {
+                    warn!("Failed to save library: {e}");
+                }
+            }
+        }
+        ComMsg::none()
+    }
+}
+
 //===========================================================================//
 //                                  Private                                  //
 //===========================================================================//
@@ -172,6 +189,7 @@ impl Library {
         Ok(())
     }
 
+    /// Finishes the loading of songs started by `start_get_new_songs`
     fn finish_get_new_songs(&mut self) -> Result<()> {
         if let Some(p) = self.load_process.take() {
             let r = p.handle.join().map_err(|_| Error::ThreadPanicked)?;
@@ -252,21 +270,5 @@ impl Library {
         }
 
         new_songs
-    }
-}
-
-impl UampApp {
-    pub fn library_event(&mut self, msg: Message) -> ComMsg {
-        match msg {
-            Message::LoadEnded => {
-                if let Err(e) = self.library.finish_get_new_songs() {
-                    error!("Failed to finsih getting new songs: {e}")
-                }
-                if let Err(e) = self.library.to_default_json(&self.config) {
-                    warn!("Failed to save library: {e}");
-                }
-            }
-        }
-        ComMsg::none()
     }
 }

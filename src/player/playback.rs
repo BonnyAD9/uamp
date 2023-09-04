@@ -11,6 +11,7 @@ pub enum Playback {
 }
 
 impl Playback {
+    /// Creates [`Playback::Playing`] or [`Playback::Paused`]
     pub fn play(play: bool) -> Self {
         if play {
             Self::Playing
@@ -19,6 +20,7 @@ impl Playback {
         }
     }
 
+    /// Returns true if this is [`Playback::Stopped`]
     pub fn is_stopped(&self) -> bool {
         matches!(self, Playback::Stopped)
     }

@@ -1,5 +1,6 @@
 use global_hotkey::hotkey::Code;
 
+/// Translates key code to a string
 pub fn get_code_string(code: &Code) -> &'static str {
     match code {
         Code::Backquote => "`",
@@ -209,6 +210,7 @@ pub fn get_code_string(code: &Code) -> &'static str {
     }
 }
 
+/// Translates key code string to Code
 pub fn string_to_code(s: &str) -> Option<Code> {
     Some(match s {
         "`" | "`~" | "backquote" => Code::Backquote,

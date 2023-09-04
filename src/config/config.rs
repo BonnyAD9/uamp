@@ -96,6 +96,7 @@ gen_struct! {
 //===========================================================================//
 
 impl Config {
+    /// Registers the hotkeys saved in the [`HotkeyMgr`] `global_hotkeys`
     pub fn register_hotkeys(
         &mut self,
         sender: Arc<UnboundedSender<Msg>>,
@@ -108,6 +109,7 @@ impl Config {
         }
     }
 
+    /// Returns true if some of the saved data changed from the last save.
     pub fn changed(&self) -> bool {
         self.change.get()
     }

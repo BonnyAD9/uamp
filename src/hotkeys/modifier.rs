@@ -1,5 +1,6 @@
 use global_hotkey::hotkey::Modifiers;
 
+/// Converts modifiers to a string
 pub fn get_modifier_string(m: &Modifiers) -> String {
     let mut res = String::new();
 
@@ -51,6 +52,7 @@ pub fn get_modifier_string(m: &Modifiers) -> String {
     res
 }
 
+/// Parses string into modifiers
 pub fn string_to_modifier(s: &str) -> Option<Modifiers> {
     Some(match s {
         "alt" | "l_alt" | "lalt" | "left_alt" | "leftalt" => Modifiers::ALT,

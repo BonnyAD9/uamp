@@ -9,7 +9,7 @@ use std::{
 use global_hotkey::GlobalHotKeyManager;
 use iced::{executor, window, Application};
 use iced_core::Event;
-use log::{error, info, warn};
+use log::{error, warn};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
@@ -17,7 +17,7 @@ use crate::{
     core::{
         messenger::{self, Messenger},
         msg::{ComMsg, ControlMsg, Msg},
-        Error, Result,
+        Result,
     },
     gui::{
         app::GuiState,

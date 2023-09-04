@@ -247,15 +247,19 @@ impl Player {
         }
     }
 
+    /// Configures the player
     pub fn load_config(&mut self, conf: &Config) {
         self.fade_play_pause(conf.fade_play_pause());
         self.inner.set_gapless(conf.gapless());
     }
 
+    /// Gets timestamp of the current playback, returns [`None`] if nothing
+    /// is playing
     pub fn timestamp(&self) -> Option<TimeStamp> {
         self.inner.get_timestamp().ok()
     }
 
+    /// Seeks to the given position
     pub fn seek_to(&mut self, t: Duration) {
         if let Err(e) = self.inner.seek_to(t) {
             error!("Failed to seek: {e}");

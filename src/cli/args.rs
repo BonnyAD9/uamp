@@ -1,15 +1,19 @@
 use crate::next;
 
 use super::{
-    help::help, parsers::parse_control_message, Action, Error, Result,
+    help::help, parsers::parse_control_message, Action, err::{Error, Result}
 };
 
 /// Contains the CLI arguments values
 #[derive(Default)]
 pub struct Args {
+    /// Actions to do
     pub actions: Vec<Action>,
+
+    /// The gui should not run, unless `must_run` is set to `true`
     pub should_exit: bool,
-    pub should_run: bool,
+    /// The gui should run in all cases if this is `true`
+    pub must_run: bool,
 }
 
 //===========================================================================//

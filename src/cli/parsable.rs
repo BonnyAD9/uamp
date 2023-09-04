@@ -3,6 +3,8 @@ use itertools::Itertools;
 
 use std::{str::FromStr, time::Duration as Dur};
 
+/// Wraper around [`std::time::Duration`] that implements ToString and FromStr,
+/// and can be converted to and from [`std::time::Duration`]
 pub struct Duration(Dur);
 
 impl From<Dur> for Duration {

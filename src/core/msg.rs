@@ -61,16 +61,22 @@ pub enum ControlMsg {
     Rewind(Option<f32>),
 }
 
+/// Message returned after proccessing message, either starts a iced command,
+/// or produces another message
 pub enum ComMsg {
+    /// Message that produces iced command
     Command(Command),
+    /// Message that produces another message
     Msg(Msg),
 }
 
 impl ComMsg {
+    /// Returns message that doesn't do anything
     pub fn none() -> Self {
         Self::Command(Command::none())
     }
 
+    /// Returns message that ticks the gui tick
     pub fn tick() -> Self {
         Self::Msg(Msg::Gui(GuiMessage::Tick))
     }
@@ -169,6 +175,7 @@ impl UampApp {
     }
 }
 
+/// The reverse of parsing control message (e.g. from cli)
 pub fn get_control_string(m: &ControlMsg) -> String {
     match m {
         ControlMsg::PlayPause(None) => "pp".to_owned(),

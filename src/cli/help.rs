@@ -1,6 +1,6 @@
 use termal::{gradient, printcln};
 
-use super::Result;
+use super::err::Result;
 
 use super::{parsers::auto_instance_help, Args};
 

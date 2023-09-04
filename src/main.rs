@@ -34,6 +34,7 @@ fn main() {
     }
 }
 
+/// Main wraps this function, this is the entry point of the application
 fn start() -> Result<()> {
     if let Err(e) = start_logger() {
         eprintln!("failed to start logger: {e}");
@@ -60,7 +61,7 @@ fn start() -> Result<()> {
     }
 
     // should run has more power - in case both run and exit are true, run wins
-    if args.should_run || !args.should_exit {
+    if args.must_run || !args.should_exit {
         if let Err(e) = UampApp::run(make_settings()) {
             error!("Uamp exited unexpectidly: {e}");
             Err(e)?;
