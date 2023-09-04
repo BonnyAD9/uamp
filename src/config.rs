@@ -54,6 +54,8 @@ gen_struct! {
             hm.add_hotkey("ctrl+alt+pg_up", "ps");
             hm.add_hotkey("ctrl+alt+up", "vu");
             hm.add_hotkey("ctrl+alt+down", "vd");
+            hm.add_hotkey("ctrl+alt+left", "rw");
+            hm.add_hotkey("ctrl+alt+right", "ff");
             hm
         },
 
@@ -74,6 +76,8 @@ gen_struct! {
         gapless: bool { pub, pub } => () false,
 
         tick_length: f32 { pub, pub } => () 1.,
+
+        seek_jump: f32 { pub, pub } => () 10.,
 
         ; // fields that aren't serialized
 
@@ -190,6 +194,7 @@ impl Config {
             global_hotkeys: default_global_hotkeys(),
             gapless: default_gapless(),
             tick_length: default_tick_length(),
+            seek_jump: default_seek_jump(),
             change: Cell::new(true),
         }
     }

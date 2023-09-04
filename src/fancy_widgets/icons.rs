@@ -42,6 +42,13 @@ pub const VOLUME: SvgData =
 pub const NO_VOLUME: SvgData =
     SvgData::new(include_bytes!("../../assets/svg/no_volume.svg").as_slice());
 
+pub const FAST_FORWARD: SvgData = SvgData::new(
+    include_bytes!("../../assets/svg/fast_forward.svg").as_slice(),
+);
+
+pub const REWIND: SvgData =
+    SvgData::new(include_bytes!("../../assets/svg/rewind.svg").as_slice());
+
 /// contains svg data, can be created with const function, implements [`Into<iced::svg::Handle>`]
 #[derive(Clone, Copy)]
 pub struct SvgData(&'static [u8]);

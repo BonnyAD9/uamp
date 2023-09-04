@@ -185,6 +185,10 @@ impl UampApp {
     fn play_menu(&self) -> Element {
         col![
             row![
+                button(svg(icons::REWIND))
+                    .height(30)
+                    .width(30)
+                    .on_press(Msg::Control(ControlMsg::Rewind(None))),
                 button(svg(icons::PREVIOUS))
                     .height(30)
                     .width(30)
@@ -194,6 +198,10 @@ impl UampApp {
                     .height(30)
                     .width(30)
                     .on_press(Msg::Control(ControlMsg::NextSong(1))),
+                button(svg(icons::FAST_FORWARD))
+                    .height(30)
+                    .width(30)
+                    .on_press(Msg::Control(ControlMsg::FastForward(None))),
                 self.current_song(),
                 self.volume(),
             ]

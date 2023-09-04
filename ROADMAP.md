@@ -1,7 +1,6 @@
 # Roadmap
 
 ## v0.2.0
-- fast forward, rewind
 - System for removing songs
 - Config port and address
 - Load config without gui

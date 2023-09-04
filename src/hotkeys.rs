@@ -261,10 +261,10 @@ fn get_control_string(m: &ControlMsg) -> String {
         ControlMsg::NextSong(v) => format!("ns={v}"),
         ControlMsg::PrevSong(v) => format!("ps={v}"),
         ControlMsg::SetVolume(v) => format!("v={v}"),
+        ControlMsg::VolumeUp(None) => "vu".to_owned(),
         ControlMsg::VolumeUp(Some(v)) => format!("vu={v}"),
-        ControlMsg::VolumeUp(None) => format!("vu"),
+        ControlMsg::VolumeDown(None) => "vd".to_owned(),
         ControlMsg::VolumeDown(Some(v)) => format!("vd={v}"),
-        ControlMsg::VolumeDown(None) => format!("vd"),
         ControlMsg::Mute(None) => "mute".to_owned(),
         ControlMsg::Mute(Some(v)) => format!("mute={v}"),
         ControlMsg::Shuffle => "shuffle".to_owned(),
@@ -272,6 +272,10 @@ fn get_control_string(m: &ControlMsg) -> String {
         ControlMsg::Close => "x".to_owned(),
         ControlMsg::LoadNewSongs => "load-songs".to_owned(),
         ControlMsg::SeekTo(d) => format!("st={}", d.as_secs_f32()),
+        ControlMsg::FastForward(None) => "ff".to_owned(),
+        ControlMsg::FastForward(Some(d)) => format!("ff={}", d),
+        ControlMsg::Rewind(None) => "rw".to_owned(),
+        ControlMsg::Rewind(Some(d)) => format!("rw={}", d),
     }
 }
 

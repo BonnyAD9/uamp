@@ -1,4 +1,4 @@
-use std::{time::Duration, str::FromStr, num::ParseFloatError};
+use std::{num::ParseFloatError, str::FromStr, time::Duration};
 
 use crate::{messenger, uamp_app::ControlMsg};
 use anyhow::anyhow;
@@ -386,9 +386,9 @@ macro_rules! control_args {
                             "{'_}"
                         )?
                         $(
-                            "{'gr}[=<"
-                            $($otn __ignore__)?(__strfy__($ot))
-                            ">]{'_}"
+                            "{'gr}[="
+                            $($otn __ignore__)?("<" __strfy__($ot) ">")
+                            "]{'_}"
                         )?
                         $("\n    " __repnl__($help, "\n    "))?
                         "\n\n",
@@ -440,6 +440,16 @@ control_args! {
     ? "Seeks to the given timestamp. Timestamp is in format 'h:m:s'."
     "seek-to" | "seek" =ParsableDuration: "{'_ gr}[[[<h>]:][<m>]:][<s>[.<s>]]"
         => SeekTo;
+
+    ? "Seeks forward by the given amout in seconds. If the parameter is not
+       present, seek by the default amount."
+    "fast-forward" | "ff" [=f32]
+        => FastForward;
+
+    ? "Seeks backward by the given amout in seconds. If the parameter is not
+       present, seek by the default amount."
+    "rewind" | "rw" [=f32]
+        => Rewind;
 }
 
 #[derive(Error, Debug)]

@@ -96,6 +96,10 @@ pub enum ControlMsg {
     LoadNewSongs,
     /// Seek to the given timesamp
     SeekTo(Duration),
+    /// Seeks forward
+    FastForward(Option<f32>),
+    /// Seeks backward
+    Rewind(Option<f32>),
 }
 
 impl Application for UampApp {
@@ -300,12 +304,14 @@ impl UampApp {
                 self.player.set_volume(v.clamp(0., 1.))
             }
             ControlMsg::VolumeUp(m) => self.player.set_volume(
-                (self.player.volume() + m.unwrap_or(self.config.volume_jump()))
-                    .clamp(0., 1.),
+                (self.player.volume()
+                    + m.unwrap_or(self.config.volume_jump()))
+                .clamp(0., 1.),
             ),
             ControlMsg::VolumeDown(m) => self.player.set_volume(
-                (self.player.volume() - m.unwrap_or(self.config.volume_jump()))
-                    .clamp(0., 1.),
+                (self.player.volume()
+                    - m.unwrap_or(self.config.volume_jump()))
+                .clamp(0., 1.),
             ),
             ControlMsg::PlaylistJump(i) => {
                 self.player.play_at(
@@ -333,6 +339,33 @@ impl UampApp {
             ControlMsg::SeekTo(d) => {
                 self.player.seek_to(d);
                 return ComMsg::Msg(UampMessage::Gui(uamp_gui::Message::Tick));
+            }
+            ControlMsg::FastForward(d) => {
+                if let Some(ts) = self.player.timestamp() {
+                    let pos = ts.current
+                        + Duration::from_secs_f32(
+                            d.unwrap_or(self.config.seek_jump()),
+                        );
+                    let pos = pos.min(ts.total);
+                    self.player.seek_to(pos);
+                    return ComMsg::Msg(UampMessage::Gui(
+                        uamp_gui::Message::Tick,
+                    ));
+                }
+            }
+            ControlMsg::Rewind(d) => {
+                if let Some(ts) = self.player.timestamp() {
+                    let pos = ts
+                        .current
+                        .checked_sub(Duration::from_secs_f32(
+                            d.unwrap_or(self.config.seek_jump()),
+                        ))
+                        .unwrap_or(Duration::ZERO);
+                    self.player.seek_to(pos);
+                    return ComMsg::Msg(UampMessage::Gui(
+                        uamp_gui::Message::Tick,
+                    ));
+                }
             }
         };
 

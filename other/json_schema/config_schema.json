@@ -88,6 +88,10 @@
             "description": "Determines how often is the seek bar refreshed, in seconds",
             "type": "number",
             "default": 1
+        },
+        "seek_jump": {
+            "description": "Determines how much should be seeked with fast-forward/rewind",
+            "type": "number"
         }
     }
 }
