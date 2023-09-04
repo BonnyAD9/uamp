@@ -1,4 +1,8 @@
+use std::{time::Duration, str::FromStr, num::ParseFloatError};
+
 use crate::{messenger, uamp_app::ControlMsg};
+use anyhow::anyhow;
+use itertools::Itertools;
 use termal::{gradient, printcln};
 use thiserror::Error;
 
@@ -347,10 +351,10 @@ macro_rules! control_args {
                         )?
 
                         ControlMsg::$msg
-                        $(__ignore__($($seldef )+) (v))?
-                        $(__ignore__($($oseldef)+) (v))?
-                        $(__ignore__(  $rt       ) (v))?
-                        $(__ignore__(  $ot       ) (v))?
+                        $(__ignore__($($seldef )+) (v.into()))?
+                        $(__ignore__($($oseldef)+) (v.into()))?
+                        $(__ignore__(  $rt       ) (v.into()))?
+                        $(__ignore__(  $ot       ) (v.into()))?
                     }
                 ),*
                 _ => return Err(Error::UnknownArgument(Some(v.to_owned()))),
@@ -435,6 +439,9 @@ control_args! {
 
     ? "Exits the instance"
     "exit" | "close" | "x" => Close;
+
+    ? "Seeks to the given timestamp. Timestamp is in format 'hh:mm:ss'."
+    "seek_to" | "seek" =ParsableDuration => SeekTo;
 }
 
 #[derive(Error, Debug)]
@@ -544,4 +551,53 @@ fn print_basic_help() {
 fn print_instance_help() {
     printcln!("{'g}Instance actions:");
     auto_instance_help();
+}
+
+struct ParsableDuration(Duration);
+
+impl From<Duration> for ParsableDuration {
+    fn from(value: Duration) -> Self {
+        Self(value)
+    }
+}
+
+impl Into<Duration> for ParsableDuration {
+    fn into(self) -> Duration {
+        self.0
+    }
+}
+
+impl FromStr for ParsableDuration {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        let r = s.split(':').collect_vec();
+        let (h, m, s) = match r.len() {
+            0 => return Err(anyhow!("Imput string is empty.")),
+            1 => ("", "", r[0]),
+            2 => ("", r[0], r[1]),
+            3 => (r[0], r[1], r[2]),
+            _ => return Err(anyhow!("Too many colons")),
+        };
+
+        let mut res = if s.is_empty() {
+            Duration::ZERO
+        } else {
+            Duration::from_secs_f32(f32::from_str(s)?)
+        };
+
+        res += if m.is_empty() {
+            Duration::ZERO
+        } else {
+            Duration::from_secs(u64::from_str(m)? * 60)
+        };
+
+        res += if h.is_empty() {
+            Duration::ZERO
+        } else {
+            Duration::from_secs(u64::from_str(h)? * 3600)
+        };
+
+        Ok(res.into())
+    }
 }
