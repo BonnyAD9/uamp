@@ -11,6 +11,10 @@
     - `playlist-jump`, `pj`: jumps to the given position in the playlist
     - `exit`, `close`, `x`: exits the instance
 
+### Other Changes
+- Volume up and volume down commands now don't specify the multiplier, but the
+  change.
+
 ### Bugfixes
 - Scroll widgets now remember their position while the app is runung
 - Next on last song in playlist wouldn't stop playback
