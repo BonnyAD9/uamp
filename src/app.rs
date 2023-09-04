@@ -58,6 +58,28 @@ pub struct UampApp {
     pub last_save: Instant,
 }
 
+
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
+impl UampApp {
+    /// Saves all the data that is saved by uamp
+    pub fn save_all(&mut self) {
+        if let Err(e) = self.library.to_default_json(&self.config) {
+            error!("Failed to save library: {e}");
+        }
+        if let Err(e) = self.player.to_default_json(&self.config) {
+            error!("Failed to save play state: {e}");
+        }
+        if let Err(e) = self.config.to_default_json() {
+            error!("Failed to save config: {e}");
+        }
+
+        self.last_save = Instant::now();
+    }
+}
+
 impl Application for UampApp {
     type Executor = executor::Default;
     type Flags = ();
@@ -234,113 +256,12 @@ impl Default for UampApp {
     }
 }
 
+
+//===========================================================================//
+//                                  Private                                  //
+//===========================================================================//
+
 impl UampApp {
-    /// handles the control events
-    fn control_event(&mut self, msg: ControlMsg) -> ComMsg {
-        match msg {
-            ControlMsg::PlayPause(p) => {
-                self.player.play_pause(
-                    &self.library,
-                    p.unwrap_or(!self.player.is_playing()),
-                );
-                return ComMsg::tick();
-            }
-            ControlMsg::NextSong(n) => {
-                self.player.play_next(&self.library, n);
-                return ComMsg::tick();
-            }
-            ControlMsg::PrevSong(n) => {
-                self.player.play_prev(&self.library, n);
-                return ComMsg::tick();
-            }
-            ControlMsg::Close => {
-                self.save_all();
-                return ComMsg::Command(window::close());
-            }
-            ControlMsg::Shuffle => self.player.shuffle(),
-            ControlMsg::SetVolume(v) => {
-                self.player.set_volume(v.clamp(0., 1.))
-            }
-            ControlMsg::VolumeUp(m) => self.player.set_volume(
-                (self.player.volume()
-                    + m.unwrap_or(self.config.volume_jump()))
-                .clamp(0., 1.),
-            ),
-            ControlMsg::VolumeDown(m) => self.player.set_volume(
-                (self.player.volume()
-                    - m.unwrap_or(self.config.volume_jump()))
-                .clamp(0., 1.),
-            ),
-            ControlMsg::PlaylistJump(i) => {
-                self.player.play_at(
-                    &self.library,
-                    i,
-                    self.player.is_playing(),
-                );
-                return ComMsg::tick();
-            }
-            ControlMsg::Mute(b) => {
-                self.player.set_mute(b.unwrap_or(!self.player.mute()))
-            }
-            ControlMsg::LoadNewSongs => {
-                match self
-                    .library
-                    .start_get_new_songs(&self.config, self.sender.clone())
-                {
-                    Err(e) if matches!(e, Error::InvalidOperation(_)) => {
-                        info!("Cannot load new songs: {e}")
-                    }
-                    Err(e) => error!("Cannot load new songs: {e}"),
-                    _ => {}
-                }
-            }
-            ControlMsg::SeekTo(d) => {
-                self.player.seek_to(d);
-                return ComMsg::tick();
-            }
-            ControlMsg::FastForward(d) => {
-                if let Some(ts) = self.player.timestamp() {
-                    let pos = ts.current
-                        + Duration::from_secs_f32(
-                            d.unwrap_or(self.config.seek_jump()),
-                        );
-                    let pos = pos.min(ts.total);
-                    self.player.seek_to(pos);
-                    return ComMsg::tick();
-                }
-            }
-            ControlMsg::Rewind(d) => {
-                if let Some(ts) = self.player.timestamp() {
-                    let pos = ts
-                        .current
-                        .checked_sub(Duration::from_secs_f32(
-                            d.unwrap_or(self.config.seek_jump()),
-                        ))
-                        .unwrap_or(Duration::ZERO);
-                    self.player.seek_to(pos);
-                    return ComMsg::tick();
-                }
-            }
-        };
-
-        ComMsg::none()
-    }
-
-    /// Saves all the data that is saved by uamp
-    fn save_all(&mut self) {
-        if let Err(e) = self.library.to_default_json(&self.config) {
-            error!("Failed to save library: {e}");
-        }
-        if let Err(e) = self.player.to_default_json(&self.config) {
-            error!("Failed to save play state: {e}");
-        }
-        if let Err(e) = self.config.to_default_json() {
-            error!("Failed to save config: {e}");
-        }
-
-        self.last_save = Instant::now();
-    }
-
     /// Starts the tcp server
     fn start_server() -> Result<TcpListener> {
         Ok(TcpListener::bind(format!("127.0.0.1:{}", default_port()))?)

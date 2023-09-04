@@ -1,12 +1,16 @@
 use std::{sync::Arc, time::Duration};
 
+use iced::window;
+use log::{info, error};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     gui::{wid::Command, GuiMessage},
     library::{LibraryMessage, SongId},
-    player::PlayerMessage,
+    player::PlayerMessage, app::UampApp,
 };
+
+use super::Error;
 
 /// Event messages in uamp
 #[allow(missing_debug_implementations)]
@@ -57,6 +61,114 @@ pub enum ControlMsg {
     Rewind(Option<f32>),
 }
 
+pub enum ComMsg {
+    Command(Command),
+    Msg(Msg),
+}
+
+impl ComMsg {
+    pub fn none() -> Self {
+        Self::Command(Command::none())
+    }
+
+    pub fn tick() -> Self {
+        Self::Msg(Msg::Gui(GuiMessage::Tick))
+    }
+}
+
+impl UampApp {
+    /// handles the control events
+    pub fn control_event(&mut self, msg: ControlMsg) -> ComMsg {
+        match msg {
+            ControlMsg::PlayPause(p) => {
+                self.player.play_pause(
+                    &self.library,
+                    p.unwrap_or(!self.player.is_playing()),
+                );
+                return ComMsg::tick();
+            }
+            ControlMsg::NextSong(n) => {
+                self.player.play_next(&self.library, n);
+                return ComMsg::tick();
+            }
+            ControlMsg::PrevSong(n) => {
+                self.player.play_prev(&self.library, n);
+                return ComMsg::tick();
+            }
+            ControlMsg::Close => {
+                self.save_all();
+                return ComMsg::Command(window::close());
+            }
+            ControlMsg::Shuffle => self.player.shuffle(),
+            ControlMsg::SetVolume(v) => {
+                self.player.set_volume(v.clamp(0., 1.))
+            }
+            ControlMsg::VolumeUp(m) => self.player.set_volume(
+                (self.player.volume()
+                    + m.unwrap_or(self.config.volume_jump()))
+                .clamp(0., 1.),
+            ),
+            ControlMsg::VolumeDown(m) => self.player.set_volume(
+                (self.player.volume()
+                    - m.unwrap_or(self.config.volume_jump()))
+                .clamp(0., 1.),
+            ),
+            ControlMsg::PlaylistJump(i) => {
+                self.player.play_at(
+                    &self.library,
+                    i,
+                    self.player.is_playing(),
+                );
+                return ComMsg::tick();
+            }
+            ControlMsg::Mute(b) => {
+                self.player.set_mute(b.unwrap_or(!self.player.mute()))
+            }
+            ControlMsg::LoadNewSongs => {
+                match self
+                    .library
+                    .start_get_new_songs(&self.config, self.sender.clone())
+                {
+                    Err(e) if matches!(e, Error::InvalidOperation(_)) => {
+                        info!("Cannot load new songs: {e}")
+                    }
+                    Err(e) => error!("Cannot load new songs: {e}"),
+                    _ => {}
+                }
+            }
+            ControlMsg::SeekTo(d) => {
+                self.player.seek_to(d);
+                return ComMsg::tick();
+            }
+            ControlMsg::FastForward(d) => {
+                if let Some(ts) = self.player.timestamp() {
+                    let pos = ts.current
+                        + Duration::from_secs_f32(
+                            d.unwrap_or(self.config.seek_jump()),
+                        );
+                    let pos = pos.min(ts.total);
+                    self.player.seek_to(pos);
+                    return ComMsg::tick();
+                }
+            }
+            ControlMsg::Rewind(d) => {
+                if let Some(ts) = self.player.timestamp() {
+                    let pos = ts
+                        .current
+                        .checked_sub(Duration::from_secs_f32(
+                            d.unwrap_or(self.config.seek_jump()),
+                        ))
+                        .unwrap_or(Duration::ZERO);
+                    self.player.seek_to(pos);
+                    return ComMsg::tick();
+                }
+            }
+        };
+
+        ComMsg::none()
+    }
+}
+
 pub fn get_control_string(m: &ControlMsg) -> String {
     match m {
         ControlMsg::PlayPause(None) => "pp".to_owned(),
@@ -81,20 +193,5 @@ pub fn get_control_string(m: &ControlMsg) -> String {
         ControlMsg::FastForward(Some(d)) => format!("ff={}", d),
         ControlMsg::Rewind(None) => "rw".to_owned(),
         ControlMsg::Rewind(Some(d)) => format!("rw={}", d),
-    }
-}
-
-pub enum ComMsg {
-    Command(Command),
-    Msg(Msg),
-}
-
-impl ComMsg {
-    pub fn none() -> Self {
-        Self::Command(Command::none())
-    }
-
-    pub fn tick() -> Self {
-        Self::Msg(Msg::Gui(GuiMessage::Tick))
     }
 }
