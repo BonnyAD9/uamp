@@ -441,7 +441,7 @@ control_args! {
     "exit" | "close" | "x" => Close;
 
     ? "Seeks to the given timestamp. Timestamp is in format 'hh:mm:ss'."
-    "seek_to" | "seek" =ParsableDuration => SeekTo;
+    "seek-to" | "seek" =ParsableDuration => SeekTo;
 }
 
 #[derive(Error, Debug)]

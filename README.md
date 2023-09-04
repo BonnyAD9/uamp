@@ -86,6 +86,9 @@ Instance actions:
 
   exit  close  x
     Exits the instance
+
+  seek-to  seek=<ParsableDuration>
+    Seeks to the given timestamp. Timestamp is in format 'hh:mm:ss'.
 ```
 
 ## How it looks
