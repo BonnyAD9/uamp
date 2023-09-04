@@ -81,9 +81,9 @@ pub enum ControlMsg {
     /// Set the volume
     SetVolume(f32),
     /// Increase the volume by `vol_jump * .0`
-    VolumeUp(f32),
+    VolumeUp(Option<f32>),
     /// Decrease the volume by `vol_jump * .0`
-    VolumeDown(f32),
+    VolumeDown(Option<f32>),
     /// Toggle/set the mute control, [`None`] to toggle, [`Some`] to set
     Mute(Option<bool>),
     /// Shuffle the current playlist
@@ -300,11 +300,11 @@ impl UampApp {
                 self.player.set_volume(v.clamp(0., 1.))
             }
             ControlMsg::VolumeUp(m) => self.player.set_volume(
-                (self.player.volume() + self.config.volume_jump() * m)
+                (self.player.volume() + m.unwrap_or(self.config.volume_jump()))
                     .clamp(0., 1.),
             ),
             ControlMsg::VolumeDown(m) => self.player.set_volume(
-                (self.player.volume() - self.config.volume_jump() * m)
+                (self.player.volume() - m.unwrap_or(self.config.volume_jump()))
                     .clamp(0., 1.),
             ),
             ControlMsg::PlaylistJump(i) => {

@@ -404,13 +404,13 @@ control_args! {
        playing and paused."
     "play-pause" | "pp" {= "play" -> true, "pause" -> false} => PlayPause;
 
-    ? "Increase the volume by the default amount, when argument is
-       present, multiply the volume increase with it."
-    "volume-up" | "vol-up" | "vu" [=f32] => VolumeUp(1.);
+    ? "Increase the volume by the given amount. If the parameter is not
+       present, increase by the default amount"
+    "volume-up" | "vol-up" | "vu" [=f32] => VolumeUp;
 
-    ? "Decrease the volume by the default amount, when argument is
-       present, multiply the volume decrease with it."
-    "volume-down" | "vol-down" | "vd" [=f32] => VolumeDown(1.);
+    ? "Decrease the volume by the given amount. If the parameter is not
+       present, decrease by the default amount"
+    "volume-down" | "vol-down" | "vd" [=f32] => VolumeDown;
 
     ? "Jump to the next song, arguments specifies how much to jump (e.g.
        with argument '2' skips one song and plays the next)."
