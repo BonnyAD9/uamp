@@ -1,6 +1,6 @@
 use crate::err::Error;
 use crate::gen_struct;
-use crate::uamp_app::UampMessage;
+use crate::uamp_app::{ComMsg, UampMessage};
 use crate::wid::Command;
 use crate::{config::Config, err::Result, song::Song};
 use log::{error, info, warn};
@@ -174,7 +174,7 @@ impl Library {
         }
     }
 
-    pub fn event(&mut self, msg: LibraryMessage, config: &Config) -> Command {
+    pub fn event(&mut self, msg: LibraryMessage, config: &Config) -> ComMsg {
         match msg {
             LibraryMessage::LoadEnded => {
                 if let Err(e) = self.finish_get_new_songs() {
@@ -185,7 +185,7 @@ impl Library {
                 }
             }
         }
-        Command::none()
+        ComMsg::none()
     }
 
     /// Adds new songs to the given vector of songs

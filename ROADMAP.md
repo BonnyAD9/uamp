@@ -1,7 +1,6 @@
 # Roadmap
 
 ## v0.2.0
-- Seeking
 - System for removing songs
 - Config port and address
 - Load config without gui

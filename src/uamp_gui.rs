@@ -1,4 +1,8 @@
-use std::sync::Arc;
+use std::{
+    cell::Cell,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use iced_core::Length::{Fill, Shrink};
 
@@ -6,9 +10,11 @@ use crate::{
     button, col,
     fancy_widgets::icons,
     library::{Filter, SongId},
-    make_ids, row, text,
+    make_ids,
+    player::TimeStamp,
+    row, text,
     theme::{Button, Text},
-    uamp_app::{ControlMsg, UampApp, UampMessage as Msg},
+    uamp_app::{ComMsg, ControlMsg, UampApp, UampMessage as Msg},
     wid::{
         self, button, center, center_y, nothing, slider, space, svg, wrap_box,
         Command, Element, WrapBoxState,
@@ -20,6 +26,12 @@ use crate::{
 pub enum Message {
     /// Jump to the main page
     SetPage(MainPage),
+    /// Seek slider is dragged by the user
+    SeekSliderMove(Duration),
+    /// The user stopped dragging the slider
+    SeekSliderEnd,
+    /// Ticks every set amount of time
+    Tick,
 }
 
 /// Available main menu pages
@@ -37,15 +49,27 @@ pub struct GuiState {
     page: MainPage,
     /// States of WrapBoxes
     wb_states: Vec<WrapBoxState>,
+
+    song_timestamp: Option<TimeStamp>,
+    seek_drag: Option<Duration>,
 }
 
 impl UampApp {
     /// handles gui events
-    pub fn gui_event(&mut self, message: Message) -> Command {
+    pub fn gui_event(&mut self, message: Message) -> ComMsg {
         match message {
             Message::SetPage(page) => self.gui.page = page,
+            Message::SeekSliderMove(d) => self.gui.seek_drag = Some(d),
+            Message::SeekSliderEnd => {
+                return ComMsg::Msg(Msg::Control(ControlMsg::SeekTo(
+                    self.gui.seek_drag.take().unwrap_or_default(),
+                )))
+            }
+            Message::Tick => {
+                self.gui.song_timestamp = self.player.timestamp();
+            }
         }
-        Command::none()
+        ComMsg::Command(Command::none())
     }
 
     /// Generates the gui
@@ -163,20 +187,23 @@ impl UampApp {
 
     /// Creates the play menu
     fn play_menu(&self) -> Element {
-        row![
-            button(svg(icons::PREVIOUS))
-                .height(30)
-                .width(30)
-                .on_press(Msg::Control(ControlMsg::PrevSong(1))),
-            self.play_pause_button(),
-            button(svg(icons::NEXT))
-                .height(30)
-                .width(30)
-                .on_press(Msg::Control(ControlMsg::NextSong(1))),
-            self.current_song(),
-            self.volume(),
+        col![
+            row![
+                button(svg(icons::PREVIOUS))
+                    .height(30)
+                    .width(30)
+                    .on_press(Msg::Control(ControlMsg::PrevSong(1))),
+                self.play_pause_button(),
+                button(svg(icons::NEXT))
+                    .height(30)
+                    .width(30)
+                    .on_press(Msg::Control(ControlMsg::NextSong(1))),
+                self.current_song(),
+                self.volume(),
+            ]
+            .height(30),
+            self.seek_slider(),
         ]
-        .height(30)
         .into()
     }
 
@@ -238,6 +265,58 @@ impl UampApp {
         .on_press(Msg::Control(ControlMsg::Mute(None)))
         .into()
     }
+
+    fn seek_slider(&self) -> Element {
+        let mut ts = match self.gui.song_timestamp {
+            Some(ts) => ts,
+            None => {
+                return row![
+                    center(text!("--:--")).width(50).height(30),
+                    center_y(slider(0.0..=1., 0., |_| {
+                        Msg::Gui(Message::SeekSliderMove(Duration::ZERO))
+                    }))
+                    .width(Fill)
+                    .height(30),
+                    center(text!("--:--")).width(50).height(30),
+                ]
+                .into()
+            }
+        };
+
+        if let Some(d) = self.gui.seek_drag {
+            ts.current = d;
+        }
+        row![
+            center(text!(
+                "{}:{:0>2}",
+                ts.current.as_secs() / 60,
+                ts.current.as_secs() % 60
+            ))
+            .width(50)
+            .height(30),
+            center_y(
+                slider(
+                    0.0..=ts.total.as_secs_f32(),
+                    ts.current.as_secs_f32(),
+                    |c| Msg::Gui(Message::SeekSliderMove(
+                        Duration::from_secs_f32(c)
+                    )),
+                )
+                .on_release(Msg::Gui(Message::SeekSliderEnd))
+                .step(0.1)
+            )
+            .width(Fill)
+            .height(30),
+            center(text!(
+                "{}:{:0>2}",
+                ts.total.as_secs() / 60,
+                ts.total.as_secs() % 60
+            ))
+            .width(50)
+            .height(30),
+        ]
+        .into()
+    }
 }
 
 impl GuiState {
@@ -246,6 +325,8 @@ impl GuiState {
         GuiState {
             page: MainPage::Songs,
             wb_states: vec![WrapBoxState::default(); WB_STATE_COUNT],
+            song_timestamp: None,
+            seek_drag: None,
         }
     }
 }

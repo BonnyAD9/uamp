@@ -74,6 +74,8 @@ gen_struct! {
 
         gapless: bool { pub, pub } => () false,
 
+        tick_length: f32 { pub, pub } => () 1.,
+
         ; // fields that aren't serialized
 
         #[serde(skip_serializing, default = "default_config_path_json")]
@@ -188,6 +190,7 @@ impl Config {
             fade_play_pause: default_fade_play_pause(),
             global_hotkeys: default_global_hotkeys(),
             gapless: default_gapless(),
+            tick_length: default_tick_length(),
             change: Cell::new(true),
         }
     }

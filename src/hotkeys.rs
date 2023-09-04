@@ -269,6 +269,7 @@ fn get_control_string(m: &ControlMsg) -> String {
         ControlMsg::PlaylistJump(v) => format!("pj={v}"),
         ControlMsg::Close => "x".to_owned(),
         ControlMsg::LoadNewSongs => "load-songs".to_owned(),
+        ControlMsg::SeekTo(d) => format!("st={}", d.as_secs_f32()),
     }
 }
 

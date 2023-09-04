@@ -22,7 +22,7 @@ use crate::{
     err::Result,
     gen_struct,
     library::{Library, SongId},
-    uamp_app::UampMessage,
+    uamp_app::{ComMsg, UampMessage},
     wid::Command,
 };
 
@@ -42,13 +42,13 @@ gen_struct! {
 
 impl Player {
     /// Handles player event messages
-    pub fn event(&mut self, lib: &Library, msg: PlayerMessage) -> Command {
+    pub fn event(&mut self, lib: &Library, msg: PlayerMessage) -> ComMsg {
         match msg {
             PlayerMessage::SongEnd => {
                 self.play_next(lib, 1);
             }
         }
-        Command::none()
+        ComMsg::none()
     }
 
     /// Sets the playback state to play/pause
@@ -296,6 +296,16 @@ impl Player {
         self.fade_play_pause(conf.fade_play_pause());
         self.inner.set_gapless(conf.gapless());
     }
+
+    pub fn timestamp(&self) -> Option<TimeStamp> {
+        self.inner.get_timestamp().ok()
+    }
+
+    pub fn seek_to(&mut self, t: Duration) {
+        if let Err(e) = self.inner.seek_to(t) {
+            error!("Failed to seek: {e}");
+        }
+    }
 }
 
 /// Wrapps the sink
@@ -379,6 +389,13 @@ impl SinkWrapper {
 
     pub fn set_gapless(&mut self, v: bool) {
         self.symph.format.enable_gapless = v;
+    }
+
+    pub fn get_timestamp(&self) -> Result<TimeStamp> {
+        Ok(self
+            .sink
+            .get_timestamp()
+            .map(|(c, t)| TimeStamp::new(c, t))?)
     }
 }
 
@@ -586,4 +603,16 @@ struct PlayerDataSave<'a> {
 /// returns the default volume
 fn default_volume() -> f32 {
     1.
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct TimeStamp {
+    pub current: Duration,
+    pub total: Duration,
+}
+
+impl TimeStamp {
+    pub fn new(current: Duration, total: Duration) -> Self {
+        Self { current, total }
+    }
 }

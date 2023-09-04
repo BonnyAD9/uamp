@@ -84,6 +84,11 @@
             "description": "Enable/disable gapless playback.",
             "type": "boolean",
             "default": "false"
+        },
+        "tick_length": {
+            "description": "Determines how often is the seek bar refreshed, in seconds",
+            "type": "number",
+            "default": 1
         }
     }
 }
