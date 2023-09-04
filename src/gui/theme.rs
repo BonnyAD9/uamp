@@ -8,7 +8,7 @@ use iced::{
 };
 use iced_core::{Background, Color, Padding, Vector};
 
-use crate::fancy_widgets::wrap_box;
+use super::widgets::wrap_box;
 
 /// Creates const color from hex
 ///

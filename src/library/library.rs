@@ -1,17 +1,32 @@
-use crate::err::Error;
-use crate::gen_struct;
-use crate::uamp_app::{ComMsg, UampMessage};
-use crate::{config::Config, err::Result, song::Song};
 use log::{error, info, warn};
 use serde_derive::{Deserialize, Serialize};
-use std::cell::Cell;
-use std::fs::{create_dir_all, read_dir, File};
-use std::ops::Index;
-use std::path::Path;
-use std::sync::Arc;
-use std::thread::{self, JoinHandle};
-use std::time::Instant;
 use tokio::sync::mpsc::UnboundedSender;
+
+use std::{
+    cell::Cell,
+    fs::{create_dir_all, read_dir, File},
+    ops::Index,
+    path::Path,
+    sync::Arc,
+    thread,
+    time::Instant,
+};
+
+use crate::{
+    app::UampApp,
+    config::Config,
+    core::{
+        msg::{ComMsg, Msg},
+        Error, Result,
+    },
+    gen_struct,
+};
+
+use super::{
+    load::{LibraryLoad, LibraryLoadResult},
+    msg::Message,
+    Filter, Song, SongId,
+};
 
 gen_struct! {
     #[derive(Serialize, Deserialize)]
@@ -28,20 +43,9 @@ gen_struct! {
     }
 }
 
-/// Id of song in a [`Library`]
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
-pub struct SongId(usize);
-
-/// Filter for iterating library
-pub enum Filter {
-    All,
-}
-
-impl Default for Library {
-    fn default() -> Self {
-        Library::new()
-    }
-}
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
 
 impl Library {
     /// Creates empty library
@@ -65,26 +69,6 @@ impl Library {
                 (0..self.songs().len()).into_iter().map(|n| SongId(n)),
             ),
         }
-    }
-
-    /// Iterates over all of the songs in the library
-    pub fn iter(&self) -> std::slice::Iter<'_, Song> {
-        self.songs().iter()
-    }
-
-    /// Saves the library to the specified path.
-    ///
-    /// # Errors
-    /// - Fails to create the parent directory
-    /// - Fails to write file
-    /// - Fails to serialize
-    fn to_json(&self, path: impl AsRef<Path>) -> Result<()> {
-        if let Some(par) = path.as_ref().parent() {
-            create_dir_all(par)?;
-        }
-
-        serde_json::to_writer(File::create(path)?, self)?;
-        Ok(())
     }
 
     /// Saves the library to the default path. Save doesn't happen if
@@ -114,16 +98,11 @@ impl Library {
         }
     }
 
-    /// Finds new songs to the library
-    pub fn get_new_songs(&mut self, conf: &Config) {
-        Self::add_new_songs(&mut self.songs_mut(), conf);
-    }
-
     /// Loads new songs on another thread
     pub fn start_get_new_songs(
         &mut self,
         conf: &Config,
-        sender: Arc<UnboundedSender<UampMessage>>,
+        sender: Arc<UnboundedSender<Msg>>,
     ) -> Result<()> {
         if self.load_process.is_some() {
             return Err(Error::InvalidOperation(
@@ -142,9 +121,7 @@ impl Library {
                 None
             };
 
-            if let Err(e) =
-                sender.send(UampMessage::Library(LibraryMessage::LoadEnded))
-            {
+            if let Err(e) = sender.send(Msg::Library(Message::LoadEnded)) {
                 error!("Library load failed to send message: {e}");
             }
 
@@ -160,6 +137,40 @@ impl Library {
 
         Ok(())
     }
+}
+
+impl Index<SongId> for Library {
+    type Output = Song;
+    fn index(&self, index: SongId) -> &Self::Output {
+        &self.songs()[index.0]
+    }
+}
+
+impl Default for Library {
+    fn default() -> Self {
+        Library::new()
+    }
+}
+
+//===========================================================================//
+//                                  Private                                  //
+//===========================================================================//
+
+impl Library {
+    /// Saves the library to the specified path.
+    ///
+    /// # Errors
+    /// - Fails to create the parent directory
+    /// - Fails to write file
+    /// - Fails to serialize
+    fn to_json(&self, path: impl AsRef<Path>) -> Result<()> {
+        if let Some(par) = path.as_ref().parent() {
+            create_dir_all(par)?;
+        }
+
+        serde_json::to_writer(File::create(path)?, self)?;
+        Ok(())
+    }
 
     fn finish_get_new_songs(&mut self) -> Result<()> {
         if let Some(p) = self.load_process.take() {
@@ -171,20 +182,6 @@ impl Library {
         } else {
             Err(Error::InvalidOperation("No load was running"))
         }
-    }
-
-    pub fn event(&mut self, msg: LibraryMessage, config: &Config) -> ComMsg {
-        match msg {
-            LibraryMessage::LoadEnded => {
-                if let Err(e) = self.finish_get_new_songs() {
-                    error!("Failed to finsih getting new songs: {e}")
-                }
-                if let Err(e) = self.to_default_json(&config) {
-                    warn!("Failed to save library: {e}");
-                }
-            }
-        }
-        ComMsg::none()
     }
 
     /// Adds new songs to the given vector of songs
@@ -258,23 +255,18 @@ impl Library {
     }
 }
 
-impl Index<SongId> for Library {
-    type Output = Song;
-    fn index(&self, index: SongId) -> &Self::Output {
-        &self.songs()[index.0]
+impl UampApp {
+    pub fn library_event(&mut self, msg: Message) -> ComMsg {
+        match msg {
+            Message::LoadEnded => {
+                if let Err(e) = self.library.finish_get_new_songs() {
+                    error!("Failed to finsih getting new songs: {e}")
+                }
+                if let Err(e) = self.library.to_default_json(&self.config) {
+                    warn!("Failed to save library: {e}");
+                }
+            }
+        }
+        ComMsg::none()
     }
-}
-
-struct LibraryLoad {
-    handle: JoinHandle<LibraryLoadResult>,
-    time_started: Instant,
-}
-
-struct LibraryLoadResult {
-    new_song_vec: Option<Vec<Song>>,
-}
-
-#[derive(Clone, Debug)]
-pub enum LibraryMessage {
-    LoadEnded,
 }

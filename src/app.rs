@@ -10,18 +10,23 @@ use global_hotkey::GlobalHotKeyManager;
 use iced::{executor, window, Application};
 use iced_core::Event;
 use log::{error, info, warn};
-use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
     config::{app_id, default_port, Config},
-    err::{Error, Result},
-    library::{Library, LibraryMessage, SongId},
-    messenger::{self, Messenger},
-    player::{Player, PlayerMessage},
-    theme::Theme,
-    uamp_gui::{self, GuiState},
-    wid::{Command, Element},
+    core::{
+        messenger::{self, Messenger},
+        msg::{ComMsg, ControlMsg, Msg},
+        Error, Result,
+    },
+    gui::{
+        app::GuiState,
+        theme::Theme,
+        wid::{Command, Element},
+        GuiMessage,
+    },
+    library::Library,
+    player::Player,
 };
 
 /// The uamp app state
@@ -35,9 +40,9 @@ pub struct UampApp {
 
     /// Sender for async messages to be synchronized with the main message
     /// handler
-    pub sender: Arc<UnboundedSender<UampMessage>>,
+    pub sender: Arc<UnboundedSender<Msg>>,
     /// Reciever of the async messages
-    pub reciever: RefCell<Option<UnboundedReceiver<UampMessage>>>,
+    pub reciever: RefCell<Option<UnboundedReceiver<Msg>>>,
 
     /// The visual style/theme of the app
     pub theme: Theme,
@@ -53,59 +58,10 @@ pub struct UampApp {
     pub last_save: Instant,
 }
 
-/// Event messages in uamp
-#[allow(missing_debug_implementations)]
-#[derive(Clone, Debug)]
-pub enum UampMessage {
-    /// Play song song at the given index in the playlist
-    PlaySong(usize, Arc<[SongId]>),
-    /// Some simple messages
-    Control(ControlMsg),
-    /// Gui messages handled by the gui
-    Gui(uamp_gui::Message),
-    /// Player messges handled by the player
-    Player(PlayerMessage),
-    /// Library messages handled by the library
-    Library(LibraryMessage),
-}
-
-/// only simple messages that can be safely send across threads and copied
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
-pub enum ControlMsg {
-    /// Toggle/set between play/pause, [`None`] to toggle, [`Some`] to set
-    PlayPause(Option<bool>),
-    /// Jump to the Nth next song
-    NextSong(usize),
-    /// Jump to the Nth previous song
-    PrevSong(usize),
-    /// Set the volume
-    SetVolume(f32),
-    /// Increase the volume by `vol_jump * .0`
-    VolumeUp(Option<f32>),
-    /// Decrease the volume by `vol_jump * .0`
-    VolumeDown(Option<f32>),
-    /// Toggle/set the mute control, [`None`] to toggle, [`Some`] to set
-    Mute(Option<bool>),
-    /// Shuffle the current playlist
-    Shuffle,
-    /// Jump to the given index in the playlist
-    PlaylistJump(usize),
-    /// Exit the app
-    Close,
-    /// Search for new songs
-    LoadNewSongs,
-    /// Seek to the given timesamp
-    SeekTo(Duration),
-    /// Seeks forward
-    FastForward(Option<f32>),
-    /// Seeks backward
-    Rewind(Option<f32>),
-}
-
 impl Application for UampApp {
     type Executor = executor::Default;
     type Flags = ();
-    type Message = UampMessage;
+    type Message = Msg;
     type Theme = Theme;
 
     fn new(_flags: Self::Flags) -> (Self, Command) {
@@ -114,19 +70,19 @@ impl Application for UampApp {
 
     fn update(&mut self, message: Self::Message) -> Command {
         let com = match message {
-            UampMessage::PlaySong(index, songs) => {
+            Msg::PlaySong(index, songs) => {
                 self.player.play_playlist(
                     &self.library,
                     songs,
                     Some(index),
                     true,
                 );
-                ComMsg::Msg(UampMessage::Gui(uamp_gui::Message::Tick))
+                ComMsg::tick()
             }
-            UampMessage::Control(msg) => self.control_event(msg),
-            UampMessage::Gui(msg) => self.gui_event(msg),
-            UampMessage::Player(msg) => self.player.event(&self.library, msg),
-            UampMessage::Library(msg) => self.library.event(msg, &self.config),
+            Msg::Control(msg) => self.control_event(msg),
+            Msg::Gui(msg) => self.gui_event(msg),
+            Msg::Player(msg) => self.player_event(msg),
+            Msg::Library(msg) => self.library_event(msg),
         };
 
         let com = match com {
@@ -185,9 +141,11 @@ impl Application for UampApp {
                             Ok(m) => m,
                             Err(e) => {
                                 warn!("Failed to recieve message: {e}");
-                                if let Err(e) = msgr.send(messenger::error(
-                                    messenger::ErrorType::DeserializeFailed,
+                                if let Err(e) = msgr.send(messenger::msg::Message::Error(
+                                    messenger::msg::Error::new(
+                                    messenger::msg::ErrorType::DeserializeFailed,
                                     e.to_string(),
+                                )
                                 )) {
                                     warn!("Failed to send error message: {e}");
                                 }
@@ -210,7 +168,7 @@ impl Application for UampApp {
             ),
             iced::subscription::events_with(|e, _| match e {
                 Event::Window(window::Event::CloseRequested) => {
-                    Some(UampMessage::Control(ControlMsg::Close))
+                    Some(Msg::Control(ControlMsg::Close))
                 }
                 _ => None,
             }),
@@ -224,7 +182,7 @@ impl Application for UampApp {
                     if dif < tick_len {
                         thread::sleep(tick_len - dif);
                     }
-                    (UampMessage::Gui(uamp_gui::Message::Tick), i + tick_len)
+                    (Msg::Gui(GuiMessage::Tick), i + tick_len)
                 },
             ),
         ])
@@ -237,7 +195,7 @@ impl Default for UampApp {
 
         let mut lib = Library::from_config(&conf);
 
-        let (sender, reciever) = mpsc::unbounded_channel::<UampMessage>();
+        let (sender, reciever) = mpsc::unbounded_channel::<Msg>();
         let sender = Arc::new(sender);
 
         if conf.update_library_on_start() {
@@ -285,15 +243,15 @@ impl UampApp {
                     &self.library,
                     p.unwrap_or(!self.player.is_playing()),
                 );
-                return ComMsg::Msg(UampMessage::Gui(uamp_gui::Message::Tick));
+                return ComMsg::tick();
             }
             ControlMsg::NextSong(n) => {
                 self.player.play_next(&self.library, n);
-                return ComMsg::Msg(UampMessage::Gui(uamp_gui::Message::Tick));
+                return ComMsg::tick();
             }
             ControlMsg::PrevSong(n) => {
                 self.player.play_prev(&self.library, n);
-                return ComMsg::Msg(UampMessage::Gui(uamp_gui::Message::Tick));
+                return ComMsg::tick();
             }
             ControlMsg::Close => {
                 self.save_all();
@@ -319,7 +277,7 @@ impl UampApp {
                     i,
                     self.player.is_playing(),
                 );
-                return ComMsg::Msg(UampMessage::Gui(uamp_gui::Message::Tick));
+                return ComMsg::tick();
             }
             ControlMsg::Mute(b) => {
                 self.player.set_mute(b.unwrap_or(!self.player.mute()))
@@ -338,7 +296,7 @@ impl UampApp {
             }
             ControlMsg::SeekTo(d) => {
                 self.player.seek_to(d);
-                return ComMsg::Msg(UampMessage::Gui(uamp_gui::Message::Tick));
+                return ComMsg::tick();
             }
             ControlMsg::FastForward(d) => {
                 if let Some(ts) = self.player.timestamp() {
@@ -348,9 +306,7 @@ impl UampApp {
                         );
                     let pos = pos.min(ts.total);
                     self.player.seek_to(pos);
-                    return ComMsg::Msg(UampMessage::Gui(
-                        uamp_gui::Message::Tick,
-                    ));
+                    return ComMsg::tick();
                 }
             }
             ControlMsg::Rewind(d) => {
@@ -362,9 +318,7 @@ impl UampApp {
                         ))
                         .unwrap_or(Duration::ZERO);
                     self.player.seek_to(pos);
-                    return ComMsg::Msg(UampMessage::Gui(
-                        uamp_gui::Message::Tick,
-                    ));
+                    return ComMsg::tick();
                 }
             }
         };
@@ -390,16 +344,5 @@ impl UampApp {
     /// Starts the tcp server
     fn start_server() -> Result<TcpListener> {
         Ok(TcpListener::bind(format!("127.0.0.1:{}", default_port()))?)
-    }
-}
-
-pub enum ComMsg {
-    Command(Command),
-    Msg(UampMessage),
-}
-
-impl ComMsg {
-    pub fn none() -> Self {
-        Self::Command(Command::none())
     }
 }

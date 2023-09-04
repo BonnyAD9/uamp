@@ -1,38 +1,32 @@
+use core::messenger::{self, Messenger};
 use std::{
     env::{self, args},
     net::TcpStream,
     time::Duration,
 };
 
-use config::app_id;
+use app::UampApp;
+use config::{app_id, default_port};
 use iced::{
     window::{self, PlatformSpecific},
     Application, Settings,
 };
 use log::{error, info};
-use uamp_app::UampApp;
 
 use crate::{
-    arg_parser::{parse_args, Action},
-    config::default_port,
-    err::Result,
-    messenger::Messenger,
+    cli::{Action, Args},
+    core::Result,
+    messenger::msg,
 };
 
-mod arg_parser;
+mod app;
+mod cli;
 mod config;
-mod err;
-mod fancy_widgets;
+mod core;
+mod gui;
 mod hotkeys;
 mod library;
-mod messenger;
 mod player;
-mod save_struct_macro;
-mod song;
-mod theme;
-mod uamp_app;
-mod uamp_gui;
-mod wid;
 
 fn main() {
     if let Err(e) = start() {
@@ -52,7 +46,7 @@ fn start() -> Result<()> {
     env::set_var("WINIT_UNIX_BACKEND", "x11");
 
     let args: Vec<_> = args().collect();
-    let args = parse_args(args.iter().map(|a| a.as_ref()))?;
+    let args = Args::parse(args.iter().map(|a| a.as_ref()))?;
 
     for a in args.actions {
         match a {
@@ -121,7 +115,7 @@ fn start_logger() -> Result<()> {
 }
 
 /// Sends message to a existing uamp instance
-fn send_message(msg: messenger::Message) -> Result<messenger::Message> {
+fn send_message(msg: msg::Message) -> Result<msg::Message> {
     let stream = TcpStream::connect(format!("127.0.0.1:{}", default_port()))?;
     if let Err(e) = stream.set_read_timeout(Some(Duration::from_secs(5))) {
         error!("failed to send message: {}", e);

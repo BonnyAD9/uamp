@@ -3,39 +3,40 @@ use std::{borrow::Cow, cell::Cell, ops::RangeInclusive};
 use iced::widget;
 use iced_core::Length::{self, FillPortion, Shrink};
 
-use crate::{fancy_widgets, theme::Theme, uamp_app::UampMessage};
+use crate::core::msg::Msg;
+
+use super::{theme::Theme, widgets};
 
 // collection of less generic types
 
 /// Renderer used in uamp
 pub type Renderer = iced::Renderer<Theme>;
 /// Element used in uamp
-pub type Element<'a> = iced::Element<'a, UampMessage, Renderer>;
+pub type Element<'a> = iced::Element<'a, Msg, Renderer>;
 /// Command used in uamp
-pub type Command = iced::Command<UampMessage>;
+pub type Command = iced::Command<Msg>;
 /// WrapBox widget as used in uamp
-pub type WrapBox<'a> =
-    fancy_widgets::wrap_box::WrapBox<'a, UampMessage, Renderer>;
+pub type WrapBox<'a> = widgets::wrap_box::WrapBox<'a, Msg, Renderer>;
 /// Button widget as used in uamp
-pub type Button<'a> = widget::Button<'a, UampMessage, Renderer>;
+pub type Button<'a> = widget::Button<'a, Msg, Renderer>;
 /// Text widget as used in uamp
 pub type Text<'a> = widget::Text<'a, Renderer>;
 /// Column widget as used in uamp
-pub type Column<'a> = widget::Column<'a, UampMessage, Renderer>;
+pub type Column<'a> = widget::Column<'a, Msg, Renderer>;
 /// Row widget as used in uamp
-pub type Row<'a> = widget::Row<'a, UampMessage, Renderer>;
+pub type Row<'a> = widget::Row<'a, Msg, Renderer>;
 /// Svg widget as used in uamp
 pub type Svg = widget::Svg<Renderer>;
 /// Space widget as used in uamp
 pub type Space = widget::Space;
 /// Scrollable widget as used in uamp
-pub type Scrollable<'a> = widget::Scrollable<'a, UampMessage, Renderer>;
+pub type Scrollable<'a> = widget::Scrollable<'a, Msg, Renderer>;
 /// Slider widget as used in uamp
-pub type Slider<'a, T> = widget::Slider<'a, T, UampMessage, Renderer>;
+pub type Slider<'a, T> = widget::Slider<'a, T, Msg, Renderer>;
 /// Container widget as used in uamp
-pub type Container<'a> = widget::Container<'a, UampMessage, Renderer>;
+pub type Container<'a> = widget::Container<'a, Msg, Renderer>;
 
-pub type WrapBoxState = Cell<fancy_widgets::wrap_box::State>;
+pub type WrapBoxState = Cell<widgets::wrap_box::State>;
 
 /// creates wrap_box widhet with the given children
 pub fn wrap_box<'a>(
@@ -85,7 +86,7 @@ macro_rules! button {
         crate::wid::button(nothing())
     };
     ($s:expr) => {
-        crate::wid::button(text!($s))
+        crate::gui::wid::button(text!($s))
     };
     ($fmt:literal, $($args:expr),+) => {
         crate::wid::button(text!($fmt, $($args),+)
@@ -112,13 +113,13 @@ pub fn text<'a>(content: impl Into<Cow<'a, str>>) -> Text<'a> {
 #[macro_export]
 macro_rules! text {
     () => {
-        crate::wid::text("")
+        crate::gui::wid::text("")
     };
     ($s:expr) => {
-        $crate::wid::text($s)
+        $crate::gui::wid::text($s)
     };
     ($fmt:literal, $($args:expr),+) => {
-        $crate::wid::text(format!($fmt, $($args),+))
+        $crate::gui::wid::text(format!($fmt, $($args),+))
     };
 }
 
@@ -139,10 +140,10 @@ pub fn column<'a>(children: Vec<Element<'a>>) -> Column<'a> {
 #[macro_export]
 macro_rules! col {
     () => (
-        $crate::wid::Column::new(crate::wid::nothing())
+        $crate::gui::wid::Column::new($crate::gui::wid::nothing())
     );
     ($($x:expr),+ $(,)?) => (
-        $crate::wid::column(vec![$($crate::wid::Element::from($x)),+])
+        $crate::gui::wid::column(vec![$($crate::gui::wid::Element::from($x)),+])
     );
 }
 
@@ -163,10 +164,10 @@ pub fn row<'a>(children: Vec<Element<'a>>) -> Row<'a> {
 #[macro_export]
 macro_rules! row {
     () => (
-        $crate::wid::Row::new(crate::wid::nothing())
+        $crate::gui::wid::Row::new($crate::gui::wid::nothing())
     );
     ($($x:expr),+ $(,)?) => {{
-        $crate::wid::row(vec![$($crate::wid::Element::from($x)),+])
+        $crate::gui::wid::row(vec![$($crate::gui::wid::Element::from($x)),+])
     }};
 }
 
@@ -189,7 +190,7 @@ pub fn nothing() -> Space {
 pub fn slider<'a, T: Copy + From<u8> + std::cmp::PartialOrd>(
     range: RangeInclusive<T>,
     value: T,
-    on_change: impl Fn(T) -> UampMessage + 'a,
+    on_change: impl Fn(T) -> Msg + 'a,
 ) -> Slider<'a, T> {
     widget::slider(range, value, on_change)
 }
@@ -220,12 +221,4 @@ pub fn center_y<'a>(child: impl Into<Element<'a>>) -> Column<'a> {
         child.into(),
         space(Shrink, FillPortion(1)),
     ]
-}
-
-/// Can be used to generate consecutive ids
-#[macro_export]
-macro_rules! make_ids {
-    ($($i:ident),+ $(,)?) => {
-        count_macro::count!{$(const $i: usize = _int_;)+}
-    };
 }

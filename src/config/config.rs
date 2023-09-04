@@ -10,7 +10,9 @@ use std::{
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{
-    err::Result, gen_struct, hotkeys::HotkeyMgr, uamp_app::UampMessage,
+    core::{msg::Msg, Result},
+    gen_struct,
+    hotkeys::HotkeyMgr,
 };
 
 gen_struct! {
@@ -89,13 +91,33 @@ gen_struct! {
     }
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Config::new(default_config_path())
-    }
-}
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
 
 impl Config {
+    pub fn register_hotkeys(
+        &mut self,
+        sender: Arc<UnboundedSender<Msg>>,
+    ) -> Result<Option<GlobalHotKeyManager>> {
+        if self.register_global_hotkeys() {
+            // Intentionaly mutate the global_hotkeys without the setter
+            Ok(Some(self.global_hotkeys.register(sender)?))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn changed(&self) -> bool {
+        self.change.get()
+    }
+
+    /// Loads config from the default json file. If the loading fails, creates
+    /// default config.
+    pub fn from_default_json() -> Self {
+        Config::from_json(default_config_path().join("config.json"))
+    }
+
     /// Loads config from the given json file. If the loading fails, creates
     /// default config.
     pub fn from_json<P: AsRef<Path>>(path: P) -> Self {
@@ -120,26 +142,18 @@ impl Config {
         serde_json::from_reader(file).unwrap_or_default()
     }
 
-    pub fn register_hotkeys(
-        &mut self,
-        sender: Arc<UnboundedSender<UampMessage>>,
-    ) -> Result<Option<GlobalHotKeyManager>> {
-        if self.register_global_hotkeys() {
-            // Intentionaly mutate the global_hotkeys without the setter
-            Ok(Some(self.global_hotkeys.register(sender)?))
-        } else {
-            Ok(None)
+    /// Saves the config to the default json file. Doesn't save if there was no
+    /// chagnge since the last save.
+    ///
+    /// # Errors
+    /// - Fails to create parent directory
+    /// - Fails to write to fi
+    pub fn to_default_json(&self) -> Result<()> {
+        if self.changed() {
+            self.to_json(&self.config_path)?;
+            self.change.set(false);
         }
-    }
-
-    pub fn changed(&self) -> bool {
-        self.change.get()
-    }
-
-    /// Loads config from the default json file. If the loading fails, creates
-    /// default config.
-    pub fn from_default_json() -> Self {
-        Config::from_json(default_config_path().join("config.json"))
+        Ok(())
     }
 
     /// Saves the config to the given json file.
@@ -163,20 +177,6 @@ impl Config {
         Ok(())
     }
 
-    /// Saves the config to the default json file. Doesn't save if there was no
-    /// chagnge since the last save.
-    ///
-    /// # Errors
-    /// - Fails to create parent directory
-    /// - Fails to write to fi
-    pub fn to_default_json(&self) -> Result<()> {
-        if self.changed() {
-            self.to_json(&self.config_path)?;
-            self.change.set(false);
-        }
-        Ok(())
-    }
-
     /// Creates new config with the given config path
     pub fn new(config_path: impl Into<PathBuf>) -> Self {
         Config {
@@ -197,6 +197,12 @@ impl Config {
             seek_jump: default_seek_jump(),
             change: Cell::new(true),
         }
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config::new(default_config_path())
     }
 }
 
@@ -229,11 +235,6 @@ pub fn default_config_path() -> PathBuf {
     }
 }
 
-/// Gets the default path to json configuration, it is different when debugging
-fn default_config_path_json() -> PathBuf {
-    default_config_path().join("config.json")
-}
-
 /// Gets the default port for the server, it is defferent when debugging
 pub fn default_port() -> u16 {
     #[cfg(not(debug_assertions))]
@@ -244,4 +245,13 @@ pub fn default_port() -> u16 {
     {
         33284
     }
+}
+
+//===========================================================================//
+//                                  Private                                  //
+//===========================================================================//
+
+/// Gets the default path to json configuration, it is different when debugging
+fn default_config_path_json() -> PathBuf {
+    default_config_path().join("config.json")
 }

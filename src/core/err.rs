@@ -2,7 +2,7 @@ use flexi_logger::FlexiLoggerError;
 use log::error;
 use thiserror::Error;
 
-use crate::{arg_parser, hotkeys};
+use crate::{cli, hotkeys};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -13,7 +13,7 @@ pub enum Error {
     #[error("A spawned thread panicked")]
     ThreadPanicked,
     #[error(transparent)]
-    ArgParse(#[from] arg_parser::Error),
+    ArgParse(#[from] cli::Error),
     #[error(transparent)]
     Hotkey(#[from] hotkeys::Error),
     #[error(transparent)]

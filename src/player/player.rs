@@ -1,28 +1,30 @@
 use std::{
     cell::Cell,
     fs::{create_dir_all, File},
-    ops::{Index, IndexMut},
     path::Path,
-    slice::{Iter, SliceIndex},
     sync::Arc,
     time::Duration,
 };
 
 use log::{error, info, warn};
 use rand::{seq::SliceRandom, thread_rng};
-use raplay::{
-    sink::{CallbackInfo, Sink},
-    source::symph::{Symph, SymphOptions},
-};
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{
+    app::UampApp,
     config::Config,
-    err::Result,
+    core::{
+        msg::{ComMsg, Msg},
+        Result,
+    },
     gen_struct,
     library::{Library, SongId},
-    uamp_app::{ComMsg, UampMessage},
+};
+
+use super::{
+    msg::Message, playback::Playback, playlist::Playlist,
+    sink_wrapper::SinkWrapper, TimeStamp,
 };
 
 gen_struct! {
@@ -39,17 +41,11 @@ gen_struct! {
     }
 }
 
-impl Player {
-    /// Handles player event messages
-    pub fn event(&mut self, lib: &Library, msg: PlayerMessage) -> ComMsg {
-        match msg {
-            PlayerMessage::SongEnd => {
-                self.play_next(lib, 1);
-            }
-        }
-        ComMsg::none()
-    }
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
 
+impl Player {
     /// Sets the playback state to play/pause
     pub fn play(&mut self, play: bool) {
         if !self.state.is_stopped() {
@@ -85,17 +81,6 @@ impl Player {
         }
     }
 
-    /// Loads a song into the player.
-    /// doesn't check that the index is valid
-    fn load(&mut self, lib: &Library, index: usize, play: bool) {
-        self.current_set(Some(index));
-
-        match self.inner.load(lib, self.playlist()[index], play) {
-            Ok(_) => self.state = Playback::play(play),
-            Err(e) => error!("Failed to load song: {e}"),
-        }
-    }
-
     /// Toggles the states play/pause, also plays if the state is Stopped and
     /// current is [`Some`]
     pub fn play_pause(&mut self, lib: &Library, play: bool) {
@@ -125,11 +110,6 @@ impl Player {
             Ok(_) => self.mute_set(mute),
             Err(e) => error!("Failed to mute: {}", e),
         }
-    }
-
-    /// Toggle mute, not toggled on error.
-    pub fn toggle_mute(&mut self) {
-        self.set_mute(!self.mute())
     }
 
     /// Loads the given playlist at the given index
@@ -200,32 +180,10 @@ impl Player {
     /// Loads the playback state from json based on the config, returns default
     /// [`Player`] on fail
     pub fn from_config(
-        sender: Arc<UnboundedSender<UampMessage>>,
+        sender: Arc<UnboundedSender<Msg>>,
         conf: &Config,
     ) -> Self {
         Self::from_json(sender, conf.player_path())
-    }
-
-    /// Saves the playback state to the given json file
-    ///
-    /// # Errors
-    /// - cannot create parrent directory
-    /// - Failed to serialize
-    fn to_json(&self, path: impl AsRef<Path>) -> Result<()> {
-        if let Some(par) = path.as_ref().parent() {
-            create_dir_all(par)?;
-        }
-
-        serde_json::to_writer(
-            File::create(path)?,
-            &PlayerDataSave {
-                playlist: self.playlist(),
-                current: self.current(),
-                volume: self.volume(),
-                mute: self.mute(),
-            },
-        )?;
-        Ok(())
     }
 
     /// Saves the playback state to the default json directory. It doesn't
@@ -246,7 +204,7 @@ impl Player {
     /// Loads the playback state from the given json file, returns default
     /// [`Player`] on fail
     pub fn from_json(
-        sender: Arc<UnboundedSender<UampMessage>>,
+        sender: Arc<UnboundedSender<Msg>>,
         path: impl AsRef<Path>,
     ) -> Self {
         let data = if let Ok(file) = File::open(path.as_ref()) {
@@ -258,9 +216,7 @@ impl Player {
 
         let mut sink = SinkWrapper::new();
         if let Err(e) = sink.on_song_end(move || {
-            if let Err(e) =
-                sender.send(UampMessage::Player(PlayerMessage::SongEnd))
-            {
+            if let Err(e) = sender.send(Msg::Player(Message::SongEnd)) {
                 error!("Failed to inform song end: {e}");
             }
         }) {
@@ -307,254 +263,54 @@ impl Player {
     }
 }
 
-/// Wrapps the sink
-struct SinkWrapper {
-    sink: Sink,
-    symph: SymphOptions,
-}
-
-impl SinkWrapper {
-    /// Create new [`SinkWrapper`]
-    pub fn new() -> Self {
-        Self {
-            sink: Sink::default(),
-            symph: SymphOptions::default(),
-        }
-    }
-
-    /// Plays the given song
-    ///
-    /// # Errors
-    /// - only with synchronization, shouldn't happen
-    pub fn load(
-        &mut self,
-        lib: &Library,
-        id: SongId,
-        play: bool,
-    ) -> Result<()> {
-        let file = File::open(lib[id].path())?;
-        let src = Symph::try_new(file, &self.symph)?;
-        self.sink.load(src, play)?;
-        Ok(())
-    }
-
-    /// Sets the play state
-    ///
-    /// # Errors
-    /// - only with synchronization, shouldn't happen
-    pub fn play(&mut self, play: bool) -> Result<()> {
-        self.sink.play(play)?;
-        Ok(())
-    }
-
-    /// Sets callback for when a song ends
-    ///
-    /// # Errors
-    /// - only with synchronization, shouldn't happen
-    pub fn on_song_end<F: FnMut() + Send + 'static>(
-        &mut self,
-        mut f: F,
-    ) -> Result<()>
-    where
-        &'static F: std::marker::Send,
-    {
-        self.sink.on_callback(Some(move |cb| match cb {
-            CallbackInfo::SourceEnded => {
-                f();
+impl UampApp {
+    /// Handles player event messages
+    pub fn player_event(&mut self, msg: Message) -> ComMsg {
+        match msg {
+            Message::SongEnd => {
+                self.player.play_next(&self.library, 1);
             }
-            _ => {}
-        }))?;
-        Ok(())
+        }
+        ComMsg::none()
+    }
+}
+
+//===========================================================================//
+//                                  Private                                  //
+//===========================================================================//
+
+impl Player {
+    /// Loads a song into the player.
+    /// doesn't check that the index is valid
+    fn load(&mut self, lib: &Library, index: usize, play: bool) {
+        self.current_set(Some(index));
+
+        match self.inner.load(lib, self.playlist()[index], play) {
+            Ok(_) => self.state = Playback::play(play),
+            Err(e) => error!("Failed to load song: {e}"),
+        }
     }
 
-    /// Sets the playback volume
+    /// Saves the playback state to the given json file
     ///
     /// # Errors
-    /// - only with synchronization, shouldn't happen
-    pub fn set_volume(&mut self, volume: f32) -> Result<()> {
-        self.sink.volume(volume * volume)?;
+    /// - cannot create parrent directory
+    /// - Failed to serialize
+    fn to_json(&self, path: impl AsRef<Path>) -> Result<()> {
+        if let Some(par) = path.as_ref().parent() {
+            create_dir_all(par)?;
+        }
+
+        serde_json::to_writer(
+            File::create(path)?,
+            &PlayerDataSave {
+                playlist: self.playlist(),
+                current: self.current(),
+                volume: self.volume(),
+                mute: self.mute(),
+            },
+        )?;
         Ok(())
-    }
-
-    pub fn seek_to(&mut self, pos: Duration) -> Result<()> {
-        self.sink.seek_to(pos)?;
-        Ok(())
-    }
-
-    pub fn fade_play_pause(&mut self, secs: f32) -> Result<()> {
-        self.sink.set_fade_len(Duration::from_secs_f32(secs))?;
-        Ok(())
-    }
-
-    pub fn set_gapless(&mut self, v: bool) {
-        self.symph.format.enable_gapless = v;
-    }
-
-    pub fn get_timestamp(&self) -> Result<TimeStamp> {
-        Ok(self
-            .sink
-            .get_timestamp()
-            .map(|(c, t)| TimeStamp::new(c, t))?)
-    }
-}
-
-/// A playlist, lazily cloned
-pub enum Playlist {
-    /// There is static immutable reference to the playlist
-    Static(Arc<[SongId]>),
-    /// There is owned vector with the playlist
-    Dynamic(Vec<SongId>),
-}
-
-impl Playlist {
-    /// Gets the number of items in the playlist
-    pub fn len(&self) -> usize {
-        match self {
-            Self::Static(s) => s.len(),
-            Self::Dynamic(d) => d.len(),
-        }
-    }
-
-    /// Clones the playlist and creates owned vector
-    #[inline]
-    fn make_dynamic(&mut self) {
-        if let Self::Static(s) = self {
-            *self = Self::Dynamic(s.as_ref().into())
-        }
-    }
-
-    /// Returns iterator over the items
-    pub fn iter<'a>(&'a self) -> Iter<'_, SongId> {
-        self[..].iter()
-    }
-
-    /// Gets/Creates arc from the playlist
-    pub fn as_arc(&self) -> Arc<[SongId]> {
-        match self {
-            Playlist::Static(a) => a.clone(),
-            // copy to arc when this is vector
-            Playlist::Dynamic(v) => v[..].into(),
-        }
-    }
-}
-
-impl Default for Playlist {
-    fn default() -> Self {
-        [][..].into()
-    }
-}
-
-impl<T: SliceIndex<[SongId]>> Index<T> for Playlist {
-    type Output = T::Output;
-
-    fn index(&self, index: T) -> &Self::Output {
-        match self {
-            Self::Static(s) => s.index(index),
-            Self::Dynamic(d) => d.index(index),
-        }
-    }
-}
-
-impl<T: SliceIndex<[SongId]>> IndexMut<T> for Playlist {
-    #[inline]
-    fn index_mut(&mut self, index: T) -> &mut Self::Output {
-        match self {
-            Self::Static(_) => {
-                self.make_dynamic();
-                self.index_mut(index)
-            }
-            Self::Dynamic(d) => d.index_mut(index),
-        }
-    }
-}
-
-impl From<&[SongId]> for Playlist {
-    fn from(value: &[SongId]) -> Self {
-        Self::Dynamic(value.into())
-    }
-}
-
-impl From<Vec<SongId>> for Playlist {
-    fn from(value: Vec<SongId>) -> Self {
-        Self::Dynamic(value)
-    }
-}
-
-impl From<Arc<[SongId]>> for Playlist {
-    fn from(value: Arc<[SongId]>) -> Self {
-        Self::Static(value)
-    }
-}
-
-impl Serialize for Playlist {
-    fn serialize<S>(
-        &self,
-        serializer: S,
-    ) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        match self {
-            Self::Static(s) => s.as_ref().serialize(serializer),
-            Self::Dynamic(v) => v.serialize(serializer),
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for Playlist {
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        Ok(Self::Dynamic(Vec::deserialize(deserializer)?))
-    }
-
-    fn deserialize_in_place<D>(
-        deserializer: D,
-        place: &mut Self,
-    ) -> std::result::Result<(), D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        match place {
-            Playlist::Static(_) => {
-                *place = Self::Dynamic(Vec::deserialize(deserializer)?);
-                Ok(())
-            }
-            Playlist::Dynamic(v) => Vec::deserialize_in_place(deserializer, v),
-        }
-    }
-}
-
-/// Messages sent by the player
-#[derive(Clone, Copy, Debug)]
-pub enum PlayerMessage {
-    SongEnd,
-}
-
-/// State of the player playback
-#[derive(Clone, Copy, Default)]
-pub enum Playback {
-    /// No song is playing
-    #[default]
-    Stopped,
-    /// Song is playing
-    Playing,
-    /// Song is paused
-    Paused,
-}
-
-impl Playback {
-    pub fn play(play: bool) -> Self {
-        if play {
-            Self::Playing
-        } else {
-            Self::Paused
-        }
-    }
-
-    pub fn is_stopped(&self) -> bool {
-        matches!(self, Playback::Stopped)
     }
 }
 
@@ -602,16 +358,4 @@ struct PlayerDataSave<'a> {
 /// returns the default volume
 fn default_volume() -> f32 {
     1.
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct TimeStamp {
-    pub current: Duration,
-    pub total: Duration,
-}
-
-impl TimeStamp {
-    pub fn new(current: Duration, total: Duration) -> Self {
-        Self { current, total }
-    }
 }

@@ -3,31 +3,34 @@ use std::{sync::Arc, time::Duration};
 use iced_core::Length::{Fill, Shrink};
 
 use crate::{
+    app::UampApp,
     button, col,
-    fancy_widgets::icons,
+    core::msg::{ComMsg, ControlMsg, Msg},
     library::{Filter, SongId},
-    make_ids,
     player::TimeStamp,
     row, text,
+};
+
+use super::{
+    ids::*,
+    msg::Message,
     theme::{Button, Text},
-    uamp_app::{ComMsg, ControlMsg, UampApp, UampMessage as Msg},
     wid::{
         self, button, center, center_y, nothing, slider, space, svg, wrap_box,
         Command, Element, WrapBoxState,
     },
+    widgets::icons,
 };
 
-/// A gui message
-#[derive(Clone, Copy, Debug)]
-pub enum Message {
-    /// Jump to the main page
-    SetPage(MainPage),
-    /// Seek slider is dragged by the user
-    SeekSliderMove(Duration),
-    /// The user stopped dragging the slider
-    SeekSliderEnd,
-    /// Ticks every set amount of time
-    Tick,
+/// The state of the gui
+pub struct GuiState {
+    /// The current page
+    page: MainPage,
+    /// States of WrapBoxes
+    wb_states: Vec<WrapBoxState>,
+
+    song_timestamp: Option<TimeStamp>,
+    seek_drag: Option<Duration>,
 }
 
 /// Available main menu pages
@@ -39,15 +42,22 @@ pub enum MainPage {
     Playlist,
 }
 
-/// The state of the gui
-pub struct GuiState {
-    /// The current page
-    page: MainPage,
-    /// States of WrapBoxes
-    wb_states: Vec<WrapBoxState>,
+impl GuiState {
+    /// Creates default gui state
+    pub fn new() -> Self {
+        GuiState {
+            page: MainPage::Songs,
+            wb_states: vec![WrapBoxState::default(); WB_STATE_COUNT],
+            song_timestamp: None,
+            seek_drag: None,
+        }
+    }
+}
 
-    song_timestamp: Option<TimeStamp>,
-    seek_drag: Option<Duration>,
+impl Default for GuiState {
+    fn default() -> Self {
+        GuiState::new()
+    }
 }
 
 impl UampApp {
@@ -78,9 +88,9 @@ impl UampApp {
         ]
         .into()
     }
+}
 
-    // menu
-
+impl UampApp {
     /// Creates the menu
     fn menu(&self) -> Element {
         let make_button =
@@ -322,24 +332,3 @@ impl UampApp {
         .into()
     }
 }
-
-impl GuiState {
-    /// Creates default gui state
-    pub fn new() -> Self {
-        GuiState {
-            page: MainPage::Songs,
-            wb_states: vec![WrapBoxState::default(); WB_STATE_COUNT],
-            song_timestamp: None,
-            seek_drag: None,
-        }
-    }
-}
-
-impl Default for GuiState {
-    fn default() -> Self {
-        GuiState::new()
-    }
-}
-
-// Wrapbox state ids
-make_ids!(WB_SONGS, WB_PLAYLIST, WB_STATE_COUNT,);

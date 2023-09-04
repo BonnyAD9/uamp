@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use audiotags::Tag;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::err::Result;
+use crate::core::Result;
 
 /// Describes song
 #[derive(Debug, Clone, Serialize, Deserialize)]
