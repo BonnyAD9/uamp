@@ -12,7 +12,7 @@ use log::{error, info, warn};
 use rand::{seq::SliceRandom, thread_rng};
 use raplay::{
     sink::{CallbackInfo, Sink},
-    source::symph::Symph,
+    source::symph::{Symph, SymphOptions},
 };
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::UnboundedSender;
@@ -28,12 +28,13 @@ use crate::{
 
 gen_struct! {
     pub Player {
+        // Reference
         playlist: Playlist { pub, pri },
-        ;
+        ; // value
         current: Option<usize> { pri, pri },
         volume: f32 { pub, pri },
         mute: bool { pub, pri },
-        ;
+        ; // other
         state: Playback,
         inner: SinkWrapper,
     }
@@ -290,15 +291,26 @@ impl Player {
             error!("Failed to set the fade duration: {e}");
         }
     }
+
+    pub fn load_config(&mut self, conf: &Config) {
+        self.fade_play_pause(conf.fade_play_pause());
+        self.inner.set_gapless(conf.gapless());
+    }
 }
 
 /// Wrapps the sink
-struct SinkWrapper(Sink);
+struct SinkWrapper {
+    sink: Sink,
+    symph: SymphOptions,
+}
 
 impl SinkWrapper {
     /// Create new [`SinkWrapper`]
     pub fn new() -> Self {
-        Self(Sink::default())
+        Self {
+            sink: Sink::default(),
+            symph: SymphOptions::default(),
+        }
     }
 
     /// Plays the given song
@@ -312,8 +324,8 @@ impl SinkWrapper {
         play: bool,
     ) -> Result<()> {
         let file = File::open(lib[id].path())?;
-        let src = Symph::try_new(file, &Default::default())?;
-        self.0.load(src, play)?;
+        let src = Symph::try_new(file, &self.symph)?;
+        self.sink.load(src, play)?;
         Ok(())
     }
 
@@ -322,7 +334,7 @@ impl SinkWrapper {
     /// # Errors
     /// - only with synchronization, shouldn't happen
     pub fn play(&mut self, play: bool) -> Result<()> {
-        self.0.play(play)?;
+        self.sink.play(play)?;
         Ok(())
     }
 
@@ -337,7 +349,7 @@ impl SinkWrapper {
     where
         &'static F: std::marker::Send,
     {
-        self.0.on_callback(Some(move |cb| match cb {
+        self.sink.on_callback(Some(move |cb| match cb {
             CallbackInfo::SourceEnded => {
                 f();
             }
@@ -351,18 +363,22 @@ impl SinkWrapper {
     /// # Errors
     /// - only with synchronization, shouldn't happen
     pub fn set_volume(&mut self, volume: f32) -> Result<()> {
-        self.0.volume(volume * volume)?;
+        self.sink.volume(volume * volume)?;
         Ok(())
     }
 
     pub fn seek_to(&mut self, pos: Duration) -> Result<()> {
-        self.0.seek_to(pos)?;
+        self.sink.seek_to(pos)?;
         Ok(())
     }
 
     pub fn fade_play_pause(&mut self, secs: f32) -> Result<()> {
-        self.0.set_fade_len(Duration::from_secs_f32(secs))?;
+        self.sink.set_fade_len(Duration::from_secs_f32(secs))?;
         Ok(())
+    }
+
+    pub fn set_gapless(&mut self, v: bool) {
+        self.symph.format.enable_gapless = v;
     }
 }
 

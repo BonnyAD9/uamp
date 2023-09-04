@@ -2,7 +2,6 @@
 
 ## v0.2.0
 - Seeking
-- Gapless
 - System for removing songs
 - Config port and address
 - Load config without gui

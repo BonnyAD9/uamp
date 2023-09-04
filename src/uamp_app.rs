@@ -219,7 +219,7 @@ impl Default for UampApp {
         }
 
         let mut player = Player::from_config(sender.clone(), &conf);
-        player.fade_play_pause(conf.fade_play_pause());
+        player.load_config(&conf);
 
         let hotkey_mgr = match conf.register_hotkeys(sender.clone()) {
             Ok(r) => r,
