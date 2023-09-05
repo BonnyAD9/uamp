@@ -114,7 +114,8 @@ Instance actions:
 ## How it looks
 The gui is in state: at least there is gui. It looks horrible but it has the
 necesary elements.
-![image](https://github.com/BonnyAD9/uamp/assets/46282097/02ec639c-9e5d-4c51-b831-e35a668bf53b)
+![image](https://github.com/BonnyAD9/uamp/assets/46282097/b3e5f1f1-5aaf-4f4d-a9ba-bf8e65c498eb)
+
 
 ## How to get it
 To use the player you have to compile it yourself, but that shouldn't be any
