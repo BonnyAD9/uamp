@@ -92,8 +92,9 @@
         },
         "tick_length": {
             "description": "Determines how often is the seek bar refreshed, in seconds",
-            "type": "number",
-            "default": 1
+            "type": "string",
+            "default": "1",
+            "pattern": "([0-9]*d)?([0-9]*:)?([0-9]*:)?([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])"
         },
         "seek_jump": {
             "description": "Determines how much should be seeked with fast-forward/rewind",
