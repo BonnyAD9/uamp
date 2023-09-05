@@ -1,7 +1,6 @@
 # Roadmap
 
 ## v0.2.0
-- System for removing songs
 - Scroll playlist to show the currently playing song
 - Delete old logs
 
