@@ -1,10 +1,4 @@
-use std::{
-    cell::RefCell,
-    net::TcpListener,
-    sync::Arc,
-    thread,
-    time::Instant,
-};
+use std::{cell::RefCell, net::TcpListener, sync::Arc, thread, time::Instant};
 
 use global_hotkey::GlobalHotKeyManager;
 use iced::{executor, window, Application};

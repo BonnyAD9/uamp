@@ -3,14 +3,15 @@ use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::{
     cell::Cell,
-    fs::{create_dir_all, File, read_dir, remove_file},
+    fs::{create_dir_all, read_dir, remove_file, File},
     path::{Path, PathBuf},
-    sync::Arc, time::Duration,
+    sync::Arc,
+    time::Duration,
 };
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{
-    core::{msg::Msg, Result, extensions::Wrap},
+    core::{extensions::Wrap, msg::Msg, Result},
     gen_struct,
     hotkeys::HotkeyMgr,
 };

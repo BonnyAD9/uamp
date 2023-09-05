@@ -15,8 +15,8 @@ use log::{error, info};
 use crate::{
     cli::{Action, Args},
     core::{
-        messenger::{self, msg::Info, Messenger},
         extensions::duration_to_string,
+        messenger::{self, msg::Info, Messenger},
         Result,
     },
     messenger::{msg, MsgMessage},

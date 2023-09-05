@@ -1,9 +1,7 @@
 use std::{iter, str::FromStr, time::Duration};
 
 use itertools::Itertools;
-use serde::{
-    Deserialize, Serialize,
-};
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -181,7 +179,10 @@ impl<T> AsMut<T> for Wrap<T> {
     }
 }
 
-impl<T> PartialEq for Wrap<T> where T: PartialEq {
+impl<T> PartialEq for Wrap<T>
+where
+    T: PartialEq,
+{
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
     }
@@ -189,13 +190,19 @@ impl<T> PartialEq for Wrap<T> where T: PartialEq {
 
 impl<T> Eq for Wrap<T> where T: Eq {}
 
-impl<T> PartialOrd for Wrap<T> where T: PartialOrd {
+impl<T> PartialOrd for Wrap<T>
+where
+    T: PartialOrd,
+{
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         self.0.partial_cmp(&other.0)
     }
 }
 
-impl<T> Ord for Wrap<T> where T: Ord {
+impl<T> Ord for Wrap<T>
+where
+    T: Ord,
+{
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.0.cmp(&other.0)
     }

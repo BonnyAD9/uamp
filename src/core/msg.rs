@@ -161,6 +161,15 @@ impl UampApp {
             }
             ControlMsg::SeekTo(d) => {
                 self.player.seek_to(d);
+                if let Some(ts) = self.player.timestamp() {
+                    if ts.total.checked_sub(d).unwrap_or_default()
+                        < Duration::from_millis(100)
+                    {
+                        return ComMsg::Msg(Msg::Control(
+                            ControlMsg::NextSong(1),
+                        ));
+                    }
+                }
                 return ComMsg::tick();
             }
             ControlMsg::FastForward(d) => {
@@ -170,6 +179,13 @@ impl UampApp {
                             d.unwrap_or(self.config.seek_jump()),
                         );
                     let pos = pos.min(ts.total);
+                    if ts.total.checked_sub(pos).unwrap_or_default()
+                        < Duration::from_millis(100)
+                    {
+                        return ComMsg::Msg(Msg::Control(
+                            ControlMsg::NextSong(1),
+                        ));
+                    }
                     self.player.seek_to(pos);
                     return ComMsg::tick();
                 }
