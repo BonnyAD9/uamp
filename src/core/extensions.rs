@@ -118,9 +118,12 @@ pub fn str_to_duration(s: &str) -> Option<Duration> {
 
 pub trait Parses<T> {
     type Err;
+    /// Parses this to the type T
     fn get_value(&self) -> Result<T, Self::Err>;
 }
 
+/// Implements the trait [`Parses`] for the given types. The types must
+/// implement [`FromStr`]
 macro_rules! impl_parses {
     ($($t:ty),+ $(,)?) => {
         $(
