@@ -57,6 +57,7 @@ pub enum Request {
 /// Info about the playback
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Info {
+    pub version: String,
     /// Song that is now playing
     pub now_playing: Option<Song>,
     /// Length of the playlisg

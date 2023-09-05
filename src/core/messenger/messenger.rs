@@ -71,7 +71,16 @@ impl UampApp {
                     Ok(s) => s,
                     Err(e) => {
                         error!("Failed to clone tcp stream: {e}");
-                        return (Some(Message::Error(Error::new(ErrorType::InternalError, format!("Error occured when trying to fulfill request: {e}")))), None);
+                        return (
+                            Some(Message::Error(Error::new(
+                                ErrorType::InternalError,
+                                format!(
+                                "Error occured when trying to fulfill request\
+                                : {e}"
+                            ),
+                            ))),
+                            None,
+                        );
                     }
                 };
                 (
@@ -86,6 +95,9 @@ impl UampApp {
                                 }
                             };
                             if let Err(e) = msg.send(Message::Info(Info {
+                                version: option_env!("CARGO_PKG_VERSION")
+                                    .unwrap_or("unknown")
+                                    .to_owned(),
                                 now_playing: app
                                     .player
                                     .now_playing()

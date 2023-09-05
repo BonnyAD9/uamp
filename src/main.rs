@@ -148,6 +148,7 @@ fn send_message(conf: &Config, msg: msg::Message) -> Result<msg::Message> {
 
 /// Prints the info about instance playback
 fn print_info(info: Info) {
+    println!("Version: {}", info.version);
     if let Some(s) = info.now_playing {
         println!(
             "Now playing:
