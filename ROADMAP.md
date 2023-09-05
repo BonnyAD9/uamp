@@ -1,8 +1,5 @@
 # Roadmap
 
-## v0.2.0
-- Delete old logs
-
 ## v0.3.0
 - Proper gui
 - no warnings
