@@ -245,7 +245,7 @@ impl Library {
                 Err(_) => continue,
             };
 
-            for f in dir {
+            'dir_loop: for f in dir {
                 let f = match f {
                     Ok(f) => f,
                     Err(e) => {
@@ -294,8 +294,8 @@ impl Library {
                         // removed
                         idx = Some(i)
                     }
-                    if *songs[i].path() == path {
-                        continue;
+                    if songs[i].path() == &path {
+                        continue 'dir_loop;
                     }
                 }
 
