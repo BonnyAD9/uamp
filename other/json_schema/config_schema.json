@@ -62,13 +62,13 @@
             "description": "When not null, saves all the data every number of seconds specified here",
             "type": ["null", "string"],
             "default": "60",
-            "pattern": "([0-9]*d)?([0-9]*:)([0-9]*:)([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])"
+            "pattern": "([0-9]*d)?([0-9]*:)?([0-9]*:)?([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])"
         },
         "fade_play_pause": {
             "description": "Sets the fade play/pause. Set to 0 to disable fading.",
             "type": "string",
             "default": "0.15",
-            "pattern": "([0-9]*d)?([0-9]*:)([0-9]*:)([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])"
+            "pattern": "([0-9]*d)?([0-9]*:)?([0-9]*:)?([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])"
         },
         "global_hotkeys": {
             "description": "Maps global hotkeys to their action.",
@@ -110,7 +110,7 @@
         "delete_logs_after": {
             "description": "Logs are deleted after this time",
             "type": "string",
-            "pattern": "([0-9]*d)?([0-9]*:)([0-9]*:)([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])"
+            "pattern": "([0-9]*d)?([0-9]*:)?([0-9]*:)?([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])"
         }
     }
 }
