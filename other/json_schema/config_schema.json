@@ -60,13 +60,15 @@
         },
         "save_timeout": {
             "description": "When not null, saves all the data every number of seconds specified here",
-            "type": ["null", "number"],
-            "default": 60
+            "type": ["null", "string"],
+            "default": "60",
+            "pattern": "([0-9]*d)?([0-9]*:)([0-9]*:)([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])"
         },
         "fade_play_pause": {
             "description": "Sets the fade play/pause. Set to 0 to disable fading.",
-            "type": "number",
-            "default": 0.15
+            "type": "string",
+            "default": "0.15",
+            "pattern": "([0-9]*d)?([0-9]*:)([0-9]*:)([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])"
         },
         "global_hotkeys": {
             "description": "Maps global hotkeys to their action.",
@@ -96,6 +98,19 @@
         "seek_jump": {
             "description": "Determines how much should be seeked with fast-forward/rewind",
             "type": "number"
+        },
+        "server_address": {
+            "description": "Address of the server to register and use.",
+            "type": "string"
+        },
+        "port": {
+            "description": "port number to use",
+            "type": "integer"
+        },
+        "delete_logs_after": {
+            "description": "Logs are deleted after this time",
+            "type": "string",
+            "pattern": "([0-9]*d)?([0-9]*:)([0-9]*:)([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])"
         }
     }
 }
