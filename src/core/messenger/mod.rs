@@ -1,8 +1,7 @@
-mod message;
 mod messenger;
+pub mod msg;
 
-pub mod msg {
-    pub use super::message::*;
-}
-
-pub use messenger::*;
+pub use self::{
+    messenger::*,
+    msg::{Error as MsgError, Message as MsgMessage},
+};

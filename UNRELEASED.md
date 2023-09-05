@@ -12,6 +12,7 @@
 - You can now select the port and address of the server in config
 - Add option to specify the port and address of the server when starting uamp
     - When used when starting gui, this will disable config saves in the gui
+- Get playback info from running instance with `uamp i info`
 
 ## Bugfixes
 - Mute would not work properly if you save muted player

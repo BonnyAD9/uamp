@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::core::msg::ControlMsg;
+use crate::{core::msg::ControlMsg, library::Song, player::TimeStamp};
 
 /// Messages passed between uamp instances
 #[derive(Debug, Serialize, Deserialize)]
@@ -43,15 +43,31 @@ pub enum ErrorType {
     /// Expected that a request or control message was sent but there was a
     /// different message
     ExpectedRequestOrControl,
+    /// Error occured when trying to do what was requested
+    InternalError,
 }
 
 /// todo
 #[derive(Debug, Serialize, Deserialize)]
-pub enum Request {}
+pub enum Request {
+    /// Request the current playback info
+    Info,
+}
 
-/// todo
+/// Info about the playback
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Info {}
+pub struct Info {
+    /// Song that is now playing
+    pub now_playing: Option<Song>,
+    /// Length of the playlisg
+    pub playlist_len: usize,
+    /// Current position in the playlist
+    pub playlist_pos: Option<usize>,
+    /// True if is currently playing
+    pub is_playing: bool,
+    /// The timestamp of the current playback
+    pub timestamp: Option<TimeStamp>,
+}
 
 /// Creates extracton method for the given message variant
 ///
@@ -110,6 +126,10 @@ impl Message {
             ErrorType::ExpectedRequestOrControl => Self::Error(Error::new(
                 typ,
                 "Expected request or control message".to_owned(),
+            )),
+            ErrorType::InternalError => Self::Error(Error::new(
+                typ,
+                "Error occured when trying to fulfill request.".to_owned(),
             )),
         }
     }

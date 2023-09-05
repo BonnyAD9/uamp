@@ -1,4 +1,8 @@
-use crate::{config::Config, next};
+use crate::{
+    config::Config,
+    core::messenger::{msg::Request, MsgMessage},
+    next,
+};
 
 use super::{
     err::{Error, Result},
@@ -69,12 +73,18 @@ impl Args {
         self.should_exit = true;
         let a = next!(args);
 
-        if a == "--" {
-            return Err(Error::UnexpectedEnd(Some("instance".to_owned())));
+        match a {
+            "info" => self
+                .actions
+                .push(Action::Message(MsgMessage::Request(Request::Info))),
+            "--" => {
+                return Err(Error::UnexpectedEnd(Some("instance".to_owned())))
+            }
+            _ => {
+                let msg = parse_control_message(a)?;
+                self.actions.push(Action::control(msg));
+            }
         }
-
-        let msg = parse_control_message(a)?;
-        self.actions.push(Action::control(msg));
 
         Ok(())
     }

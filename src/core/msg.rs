@@ -1,3 +1,4 @@
+use core::fmt::Debug;
 use std::{sync::Arc, time::Duration};
 
 use iced::window;
@@ -27,6 +28,18 @@ pub enum Msg {
     Player(PlayerMessage),
     /// Library messages handled by the library
     Library(LibraryMessage),
+    /// Dellegate the message
+    Delegate(Arc<dyn MessageDelegate>),
+}
+
+impl Msg {
+    pub fn delegate<I, D>(d: I) -> Self
+    where
+        D: MessageDelegate + 'static,
+        I: Into<D>,
+    {
+        Self::Delegate(Arc::new(d.into()))
+    }
 }
 
 /// only simple messages that can be safely send across threads and copied
@@ -201,5 +214,40 @@ pub fn get_control_string(m: &ControlMsg) -> String {
         ControlMsg::FastForward(Some(d)) => format!("ff={}", d),
         ControlMsg::Rewind(None) => "rw".to_owned(),
         ControlMsg::Rewind(Some(d)) => format!("rw={}", d),
+    }
+}
+
+pub trait MessageDelegate: Sync + Send + Debug {
+    fn update(&self, app: &mut UampApp) -> ComMsg;
+}
+
+pub struct FnDelegate<T>(T)
+where
+    T: Sync + Send + Fn(&mut UampApp) -> ComMsg;
+
+impl<T> MessageDelegate for FnDelegate<T>
+where
+    T: Sync + Send + Fn(&mut UampApp) -> ComMsg,
+{
+    fn update(&self, app: &mut UampApp) -> ComMsg {
+        self.0(app)
+    }
+}
+
+impl<T> Debug for FnDelegate<T>
+where
+    T: Sync + Send + Fn(&mut UampApp) -> ComMsg,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("FnDelegate").finish()
+    }
+}
+
+impl<T> From<T> for FnDelegate<T>
+where
+    T: Sync + Send + Fn(&mut UampApp) -> ComMsg,
+{
+    fn from(value: T) -> Self {
+        Self(value)
     }
 }

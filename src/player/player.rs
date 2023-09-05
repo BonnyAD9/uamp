@@ -32,7 +32,7 @@ gen_struct! {
         // Reference
         playlist: Playlist { pub, pri },
         ; // value
-        current: Option<usize> { pri, pri },
+        current: Option<usize> { pub, pri },
         volume: f32 { pub, pri },
         mute: bool { pub, pri },
         ; // other

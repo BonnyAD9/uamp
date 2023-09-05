@@ -1,4 +1,4 @@
-use core::messenger::{self, Messenger};
+use core::messenger::{self, msg::Info, Messenger};
 use std::{
     env::{self, args},
     net::TcpStream,
@@ -16,7 +16,7 @@ use log::{error, info};
 use crate::{
     cli::{Action, Args},
     core::Result,
-    messenger::msg,
+    messenger::{msg, MsgMessage},
 };
 
 mod app;
@@ -55,8 +55,15 @@ fn start() -> Result<()> {
         match a {
             Action::Message(m) => {
                 let res = send_message(&conf, m);
-                if res.is_err() || !res.as_ref().unwrap().is_success() {
-                    println!("Unexpected result: {res:?}");
+                match res {
+                    Ok(MsgMessage::Success) => {}
+                    Ok(MsgMessage::Info(i)) => {
+                        print_info(i);
+                    }
+                    Err(e) => println!("{e}"),
+                    Ok(r) => {
+                        println!("Unexpected response: {r:?}");
+                    }
                 }
             }
         }
@@ -134,4 +141,42 @@ fn send_message(conf: &Config, msg: msg::Message) -> Result<msg::Message> {
     msgr.send(msg)?;
 
     msgr.recieve()
+}
+
+/// Prints the info about instance playback
+fn print_info(info: Info) {
+    if let Some(s) = info.now_playing {
+        println!(
+            "Now playing:
+  title: '{}'
+  artist: '{}'
+  album: '{}'
+  track: '{}'
+  disc: '{}'
+  path: '{}'",
+            s.title(),
+            s.artist(),
+            s.album(),
+            s.track(),
+            s.disc(),
+            s.path().to_str().unwrap_or("?")
+        )
+    }
+    if let Some(pos) = info.playlist_pos {
+        println!("Playlist: {}/{}", pos, info.playlist_len);
+    } else {
+        println!("Playlist: ?/{}", info.playlist_len);
+    }
+    println!("Is playing: {}", info.is_playing);
+    if let Some(ts) = info.timestamp {
+        println!(
+            "Timestamp: {}:{:0>2}/{}:{:0>2}",
+            ts.current.as_secs() / 60,
+            ts.current.as_secs() % 60,
+            ts.total.as_secs() / 60,
+            ts.total.as_secs() % 60
+        )
+    } else {
+        println!("Timestamp: ?/?")
+    }
 }

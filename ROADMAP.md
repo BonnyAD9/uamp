@@ -4,7 +4,6 @@
 - System for removing songs
 - Scroll playlist to show the currently playing song
 - Delete old logs
-- Status info
 
 ## v0.3.0
 - Proper gui

@@ -1,4 +1,4 @@
-use log::warn;
+use log::{error, warn};
 use rmp_serde::Serializer;
 use serde::Serialize;
 use std::{
@@ -8,10 +8,13 @@ use std::{
 
 use crate::{
     app::UampApp,
-    core::{err::Result, msg::Msg},
+    core::{
+        err::Result,
+        msg::{ComMsg, FnDelegate, Msg},
+    },
 };
 
-use super::msg::{ErrorType, Message};
+use super::msg::{Error, ErrorType, Info, Message, Request};
 
 /// used to send messages across instances
 pub struct Messenger<'a> {
@@ -58,13 +61,51 @@ impl UampApp {
     ///
     /// Returns message that should be sent as a response and the translated
     /// [`UampMessage`] if it should produce one.
-    pub fn message_event(msg: Message) -> (Message, Option<Msg>) {
-        let msg = if let Some(msg) = msg.control() {
-            msg
-        } else {
-            return (Message::new_error(ErrorType::ExpectedControl), None);
-        };
-
-        (Message::Success, Some(Msg::Control(msg)))
+    pub fn message_event(
+        msg: Message,
+        stream: &TcpStream,
+    ) -> (Option<Message>, Option<Msg>) {
+        match msg {
+            Message::Request(Request::Info) => {
+                let stream = match stream.try_clone() {
+                    Ok(s) => s,
+                    Err(e) => {
+                        error!("Failed to clone tcp stream: {e}");
+                        return (Some(Message::Error(Error::new(ErrorType::InternalError, format!("Error occured when trying to fulfill request: {e}")))), None);
+                    }
+                };
+                (
+                    None,
+                    Some(Msg::delegate::<_, FnDelegate<_>>(
+                        move |app: &mut UampApp| {
+                            let mut msg = match Messenger::try_new(&stream) {
+                                Ok(m) => m,
+                                Err(e) => {
+                                    error!("Failed to create messenger: {e}");
+                                    return ComMsg::none();
+                                }
+                            };
+                            if let Err(e) = msg.send(Message::Info(Info {
+                                now_playing: app
+                                    .player
+                                    .now_playing()
+                                    .map(|i| app.library[i].clone()),
+                                playlist_len: app.player.playlist().len(),
+                                playlist_pos: app.player.current(),
+                                is_playing: app.player.is_playing(),
+                                timestamp: app.player.timestamp(),
+                            })) {
+                                error!("Failed to send message: {e}");
+                            };
+                            ComMsg::none()
+                        },
+                    )),
+                )
+            }
+            Message::Control(msg) => {
+                (Some(Message::Success), Some(Msg::Control(msg)))
+            }
+            _ => (Some(Message::new_error(ErrorType::ExpectedControl)), None),
+        }
     }
 }

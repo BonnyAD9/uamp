@@ -104,6 +104,7 @@ impl Application for UampApp {
             Msg::Gui(msg) => self.gui_event(msg),
             Msg::Player(msg) => self.player_event(msg),
             Msg::Library(msg) => self.library_event(msg),
+            Msg::Delegate(d) => d.update(self),
         };
 
         let com = match com {
@@ -174,9 +175,12 @@ impl Application for UampApp {
                             }
                         };
 
-                        let (response, msg) = Self::message_event(rec);
-                        if let Err(e) = msgr.send(response) {
-                            warn!("Failed to send response {e}");
+                        let (response, msg) =
+                            Self::message_event(rec, &stream.0);
+                        if let Some(r) = response {
+                            if let Err(e) = msgr.send(r) {
+                                warn!("Failed to send response {e}");
+                            }
                         }
 
                         if let Some(msg) = msg {
