@@ -818,7 +818,8 @@ where
     Renderer::Theme: StyleSheet,
 {
     fn is_item_visible(&self, view_size: Size, i: usize) -> bool {
-        let (start, end) = self.visible_range(view_size, &self.state.get());
+        let size = Size::new(view_size.width, view_size.height - self.item_height);
+        let (start, end) = self.visible_range(size, &self.state.get());
         (start..end).contains(&i)
     }
 
