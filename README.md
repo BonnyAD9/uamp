@@ -31,14 +31,23 @@ uamp i pp
 This is the output of help:
 ```
 Welcome in uamp by BonnyAD9
-Version 0.1.2
+Version 0.2.0
 
 Usage:
   uamp
     starts the gui of the player
 
-  uamp [action] [--] [action] ...
+  uamp [action] [--] [action] ... [flags]
     does the given action
+
+Flags:
+  -p  --port <port>
+    Sets the port for the server comunication. If used when starting gui, it
+    will disable config saves.
+
+  -a  --address <address>
+    Sets the server address for the comunication. If used when starting gui, it
+    will disable config saves.
 
 Actions:
   i  instance <instance-action> [--]
@@ -50,17 +59,20 @@ Actions:
     Available options are: basic, i instance
 
 Instance actions:
+  info
+    Shows the info about the playback of the currently runing instance.
+
   play-pause  pp[=(play|pause)]
     Play or pause, when without argument, toggle between the states
     playing and paused.
 
   volume-up  vol-up  vu[=<f32>]
-    Increase the volume by the default amount, when argument is
-    present, multiply the volume increase with it.
+    Increase the volume by the given amount. If the parameter is not
+    present, increase by the default amount
 
   volume-down  vol-down  vd[=<f32>]
-    Decrease the volume by the default amount, when argument is
-    present, multiply the volume decrease with it.
+    Decrease the volume by the given amount. If the parameter is not
+    present, decrease by the default amount
 
   next-song  ns[=<usize>]
     Jump to the next song, arguments specifies how much to jump (e.g.
@@ -89,6 +101,14 @@ Instance actions:
 
   seek-to  seek=[[[<h>]:][<m>]:][<s>[.<s>]]
     Seeks to the given timestamp. Timestamp is in format 'h:m:s'.
+
+  fast-forward  ff[=<f32>]
+    Seeks forward by the given amout in seconds. If the parameter is not
+    present, seek by the default amount.
+
+  rewind  rw[=<f32>]
+    Seeks backward by the given amout in seconds. If the parameter is not
+    present, seek by the default amount.
 ```
 
 ## How it looks

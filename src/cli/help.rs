@@ -93,6 +93,11 @@ fn print_basic_help() {
 
 /// Prints the instance help
 fn print_instance_help() {
-    printcln!("{'g}Instance actions:");
+    printcln!(
+        "{'g}Instance actions:
+  {'y}info{'_}
+    Shows the info about the playback of the currently runing instance.
+"
+    );
     auto_instance_help();
 }
