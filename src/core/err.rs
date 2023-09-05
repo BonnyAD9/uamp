@@ -1,3 +1,5 @@
+use std::time::SystemTimeError;
+
 use flexi_logger::FlexiLoggerError;
 use log::error;
 use thiserror::Error;
@@ -43,6 +45,9 @@ pub enum Error {
     /// Some standard library io error
     #[error(transparent)]
     Io(#[from] std::io::Error),
+    /// Time dowsn't work :||
+    #[error(transparent)]
+    Time(#[from] SystemTimeError),
     /// Any other error
     #[error(transparent)]
     Other(anyhow::Error),

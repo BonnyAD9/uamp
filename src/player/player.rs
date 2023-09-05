@@ -235,15 +235,15 @@ impl Player {
     }
 
     /// Sets the fade duration for play/pause
-    pub fn fade_play_pause(&mut self, secs: f32) {
-        if let Err(e) = self.inner.fade_play_pause(secs.abs()) {
+    pub fn fade_play_pause(&mut self, t: Duration) {
+        if let Err(e) = self.inner.fade_play_pause(t) {
             error!("Failed to set the fade duration: {e}");
         }
     }
 
     /// Configures the player
     pub fn load_config(&mut self, conf: &Config) {
-        self.fade_play_pause(conf.fade_play_pause());
+        self.fade_play_pause(conf.fade_play_pause().0);
         self.inner.set_gapless(conf.gapless());
     }
 

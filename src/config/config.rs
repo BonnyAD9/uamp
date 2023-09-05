@@ -3,14 +3,14 @@ use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::{
     cell::Cell,
-    fs::{create_dir_all, File},
+    fs::{create_dir_all, File, read_dir, remove_file},
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::Arc, time::Duration,
 };
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{
-    core::{msg::Msg, Result},
+    core::{msg::Msg, Result, extensions::Wrap},
     gen_struct,
     hotkeys::HotkeyMgr,
 };
@@ -73,13 +73,19 @@ gen_struct! {
 
         volume_jump: f32 { pub, pub } => () 0.025,
 
-        save_timeout: Option<f32> { pub, pub } => () Some(60.),
+        save_timeout: Option<Wrap<Duration>> { pub, pub } => () {
+            Some(Wrap(Duration::from_secs(60)))
+        },
 
-        fade_play_pause: f32 { pub, pub } => () 0.15,
+        fade_play_pause: Wrap<Duration> { pub, pub } => () {
+            Wrap(Duration::from_millis(150))
+        },
 
         gapless: bool { pub, pub } => () false,
 
-        tick_length: f32 { pub, pub } => () 1.,
+        tick_length: Wrap<Duration> { pub, pub } => () {
+            Wrap(Duration::from_secs(1))
+        },
 
         seek_jump: f32 { pub, pub } => () 10.,
 
@@ -92,6 +98,11 @@ gen_struct! {
             {
                 33284
             }
+        },
+
+        delete_logs_after: Wrap<Duration> { pub, pub } => () {
+            // 3 days
+            Wrap(Duration::from_secs(60 * 60 * 24 * 3))
         },
 
         ; // fields that aren't serialized
@@ -217,8 +228,23 @@ impl Config {
             seek_jump: default_seek_jump(),
             port: default_port(),
             server_address: default_server_address(),
+            delete_logs_after: default_delete_logs_after(),
             change: Cell::new(true),
         }
+    }
+
+    pub fn delete_old_logs(&self) -> Result<()> {
+        let dir = read_dir(default_config_path().join("log"))?;
+
+        for d in dir {
+            let d = d?;
+            let mt = d.metadata()?.modified()?;
+            if mt.elapsed()? > self.delete_logs_after().0 {
+                remove_file(d.path())?;
+            }
+        }
+
+        Ok(())
     }
 }
 

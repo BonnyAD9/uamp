@@ -91,8 +91,8 @@ impl SinkWrapper {
     }
 
     /// Sets the fade play/pause duration in seconds
-    pub fn fade_play_pause(&mut self, secs: f32) -> Result<()> {
-        self.sink.set_fade_len(Duration::from_secs_f32(secs))?;
+    pub fn fade_play_pause(&mut self, t: Duration) -> Result<()> {
+        self.sink.set_fade_len(t)?;
         Ok(())
     }
 

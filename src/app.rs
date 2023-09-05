@@ -3,7 +3,7 @@ use std::{
     net::TcpListener,
     sync::Arc,
     thread,
-    time::{Duration, Instant},
+    time::Instant,
 };
 
 use global_hotkey::GlobalHotKeyManager;
@@ -115,7 +115,7 @@ impl Application for UampApp {
         if self
             .config
             .save_timeout()
-            .map(|t| (Instant::now() - self.last_save).as_secs_f32() >= t)
+            .map(|t| Instant::now() - self.last_save >= t.0)
             .unwrap_or_default()
         {
             self.save_all()
@@ -137,7 +137,7 @@ impl Application for UampApp {
     }
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
-        let tick_len = Duration::from_secs_f32(self.config.tick_length());
+        let tick_len = self.config.tick_length().0;
         iced::Subscription::batch([
             iced::subscription::unfold(
                 app_id() + " async msg",

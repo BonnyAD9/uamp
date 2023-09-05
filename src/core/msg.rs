@@ -113,6 +113,9 @@ impl UampApp {
             }
             ControlMsg::PrevSong(n) => {
                 self.player.play_prev(&self.library, n);
+                if let Err(e) = self.config.delete_old_logs() {
+                    error!("Failed to remove logs: {e}");
+                }
                 return ComMsg::tick();
             }
             ControlMsg::Close => {
