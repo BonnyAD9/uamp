@@ -67,7 +67,13 @@ impl UampApp {
     /// handles gui events
     pub fn gui_event(&mut self, message: Message) -> ComMsg {
         match message {
-            Message::SetPage(page) => self.gui.page = page,
+            Message::SetPage(page) => {
+                self.gui.page = page;
+                if page == MainPage::Playlist {
+                    self.gui.wb_states[WB_PLAYLIST].get_mut().scroll_to =
+                        self.player.current();
+                }
+            }
             Message::SeekSliderMove(d) => self.gui.seek_drag = Some(d),
             Message::SeekSliderEnd => {
                 return ComMsg::Msg(Msg::Control(ControlMsg::SeekTo(
@@ -76,6 +82,10 @@ impl UampApp {
             }
             Message::Tick => {
                 self.gui.song_timestamp = self.player.timestamp();
+                let st = self.gui.wb_states[WB_PLAYLIST].get_mut();
+                if st.scroll_to.is_some() {
+                    st.scroll_to = self.player.current();
+                }
             }
         }
         ComMsg::Command(Command::none())

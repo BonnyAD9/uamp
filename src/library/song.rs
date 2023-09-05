@@ -22,6 +22,7 @@ pub struct Song {
     disc: u32,
     /// True if the song is deleted, deleted songs should be skipped in all
     /// all cases, and should be removed from all collections
+    #[serde(default = "default_deleted")]
     deleted: bool,
 }
 
@@ -87,4 +88,8 @@ impl Song {
     pub fn is_deleted(&self) -> bool {
         self.deleted
     }
+}
+
+fn default_deleted() -> bool {
+    false
 }

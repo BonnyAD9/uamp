@@ -389,8 +389,18 @@ where
             .max_height(self.max_height)
             .width(self.width)
             .height(self.height);
+        let size = limits.fill();
+        let view_size = self.pad_size(size);
 
-        self.create_layout(renderer, limits.fill(), &self.state.get())
+        let mut state = self.state.get();
+        if let Some(i) = state.scroll_to {
+            if !self.is_item_visible(view_size, i) {
+                state.offset_y = self.item_scroll_pos(view_size, i);
+                self.state.set(state);
+            }
+        }
+
+        self.create_layout(renderer, size, &state)
     }
 
     fn operate(
@@ -470,6 +480,7 @@ where
                     state.offset_y -= y;
                 }
             }
+            state.scroll_to = None;
         }
 
         let mut captured = false;
@@ -806,6 +817,21 @@ impl<'a, Message: 'a, Renderer: svg::Renderer + 'a>
 where
     Renderer::Theme: StyleSheet,
 {
+    fn is_item_visible(&self, view_size: Size, i: usize) -> bool {
+        let (start, end) = self.visible_range(view_size, &self.state.get());
+        (start..end).contains(&i)
+    }
+
+    fn item_scroll_pos(&self, view_size: Size, i: usize) -> f32 {
+        let item_pos = (self.item_height + self.spacing_y) * i as f32;
+        let center_offset = (view_size.height - self.item_height) / 2.;
+        let ideal = item_pos - center_offset;
+        let content_size = (self.item_height + self.spacing_y)
+            * self.children.len() as f32
+            - self.item_height;
+        ideal.max(0.).min(content_size - view_size.height)
+    }
+
     /// creates the [`WrapBox`] layout, immidiate node is the bounds of the
     /// whole [`WrapBox`], it contains node with bounds of the viewport, it
     /// than contains the childern
@@ -1235,6 +1261,9 @@ pub struct State {
     /// Absolute offset on the y axis
     offset_y: f32,
     pressed: ScrollbarInteraction,
+    /// Index of item to which the scrollbar should scroll, not supported in
+    /// unoptimized mode
+    pub scroll_to: Option<usize>,
 }
 
 impl State {
@@ -1244,6 +1273,7 @@ impl State {
             offset_x: 0.,
             offset_y: 0.,
             pressed: ScrollbarInteraction::None,
+            scroll_to: None,
         }
     }
 
@@ -1275,16 +1305,11 @@ impl Default for State {
     }
 }
 
-/// Defines how the mouse interacts with the scrollbar
 #[derive(Clone, Copy)]
 enum ScrollbarInteraction {
-    /// Mouse doesn't interact with the scrollbar
     None,
-    /// Mouse is over the scrollbar but not pressed
     Up,
-    /// Mouse is over the scrollbar and is pressed
     Down,
-    /// Mouse is dragging the thumb
     Thumb {
         /// Last relative offset of the scrollbar
         relative: f32,

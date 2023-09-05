@@ -38,6 +38,7 @@ gen_struct! {
         #[serde(skip)]
         load_process: Option<LibraryLoad>,
         /// invalid song
+        #[serde(skip, default = "default_ghost")]
         ghost: Song,
         ; // attributes for the auto field
         #[serde(skip)]
@@ -312,4 +313,8 @@ impl Library {
 
         new_songs
     }
+}
+
+fn default_ghost() -> Song {
+    Song::invalid()
 }
