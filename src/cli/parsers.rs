@@ -1,4 +1,5 @@
-use super::parsable::Duration;
+use std::time::Duration;
+
 use crate::{core::msg::ControlMsg, parse_arg};
 
 parse_arg! {ControlMsg as parse_control_message, auto_instance_help:

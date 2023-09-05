@@ -1,3 +1,5 @@
+/// Adds some features to existing data types
+pub mod extensions;
 pub mod messenger;
 pub mod msg;
 

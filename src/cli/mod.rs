@@ -3,7 +3,6 @@ mod args;
 mod err;
 mod help;
 mod macros;
-mod parsable;
 mod parsers;
 
 pub use self::{

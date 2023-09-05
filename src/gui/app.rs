@@ -5,7 +5,7 @@ use iced_core::Length::{Fill, Shrink};
 use crate::{
     app::UampApp,
     button, col,
-    core::msg::{ComMsg, ControlMsg, Msg},
+    core::{msg::{ComMsg, ControlMsg, Msg}, extensions::duration_to_string},
     library::{Filter, SongId},
     player::TimeStamp,
     row, text,
@@ -302,13 +302,9 @@ impl UampApp {
             ts.current = d;
         }
         row![
-            center(text!(
-                "{}:{:0>2}",
-                ts.current.as_secs() / 60,
-                ts.current.as_secs() % 60
-            ))
-            .width(50)
-            .height(30),
+            center(text!("{}", duration_to_string(ts.current, true)))
+                .width(50)
+                .height(30),
             center_y(
                 slider(
                     0.0..=ts.total.as_secs_f32(),
@@ -322,13 +318,9 @@ impl UampApp {
             )
             .width(Fill)
             .height(30),
-            center(text!(
-                "{}:{:0>2}",
-                ts.total.as_secs() / 60,
-                ts.total.as_secs() % 60
-            ))
-            .width(50)
-            .height(30),
+            center(text!("{}", duration_to_string(ts.total, true)))
+                .width(50)
+                .height(30),
         ]
         .into()
     }

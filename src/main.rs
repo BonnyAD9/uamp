@@ -15,7 +15,10 @@ use log::{error, info};
 
 use crate::{
     cli::{Action, Args},
-    core::Result,
+    core::{
+        extensions::{duration_to_string, str_to_duration},
+        Result,
+    },
     messenger::{msg, MsgMessage},
 };
 
@@ -170,11 +173,9 @@ fn print_info(info: Info) {
     println!("Is playing: {}", info.is_playing);
     if let Some(ts) = info.timestamp {
         println!(
-            "Timestamp: {}:{:0>2}/{}:{:0>2}",
-            ts.current.as_secs() / 60,
-            ts.current.as_secs() % 60,
-            ts.total.as_secs() / 60,
-            ts.total.as_secs() % 60
+            "Timestamp: {}/{}",
+            duration_to_string(ts.current, false),
+            duration_to_string(ts.total, false),
         )
     } else {
         println!("Timestamp: ?/?")
