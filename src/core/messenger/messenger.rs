@@ -6,9 +6,12 @@ use std::{
     net::TcpStream,
 };
 
-use crate::{core::{err::Result, msg::Msg}, app::UampApp};
+use crate::{
+    app::UampApp,
+    core::{err::Result, msg::Msg},
+};
 
-use super::msg::{Message, ErrorType};
+use super::msg::{ErrorType, Message};
 
 /// used to send messages across instances
 pub struct Messenger<'a> {

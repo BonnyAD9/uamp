@@ -58,7 +58,6 @@ pub struct UampApp {
     pub last_save: Instant,
 }
 
-
 //===========================================================================//
 //                                   Public                                  //
 //===========================================================================//
@@ -244,7 +243,7 @@ impl UampApp {
             Err(e) => {
                 error!("Failed to start the server: {e}");
                 None
-            },
+            }
         };
 
         UampApp {
@@ -267,6 +266,10 @@ impl UampApp {
 
     /// Starts the tcp server
     fn start_server(conf: &Config) -> Result<TcpListener> {
-        Ok(TcpListener::bind(format!("{}:{}", conf.server_address(), conf.port()))?)
+        Ok(TcpListener::bind(format!(
+            "{}:{}",
+            conf.server_address(),
+            conf.port()
+        ))?)
     }
 }

@@ -1,13 +1,14 @@
 use std::{sync::Arc, time::Duration};
 
 use iced::window;
-use log::{info, error};
+use log::{error, info};
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    app::UampApp,
     gui::{wid::Command, GuiMessage},
     library::{LibraryMessage, SongId},
-    player::PlayerMessage, app::UampApp,
+    player::PlayerMessage,
 };
 
 use super::Error;

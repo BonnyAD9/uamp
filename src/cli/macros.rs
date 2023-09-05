@@ -9,6 +9,7 @@ pub fn get_after<'a>(s: &'a str, p: &str) -> Option<&'a str> {
 /// The two last arguments are used to produce the error message
 /// - the first argument says the option after which the error occured
 /// - the second argument explains what value was expected
+/// - the option argument is the argument name for error messages
 ///
 /// It can also parse and validate the value
 ///
@@ -42,7 +43,7 @@ macro_rules! next {
     ($typ:ident, $iter:ident, $id:expr) => {
         $iter
             .next()
-            .ok_or(Error::UnexpectedEnd)?
+            .ok_or(Error::UnexpectedEnd($id))?
             .parse::<$typ>()
             .map_err(|_| Error::ParseError { id: $id, typ: stringify!($typ)})?
     };
@@ -140,7 +141,10 @@ macro_rules! get_param {
         $crate::parse!(
             $t,
             $crate::cli::macros::get_after($v, "=").ok_or(
-                $crate::cli::CliError::MissingParameter(Some(format!("{}", $v)))
+                $crate::cli::CliError::MissingParameter(Some(format!(
+                    "{}",
+                    $v
+                )))
             )?,
             None
         )

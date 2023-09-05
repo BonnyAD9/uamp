@@ -5,8 +5,8 @@ use itertools::Itertools;
 
 use super::{
     code::{get_code_string, string_to_code},
-    modifier::{get_modifier_string, string_to_modifier},
     err::Error,
+    modifier::{get_modifier_string, string_to_modifier},
 };
 
 /// Represents hotkey

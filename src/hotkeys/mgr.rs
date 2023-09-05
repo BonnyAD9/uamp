@@ -12,14 +12,14 @@ use super::{action::Action, err, hotkey::Hotkey};
 /// Parses hotkeys and registers them
 #[derive(Clone)]
 pub struct HotkeyMgr {
-    unparsed: HashMap<String, String>
+    unparsed: HashMap<String, String>,
 }
 
 impl HotkeyMgr {
     /// Creates new [`HotkeyMgr`]
     pub fn new() -> Self {
         Self {
-            unparsed: HashMap::new()
+            unparsed: HashMap::new(),
         }
     }
 
@@ -114,8 +114,6 @@ impl<'de> Deserialize<'de> for HotkeyMgr {
     where
         D: serde::Deserializer<'de>,
     {
-        HashMap::deserialize(deserializer).map(|r| Self {
-            unparsed: r
-        })
+        HashMap::deserialize(deserializer).map(|r| Self { unparsed: r })
     }
 }

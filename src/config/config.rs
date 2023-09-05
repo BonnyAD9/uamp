@@ -97,7 +97,7 @@ gen_struct! {
         ; // fields that aren't serialized
 
         #[serde(skip_serializing, default = "default_config_path_json")]
-        config_path: Option<PathBuf>,
+        pub config_path: Option<PathBuf>,
 
         ; // attributes for the auto field
         #[serde(skip)]
@@ -195,7 +195,10 @@ impl Config {
     }
 
     /// Creates new config with the given config path
-    pub fn new<P>(config_path: Option<P>) -> Self where P: Into<PathBuf> {
+    pub fn new<P>(config_path: Option<P>) -> Self
+    where
+        P: Into<PathBuf>,
+    {
         Config {
             config_path: config_path.map(|p| p.into()),
             search_paths: default_search_paths(),

@@ -120,7 +120,11 @@ fn start_logger() -> Result<()> {
 
 /// Sends message to a existing uamp instance
 fn send_message(conf: &Config, msg: msg::Message) -> Result<msg::Message> {
-    let stream = TcpStream::connect(format!("{}:{}", conf.server_address(), conf.port()))?;
+    let stream = TcpStream::connect(format!(
+        "{}:{}",
+        conf.server_address(),
+        conf.port()
+    ))?;
     if let Err(e) = stream.set_read_timeout(Some(Duration::from_secs(5))) {
         error!("failed to send message: {}", e);
     }

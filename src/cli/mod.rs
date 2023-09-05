@@ -6,7 +6,11 @@ mod macros;
 mod parsable;
 mod parsers;
 
-pub use self::{action::*, args::*, err::{Error as CliError, Result as CliResult}};
+pub use self::{
+    action::*,
+    args::*,
+    err::{Error as CliError, Result as CliResult},
+};
 pub use args::*;
 
 ///! Contains tools for the cli, mostly parsing

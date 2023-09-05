@@ -334,7 +334,10 @@ impl Player {
     }
 
     fn init_inner(&mut self, sender: Arc<UnboundedSender<Msg>>) {
-        if let Err(e) = self.inner.on_song_end(move || Self::song_end_handler(&sender)) {
+        if let Err(e) = self
+            .inner
+            .on_song_end(move || Self::song_end_handler(&sender))
+        {
             error!("Failed to set the song end callback: {e}");
         }
 

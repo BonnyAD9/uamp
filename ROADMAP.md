@@ -2,7 +2,6 @@
 
 ## v0.2.0
 - System for removing songs
-- CLI port and address
 - Scroll playlist to show the currently playing song
 - Delete old logs
 - Status info

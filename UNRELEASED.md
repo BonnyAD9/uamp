@@ -10,6 +10,8 @@
 - Add fast-forward and rewind (CLI, Hotkeys, GUI)
 - Add option for how much should fast-forward and rewind seek
 - You can now select the port and address of the server in config
+- Add option to specify the port and address of the server when starting uamp
+    - When used when starting gui, this will disable config saves in the gui
 
 ## Bugfixes
 - Mute would not work properly if you save muted player

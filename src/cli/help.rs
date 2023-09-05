@@ -67,8 +67,17 @@ fn print_basic_help() {
   {'w bold}uamp{'_}
     starts the gui of the player
 
-  {'w bold}uamp{'_} {'gr}[action] [--] [action] ...{'_}
+  {'w bold}uamp{'_} {'gr}[action] [--] [action] ... [flags]{'_}
     does the given action
+
+{'g}Flags:{'_}
+  {'y}-p  --port {'bold w}<port>{'_}
+    Sets the port for the server comunication. If used when starting gui, it
+    will disable config saves.
+
+  {'y}-a  --address {'bold w}<address>{'_}
+    Sets the server address for the comunication. If used when starting gui, it
+    will disable config saves.
 
 {'g}Actions:{'_}
   {'y}i  instance {'bold w}<instance-action>{'_} {'gr}[--]{'_}
