@@ -136,7 +136,15 @@ impl Player {
 
     /// Plays the `n`th next song in the playlist
     pub fn play_next(&mut self, lib: &Library, n: usize) {
-        self.jump_to(lib, self.current().map(|i| i + n))
+        let s = self.state.is_stopped();
+        self.jump_to(lib, self.current().map(|i| i + n));
+        if !s & self.state.is_stopped() {
+            self.current = if self.playlist.len() == 0 {
+                None
+            } else {
+                Some(0)
+            }
+        }
     }
 
     /// Plays the `n`th previous song in the playlist
@@ -250,7 +258,11 @@ impl Player {
     /// Gets timestamp of the current playback, returns [`None`] if nothing
     /// is playing
     pub fn timestamp(&self) -> Option<TimeStamp> {
-        self.inner.get_timestamp().ok()
+        if self.state.is_stopped() {
+            None
+        } else {
+            self.inner.get_timestamp().ok()
+        }
     }
 
     /// Seeks to the given position
