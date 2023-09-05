@@ -1,4 +1,3 @@
-use core::messenger::{self, msg::Info, Messenger};
 use std::{
     env::{self, args},
     net::TcpStream,
@@ -16,7 +15,8 @@ use log::{error, info};
 use crate::{
     cli::{Action, Args},
     core::{
-        extensions::{duration_to_string, str_to_duration},
+        messenger::{self, msg::Info, Messenger},
+        extensions::duration_to_string,
         Result,
     },
     messenger::{msg, MsgMessage},
