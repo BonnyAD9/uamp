@@ -5,7 +5,10 @@ use iced_core::Length::{Fill, Shrink};
 use crate::{
     app::UampApp,
     button, col,
-    core::{msg::{ComMsg, ControlMsg, Msg}, extensions::duration_to_string},
+    core::{
+        extensions::duration_to_string,
+        msg::{ComMsg, ControlMsg, Msg},
+    },
     library::{Filter, SongId},
     player::TimeStamp,
     row, text,

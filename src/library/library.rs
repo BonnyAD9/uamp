@@ -37,7 +37,8 @@ gen_struct! {
         ; // Other fields
         #[serde(skip)]
         load_process: Option<LibraryLoad>,
-
+        /// invalid song
+        ghost: Song,
         ; // attributes for the auto field
         #[serde(skip)]
     }
@@ -54,6 +55,7 @@ impl Library {
             songs: Vec::new(),
             load_process: None,
             change: Cell::new(true),
+            ghost: Song::invalid(),
         }
     }
 
@@ -67,10 +69,16 @@ impl Library {
     }
 
     /// Filters songs in the library
-    pub fn filter(&self, filter: Filter) -> Box<dyn Iterator<Item = SongId>> {
+    pub fn filter<'a>(
+        &'a self,
+        filter: Filter,
+    ) -> Box<dyn Iterator<Item = SongId> + 'a> {
         match filter {
             Filter::All => Box::new(
-                (0..self.songs().len()).into_iter().map(|n| SongId(n)),
+                (0..self.songs().len())
+                    .into_iter()
+                    .map(|n| SongId(n))
+                    .filter(|s| !self[*s].is_deleted()),
             ),
         }
     }
@@ -148,7 +156,16 @@ impl Library {
 impl Index<SongId> for Library {
     type Output = Song;
     fn index(&self, index: SongId) -> &Self::Output {
-        &self.songs()[index.0]
+        if index.0 >= self.songs().len() {
+            &self.ghost
+        } else {
+            let r = &self.songs()[index.0];
+            if r.is_deleted() {
+                &self.ghost
+            } else {
+                r
+            }
+        }
     }
 }
 
@@ -214,6 +231,10 @@ impl Library {
         let mut paths = conf.search_paths().clone();
         let mut i = 0;
 
+        while songs.last().map(|s| s.is_deleted()).unwrap_or(false) {
+            songs.pop();
+        }
+
         while i < paths.len() {
             let dir = &paths[i];
             i += 1;
@@ -263,14 +284,28 @@ impl Library {
                     continue;
                 }
 
-                if songs.iter().any(|s| *s.path() == path) {
-                    continue;
+                let mut idx = None;
+
+                for i in 0..songs.len() {
+                    if songs[i].is_deleted() {
+                        // prefer the later indexes, user is more likely to
+                        // remove old song and songs at the end are more esily
+                        // removed
+                        idx = Some(i)
+                    }
+                    if *songs[i].path() == path {
+                        continue;
+                    }
                 }
 
                 new_songs = true;
 
                 if let Ok(song) = Song::from_path(path) {
-                    songs.push(song);
+                    if let Some(i) = idx {
+                        songs[i] = song;
+                    } else {
+                        songs.push(song);
+                    }
                 }
             }
         }

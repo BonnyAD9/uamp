@@ -20,6 +20,9 @@ pub struct Song {
     track: u32,
     /// The disc number in the album
     disc: u32,
+    /// True if the song is deleted, deleted songs should be skipped in all
+    /// all cases, and should be removed from all collections
+    deleted: bool,
 }
 
 impl Song {
@@ -33,7 +36,21 @@ impl Song {
             album: tag.album_title().unwrap_or("<unknown album>").to_owned(),
             track: tag.track().0.unwrap_or_default() as u32,
             disc: tag.disc().0.unwrap_or_default() as u32,
+            deleted: false,
         })
+    }
+
+    /// Constructs invalid "ghost" song
+    pub fn invalid() -> Self {
+        Self {
+            path: "<ghost>".into(),
+            title: "<ghost>".to_owned(),
+            artist: "<ghost>".to_owned(),
+            album: "<ghost>".to_owned(),
+            track: u32::MAX,
+            disc: u32::MAX,
+            deleted: true,
+        }
     }
 
     /// Gets the song title/name
@@ -64,5 +81,10 @@ impl Song {
     /// Gets the disc number of the song in the album
     pub fn disc(&self) -> u32 {
         self.disc
+    }
+
+    /// Returns true if the song is deleted
+    pub fn is_deleted(&self) -> bool {
+        self.deleted
     }
 }
