@@ -22,8 +22,12 @@
             "default": true
         },
         "library_path": {
-            "description": "Absolute path to the json file with the library",
-            "type": "string"
+            "description": "Absolute path to the json file with the library. If null, uamp will not save or load the library.",
+            "type": ["string", "null"]
+        },
+        "player_path": {
+            "description": "Absolute path to the json file with the playback info. If null, uamp will not save or load the playback.",
+            "type": ["string", "null"]
         },
         "audio_extensions": {
             "description": "File extensions that are checked as music",
