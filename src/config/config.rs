@@ -32,12 +32,12 @@ gen_struct! {
             }
         },
 
-        library_path: PathBuf { pub, pub } => () {
-            default_config_path().join("library.json")
+        library_path: Option<PathBuf> { pub, pub } => () {
+            Some(default_config_path().join("library.json"))
         },
 
-        player_path: PathBuf { pub, pub } => () {
-            default_config_path().join("player.json")
+        player_path: Option<PathBuf> { pub, pub } => () {
+            Some(default_config_path().join("player.json"))
         },
 
         audio_extensions: Vec<String> { pub, pub } => () {
@@ -84,7 +84,7 @@ gen_struct! {
         ; // fields that aren't serialized
 
         #[serde(skip_serializing, default = "default_config_path_json")]
-        config_path: PathBuf,
+        config_path: Option<PathBuf>,
 
         ; // attributes for the auto field
         #[serde(skip)]
@@ -130,7 +130,7 @@ impl Config {
                     "the config file {:?} doesn't exist, creating default",
                     path.as_ref()
                 );
-                let conf = Config::new(path.as_ref());
+                let conf = Config::new(Some(path.as_ref()));
                 if let Err(e) = conf.to_default_json() {
                     error!(
                         "failed to save config to file {:?}: {e}",
@@ -152,7 +152,9 @@ impl Config {
     /// - Fails to write to fi
     pub fn to_default_json(&self) -> Result<()> {
         if self.changed() {
-            self.to_json(&self.config_path)?;
+            if let Some(p) = &self.config_path {
+                self.to_json(p)?;
+            }
             self.change.set(false);
         }
         Ok(())
@@ -180,9 +182,9 @@ impl Config {
     }
 
     /// Creates new config with the given config path
-    pub fn new(config_path: impl Into<PathBuf>) -> Self {
+    pub fn new<P>(config_path: Option<P>) -> Self where P: Into<PathBuf> {
         Config {
-            config_path: config_path.into(),
+            config_path: config_path.map(|p| p.into()),
             search_paths: default_search_paths(),
             recursive_search: default_recursive_search(),
             library_path: default_library_path(),
@@ -204,7 +206,7 @@ impl Config {
 
 impl Default for Config {
     fn default() -> Self {
-        Config::new(default_config_path())
+        Config::new(Some(default_config_path()))
     }
 }
 
@@ -254,6 +256,6 @@ pub fn default_port() -> u16 {
 //===========================================================================//
 
 /// Gets the default path to json configuration, it is different when debugging
-fn default_config_path_json() -> PathBuf {
-    default_config_path().join("config.json")
+fn default_config_path_json() -> Option<PathBuf> {
+    Some(default_config_path().join("config.json"))
 }

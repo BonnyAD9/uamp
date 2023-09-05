@@ -9,3 +9,6 @@
 - Option to set how often the internal clock ticks
 - Add fast-forward and rewind (CLI, Hotkeys, GUI)
 - Add option for how much should fast-forward and rewind seek
+
+## Bugfixes
+- Mute would not work properly if you save muted player

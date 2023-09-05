@@ -183,7 +183,11 @@ impl Player {
         sender: Arc<UnboundedSender<Msg>>,
         conf: &Config,
     ) -> Self {
-        Self::from_json(sender, conf.player_path())
+        if let Some(p) = conf.player_path() {
+            Self::from_json(sender, p)
+        } else {
+            Self::new(sender)
+        }
     }
 
     /// Saves the playback state to the default json directory. It doesn't
@@ -196,7 +200,9 @@ impl Player {
         if !self.change.get() {
             return Ok(());
         }
-        self.to_json(conf.player_path())?;
+        if let Some(p) = conf.player_path() {
+            self.to_json(p)?;
+        }
         self.change.set(false);
         Ok(())
     }
@@ -214,30 +220,18 @@ impl Player {
             PlayerDataLoad::default()
         };
 
-        let mut sink = SinkWrapper::new();
-        if let Err(e) = sink.on_song_end(move || {
-            if let Err(e) = sender.send(Msg::Player(Message::SongEnd)) {
-                error!("Failed to inform song end: {e}");
-            }
-        }) {
-            error!("Failed to set the song end callback: {e}");
-        }
-        let volume = if let Err(e) = sink.set_volume(data.volume) {
-            error!("Failed to set the initial volume: {e}");
-            1. // 1 is the default volume of the player
-        } else {
-            data.volume
-        };
-
-        Self {
-            inner: sink,
+        let mut res = Self {
+            inner: SinkWrapper::new(),
             state: Playback::Stopped,
             playlist: data.playlist,
             current: data.current,
-            volume,
+            volume: data.volume,
             mute: data.mute,
             change: Cell::new(false),
-        }
+        };
+
+        res.init_inner(sender);
+        res
     }
 
     /// Sets the fade duration for play/pause
@@ -315,6 +309,50 @@ impl Player {
             },
         )?;
         Ok(())
+    }
+
+    /// Creates new player from the sender
+    fn new(sender: Arc<UnboundedSender<Msg>>) -> Self {
+        let mut res = Self {
+            playlist: [][..].into(),
+            current: None,
+            volume: default_volume(),
+            mute: false,
+            state: Playback::Stopped,
+            inner: SinkWrapper::new(),
+            change: Cell::new(true),
+        };
+
+        res.init_inner(sender);
+        res
+    }
+
+    fn song_end_handler(sender: &Arc<UnboundedSender<Msg>>) {
+        if let Err(e) = sender.send(Msg::Player(Message::SongEnd)) {
+            error!("Failed to inform song end: {e}");
+        }
+    }
+
+    fn init_inner(&mut self, sender: Arc<UnboundedSender<Msg>>) {
+        if let Err(e) = self.inner.on_song_end(move || Self::song_end_handler(&sender)) {
+            error!("Failed to set the song end callback: {e}");
+        }
+
+        (self.mute, self.volume) = if self.mute {
+            if let Err(e) = self.inner.set_volume(0.) {
+                error!("Failed to set the initial volume: {e}");
+                (false, 1.) // 1 is the default volume of the player
+            } else {
+                (true, self.volume)
+            }
+        } else {
+            if let Err(e) = self.inner.set_volume(self.volume) {
+                error!("Failed to set the initial volume: {e}");
+                (false, 1.) // 1 is the default volume of the player
+            } else {
+                (false, self.volume)
+            }
+        };
     }
 }
 

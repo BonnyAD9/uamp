@@ -59,7 +59,11 @@ impl Library {
 
     /// Loads library according to config, returns empty library on fail
     pub fn from_config(conf: &Config) -> Self {
-        Self::from_json(conf.library_path())
+        if let Some(p) = conf.library_path() {
+            Self::from_json(p)
+        } else {
+            Self::default()
+        }
     }
 
     /// Filters songs in the library
@@ -82,7 +86,9 @@ impl Library {
         if !self.change.get() {
             return Ok(());
         }
-        self.to_json(conf.library_path())?;
+        if let Some(p) = conf.library_path() {
+            self.to_json(p)?;
+        }
         self.change.set(false);
         Ok(())
     }

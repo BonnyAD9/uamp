@@ -6,7 +6,7 @@ use std::{
 };
 
 use app::UampApp;
-use config::{app_id, default_port};
+use config::{app_id, default_port, Config};
 use iced::{
     window::{self, PlatformSpecific},
     Application, Settings,
@@ -49,6 +49,8 @@ fn start() -> Result<()> {
     let args: Vec<_> = args().collect();
     let args = Args::parse(args.iter().map(|a| a.as_ref()))?;
 
+    let conf = args.make_config();
+
     for a in args.actions {
         match a {
             Action::Message(m) => {
@@ -60,9 +62,9 @@ fn start() -> Result<()> {
         }
     }
 
-    // should run has more power - in case both run and exit are true, run wins
+    // must run has more power - in case both run and exit are true, run wins
     if args.must_run || !args.should_exit {
-        if let Err(e) = UampApp::run(make_settings()) {
+        if let Err(e) = UampApp::run(make_settings(conf)) {
             error!("Uamp exited unexpectidly: {e}");
             Err(e)?;
         }
@@ -72,7 +74,7 @@ fn start() -> Result<()> {
 }
 
 /// Creates the settings for the uamp app
-fn make_settings() -> Settings<()> {
+fn make_settings(conf: Config) -> Settings<Config> {
     let icon = window::icon::from_rgba(
         include_bytes!("../assets/raw_img/icon_64.data")
             .to_owned()
@@ -95,6 +97,7 @@ fn make_settings() -> Settings<()> {
         },
         id: Some(app_id()),
         exit_on_close_request: false,
+        flags: conf,
         ..Default::default()
     }
 }

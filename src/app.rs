@@ -82,12 +82,12 @@ impl UampApp {
 
 impl Application for UampApp {
     type Executor = executor::Default;
-    type Flags = ();
+    type Flags = Config;
     type Message = Msg;
     type Theme = Theme;
 
-    fn new(_flags: Self::Flags) -> (Self, Command) {
-        (UampApp::default(), Command::none())
+    fn new(flags: Self::Flags) -> (Self, Command) {
+        (UampApp::new(flags), Command::none())
     }
 
     fn update(&mut self, message: Self::Message) -> Command {
@@ -211,10 +211,12 @@ impl Application for UampApp {
     }
 }
 
-impl Default for UampApp {
-    fn default() -> Self {
-        let mut conf = Config::from_default_json();
+//===========================================================================//
+//                                  Private                                  //
+//===========================================================================//
 
+impl UampApp {
+    fn new(mut conf: Config) -> Self {
         let mut lib = Library::from_config(&conf);
 
         let (sender, reciever) = mpsc::unbounded_channel::<Msg>();
@@ -254,14 +256,7 @@ impl Default for UampApp {
             last_save: Instant::now(),
         }
     }
-}
 
-
-//===========================================================================//
-//                                  Private                                  //
-//===========================================================================//
-
-impl UampApp {
     /// Starts the tcp server
     fn start_server() -> Result<TcpListener> {
         Ok(TcpListener::bind(format!("127.0.0.1:{}", default_port()))?)

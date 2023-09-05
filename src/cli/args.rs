@@ -1,4 +1,4 @@
-use crate::next;
+use crate::{next, config::Config};
 
 use super::{
     help::help, parsers::parse_control_message, Action, err::{Error, Result}
@@ -38,6 +38,10 @@ impl Args {
         }
 
         Ok(res)
+    }
+
+    pub fn make_config(&self) -> Config {
+        Config::from_default_json()
     }
 }
 
