@@ -61,6 +61,8 @@ gen_struct! {
             hm
         },
 
+        server_address: String { pub, pub } => () "127.0.0.1".to_owned(),
+
         ; // fields passed by value:
 
         recursive_search: bool { pub, pub } => () true,
@@ -80,6 +82,17 @@ gen_struct! {
         tick_length: f32 { pub, pub } => () 1.,
 
         seek_jump: f32 { pub, pub } => () 10.,
+
+        port: u16 { pub, pub } => () {
+            #[cfg(not(debug_assertions))]
+            {
+                8267
+            }
+            #[cfg(debug_assertions)]
+            {
+                33284
+            }
+        },
 
         ; // fields that aren't serialized
 
@@ -199,6 +212,8 @@ impl Config {
             gapless: default_gapless(),
             tick_length: default_tick_length(),
             seek_jump: default_seek_jump(),
+            port: default_port(),
+            server_address: default_server_address(),
             change: Cell::new(true),
         }
     }
@@ -236,18 +251,6 @@ pub fn default_config_path() -> PathBuf {
         }
     } else {
         PathBuf::from(".")
-    }
-}
-
-/// Gets the default port for the server, it is defferent when debugging
-pub fn default_port() -> u16 {
-    #[cfg(not(debug_assertions))]
-    {
-        8267
-    }
-    #[cfg(debug_assertions)]
-    {
-        33284
     }
 }
 

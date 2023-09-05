@@ -13,7 +13,7 @@ use log::{error, warn};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
-    config::{app_id, default_port, Config},
+    config::{app_id, Config},
     core::{
         messenger::{self, Messenger},
         msg::{ComMsg, ControlMsg, Msg},
@@ -239,6 +239,14 @@ impl UampApp {
             }
         };
 
+        let listener = match Self::start_server(&conf) {
+            Ok(l) => Some(l),
+            Err(e) => {
+                error!("Failed to start the server: {e}");
+                None
+            },
+        };
+
         UampApp {
             config: conf,
             library: lib,
@@ -251,14 +259,14 @@ impl UampApp {
             gui: GuiState::default(),
 
             hotkey_mgr,
-            listener: RefCell::new(Self::start_server().ok()),
+            listener: RefCell::new(listener),
 
             last_save: Instant::now(),
         }
     }
 
     /// Starts the tcp server
-    fn start_server() -> Result<TcpListener> {
-        Ok(TcpListener::bind(format!("127.0.0.1:{}", default_port()))?)
+    fn start_server(conf: &Config) -> Result<TcpListener> {
+        Ok(TcpListener::bind(format!("{}:{}", conf.server_address(), conf.port()))?)
     }
 }

@@ -6,7 +6,7 @@ use std::{
 };
 
 use app::UampApp;
-use config::{app_id, default_port, Config};
+use config::{app_id, Config};
 use iced::{
     window::{self, PlatformSpecific},
     Application, Settings,
@@ -54,7 +54,7 @@ fn start() -> Result<()> {
     for a in args.actions {
         match a {
             Action::Message(m) => {
-                let res = send_message(m);
+                let res = send_message(&conf, m);
                 if res.is_err() || !res.as_ref().unwrap().is_success() {
                     println!("Unexpected result: {res:?}");
                 }
@@ -119,8 +119,8 @@ fn start_logger() -> Result<()> {
 }
 
 /// Sends message to a existing uamp instance
-fn send_message(msg: msg::Message) -> Result<msg::Message> {
-    let stream = TcpStream::connect(format!("127.0.0.1:{}", default_port()))?;
+fn send_message(conf: &Config, msg: msg::Message) -> Result<msg::Message> {
+    let stream = TcpStream::connect(format!("{}:{}", conf.server_address(), conf.port()))?;
     if let Err(e) = stream.set_read_timeout(Some(Duration::from_secs(5))) {
         error!("failed to send message: {}", e);
     }
