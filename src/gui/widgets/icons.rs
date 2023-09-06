@@ -28,11 +28,11 @@ pub const PAUSE: SvgData =
 pub const STOP: SvgData =
     SvgData::new(include_bytes!("../../../assets/svg/stop.svg").as_slice());
 
-/// line and a triangle pointing to the right '||>', it is used as the next button
+/// triangle pointing to the right and a line '|>|', it is used as the next button
 pub const NEXT: SvgData =
     SvgData::new(include_bytes!("../../../assets/svg/next.svg").as_slice());
 
-/// triangle pointing to the left and line '<||', it is used as the previous button
+/// line and a triangle pointing to the left '|<|', it is used as the previous button
 pub const PREVIOUS: SvgData = SvgData::new(
     include_bytes!("../../../assets/svg/previous.svg").as_slice(),
 );
@@ -46,12 +46,12 @@ pub const NO_VOLUME: SvgData = SvgData::new(
     include_bytes!("../../../assets/svg/no_volume.svg").as_slice(),
 );
 
-/// Icon signifying fast forward, '||>|>'
+/// Icon signifying fast forward, '|>|>'
 pub const FAST_FORWARD: SvgData = SvgData::new(
     include_bytes!("../../../assets/svg/fast_forward.svg").as_slice(),
 );
 
-/// Icon signifying fast rewind, '<|<||'
+/// Icon signifying fast rewind, '<|<|'
 pub const REWIND: SvgData =
     SvgData::new(include_bytes!("../../../assets/svg/rewind.svg").as_slice());
 
