@@ -1,4 +1,4 @@
-use std::{cell::RefCell, net::TcpListener, sync::Arc, thread, time::Instant};
+use std::{cell::{RefCell, OnceCell, Cell}, net::TcpListener, sync::Arc, thread, time::{Instant, Duration}};
 
 use global_hotkey::GlobalHotKeyManager;
 use iced::{executor, window, Application};
@@ -16,7 +16,7 @@ use crate::{
     gui::{
         app::GuiState,
         theme::Theme,
-        wid::{Command, Element},
+        wid::{Command, Element, Subscription},
         GuiMessage,
     },
     library::Library,
@@ -36,7 +36,7 @@ pub struct UampApp {
     /// handler
     pub sender: Arc<UnboundedSender<Msg>>,
     /// Reciever of the async messages
-    pub reciever: RefCell<Option<UnboundedReceiver<Msg>>>,
+    pub reciever: Cell<Option<UnboundedReceiver<Msg>>>,
 
     /// The visual style/theme of the app
     pub theme: Theme,
@@ -46,7 +46,7 @@ pub struct UampApp {
     /// hotkey manager
     pub hotkey_mgr: Option<GlobalHotKeyManager>,
     /// The server listener
-    pub listener: RefCell<Option<TcpListener>>,
+    pub listener: Cell<Option<TcpListener>>,
 
     /// When was last save
     pub last_save: Instant,
@@ -130,81 +130,21 @@ impl Application for UampApp {
         self.theme.clone()
     }
 
-    fn subscription(&self) -> iced::Subscription<Self::Message> {
-        let tick_len = self.config.tick_length().0;
-        iced::Subscription::batch([
-            iced::subscription::unfold(
-                app_id() + " async msg",
-                self.reciever.take(),
-                |mut reciever| async {
-                    let msg = reciever.as_mut().unwrap().recv().await.unwrap();
-                    (msg, reciever)
-                },
-            ),
-            iced::subscription::unfold(
-                app_id() + " server",
-                self.listener.take(),
-                |listener| async {
-                    let listener = listener.unwrap();
-
-                    loop {
-                        let stream = listener.accept().unwrap();
-                        let mut msgr = Messenger::try_new(&stream.0).unwrap();
-
-                        let rec = msgr.recieve();
-
-                        let rec = match rec {
-                            Ok(m) => m,
-                            Err(e) => {
-                                warn!("Failed to recieve message: {e}");
-                                if let Err(e) = msgr.send(messenger::msg::Message::Error(
-                                    messenger::msg::Error::new(
-                                    messenger::msg::ErrorType::DeserializeFailed,
-                                    e.to_string(),
-                                )
-                                )) {
-                                    warn!("Failed to send error message: {e}");
-                                }
-                                continue;
-                            }
-                        };
-
-                        let (response, msg) =
-                            Self::message_event(rec, &stream.0);
-                        if let Some(r) = response {
-                            if let Err(e) = msgr.send(r) {
-                                warn!("Failed to send response {e}");
-                            }
-                        }
-
-                        if let Some(msg) = msg {
-                            break (msg, Some(listener));
-                        } else {
-                            continue;
-                        }
-                    }
-                },
-            ),
-            iced::subscription::events_with(|e, _| match e {
-                Event::Window(window::Event::CloseRequested) => {
-                    Some(Msg::Control(ControlMsg::Close))
-                }
-                _ => None,
-            }),
-            // ticks clock and ensures that errors don't accumulate
-            iced::subscription::unfold(
-                app_id() + " tick",
-                Instant::now(),
-                move |i| async move {
-                    let now = Instant::now();
-                    let dif = now - i;
-                    if dif < tick_len {
-                        thread::sleep(tick_len - dif);
-                    }
-                    (Msg::Gui(GuiMessage::Tick), i + tick_len)
-                },
-            ),
-        ])
+    fn subscription(&self) -> Subscription {
+        if self.config.enable_server() {
+            iced::subscription::Subscription::batch([
+                self.reciever_subscription(),
+                self.server_subscription(),
+                self.events_subscription(),
+                self.clock_subscription(self.config.tick_length().0)
+            ])
+        } else {
+            iced::subscription::Subscription::batch([
+                self.reciever_subscription(),
+                self.events_subscription(),
+                self.clock_subscription(self.config.tick_length().0)
+            ])
+        }
     }
 }
 
@@ -236,13 +176,18 @@ impl UampApp {
             }
         };
 
-        let listener = match Self::start_server(&conf) {
-            Ok(l) => Some(l),
-            Err(e) => {
-                error!("Failed to start the server: {e}");
-                None
+        let listener = if conf.enable_server() {
+            match Self::start_server(&conf) {
+                Ok(l) => Cell::new(Some(l)),
+                Err(e) => {
+                    error!("Failed to start the server: {e}");
+                    Cell::new(None)
+                }
             }
+        } else {
+            Cell::new(None)
         };
+
 
         UampApp {
             config: conf,
@@ -250,13 +195,13 @@ impl UampApp {
             player,
 
             sender,
-            reciever: RefCell::new(Some(reciever)),
+            reciever: Cell::new(Some(reciever)),
 
             theme: Theme::default(),
             gui: GuiState::default(),
 
             hotkey_mgr,
-            listener: RefCell::new(listener),
+            listener: listener,
 
             last_save: Instant::now(),
         }
@@ -269,5 +214,99 @@ impl UampApp {
             conf.server_address(),
             conf.port()
         ))?)
+    }
+
+    fn reciever_subscription(&self) -> Subscription {
+        let id = app_id() + " async msg";
+        if let Some(r) = self.reciever.take() {
+            iced::subscription::unfold(
+                id,
+                r,
+                |mut reciever| async {
+                    let msg = reciever.recv().await.unwrap();
+                    (msg, reciever)
+                },
+            )
+        } else {
+            self.fake_sub(id)
+        }
+    }
+
+    fn server_subscription(&self) -> Subscription {
+        let id = app_id() + " server";
+        if let Some(l) = self.listener.take() {
+            iced::subscription::unfold(
+                id,
+                l,
+                |listener| async {
+                    loop {
+                        let stream = listener.accept().unwrap();
+                        let mut msgr = Messenger::try_new(&stream.0).unwrap();
+
+                        let rec = msgr.recieve();
+
+                        let rec = match rec {
+                            Ok(m) => m,
+                            Err(e) => {
+                                warn!("Failed to recieve message: {e}");
+                                if let Err(e) = msgr.send(messenger::msg::Message::Error(
+                                    messenger::msg::Error::new(
+                                    messenger::msg::ErrorType::DeserializeFailed,
+                                    e.to_string(),
+                                )
+                                )) {
+                                    warn!("Failed to send error message: {e}");
+                                }
+                                continue;
+                            }
+                        };
+
+                        let (response, msg) =
+                            Self::message_event(rec, &stream.0);
+                        if let Some(r) = response {
+                            if let Err(e) = msgr.send(r) {
+                                warn!("Failed to send response {e}");
+                            }
+                        }
+
+                        if let Some(msg) = msg {
+                            break (msg, listener);
+                        } else {
+                            continue;
+                        }
+                    }
+                },
+            )
+        } else {
+            self.fake_sub(id)
+        }
+    }
+
+    fn events_subscription(&self) -> Subscription {
+        iced::subscription::events_with(|e, _| match e {
+            Event::Window(window::Event::CloseRequested) => {
+                Some(Msg::Control(ControlMsg::Close))
+            }
+            _ => None,
+        })
+    }
+
+    fn clock_subscription(&self, tick: Duration) -> Subscription {
+        iced::subscription::unfold(
+            app_id() + " tick",
+            Instant::now(),
+            move |i| async move {
+                let now = Instant::now();
+                let dif = now - i;
+                if dif < tick {
+                    thread::sleep(tick - dif);
+                }
+                (Msg::Gui(GuiMessage::Tick), i + tick)
+            },
+        )
+    }
+
+    fn fake_sub(&self, id: String) -> Subscription {
+        iced::subscription::unfold(id, (), |_| async { loop { println!("hi") } })
     }
 }

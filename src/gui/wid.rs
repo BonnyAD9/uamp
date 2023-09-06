@@ -15,6 +15,9 @@ pub type Renderer = iced::Renderer<Theme>;
 pub type Element<'a> = iced::Element<'a, Msg, Renderer>;
 /// Command used in uamp
 pub type Command = iced::Command<Msg>;
+/// Subscription use in uamp
+pub type Subscription = iced::Subscription<Msg>;
+
 /// WrapBox widget as used in uamp
 pub type WrapBox<'a> = widgets::wrap_box::WrapBox<'a, Msg, Renderer>;
 /// Button widget as used in uamp

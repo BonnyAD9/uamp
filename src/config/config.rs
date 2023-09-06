@@ -108,6 +108,8 @@ gen_struct! {
             Wrap(Duration::from_secs(60 * 60 * 24 * 3))
         },
 
+        enable_server: bool { pub, pub } => () true,
+
         ; // fields that aren't serialized
 
         #[serde(skip_serializing, default = "default_config_path_json")]
@@ -238,6 +240,7 @@ impl Config {
             port: default_port(),
             server_address: default_server_address(),
             delete_logs_after: default_delete_logs_after(),
+            enable_server: default_enable_server(),
             change: Cell::new(true),
         }
     }
