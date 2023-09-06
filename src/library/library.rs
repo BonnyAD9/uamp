@@ -106,7 +106,13 @@ impl Library {
     /// error.
     pub fn from_json(path: impl AsRef<Path>) -> Self {
         if let Ok(file) = File::open(path.as_ref()) {
-            serde_json::from_reader(file).unwrap_or_default()
+            match serde_json::from_reader(file) {
+                Ok(l) => l,
+                Err(e) => {
+                    error!("Failed to load library: {e}");
+                    Library::default()
+                }
+            }
         } else {
             info!("library file {:?} doesn't exist", path.as_ref());
             Self::default()

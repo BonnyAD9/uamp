@@ -222,7 +222,13 @@ impl Player {
         path: impl AsRef<Path>,
     ) -> Self {
         let data = if let Ok(file) = File::open(path.as_ref()) {
-            serde_json::from_reader(file).unwrap_or_default()
+            match serde_json::from_reader(file) {
+                Ok(p) => p,
+                Err(e) => {
+                    error!("Failed to load playback info: {e}");
+                    PlayerDataLoad::default()
+                }
+            }
         } else {
             info!("player file {:?} doesn't exist", path.as_ref());
             PlayerDataLoad::default()

@@ -168,7 +168,13 @@ impl Config {
             }
         };
 
-        serde_json::from_reader(file).unwrap_or_default()
+        match serde_json::from_reader(file) {
+            Ok(c) => c,
+            Err(e) => {
+                error!("Failed to load config file: {e}");
+                Config::default()
+            }
+        }
     }
 
     /// Saves the config to the default json file. Doesn't save if there was no
