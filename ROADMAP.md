@@ -5,7 +5,6 @@
 - no warnings
 - Don't block on large IO (library save)
 - Save window state
-- Option to disable server
 
 ## v1.0.0
 - Languages
