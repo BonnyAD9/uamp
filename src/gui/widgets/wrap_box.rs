@@ -834,7 +834,7 @@ where
         let ideal = item_pos - center_offset;
         let content_size = (self.item_height + self.spacing_y)
             * self.children.len() as f32
-            - self.item_height;
+            - self.spacing_y;
         ideal.max(0.).min(content_size - view_size.height)
     }
 
