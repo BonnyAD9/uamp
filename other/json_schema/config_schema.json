@@ -122,6 +122,10 @@
             "description": "If true, server will be enabled. If the server is disabled, you cannot control running instance from CLI",
             "type": "boolean",
             "default": true
+        },
+        "gui_state_path": {
+            "description": "Path to json file containing the gui state. When null, gui state is not saved or load.",
+            "type": ["string", "null"]
         }
     }
 }

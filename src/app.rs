@@ -17,7 +17,7 @@ use crate::{
         app::GuiState,
         theme::Theme,
         wid::{Command, Element, Subscription},
-        GuiMessage,
+        GuiMessage, WinMessage,
     },
     library::Library,
     player::Player,
@@ -68,6 +68,9 @@ impl UampApp {
         if let Err(e) = self.config.to_default_json() {
             error!("Failed to save config: {e}");
         }
+        if let Err(e) = self.gui.to_default_json(&self.config) {
+            error!("Failed to save gui state: {e}");
+        }
 
         self.last_save = Instant::now();
     }
@@ -75,12 +78,12 @@ impl UampApp {
 
 impl Application for UampApp {
     type Executor = executor::Default;
-    type Flags = Config;
+    type Flags = (Config, GuiState);
     type Message = Msg;
     type Theme = Theme;
 
     fn new(flags: Self::Flags) -> (Self, Command) {
-        (UampApp::new(flags), Command::none())
+        (UampApp::new(flags.0, flags.1), Command::none())
     }
 
     fn update(&mut self, message: Self::Message) -> Command {
@@ -99,6 +102,7 @@ impl Application for UampApp {
             Msg::Player(msg) => self.player_event(msg),
             Msg::Library(msg) => self.library_event(msg),
             Msg::Delegate(d) => d.update(self),
+            Msg::WindowChange(msg) => self.win_event(msg),
         };
 
         let com = match com {
@@ -153,7 +157,7 @@ impl Application for UampApp {
 //===========================================================================//
 
 impl UampApp {
-    fn new(mut conf: Config) -> Self {
+    fn new(mut conf: Config, gui: GuiState) -> Self {
         let mut lib = Library::from_config(&conf);
 
         let (sender, reciever) = mpsc::unbounded_channel::<Msg>();
@@ -198,10 +202,10 @@ impl UampApp {
             reciever: Cell::new(Some(reciever)),
 
             theme: Theme::default(),
-            gui: GuiState::default(),
+            gui,
 
             hotkey_mgr,
-            listener: listener,
+            listener,
 
             last_save: Instant::now(),
         }
@@ -286,6 +290,12 @@ impl UampApp {
         iced::subscription::events_with(|e, _| match e {
             Event::Window(window::Event::CloseRequested) => {
                 Some(Msg::Control(ControlMsg::Close))
+            },
+            Event::Window(window::Event::Moved { x, y }) => {
+                Some(Msg::WindowChange(WinMessage::Position(x, y)))
+            }
+            Event::Window(window::Event::Resized { width, height }) => {
+                Some(Msg::WindowChange(WinMessage::Size(width, height)))
             }
             _ => None,
         })

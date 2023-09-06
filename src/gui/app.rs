@@ -1,6 +1,8 @@
-use std::{sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration, default, cell::Cell, path::Path, fs::{File, create_dir_all}};
 
 use iced_core::Length::{Fill, Shrink};
+use log::{error, info};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     app::UampApp,
@@ -8,10 +10,11 @@ use crate::{
     core::{
         extensions::duration_to_string,
         msg::{ComMsg, ControlMsg, Msg},
+        Result
     },
     library::{Filter, SongId},
     player::TimeStamp,
-    row, text,
+    row, text, gen_struct, config::Config,
 };
 
 use super::{
@@ -22,24 +25,41 @@ use super::{
         self, button, center, center_y, nothing, slider, space, svg, wrap_box,
         Command, Element, WrapBoxState,
     },
-    widgets::icons,
+    widgets::icons, WinMessage,
 };
 
-/// The state of the gui
-pub struct GuiState {
-    /// The current page
-    page: MainPage,
-    /// States of WrapBoxes
-    wb_states: Vec<WrapBoxState>,
+gen_struct! {
+    /// The state of the gui
+    #[derive(Serialize, Deserialize)]
+    pub GuiState {
+        // fields passed by reference
+        ; // fields passed by value
+        window_x: i32 { pub, pri } => () i32::MAX,
+        window_y: i32 { pub, pri } => () i32::MAX,
+        window_width: u32 { pub, pri } => () u32::MAX,
+        window_height: u32 { pub, pri } => () u32::MAX,
+        ; // other fields
+        /// The current page
+        #[serde(skip)]
+        page: MainPage,
+        /// States of WrapBoxes
+        #[serde(skip, default = "default_states")]
+        wb_states: Vec<WrapBoxState>,
 
-    song_timestamp: Option<TimeStamp>,
-    seek_drag: Option<Duration>,
+        #[serde(skip)]
+        song_timestamp: Option<TimeStamp>,
+        #[serde(skip)]
+        seek_drag: Option<Duration>,
+        ; // auto gen attribute
+        #[serde(skip)]
+    }
 }
 
 /// Available main menu pages
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub enum MainPage {
     /// All songs page
+    #[default]
     Songs,
     /// Current playlist page
     Playlist,
@@ -50,9 +70,36 @@ impl GuiState {
     pub fn new() -> Self {
         GuiState {
             page: MainPage::Songs,
-            wb_states: vec![WrapBoxState::default(); WB_STATE_COUNT],
+            wb_states: default_states(),
             song_timestamp: None,
             seek_drag: None,
+            window_x: default_window_x(),
+            window_y: default_window_y(),
+            window_width: default_window_width(),
+            window_height: default_window_height(),
+            change: Cell::new(false),
+        }
+    }
+
+    /// Saves the gui state to the default location. It is not saved if there
+    /// was no change.
+    pub fn to_default_json(&self, conf: &Config) -> Result<()> {
+        if !self.change.get() {
+            return Ok(());
+        }
+        if let Some(p) = conf.gui_state_path() {
+            self.to_json(p)?;
+        }
+        self.change.set(false);
+        Ok(())
+    }
+
+    /// Loads gui state from default json. If it fails, creates default.
+    pub fn from_default_json(conf: &Config) -> Self {
+        if let Some(p) = conf.gui_state_path() {
+            Self::from_json(p)
+        } else {
+            Self::default()
         }
     }
 }
@@ -91,6 +138,21 @@ impl UampApp {
         ComMsg::Command(Command::none())
     }
 
+    pub fn win_event(&mut self, message: WinMessage) -> ComMsg {
+        match message {
+            WinMessage::Position(x, y) => {
+                self.gui.window_x_set(x);
+                self.gui.window_y_set(y);
+            },
+            WinMessage::Size(w, h) => {
+                self.gui.window_width_set(w);
+                self.gui.window_height_set(h);
+            },
+        }
+
+        ComMsg::none()
+    }
+
     /// Generates the gui
     pub fn gui(&self) -> Element {
         col![
@@ -100,6 +162,38 @@ impl UampApp {
             //event_capture(|e, m, c| self.events(e, m, c))
         ]
         .into()
+    }
+}
+
+//===========================================================================//
+//                                  Private                                  //
+//===========================================================================//
+
+impl GuiState {
+    /// Loads gui state from the given path, if it fails creates default.
+    fn from_json<P>(path: P) -> Self where P: AsRef<Path> {
+        if let Ok(file) = File::open(path.as_ref()) {
+            match serde_json::from_reader(file) {
+                Ok(g) => g,
+                Err(e) => {
+                    error!("Failed to load gui state: {e}");
+                    GuiState::default()
+                }
+            }
+        } else {
+            info!("Gui file {:?} doesn't exist", path.as_ref());
+            Self::default()
+        }
+    }
+
+    /// Saves the gui state to the given file.
+    fn to_json<P>(&self, path: P) -> Result<()> where P: AsRef<Path> {
+        if let Some(par) = path.as_ref().parent() {
+            create_dir_all(par)?;
+        }
+
+        serde_json::to_writer(File::create(path)?, self)?;
+        Ok(())
     }
 }
 
@@ -337,4 +431,8 @@ impl UampApp {
         ]
         .into()
     }
+}
+
+fn default_states() -> Vec<WrapBoxState> {
+    vec![WrapBoxState::default(); WB_STATE_COUNT]
 }

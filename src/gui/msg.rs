@@ -14,3 +14,12 @@ pub enum Message {
     /// Ticks every set amount of time (used for example for the seek slider)
     Tick,
 }
+
+/// Window has changed its parameters
+#[derive(Clone, Copy, Debug)]
+pub enum WinMessage {
+    /// The window has moved
+    Position(i32, i32),
+    /// The window has resized
+    Size(u32, u32),
+}

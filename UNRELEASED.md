@@ -2,6 +2,7 @@
 
 ## New features
 - Add option to disable server
+- Uamp now remembers its window position and size
 
 ## Bugfixes
 - Use proper types: fast-forward, rewind, and seek_jump now use Duration
