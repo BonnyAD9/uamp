@@ -597,6 +597,10 @@ where
             }
         }
 
+        if state.pressed != ScrollbarInteraction::None {
+            state.scroll_to = None;
+        }
+
         state.offset_y = state
             .offset_y
             .min(content_size.height - view_size.height)
@@ -1307,11 +1311,15 @@ impl Default for State {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 enum ScrollbarInteraction {
+    // nothing pressed
     None,
+    // The top button is pressed
     Up,
+    // The bottom button is pressed
     Down,
+    // The thumb is pressed
     Thumb {
         /// Last relative offset of the scrollbar
         relative: f32,
