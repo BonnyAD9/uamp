@@ -88,7 +88,9 @@ gen_struct! {
             Wrap(Duration::from_secs(1))
         },
 
-        seek_jump: f32 { pub, pub } => () 10.,
+        seek_jump: Wrap<Duration> { pub, pub } => () {
+            Wrap(Duration::from_secs(10))
+        },
 
         port: u16 { pub, pub } => () {
             #[cfg(not(debug_assertions))]

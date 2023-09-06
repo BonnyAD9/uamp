@@ -12,7 +12,7 @@ use crate::{
     player::PlayerMessage,
 };
 
-use super::Error;
+use super::{Error, extensions::duration_to_string};
 
 /// Event messages in uamp
 #[allow(missing_debug_implementations)]
@@ -70,9 +70,9 @@ pub enum ControlMsg {
     /// Seek to the given timesamp
     SeekTo(Duration),
     /// Seeks forward
-    FastForward(Option<f32>),
+    FastForward(Option<Duration>),
     /// Seeks backward
-    Rewind(Option<f32>),
+    Rewind(Option<Duration>),
 }
 
 /// Message returned after proccessing message, either starts a iced command,
@@ -175,9 +175,7 @@ impl UampApp {
             ControlMsg::FastForward(d) => {
                 if let Some(ts) = self.player.timestamp() {
                     let pos = ts.current
-                        + Duration::from_secs_f32(
-                            d.unwrap_or(self.config.seek_jump()),
-                        );
+                        + d.unwrap_or(self.config.seek_jump().0);
                     let pos = pos.min(ts.total);
                     if ts.total.checked_sub(pos).unwrap_or_default()
                         < Duration::from_millis(100)
@@ -194,9 +192,7 @@ impl UampApp {
                 if let Some(ts) = self.player.timestamp() {
                     let pos = ts
                         .current
-                        .checked_sub(Duration::from_secs_f32(
-                            d.unwrap_or(self.config.seek_jump()),
-                        ))
+                        .checked_sub(d.unwrap_or(self.config.seek_jump().0))
                         .unwrap_or(Duration::ZERO);
                     self.player.seek_to(pos);
                     return ComMsg::tick();
@@ -230,9 +226,9 @@ pub fn get_control_string(m: &ControlMsg) -> String {
         ControlMsg::LoadNewSongs => "load-songs".to_owned(),
         ControlMsg::SeekTo(d) => format!("st={}", d.as_secs_f32()),
         ControlMsg::FastForward(None) => "ff".to_owned(),
-        ControlMsg::FastForward(Some(d)) => format!("ff={}", d),
+        ControlMsg::FastForward(Some(d)) => format!("ff={}", duration_to_string(*d, false)),
         ControlMsg::Rewind(None) => "rw".to_owned(),
-        ControlMsg::Rewind(Some(d)) => format!("rw={}", d),
+        ControlMsg::Rewind(Some(d)) => format!("rw={}", duration_to_string(*d, false)),
     }
 }
 

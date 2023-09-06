@@ -98,20 +98,25 @@
         },
         "seek_jump": {
             "description": "Determines how much should be seeked with fast-forward/rewind",
-            "type": "number"
+            "type": "string",
+            "default": "10",
+            "pattern": "^([0-9]*d)?([0-9]*:)?([0-9]*:)?([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])$"
         },
         "server_address": {
             "description": "Address of the server to register and use.",
-            "type": "string"
+            "type": "string",
+            "default": "127.0.0.1"
         },
         "port": {
             "description": "port number to use",
-            "type": "integer"
+            "type": "integer",
+            "default": 8267
         },
         "delete_logs_after": {
             "description": "Logs are deleted after this time",
             "type": "string",
-            "pattern": "^([0-9]*d)?([0-9]*:)?([0-9]*:)?([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])$"
+            "pattern": "^([0-9]*d)?([0-9]*:)?([0-9]*:)?([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])$",
+            "default": "3d"
         }
     }
 }
