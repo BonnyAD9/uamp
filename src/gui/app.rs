@@ -435,8 +435,37 @@ impl UampApp {
     }
 
     fn volume_menu(&self) -> Element {
-        // width 300
-        space(FillPortion(1), Fill).into()
+        grid![
+            Relative(1.), Fixed(40.), Fixed(30.), Fixed(160.);
+            Fixed(40.), Relative(1.);
+            GridItem::new(center_y(self.mute_button())).column(1).row(1).padding([0, 10, 0, 0]),
+            GridItem::new(center_y(text!("{:.0}", self.player.volume() * 100.)).width(30)).column(2).row(1),
+            GridItem::new(
+                center_y(
+                    slider(0.0..=1., self.player.volume(), |v| {
+                        Msg::Control(ControlMsg::SetVolume(v))
+                    })
+                    .step(0.001),
+                )
+                .width(150)
+                .padding([0, 5])
+            ).column(3).row(1)
+            .padding([0, 10, 0, 0])
+        ].into()
+    }
+
+    fn mute_button(&self) -> Element {
+        svg_button(if self.player.mute() {
+            icons::NO_VOLUME
+        } else {
+            icons::VOLUME
+        })
+        .padding(5)
+        .style(SvgButton::TransparentCircle(30.))
+        .width(30)
+        .height(30)
+        .on_click(Msg::Control(ControlMsg::Mute(None)))
+        .into()
     }
     /* /// Creates the menu
     fn menu(&self) -> Element {
@@ -535,141 +564,6 @@ impl UampApp {
             .style(button_style)
             .into()
     }
-
-    // play menu
-
-    /// Creates the play menu
-    fn play_menu(&self) -> Element {
-        col![
-            row![
-                button(svg(icons::REWIND))
-                    .height(30)
-                    .width(30)
-                    .on_press(Msg::Control(ControlMsg::Rewind(None))),
-                button(svg(icons::PREVIOUS))
-                    .height(30)
-                    .width(30)
-                    .on_press(Msg::Control(ControlMsg::PrevSong(1))),
-                self.play_pause_button(),
-                button(svg(icons::NEXT))
-                    .height(30)
-                    .width(30)
-                    .on_press(Msg::Control(ControlMsg::NextSong(1))),
-                button(svg(icons::FAST_FORWARD))
-                    .height(30)
-                    .width(30)
-                    .on_press(Msg::Control(ControlMsg::FastForward(None))),
-                self.current_song(),
-                self.volume(),
-            ]
-            .height(30),
-            self.seek_slider(),
-        ]
-        .into()
-    }
-
-    /// Creates the play/pause button
-    fn play_pause_button(&self) -> Element {
-        let icon = if self.player.is_playing() {
-            icons::PAUSE
-        } else {
-            icons::PLAY
-        };
-
-        button(svg(icon))
-            .height(30)
-            .width(30)
-            .on_press(Msg::Control(ControlMsg::PlayPause(None)))
-            .into()
-    }
-
-    /// Shows the current song
-    fn current_song(&self) -> Element {
-        button(if let Some(s) = self.player.now_playing() {
-            let s = &self.library[s];
-            text!("{} - {}", s.artist(), s.title()).width(Fill).into()
-        } else {
-            <iced::widget::Space as Into<Element>>::into(nothing())
-        })
-        .height(30)
-        .width(Fill)
-        .on_press(Msg::Gui(Message::SetPage(MainPage::Playlist)))
-        .into()
-    }
-
-    /// Creates the volume controls
-    fn volume(&self) -> Element {
-        row![
-            self.mute_button(),
-            center(text!("{:.0}", self.player.volume() * 100.)).width(30),
-            center_y(
-                slider(0.0..=1., self.player.volume(), |v| {
-                    Msg::Control(ControlMsg::SetVolume(v))
-                })
-                .step(0.001),
-            )
-            .width(150)
-            .padding([0, 5])
-        ]
-        .into()
-    }
-
-    /// Creates the mute button
-    fn mute_button(&self) -> Element {
-        button(svg(if self.player.mute() {
-            icons::NO_VOLUME
-        } else {
-            icons::VOLUME
-        }))
-        .width(30)
-        .height(30)
-        .on_press(Msg::Control(ControlMsg::Mute(None)))
-        .into()
-    }
-
-    /// Creates seek slider that updates with tick
-    fn seek_slider(&self) -> Element {
-        let mut ts = match self.gui.song_timestamp {
-            Some(ts) => ts,
-            None => {
-                return row![
-                    center(text!("--:--")).width(50).height(30),
-                    center_y(slider(0.0..=1., 0., |_| {
-                        Msg::Gui(Message::SeekSliderMove(Duration::ZERO))
-                    }))
-                    .width(Fill)
-                    .height(30),
-                    center(text!("--:--")).width(50).height(30),
-                ]
-                .into()
-            }
-        };
-
-        if let Some(d) = self.gui.seek_drag {
-            ts.current = d;
-        }
-        row![
-            center(text!("{}", duration_to_string(ts.current, true)))
-                .width(50)
-                .height(30),
-            center_y(
-                slider(
-                    0.0..=ts.total.as_secs_f32(),
-                    ts.current.as_secs_f32(),
-                    |c| Msg::Gui(Message::SeekSliderMove(
-                        Duration::from_secs_f32(c)
-                    )),
-                )
-                .on_release(Msg::Gui(Message::SeekSliderEnd))
-                .step(0.1)
-            )
-            .width(Fill)
-            .height(30),
-            center(text!("{}", duration_to_string(ts.total, true)))
-                .width(50)
-                .height(30),
-        ]
-        .into()
     }*/
 }
 

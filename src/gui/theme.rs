@@ -847,6 +847,7 @@ impl svg_button::StyleSheet for Theme {
             },
             SvgButton::TransparentCircle(_) => svg_button::Appearance {
                 svg_color: Some(CONTRAST),
+                background: Background::Color(Color::TRANSPARENT),
                 ..self.active(style)
             },
             _ => base,
@@ -871,6 +872,7 @@ impl svg_button::StyleSheet for Theme {
             },
             SvgButton::TransparentCircle(_) => svg_button::Appearance {
                 svg_color: Some(BRIGHT_CONTRAST),
+                background: Background::Color(Color::TRANSPARENT),
                 ..base
             },
             _ => base,
