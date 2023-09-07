@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 use iced_core::BorderRadius;
 
 /// Represents the four sides of border
@@ -27,6 +29,19 @@ impl<T> Sides<T> {
 
     pub fn bottom_left(&self) -> &T {
         &self.left
+    }
+}
+
+impl<A, O> Sides<A>
+where
+    A: Add<Output = O> + Copy,
+{
+    pub fn tb_sum(&self) -> O {
+        self.top + self.bottom
+    }
+
+    pub fn lr_sum(&self) -> O {
+        self.left + self.right
     }
 }
 

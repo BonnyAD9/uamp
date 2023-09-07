@@ -26,10 +26,10 @@ use crate::{
         msg::{ComMsg, ControlMsg, Msg},
         Result,
     },
-    gen_struct,
+    gen_struct, grid,
     library::{Filter, SongId},
     player::TimeStamp,
-    row, text, grid,
+    row, text,
 };
 
 use super::{
@@ -37,11 +37,14 @@ use super::{
     msg::Message,
     theme::{Border, Button, Svg, SvgButton, Text},
     wid::{
-        self, border, button, center, center_x, center_y, container, nothing,
-        slider, space, svg, svg_button, text, wrap_box, Command, Element,
-        WrapBoxState, GridItem,
+        self, border, button, center, center_x, center_y, container,
+        line_text, nothing, slider, space, svg, svg_button, text, wrap_box,
+        Command, Element, GridItem, WrapBoxState,
     },
-    widgets::{icons, grid::SpanLen::{Fixed, Relative}},
+    widgets::{
+        grid::SpanLen::{Fixed, Relative},
+        icons,
+    },
     WinMessage,
 };
 
@@ -219,14 +222,41 @@ impl UampApp {
         container(nothing()).height(Fill).width(Fill).into()
     }
 
-
     fn bottom_menu(&self) -> Element {
+        let song = self.player.now_playing().map(|s| &self.library[s]);
+        let title = song.map(|s| s.title()).unwrap_or("-");
+        let artist = song.map(|s| s.artist()).unwrap_or("-");
+
         border(grid![
             Relative(2.), Relative(1.), Fixed(210.), Relative(1.), Relative(2.);
-            ;
-            GridItem::new(self.song_title()).column(0..2),
-            GridItem::new(self.play_menu()).column(1..4),
-            GridItem::new(self.volume_menu()).column(4)
+            Fixed(40.), Relative(1.);
+            GridItem::new(
+                line_text(title)
+                .size(20)
+                .height(25)
+                .font(Font {
+                    weight: Weight::Medium,
+                    ..Font::default()
+                })
+                .elipsis("...")
+                .width(Fill)
+                .height(Fill),
+            ).column(0..2).row(0..2).padding([15, 0, 0, 15]),
+            GridItem::new(
+                line_text(artist)
+                    .elipsis("...")
+                    .width(Fill)
+                    .height(Fill)
+                    .size(14)
+                    .style(Text::Gray)
+                    .height(20)
+                    .font(Font {
+                        weight: Weight::Medium,
+                        ..Font::default()
+                    }),
+            ).row(1).padding([0, 0, 0, 20]),
+            GridItem::new(self.play_menu()).column(1..4).row(0..2),
+            GridItem::new(self.volume_menu()).column(4).row(0..2),
         ])
         .height(80)
         .width(Fill)
@@ -238,7 +268,6 @@ impl UampApp {
         // width 300
         let now = self.player.now_playing().map(|s| &self.library[s]);
         let title = now.map(|s| s.title()).unwrap_or("-");
-        //let album = now.map(|s| s.album()).unwrap_or("-");
         let artist = now.map(|s| s.artist()).unwrap_or("-");
 
         col![

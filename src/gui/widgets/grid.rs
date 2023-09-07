@@ -1,4 +1,4 @@
-use std::ops::{Add, RangeInclusive, Sub, Range};
+use std::ops::{Add, Range, RangeInclusive, Sub};
 
 use iced_core::{
     event::Status,
@@ -9,6 +9,8 @@ use iced_core::{
     Element, Length, Size, Vector, Widget,
 };
 use itertools::Itertools;
+
+use super::sides::Sides;
 
 /// Container that can separate its contents into grid and allows spanning
 pub struct Grid<'a, Message, Renderer>
@@ -37,7 +39,6 @@ where
         I1: Iterator<Item = SpanLen>,
         I2: Iterator<Item = SpanLen>,
     {
-
         let mut columns = vec![SpanSum::new(0., 0.)];
         let mut rows = vec![SpanSum::new(0., 0.)];
 
@@ -129,13 +130,16 @@ where
         for i in &self.items {
             let w = (self.columns[i.columns.end]
                 - self.columns[i.columns.start])
-            .with_unit(c_point);
+                .with_unit(c_point)
+                - i.padding.lr_sum();
 
-            let h = (self.rows[i.rows.end] - self.columns[i.rows.start])
-                .with_unit(r_point);
+            let h = (self.rows[i.rows.end] - self.rows[i.rows.start])
+                .with_unit(r_point)
+                - i.padding.tb_sum();
 
-            let x = self.columns[i.columns.start].with_unit(c_point);
-            let y = self.rows[i.rows.start].with_unit(c_point);
+            let x = self.columns[i.columns.start].with_unit(c_point)
+                + i.padding.left;
+            let y = self.rows[i.rows.start].with_unit(c_point) + i.padding.top;
 
             let child_limits = Limits::new(Size::ZERO, Size::new(w, h));
             let child = i.child.as_widget().layout(renderer, &child_limits);
@@ -271,6 +275,7 @@ where
 {
     columns: Range<usize>,
     rows: Range<usize>,
+    padding: Sides<f32>,
     child: Element<'a, Message, Renderer>,
 }
 
@@ -285,6 +290,7 @@ where
         Self {
             columns: 0..1,
             rows: 0..1,
+            padding: 0.into(),
             child: item.into(),
         }
     }
@@ -304,6 +310,14 @@ where
         self.rows = row.into().0;
         self
     }
+
+    pub fn padding<P>(mut self, padding: P) -> Self
+    where
+        P: Into<Sides<f32>>,
+    {
+        self.padding = padding.into();
+        self
+    }
 }
 
 impl<'a, Message, Renderer, I> From<I> for GridItem<'a, Message, Renderer>
@@ -320,7 +334,7 @@ pub struct GridPosition(Range<usize>);
 
 impl From<usize> for GridPosition {
     fn from(value: usize) -> Self {
-        GridPosition(value..value)
+        GridPosition(value..value + 1)
     }
 }
 

@@ -13,7 +13,7 @@ use iced_core::{
     Background, Color, Degrees, Gradient, Padding, Vector,
 };
 
-use super::widgets::{border, sides::Sides, svg_button, wrap_box};
+use super::widgets::{border, line_text, sides::Sides, svg_button, wrap_box};
 
 /// Creates const color from hex
 ///
@@ -878,4 +878,16 @@ impl svg_button::StyleSheet for Theme {
     }
 
     // fn disabled(&self, style: &Self::Style) -> button::Appearance;
+}
+
+impl line_text::StyleSheet for Theme {
+    type Style = Text;
+
+    fn foreground(&self, style: &Self::Style) -> Option<Color> {
+        match style {
+            Text::Default => Some(FOREGROUND),
+            Text::Contrast => Some(CONTRAST),
+            Text::Gray => Some(const_color!(0x777777)),
+        }
+    }
 }

@@ -29,6 +29,8 @@ pub type Button<'a> = widget::Button<'a, Msg, Renderer>;
 pub type SvgButton = widgets::svg_button::SvgButton<Msg, Renderer>;
 /// Text widget as used in uamp
 pub type Text<'a> = widget::Text<'a, Renderer>;
+/// Text widget as used in uamp
+pub type LineText<'a> = widgets::line_text::LineText<'a, Renderer>;
 /// Column widget as used in uamp
 pub type Column<'a> = widget::Column<'a, Msg, Renderer>;
 /// Row widget as used in uamp
@@ -250,7 +252,7 @@ pub fn svg_button(handle: impl Into<widget::svg::Handle>) -> SvgButton {
 
 #[macro_export]
 macro_rules! grid {
-    ($($col:expr),* $(,)? ; $($row:expr),* ; $($elem:expr),+ ) => {
+    ($($col:expr),* $(,)? ; $($row:expr),* ; $($elem:expr),+ $(,)?) => {
         $crate::gui::wid::grid(
             [$($col),*].iter().map(|i| *i),
             [$($row),*].iter().map(|i| *i),
@@ -269,4 +271,32 @@ where
     I2: Iterator<Item = SpanLen>,
 {
     Grid::new(columns, rows, items)
+}
+
+/// Creates text widget with the given string content
+pub fn line_text<'a>(content: impl Into<Cow<'a, str>>) -> LineText<'a> {
+    LineText::new(content)
+}
+
+/// Creates text widgets
+///
+/// # Examples
+/// ```
+/// // Empty text
+/// text!();
+///
+/// // formatted text
+/// text!("hello {}", name);
+/// ```
+#[macro_export]
+macro_rules! line_text {
+    () => {
+        crate::gui::wid::line_text("")
+    };
+    ($s:expr) => {
+        $crate::gui::wid::line_text($s)
+    };
+    ($fmt:literal, $($args:expr),+) => {
+        $crate::gui::wid::line_text(format!($fmt, $($args),+))
+    };
 }

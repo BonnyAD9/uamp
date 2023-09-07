@@ -5,6 +5,7 @@ pub mod grid;
 ///!
 ///! I also contains module with svg icons.
 pub mod icons;
+pub mod line_text;
 pub mod sides;
 pub mod svg_button;
 pub mod wrap_box;
