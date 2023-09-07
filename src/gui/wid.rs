@@ -1,11 +1,14 @@
 use std::{borrow::Cow, cell::Cell, ops::RangeInclusive};
 
 use iced::widget;
-use iced_core::Length::{self, FillPortion, Shrink};
+use iced_core::Length::{self, Fill, FillPortion, Shrink};
 
 use crate::core::msg::Msg;
 
-use super::{theme::Theme, widgets};
+use super::{
+    theme::Theme,
+    widgets::{self, grid::SpanLen},
+};
 
 // collection of less generic types
 
@@ -22,6 +25,8 @@ pub type Subscription = iced::Subscription<Msg>;
 pub type WrapBox<'a> = widgets::wrap_box::WrapBox<'a, Msg, Renderer>;
 /// Button widget as used in uamp
 pub type Button<'a> = widget::Button<'a, Msg, Renderer>;
+/// Button widget as used in uamp
+pub type SvgButton = widgets::svg_button::SvgButton<Msg, Renderer>;
 /// Text widget as used in uamp
 pub type Text<'a> = widget::Text<'a, Renderer>;
 /// Column widget as used in uamp
@@ -38,6 +43,12 @@ pub type Scrollable<'a> = widget::Scrollable<'a, Msg, Renderer>;
 pub type Slider<'a, T> = widget::Slider<'a, T, Msg, Renderer>;
 /// Container widget as used in uamp
 pub type Container<'a> = widget::Container<'a, Msg, Renderer>;
+/// Border widget used by uamp
+pub type Border<'a> = widgets::border::Border<'a, Msg, Renderer>;
+/// Grid
+pub type Grid<'a> = widgets::grid::Grid<'a, Msg, Renderer>;
+/// Item in a grid
+pub type GridItem<'a> = widgets::grid::GridItem<'a, Msg, Renderer>;
 
 pub type WrapBoxState = Cell<widgets::wrap_box::State>;
 
@@ -186,7 +197,7 @@ pub fn space(width: impl Into<Length>, height: impl Into<Length>) -> Space {
 
 /// Creates widget that shrinks
 pub fn nothing() -> Space {
-    space(Shrink, Shrink)
+    space(Fill, Fill)
 }
 
 /// Creates slider widget
@@ -224,4 +235,38 @@ pub fn center_y<'a>(child: impl Into<Element<'a>>) -> Column<'a> {
         child.into(),
         space(Shrink, FillPortion(1)),
     ]
+}
+
+pub fn border<'a, E>(child: E) -> Border<'a>
+where
+    E: Into<Element<'a>>,
+{
+    Border::new(child.into())
+}
+
+pub fn svg_button(handle: impl Into<widget::svg::Handle>) -> SvgButton {
+    SvgButton::new(handle.into())
+}
+
+#[macro_export]
+macro_rules! grid {
+    ($($col:expr),* $(,)? ; $($row:expr),* ; $($elem:expr),+ ) => {
+        $crate::gui::wid::grid(
+            [$($col),*].iter().map(|i| *i),
+            [$($row),*].iter().map(|i| *i),
+            vec![$($crate::gui::wid::GridItem::from($elem)),*]
+        )
+    };
+}
+
+pub fn grid<'a, I1, I2>(
+    columns: I1,
+    rows: I2,
+    items: Vec<GridItem<'a>>,
+) -> Grid<'a>
+where
+    I1: Iterator<Item = SpanLen>,
+    I2: Iterator<Item = SpanLen>,
+{
+    Grid::new(columns, rows, items)
 }

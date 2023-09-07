@@ -12,7 +12,7 @@ use crate::{
     player::PlayerMessage,
 };
 
-use super::{Error, extensions::duration_to_string};
+use super::{extensions::duration_to_string, Error};
 
 /// Event messages in uamp
 #[allow(missing_debug_implementations)]
@@ -31,7 +31,7 @@ pub enum Msg {
     /// Dellegate the message
     Delegate(Arc<dyn MessageDelegate>),
     /// The window has changed its parameters
-    WindowChange(WinMessage)
+    WindowChange(WinMessage),
 }
 
 impl Msg {
@@ -176,8 +176,8 @@ impl UampApp {
             }
             ControlMsg::FastForward(d) => {
                 if let Some(ts) = self.player.timestamp() {
-                    let pos = ts.current
-                        + d.unwrap_or(self.config.seek_jump().0);
+                    let pos =
+                        ts.current + d.unwrap_or(self.config.seek_jump().0);
                     let pos = pos.min(ts.total);
                     if ts.total.checked_sub(pos).unwrap_or_default()
                         < Duration::from_millis(100)
@@ -228,9 +228,13 @@ pub fn get_control_string(m: &ControlMsg) -> String {
         ControlMsg::LoadNewSongs => "load-songs".to_owned(),
         ControlMsg::SeekTo(d) => format!("st={}", d.as_secs_f32()),
         ControlMsg::FastForward(None) => "ff".to_owned(),
-        ControlMsg::FastForward(Some(d)) => format!("ff={}", duration_to_string(*d, false)),
+        ControlMsg::FastForward(Some(d)) => {
+            format!("ff={}", duration_to_string(*d, false))
+        }
         ControlMsg::Rewind(None) => "rw".to_owned(),
-        ControlMsg::Rewind(Some(d)) => format!("rw={}", duration_to_string(*d, false)),
+        ControlMsg::Rewind(Some(d)) => {
+            format!("rw={}", duration_to_string(*d, false))
+        }
     }
 }
 

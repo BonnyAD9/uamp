@@ -1,31 +1,48 @@
-use std::{sync::Arc, time::Duration, default, cell::Cell, path::Path, fs::{File, create_dir_all}};
+use std::{
+    cell::Cell,
+    default,
+    fs::{create_dir_all, File},
+    path::Path,
+    sync::Arc,
+    time::Duration,
+};
 
-use iced_core::Length::{Fill, Shrink};
+use iced_core::{
+    alignment::{Horizontal, Vertical},
+    font::{Family, Weight},
+    Font,
+    Length::{Fill, FillPortion, Shrink},
+    Widget,
+};
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     app::UampApp,
     button, col,
+    config::Config,
     core::{
         extensions::duration_to_string,
         msg::{ComMsg, ControlMsg, Msg},
-        Result
+        Result,
     },
+    gen_struct,
     library::{Filter, SongId},
     player::TimeStamp,
-    row, text, gen_struct, config::Config,
+    row, text, grid,
 };
 
 use super::{
     ids::*,
     msg::Message,
-    theme::{Button, Text},
+    theme::{Border, Button, Svg, SvgButton, Text},
     wid::{
-        self, button, center, center_y, nothing, slider, space, svg, wrap_box,
-        Command, Element, WrapBoxState,
+        self, border, button, center, center_x, center_y, container, nothing,
+        slider, space, svg, svg_button, text, wrap_box, Command, Element,
+        WrapBoxState, GridItem,
     },
-    widgets::icons, WinMessage,
+    widgets::{icons, grid::SpanLen::{Fixed, Relative}},
+    WinMessage,
 };
 
 gen_struct! {
@@ -143,11 +160,11 @@ impl UampApp {
             WinMessage::Position(x, y) => {
                 self.gui.window_x_set(x);
                 self.gui.window_y_set(y);
-            },
+            }
             WinMessage::Size(w, h) => {
                 self.gui.window_width_set(w);
                 self.gui.window_height_set(h);
-            },
+            }
         }
 
         ComMsg::none()
@@ -155,13 +172,7 @@ impl UampApp {
 
     /// Generates the gui
     pub fn gui(&self) -> Element {
-        col![
-            self.menu(),
-            self.main_page(),
-            self.play_menu(),
-            //event_capture(|e, m, c| self.events(e, m, c))
-        ]
-        .into()
+        col![self.main_view(), self.bottom_menu()].into()
     }
 }
 
@@ -171,7 +182,10 @@ impl UampApp {
 
 impl GuiState {
     /// Loads gui state from the given path, if it fails creates default.
-    fn from_json<P>(path: P) -> Self where P: AsRef<Path> {
+    fn from_json<P>(path: P) -> Self
+    where
+        P: AsRef<Path>,
+    {
         if let Ok(file) = File::open(path.as_ref()) {
             match serde_json::from_reader(file) {
                 Ok(g) => g,
@@ -187,7 +201,10 @@ impl GuiState {
     }
 
     /// Saves the gui state to the given file.
-    fn to_json<P>(&self, path: P) -> Result<()> where P: AsRef<Path> {
+    fn to_json<P>(&self, path: P) -> Result<()>
+    where
+        P: AsRef<Path>,
+    {
         if let Some(par) = path.as_ref().parent() {
             create_dir_all(par)?;
         }
@@ -198,7 +215,201 @@ impl GuiState {
 }
 
 impl UampApp {
-    /// Creates the menu
+    fn main_view(&self) -> Element {
+        container(nothing()).height(Fill).width(Fill).into()
+    }
+
+
+    fn bottom_menu(&self) -> Element {
+        border(grid![
+            Relative(2.), Relative(1.), Fixed(210.), Relative(1.), Relative(2.);
+            ;
+            GridItem::new(self.song_title()).column(0..2),
+            GridItem::new(self.play_menu()).column(1..4),
+            GridItem::new(self.volume_menu()).column(4)
+        ])
+        .height(80)
+        .width(Fill)
+        .style(Border::TopGrad)
+        .into()
+    }
+
+    fn song_title(&self) -> Element {
+        // width 300
+        let now = self.player.now_playing().map(|s| &self.library[s]);
+        let title = now.map(|s| s.title()).unwrap_or("-");
+        //let album = now.map(|s| s.album()).unwrap_or("-");
+        let artist = now.map(|s| s.artist()).unwrap_or("-");
+
+        col![
+            text(title)
+                .size(20)
+                .height(25)
+                .font(Font {
+                    weight: Weight::Medium,
+                    ..Font::default()
+                })
+                .width(Fill),
+            space(Fill, 5),
+            row![
+                space(5, Fill),
+                //text!("{} • {}", album, artist)
+                text(artist)
+                    .width(Fill)
+                    .size(14)
+                    .style(Text::Gray)
+                    .height(20)
+                    .font(Font {
+                        weight: Weight::Medium,
+                        ..Font::default()
+                    }),
+            ]
+            .height(20)
+        ]
+        .padding([15, 0, 0, 15])
+        .width(FillPortion(1))
+        .into()
+    }
+
+    fn play_menu(&self) -> Element {
+        let pp_svg = if self.player.is_playing() {
+            icons::PAUSE
+        } else {
+            icons::PLAY
+        };
+        col![
+            center_x(
+                row![
+                    svg_button(icons::PREVIOUS)
+                        .height(30)
+                        .width(30)
+                        .padding(5)
+                        .on_click(Msg::Control(ControlMsg::PrevSong(1)))
+                        .style(SvgButton::TransparentCircle(30.)),
+                    space(15, Fill),
+                    svg_button(icons::REWIND)
+                        .height(30)
+                        .width(30)
+                        .padding(5)
+                        .on_click(Msg::Control(ControlMsg::Rewind(None)))
+                        .style(SvgButton::TransparentCircle(30.)),
+                    space(15, Fill),
+                    button(
+                        center(
+                            svg(pp_svg).width(25).height(25).style(Svg::Dark)
+                        )
+                        .padding(0)
+                    )
+                    .height(30)
+                    .width(30)
+                    .on_press(Msg::Control(ControlMsg::PlayPause(None)))
+                    .style(Button::WhiteCircle(40.)),
+                    space(15, Fill),
+                    svg_button(icons::FAST_FORWARD)
+                        .height(30)
+                        .width(30)
+                        .padding(5)
+                        .on_click(Msg::Control(ControlMsg::FastForward(None)))
+                        .style(SvgButton::TransparentCircle(30.)),
+                    space(15, Fill),
+                    svg_button(icons::NEXT)
+                        .height(30)
+                        .width(30)
+                        .padding(5)
+                        .on_click(Msg::Control(ControlMsg::NextSong(1)))
+                        .style(SvgButton::TransparentCircle(30.))
+                ]
+                .height(40)
+                .padding([10, 0, 0, 0])
+            ),
+            space(Fill, 5),
+            self.seek_slider()
+        ]
+        .width(FillPortion(2))
+        .into()
+    }
+
+    fn seek_slider(&self) -> Element {
+        let mut ts = match self.gui.song_timestamp {
+            Some(ts) => ts,
+            None => {
+                return row![
+                    text!("--:--")
+                        .style(Text::Gray)
+                        .size(14)
+                        .width(Fill)
+                        .height(Fill)
+                        .horizontal_alignment(Horizontal::Center)
+                        .vertical_alignment(Vertical::Center)
+                        .width(50)
+                        .height(30),
+                    space(10, Fill),
+                    center_y(slider(0.0..=1., 0., |_| {
+                        Msg::Gui(Message::SeekSliderMove(Duration::ZERO))
+                    }))
+                    .width(Fill)
+                    .height(30),
+                    space(10, Fill),
+                    text!("--:--")
+                        .style(Text::Gray)
+                        .size(14)
+                        .width(Fill)
+                        .height(Fill)
+                        .horizontal_alignment(Horizontal::Center)
+                        .vertical_alignment(Vertical::Center)
+                        .width(50)
+                        .height(30),
+                ]
+                .into()
+            }
+        };
+
+        if let Some(d) = self.gui.seek_drag {
+            ts.current = d;
+        }
+        row![
+            text!("{}", duration_to_string(ts.current, true))
+                .style(Text::Gray)
+                .size(14)
+                .width(Fill)
+                .height(Fill)
+                .horizontal_alignment(Horizontal::Center)
+                .vertical_alignment(Vertical::Center)
+                .width(50)
+                .height(30),
+            space(10, Fill),
+            center_y(
+                slider(
+                    0.0..=ts.total.as_secs_f32(),
+                    ts.current.as_secs_f32(),
+                    |c| Msg::Gui(Message::SeekSliderMove(
+                        Duration::from_secs_f32(c)
+                    )),
+                )
+                .on_release(Msg::Gui(Message::SeekSliderEnd))
+                .step(0.1)
+            )
+            .width(Fill)
+            .height(30),
+            space(10, Fill),
+            text!("{}", duration_to_string(ts.total, true))
+                .style(Text::Gray)
+                .size(14)
+                .width(Fill)
+                .height(Fill)
+                .horizontal_alignment(Horizontal::Center)
+                .vertical_alignment(Vertical::Center)
+                .width(50)
+                .height(30),
+        ]
+        .into()
+    }
+
+    fn volume_menu(&self) -> Element {
+        // width 300
+        space(FillPortion(1), Fill).into()
+    }
+    /* /// Creates the menu
     fn menu(&self) -> Element {
         let make_button =
             |text: &'static str, page: MainPage| -> wid::Button {
@@ -430,7 +641,7 @@ impl UampApp {
                 .height(30),
         ]
         .into()
-    }
+    }*/
 }
 
 fn default_states() -> Vec<WrapBoxState> {

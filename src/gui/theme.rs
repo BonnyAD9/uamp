@@ -1,3 +1,5 @@
+use std::{default, f32::consts::PI, sync::Condvar};
+
 use iced::{
     application,
     overlay::menu,
@@ -6,9 +8,12 @@ use iced::{
         radio, rule, scrollable, slider, svg, text, text_input, toggler,
     },
 };
-use iced_core::{Background, Color, Padding, Vector};
+use iced_core::{
+    gradient::{ColorStop, Linear},
+    Background, Color, Degrees, Gradient, Padding, Vector,
+};
 
-use super::widgets::wrap_box;
+use super::widgets::{border, sides::Sides, svg_button, wrap_box};
 
 /// Creates const color from hex
 ///
@@ -53,11 +58,17 @@ const SELECTED: Color = const_color!(0x444444);
 /// The color of selected button as background
 const SELECTED_BG: Background = Background::Color(SELECTED);
 /// The contras color
-const CONTRAST: Color = const_color!(0xCCCC00);
+const CONTRAST: Color = const_color!(0xEEEE55);
 /// The contras color as background
 const CONTRAST_BG: Background = Background::Color(CONTRAST);
+/// The contras color
+const DARK_CONTRAST: Color = const_color!(0xBBBB33);
+/// The contras color as background
+const DARK_CONTRAST_BG: Background = Background::Color(DARK_CONTRAST);
 /// Brighter version of contrast color
-const BRIGHT_CONTRAST: Color = const_color!(0xEEEE00);
+const BRIGHT_CONTRAST: Color = const_color!(0xEEEE33);
+/// The contras color as background
+const BRIGHT_CONTRAST_BG: Background = Background::Color(BRIGHT_CONTRAST);
 /// The border radius
 const RADIUS: f32 = 4.;
 /// The border thickness
@@ -84,6 +95,10 @@ pub enum Button {
     /// Default button style
     #[default]
     Default,
+    /// Circle with white background
+    WhiteCircle(f32),
+    /// Circle with transparent background
+    TransparentCircle(f32),
     /// Odd items in list
     ItemOdd,
     /// Even items in list
@@ -114,6 +129,18 @@ impl button::StyleSheet for Theme {
                 border_width: 0.,
                 ..default
             },
+            Button::WhiteCircle(r) => button::Appearance {
+                background: Some(Background::Color(FOREGROUND)),
+                border_width: 0.,
+                border_radius: (*r).into(),
+                ..default
+            },
+            Button::TransparentCircle(r) => button::Appearance {
+                background: Some(Background::Color(Color::TRANSPARENT)),
+                border_width: 0.,
+                border_radius: (*r).into(),
+                ..default
+            },
         }
     }
 
@@ -127,6 +154,16 @@ impl button::StyleSheet for Theme {
             Button::ItemOdd => button::Appearance {
                 border_width: THICKNESS,
                 border_color: CONTRAST,
+                ..base
+            },
+            Button::WhiteCircle(_) => button::Appearance {
+                background: Some(CONTRAST_BG),
+                ..base
+            },
+            Button::TransparentCircle(_) => button::Appearance {
+                background: Some(Background::Color(Color::from_rgba8(
+                    0x44, 0x44, 0x44, 0.5,
+                ))),
                 ..base
             },
             _ => base,
@@ -143,6 +180,16 @@ impl button::StyleSheet for Theme {
         match style {
             Button::ItemOdd => button::Appearance {
                 border_width: THICKNESS,
+                ..base
+            },
+            Button::WhiteCircle(_) => button::Appearance {
+                background: Some(BRIGHT_CONTRAST_BG),
+                ..base
+            },
+            Button::TransparentCircle(_) => button::Appearance {
+                background: Some(Background::Color(Color::from_rgba8(
+                    0x33, 0x33, 0x33, 0.5,
+                ))),
                 ..base
             },
             _ => base,
@@ -186,7 +233,10 @@ impl container::StyleSheet for Theme {
     type Style = ();
 
     fn appearance(&self, _style: &Self::Style) -> container::Appearance {
-        container::Appearance::default()
+        container::Appearance {
+            background: Some(Background::Color(Color::BLACK)),
+            ..container::Appearance::default()
+        }
     }
 }
 
@@ -197,13 +247,13 @@ impl slider::StyleSheet for Theme {
         slider::Appearance {
             rail: slider::Rail {
                 colors: (CONTRAST, OUTLINE),
-                width: THICKNESS * 2.,
-                border_radius: RADIUS.into(),
+                width: 4.,
+                border_radius: 2.0.into(),
             },
             handle: slider::Handle {
-                shape: slider::HandleShape::Circle { radius: 5. },
-                color: SECONDARY,
-                border_width: THICKNESS,
+                shape: slider::HandleShape::Circle { radius: 0. },
+                color: Color::TRANSPARENT,
+                border_width: 0.,
                 border_color: OUTLINE,
             },
         }
@@ -213,8 +263,8 @@ impl slider::StyleSheet for Theme {
         let base = self.active(style);
         slider::Appearance {
             handle: slider::Handle {
-                color: SELECTED,
-                border_color: CONTRAST,
+                shape: slider::HandleShape::Circle { radius: 5. },
+                color: FOREGROUND,
                 ..base.handle
             },
             ..base
@@ -225,7 +275,8 @@ impl slider::StyleSheet for Theme {
         let base = self.active(style);
         slider::Appearance {
             handle: slider::Handle {
-                color: PRESSED,
+                shape: slider::HandleShape::Circle { radius: 5. },
+                color: DARK_CONTRAST,
                 border_color: CONTRAST,
                 ..base.handle
             },
@@ -388,11 +439,34 @@ impl rule::StyleSheet for Theme {
     }
 }
 
-impl svg::StyleSheet for Theme {
-    type Style = ();
+#[derive(Default)]
+pub enum Svg {
+    /// Original svg color
+    #[default]
+    Original,
+    /// Use white
+    Light,
+    Gray,
+    /// Use black
+    Dark,
+}
 
-    fn appearance(&self, _style: &Self::Style) -> svg::Appearance {
-        svg::Appearance::default()
+impl svg::StyleSheet for Theme {
+    type Style = Svg;
+
+    fn appearance(&self, style: &Self::Style) -> svg::Appearance {
+        match style {
+            Svg::Original => svg::Appearance::default(),
+            Svg::Light => svg::Appearance {
+                color: Some(FOREGROUND),
+            },
+            Svg::Dark => svg::Appearance {
+                color: Some(const_color!(0x181818)),
+            },
+            Svg::Gray => svg::Appearance {
+                color: Some(const_color!(0x777777)),
+            },
+        }
     }
 }
 
@@ -457,6 +531,7 @@ pub enum Text {
     Default,
     /// Text with contrast color as foreground
     Contrast,
+    Gray,
 }
 
 impl text::StyleSheet for Theme {
@@ -467,6 +542,7 @@ impl text::StyleSheet for Theme {
             color: match style {
                 Text::Default => Some(FOREGROUND),
                 Text::Contrast => Some(CONTRAST),
+                Text::Gray => Some(const_color!(0x777777)),
             },
         }
     }
@@ -651,4 +727,155 @@ impl wrap_box::LayoutStyleSheet<()> for Theme {
             ..wrap_box::LayoutStyle::default()
         }
     }
+}
+
+#[derive(Default)]
+pub enum Border {
+    #[default]
+    None,
+    TopGrad,
+}
+
+impl border::StyleSheet for Theme {
+    type Style = Border;
+
+    fn background(&self, style: &Self::Style) -> Background {
+        match style {
+            Border::None => Background::Color(Color::TRANSPARENT),
+            Border::TopGrad => Background::Gradient(Gradient::Linear(
+                Linear::new(Degrees(270.)).add_stops([
+                    ColorStop {
+                        offset: 0.,
+                        color: const_color!(0x1E1E1E),
+                    },
+                    ColorStop {
+                        offset: 0.8,
+                        color: const_color!(0x181818),
+                    },
+                ]),
+            )),
+        }
+    }
+
+    fn border_thickness(&self, style: &Self::Style) -> Sides<f32> {
+        0.into()
+    }
+
+    fn border_radius(&self, style: &Self::Style) -> Sides<f32> {
+        0.into()
+    }
+
+    fn border_color(&self, style: &Self::Style) -> Sides<Background> {
+        OUTLINE_BG.into()
+    }
+
+    fn corner_color(&self, style: &Self::Style) -> Sides<Color> {
+        OUTLINE.into()
+    }
+}
+
+/// The types of styles of buttons
+#[derive(Default, PartialEq)]
+pub enum SvgButton {
+    /// Default button style
+    #[default]
+    Default,
+    /// Circle with white background
+    WhiteCircle(f32),
+    /// Circle with transparent background
+    TransparentCircle(f32),
+    /// Odd items in list
+    ItemOdd,
+    /// Even items in list
+    ItemEven,
+}
+
+impl svg_button::StyleSheet for Theme {
+    type Style = SvgButton;
+
+    fn active(&self, style: &Self::Style) -> svg_button::Appearance {
+        let default = svg_button::Appearance {
+            background: SECONDARY_BG,
+            border_radius: RADIUS.into(),
+            border_thickness: THICKNESS,
+            border_color: OUTLINE,
+            svg_color: None,
+        };
+
+        match style {
+            SvgButton::Default => default,
+            SvgButton::ItemEven => svg_button::Appearance {
+                border_color: PRESSED,
+                ..default
+            },
+            SvgButton::ItemOdd => svg_button::Appearance {
+                background: PRIMARY_BG,
+                border_thickness: 0.,
+                ..default
+            },
+            SvgButton::WhiteCircle(r) => svg_button::Appearance {
+                background: Background::Color(FOREGROUND),
+                border_thickness: 0.,
+                border_radius: (*r).into(),
+                ..default
+            },
+            SvgButton::TransparentCircle(r) => svg_button::Appearance {
+                background: Background::Color(Color::TRANSPARENT),
+                border_thickness: 0.,
+                border_radius: (*r).into(),
+                svg_color: Some(FOREGROUND),
+                ..default
+            },
+        }
+    }
+
+    fn hovered(&self, style: &Self::Style) -> svg_button::Appearance {
+        let base = svg_button::Appearance {
+            background: PRESSED_BG,
+            border_color: CONTRAST,
+            ..self.active(style)
+        };
+        match style {
+            SvgButton::ItemOdd => svg_button::Appearance {
+                border_thickness: THICKNESS,
+                border_color: CONTRAST,
+                ..base
+            },
+            SvgButton::WhiteCircle(_) => svg_button::Appearance {
+                background: CONTRAST_BG,
+                ..base
+            },
+            SvgButton::TransparentCircle(_) => svg_button::Appearance {
+                svg_color: Some(CONTRAST),
+                ..self.active(style)
+            },
+            _ => base,
+        }
+    }
+
+    fn pressed(&self, style: &Self::Style) -> svg_button::Appearance {
+        let base = svg_button::Appearance {
+            background: SELECTED_BG,
+            border_color: BRIGHT_CONTRAST,
+            ..self.active(style)
+        };
+
+        match style {
+            SvgButton::ItemOdd => svg_button::Appearance {
+                border_thickness: THICKNESS,
+                ..base
+            },
+            SvgButton::WhiteCircle(_) => svg_button::Appearance {
+                background: BRIGHT_CONTRAST_BG,
+                ..base
+            },
+            SvgButton::TransparentCircle(_) => svg_button::Appearance {
+                svg_color: Some(BRIGHT_CONTRAST),
+                ..base
+            },
+            _ => base,
+        }
+    }
+
+    // fn disabled(&self, style: &Self::Style) -> button::Appearance;
 }

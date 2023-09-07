@@ -1,4 +1,10 @@
-use std::{cell::{RefCell, OnceCell, Cell}, net::TcpListener, sync::Arc, thread, time::{Instant, Duration}};
+use std::{
+    cell::{Cell, OnceCell, RefCell},
+    net::TcpListener,
+    sync::Arc,
+    thread,
+    time::{Duration, Instant},
+};
 
 use global_hotkey::GlobalHotKeyManager;
 use iced::{executor, window, Application};
@@ -140,13 +146,13 @@ impl Application for UampApp {
                 self.reciever_subscription(),
                 self.server_subscription(),
                 self.events_subscription(),
-                self.clock_subscription(self.config.tick_length().0)
+                self.clock_subscription(self.config.tick_length().0),
             ])
         } else {
             iced::subscription::Subscription::batch([
                 self.reciever_subscription(),
                 self.events_subscription(),
-                self.clock_subscription(self.config.tick_length().0)
+                self.clock_subscription(self.config.tick_length().0),
             ])
         }
     }
@@ -192,7 +198,6 @@ impl UampApp {
             Cell::new(None)
         };
 
-
         UampApp {
             config: conf,
             library: lib,
@@ -223,14 +228,10 @@ impl UampApp {
     fn reciever_subscription(&self) -> Subscription {
         let id = app_id() + " async msg";
         if let Some(r) = self.reciever.take() {
-            iced::subscription::unfold(
-                id,
-                r,
-                |mut reciever| async {
-                    let msg = reciever.recv().await.unwrap();
-                    (msg, reciever)
-                },
-            )
+            iced::subscription::unfold(id, r, |mut reciever| async {
+                let msg = reciever.recv().await.unwrap();
+                (msg, reciever)
+            })
         } else {
             self.fake_sub(id)
         }
@@ -239,21 +240,18 @@ impl UampApp {
     fn server_subscription(&self) -> Subscription {
         let id = app_id() + " server";
         if let Some(l) = self.listener.take() {
-            iced::subscription::unfold(
-                id,
-                l,
-                |listener| async {
-                    loop {
-                        let stream = listener.accept().unwrap();
-                        let mut msgr = Messenger::try_new(&stream.0).unwrap();
+            iced::subscription::unfold(id, l, |listener| async {
+                loop {
+                    let stream = listener.accept().unwrap();
+                    let mut msgr = Messenger::try_new(&stream.0).unwrap();
 
-                        let rec = msgr.recieve();
+                    let rec = msgr.recieve();
 
-                        let rec = match rec {
-                            Ok(m) => m,
-                            Err(e) => {
-                                warn!("Failed to recieve message: {e}");
-                                if let Err(e) = msgr.send(messenger::msg::Message::Error(
+                    let rec = match rec {
+                        Ok(m) => m,
+                        Err(e) => {
+                            warn!("Failed to recieve message: {e}");
+                            if let Err(e) = msgr.send(messenger::msg::Message::Error(
                                     messenger::msg::Error::new(
                                     messenger::msg::ErrorType::DeserializeFailed,
                                     e.to_string(),
@@ -261,26 +259,24 @@ impl UampApp {
                                 )) {
                                     warn!("Failed to send error message: {e}");
                                 }
-                                continue;
-                            }
-                        };
-
-                        let (response, msg) =
-                            Self::message_event(rec, &stream.0);
-                        if let Some(r) = response {
-                            if let Err(e) = msgr.send(r) {
-                                warn!("Failed to send response {e}");
-                            }
-                        }
-
-                        if let Some(msg) = msg {
-                            break (msg, listener);
-                        } else {
                             continue;
                         }
+                    };
+
+                    let (response, msg) = Self::message_event(rec, &stream.0);
+                    if let Some(r) = response {
+                        if let Err(e) = msgr.send(r) {
+                            warn!("Failed to send response {e}");
+                        }
                     }
-                },
-            )
+
+                    if let Some(msg) = msg {
+                        break (msg, listener);
+                    } else {
+                        continue;
+                    }
+                }
+            })
         } else {
             self.fake_sub(id)
         }
@@ -290,7 +286,7 @@ impl UampApp {
         iced::subscription::events_with(|e, _| match e {
             Event::Window(window::Event::CloseRequested) => {
                 Some(Msg::Control(ControlMsg::Close))
-            },
+            }
             Event::Window(window::Event::Moved { x, y }) => {
                 Some(Msg::WindowChange(WinMessage::Position(x, y)))
             }
@@ -317,6 +313,10 @@ impl UampApp {
     }
 
     fn fake_sub(&self, id: String) -> Subscription {
-        iced::subscription::unfold(id, (), |_| async { loop { println!("hi") } })
+        iced::subscription::unfold(id, (), |_| async {
+            loop {
+                println!("hi")
+            }
+        })
     }
 }
