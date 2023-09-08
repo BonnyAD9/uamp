@@ -1,4 +1,5 @@
 # Unreleased
+This new update most notably brings fully new gui.
 
 ## New features
 - Add option to disable server
@@ -10,3 +11,6 @@
 - Auto scroll would never scroll to the last item
 - Errors when loading from json files weren't logged
 - Some icons were incorrectly constructed
+
+## Changes
+- New gui
