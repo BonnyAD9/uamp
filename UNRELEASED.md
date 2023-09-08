@@ -1,5 +1,5 @@
 # Unreleased
-This new update most notably brings fully new gui.
+This update was focused on a new gui.
 
 ## New features
 - Add option to disable server
