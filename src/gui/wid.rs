@@ -47,6 +47,8 @@ pub type Slider<'a, T> = widget::Slider<'a, T, Msg, Renderer>;
 pub type Container<'a> = widget::Container<'a, Msg, Renderer>;
 /// Border widget used by uamp
 pub type Border<'a> = widgets::border::Border<'a, Msg, Renderer>;
+/// Border widget used by uamp
+pub type CursorGrad<'a> = widgets::cursor_grad::CursorGrad<'a, Msg, Renderer>;
 /// Grid
 pub type Grid<'a> = widgets::grid::Grid<'a, Msg, Renderer>;
 /// Item in a grid
@@ -299,4 +301,11 @@ macro_rules! line_text {
     ($fmt:literal, $($args:expr),+) => {
         $crate::gui::wid::line_text(format!($fmt, $($args),+))
     };
+}
+
+pub fn cursor_grad<'a, E>(child: E) -> CursorGrad<'a>
+where
+    E: Into<Element<'a>>,
+{
+    CursorGrad::new(child.into())
 }

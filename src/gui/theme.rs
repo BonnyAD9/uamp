@@ -12,8 +12,9 @@ use iced_core::{
     gradient::{ColorStop, Linear},
     Background, Color, Degrees, Gradient, Padding, Vector,
 };
+use serde::de;
 
-use super::widgets::{border, line_text, sides::Sides, svg_button, wrap_box};
+use super::widgets::{border, line_text, sides::Sides, svg_button, wrap_box, cursor_grad};
 
 /// Creates const color from hex
 ///
@@ -99,10 +100,13 @@ pub enum Button {
     WhiteCircle(f32),
     /// Circle with transparent background
     TransparentCircle(f32),
+    /// Gradient that is lighter on top and bottom
+    GradItem,
     /// Odd items in list
     ItemOdd,
     /// Even items in list
     ItemEven,
+    Item,
 }
 
 impl button::StyleSheet for Theme {
@@ -141,6 +145,18 @@ impl button::StyleSheet for Theme {
                 border_radius: (*r).into(),
                 ..default
             },
+            Button::GradItem => button::Appearance {
+                background: Some(Background::Color(Color::TRANSPARENT)),
+                border_width: 0.,
+                border_radius: 4.0.into(),
+                ..default
+            },
+            Button::Item => button::Appearance {
+                background: None,
+                border_width: 0.,
+                border_radius: 6.0.into(),
+                ..default
+            }
         }
     }
 
@@ -161,9 +177,11 @@ impl button::StyleSheet for Theme {
                 ..base
             },
             Button::TransparentCircle(_) => button::Appearance {
-                background: Some(Background::Color(Color::from_rgba8(
-                    0x44, 0x44, 0x44, 0.5,
-                ))),
+                background: Some(Background::Color(Color::TRANSPARENT)),
+                ..base
+            },
+            Button::Item => button::Appearance {
+                background: Some(Background::Color(Color::TRANSPARENT)),
                 ..base
             },
             _ => base,
@@ -187,9 +205,11 @@ impl button::StyleSheet for Theme {
                 ..base
             },
             Button::TransparentCircle(_) => button::Appearance {
-                background: Some(Background::Color(Color::from_rgba8(
-                    0x33, 0x33, 0x33, 0.5,
-                ))),
+                background: Some(Background::Color(Color::TRANSPARENT)),
+                ..base
+            },
+            Button::Item => button::Appearance {
+                background: Some(Background::Color(const_color!(0x222222))),
                 ..base
             },
             _ => base,
@@ -229,13 +249,64 @@ impl checkbox::StyleSheet for Theme {
     }
 }
 
-impl container::StyleSheet for Theme {
-    type Style = ();
+#[derive(Copy, Clone, Default, Debug)]
+pub enum Container {
+    #[default]
+    Default,
+    Gray,
+    Black,
+    ToInvis,
+    FromInvis,
+    TopGrad,
+}
 
-    fn appearance(&self, _style: &Self::Style) -> container::Appearance {
-        container::Appearance {
-            background: Some(Background::Color(Color::BLACK)),
+impl container::StyleSheet for Theme {
+    type Style = Container;
+
+    fn appearance(&self, style: &Self::Style) -> container::Appearance {
+        let default = container::Appearance {
             ..container::Appearance::default()
+        };
+
+        match style {
+            Container::Default => default,
+            Container::Gray => container::Appearance {
+                background: Some(Background::Color(const_color!(0x1E1E1E)),),
+                ..default
+            },
+            Container::Black => container::Appearance {
+                background: Some(Background::Color(Color::BLACK)),
+                ..default
+            },
+            Container::ToInvis => container::Appearance {
+                background: Some(Background::Gradient(Gradient::Linear(Linear::new(Degrees(180.)).add_stops([
+                    ColorStop { offset: 0., color: const_color!(0x1E1E1E) },
+                    ColorStop { offset: 1., color: Color::from_rgba8(0x1E, 0x1E, 0x1E, 0.) },
+                ])))),
+                ..default
+            },
+            Container::FromInvis => container::Appearance {
+                background: Some(Background::Gradient(Gradient::Linear(Linear::new(Degrees(180.)).add_stops([
+                    ColorStop { offset: 0., color: Color::from_rgba8(0x1E, 0x1E, 0x1E, 0.) },
+                    ColorStop { offset: 1., color: const_color!(0x1E1E1E) },
+                ])))),
+                ..default
+            },
+            Container::TopGrad => container::Appearance {
+                background: Some(Background::Gradient(Gradient::Linear(
+                    Linear::new(Degrees(270.)).add_stops([
+                        ColorStop {
+                            offset: 0.,
+                            color: const_color!(0x1E1E1E),
+                        },
+                        ColorStop {
+                            offset: 0.8,
+                            color: const_color!(0x181818),
+                        },
+                    ]),
+                ))),
+                ..default
+            }
         }
     }
 }
@@ -524,7 +595,7 @@ impl scrollable::StyleSheet for Theme {
 }
 
 /// The text styles
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Copy)]
 pub enum Text {
     /// The default text style
     #[default]
@@ -601,7 +672,7 @@ impl wrap_box::StyleSheet for Theme {
         _pos: wrap_box::MousePos,
     ) -> wrap_box::SquareStyle {
         wrap_box::SquareStyle {
-            background: PRIMARY_BG,
+            background: Background::Color(const_color!(0x181818)),
             border: Color::BLACK,
             border_thickness: 0.,
             border_radius: 0.0.into(),
@@ -617,9 +688,9 @@ impl wrap_box::StyleSheet for Theme {
         relative_scroll: f32,
     ) -> wrap_box::ButtonStyle {
         let square = wrap_box::SquareStyle {
-            background: PRIMARY_BG,
-            border: OUTLINE,
-            border_thickness: THICKNESS,
+            background: Background::Color(Color::TRANSPARENT),
+            border: Color::TRANSPARENT,
+            border_thickness: 0.0.into(),
             border_radius: RADIUS.into(),
         };
 
@@ -637,28 +708,17 @@ impl wrap_box::StyleSheet for Theme {
         } else {
             // active
 
-            let square = if pressed {
-                wrap_box::SquareStyle {
-                    background: SELECTED_BG,
-                    border: BRIGHT_CONTRAST,
-                    ..square
-                }
+            let foreground = if pressed {
+                BRIGHT_CONTRAST
             } else if pos == wrap_box::MousePos::DirectlyOver {
-                wrap_box::SquareStyle {
-                    background: PRESSED_BG,
-                    border: CONTRAST,
-                    ..square
-                }
+                CONTRAST
             } else {
-                wrap_box::SquareStyle {
-                    border_thickness: 0.,
-                    ..square
-                }
+                FOREGROUND
             };
 
             wrap_box::ButtonStyle {
                 square,
-                foreground: FOREGROUND,
+                foreground,
             }
         }
     }
@@ -673,8 +733,8 @@ impl wrap_box::StyleSheet for Theme {
         let square = wrap_box::SquareStyle {
             background: PRIMARY_BG,
             border: OUTLINE,
-            border_thickness: THICKNESS,
-            border_radius: RADIUS.into(),
+            border_thickness: 0.,
+            border_radius: 6.0.into(),
         };
 
         if pressed {
@@ -704,11 +764,11 @@ impl wrap_box::StyleSheet for Theme {
         wrap_box::SquareStyle {
             background: SECONDARY_BG,
             border: PRESSED,
-            border_thickness: THICKNESS,
+            border_thickness: 0.0,
             border_radius: if is_start {
-                [RADIUS, RADIUS, 0., 0.].into()
+                [6., 6., 0., 0.].into()
             } else {
-                [0., 0., RADIUS, RADIUS].into()
+                [0., 0., 6., 6.].into()
             },
         }
     }
@@ -717,12 +777,7 @@ impl wrap_box::StyleSheet for Theme {
 impl wrap_box::LayoutStyleSheet<()> for Theme {
     fn layout(&self, _style: &()) -> wrap_box::LayoutStyle {
         wrap_box::LayoutStyle {
-            padding: Some(Padding {
-                left: 30.,
-                right: 30.,
-                top: 0.,
-                bottom: 0.,
-            }),
+            padding: Some([0, 0, 0, 20].into()),
             spacing: (None, Some(1.)),
             ..wrap_box::LayoutStyle::default()
         }
@@ -734,6 +789,8 @@ pub enum Border {
     #[default]
     None,
     TopGrad,
+    SongItem,
+    Bot,
 }
 
 impl border::StyleSheet for Theme {
@@ -742,7 +799,7 @@ impl border::StyleSheet for Theme {
     fn background(&self, style: &Self::Style) -> Background {
         match style {
             Border::None => Background::Color(Color::TRANSPARENT),
-            Border::TopGrad => Background::Gradient(Gradient::Linear(
+            Border::TopGrad=> Background::Gradient(Gradient::Linear(
                 Linear::new(Degrees(270.)).add_stops([
                     ColorStop {
                         offset: 0.,
@@ -754,19 +811,35 @@ impl border::StyleSheet for Theme {
                     },
                 ]),
             )),
+            _ => Background::Color(Color::TRANSPARENT),
         }
     }
 
     fn border_thickness(&self, style: &Self::Style) -> Sides<f32> {
-        0.into()
+        match style {
+            Border::None => 0.into(),
+            Border::TopGrad => 0.into(),
+            Border::Bot => [0, 0, 2, 0].into(),
+            Border::SongItem => [1, 0, 0, 0].into(),
+        }
     }
 
     fn border_radius(&self, style: &Self::Style) -> Sides<f32> {
-        0.into()
+        match style {
+            Border::None => 0.into(),
+            Border::TopGrad => 0.into(),
+            Border::Bot => 15.into(),
+            Border::SongItem => 6.into(),
+        }
     }
 
     fn border_color(&self, style: &Self::Style) -> Sides<Background> {
-        OUTLINE_BG.into()
+        match style {
+            Border::None => OUTLINE_BG.into(),
+            Border::TopGrad => OUTLINE_BG.into(),
+            Border::Bot => Background::Color(const_color!(0x333333)).into(),
+            Border::SongItem => Background::Color(const_color!(0x444444)).into(),
+        }
     }
 
     fn corner_color(&self, style: &Self::Style) -> Sides<Color> {
@@ -891,5 +964,22 @@ impl line_text::StyleSheet for Theme {
             Text::Contrast => Some(CONTRAST),
             Text::Gray => Some(const_color!(0x777777)),
         }
+    }
+}
+
+impl cursor_grad::StyleSheet for Theme {
+    type Style = ();
+
+    fn active(&self, _style: &Self::Style) -> Option<cursor_grad::Appearance> {
+        None
+    }
+
+    fn hovered(&self, _style: &Self::Style) -> Option<cursor_grad::Appearance> {
+        Some(cursor_grad::Appearance {
+            border_radius: 6.into(),
+            mouse_color: Color::from_rgba8(0x99, 0x99, 0x99, 0.05),
+            fade_color: Color::from_rgba8(0x99, 0x99, 0x99, 0.),
+            fade_len: 700.
+        })
     }
 }

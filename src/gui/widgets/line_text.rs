@@ -7,6 +7,8 @@ use iced_core::{
     Color, Element, Length, Pixels, Point, Size, Text, Widget,
 };
 
+use super::sides::Sides;
+
 /// Text that will not wrap
 pub struct LineText<'a, Renderer>
 where
@@ -17,6 +19,7 @@ where
     size: Option<f32>,
     width: Length,
     height: Length,
+    padding: Sides<f32>,
     horizontal_alignment: Horizontal,
     vertical_alignment: Vertical,
     font: Option<Renderer::Font>,
@@ -40,6 +43,7 @@ where
             font: None,
             width: Length::Shrink,
             height: Length::Shrink,
+            padding: 0.into(),
             horizontal_alignment: Horizontal::Left,
             vertical_alignment: Vertical::Top,
             shaping: Shaping::Basic,
@@ -80,6 +84,11 @@ where
 
     pub fn height(mut self, height: impl Into<Length>) -> Self {
         self.height = height.into();
+        self
+    }
+
+    pub fn padding(mut self, padding: impl Into<Sides<f32>>) -> Self {
+        self.padding = padding.into();
         self
     }
 
@@ -126,7 +135,7 @@ where
         renderer: &Renderer,
         limits: &iced_core::layout::Limits,
     ) -> Node {
-        let limits = limits.width(self.width).height(self.height);
+        let limits = limits.width(self.width).height(self.height).pad(self.padding.into());
 
         let font_size = self.size.unwrap_or_else(|| renderer.default_size());
         let font = self.font.unwrap_or_else(|| renderer.default_font());

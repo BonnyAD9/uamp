@@ -1,9 +1,9 @@
-use std::path::{Path, PathBuf};
+use std::{path::{Path, PathBuf}, time::Duration};
 
 use audiotags::Tag;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::core::Result;
+use crate::core::{Result, extensions::duration_to_string};
 
 /// Describes song
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -20,6 +20,12 @@ pub struct Song {
     track: u32,
     /// The disc number in the album
     disc: u32,
+    /// The year of release
+    year: i32,
+    /// The duration/length of the track
+    length: Duration,
+    /// The genre of the song
+    genre: String,
     /// True if the song is deleted, deleted songs should be skipped in all
     /// all cases, and should be removed from all collections
     #[serde(default = "default_deleted")]
@@ -32,11 +38,14 @@ impl Song {
         let tag = Tag::new().read_from_path(&path)?;
         Ok(Song {
             path: path.as_ref().to_path_buf(),
-            title: tag.title().unwrap_or("<unknown title>").to_owned(),
-            artist: tag.artist().unwrap_or("<unknown artist>").to_owned(),
-            album: tag.album_title().unwrap_or("<unknown album>").to_owned(),
+            title: tag.title().unwrap_or("-").to_owned(),
+            artist: tag.artist().unwrap_or("-").to_owned(),
+            album: tag.album_title().unwrap_or("-").to_owned(),
             track: tag.track().0.unwrap_or_default() as u32,
             disc: tag.disc().0.unwrap_or_default() as u32,
+            year: tag.year().unwrap_or(i32::MAX),
+            length: tag.duration().map(|s| Duration::from_secs_f64(s)).unwrap_or(Duration::ZERO),
+            genre: tag.genre().unwrap_or("-").to_owned(),
             deleted: false,
         })
     }
@@ -50,6 +59,9 @@ impl Song {
             album: "<ghost>".to_owned(),
             track: u32::MAX,
             disc: u32::MAX,
+            year: i32::MAX,
+            length: Duration::ZERO,
+            genre: "<ghost>".to_owned(),
             deleted: true,
         }
     }
@@ -79,14 +91,58 @@ impl Song {
         self.track
     }
 
+    pub fn track_str(&self) -> String {
+        if self.track == u32::MAX {
+            "-".to_owned()
+        } else {
+            self.track.to_string()
+        }
+    }
+
     /// Gets the disc number of the song in the album
     pub fn disc(&self) -> u32 {
         self.disc
     }
 
+    pub fn disc_str(&self) -> String {
+        if self.disc == u32::MAX {
+            "-".to_owned()
+        } else {
+            self.disc.to_string()
+        }
+    }
+
     /// Returns true if the song is deleted
     pub fn is_deleted(&self) -> bool {
         self.deleted
+    }
+
+    pub fn year(&self) -> i32 {
+        self.year
+    }
+
+    pub fn year_str(&self) -> String {
+        if self.year == i32::MAX {
+            "-".to_owned()
+        } else {
+            self.year.to_string()
+        }
+    }
+
+    pub fn length(&self) -> Duration {
+        self.length
+    }
+
+    pub fn length_str(&self) -> String {
+        if self.length == Duration::ZERO {
+            "--:--".to_owned()
+        } else {
+            duration_to_string(self.length, true)
+        }
+    }
+
+    pub fn genre(&self) -> &str {
+        &self.genre
     }
 }
 

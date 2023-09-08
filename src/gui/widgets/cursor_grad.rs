@@ -4,12 +4,12 @@ use iced_core::{
     renderer::{Quad, Style},
     widget::Tree,
     Background, BorderRadius, Color, Element, Layout, Length, Rectangle, Size,
-    Vector, Widget,
+    Vector, Widget, gradient::Linear, Radians, Degrees, Gradient,
 };
 
 use super::sides::Sides;
 
-pub struct Border<'a, Message, Renderer>
+pub struct CursorGrad<'a, Message, Renderer>
 where
     Renderer: iced_core::Renderer,
     Renderer::Theme: StyleSheet,
@@ -21,7 +21,7 @@ where
     style: <Renderer::Theme as StyleSheet>::Style,
 }
 
-impl<'a, Message, Renderer> Border<'a, Message, Renderer>
+impl<'a, Message, Renderer> CursorGrad<'a, Message, Renderer>
 where
     Renderer: iced_core::Renderer,
     Renderer::Theme: StyleSheet,
@@ -74,7 +74,7 @@ where
 }
 
 impl<'a, Message, Renderer> Widget<Message, Renderer>
-    for Border<'a, Message, Renderer>
+    for CursorGrad<'a, Message, Renderer>
 where
     Renderer: iced_core::Renderer,
     Renderer::Theme: StyleSheet,
@@ -186,98 +186,92 @@ where
     ) {
         let bounds = layout.bounds();
 
-        let thickness = theme.border_thickness(&self.style);
-        let radius = theme.border_radius(&self.style);
-        let border_radius = theme.border_border_radius(&self.style);
-        let color = theme.border_color(&self.style);
+        let ap = if cursor.is_over(bounds) {
+            theme.hovered(&self.style)
+        } else {
+            theme.active(&self.style)
+        };
 
-        // Left border
-        if thickness.left != 0. {
-            let bounds = Rectangle {
-                x: bounds.x - thickness.left,
-                y: bounds.y + radius.top,
-                width: thickness.left,
-                height: bounds.height - radius.top - radius.left,
-            };
+        let ap = if let Some(ap) = ap {
+            ap
+        } else {
+            self.child.as_widget().draw(
+                &state.children[0],
+                renderer,
+                theme,
+                style,
+                layout.children().next().unwrap(),
+                cursor,
+                viewport,
+            );
+            return;
+        };
 
-            let quad = Quad {
-                bounds,
-                border_radius: border_radius.left.into(),
-                border_width: 0.,
-                border_color: Color::TRANSPARENT,
-            };
+        let pos = if let Some(p) = cursor.position() {
+            p
+        } else {
+            self.child.as_widget().draw(
+                &state.children[0],
+                renderer,
+                theme,
+                style,
+                layout.children().next().unwrap(),
+                cursor,
+                viewport,
+            );
+            return;
+        };
 
-            renderer.fill_quad(quad, color.left);
-        }
+        // in pixels
+        let mut center = pos.x - bounds.x;
+        let left = center - ap.fade_len;
+        let right = center + ap.fade_len;
 
-        // Top border
-        if thickness.top != 0. {
-            let bounds = Rectangle {
-                x: bounds.x + radius.top,
-                y: bounds.y - thickness.top,
-                width: bounds.width - radius.top - radius.right,
-                height: thickness.top,
-            };
+        let (mut left, l_mul) = if left > 0. {
+            (left, 0.)
+        } else {
+            (0., left.abs() / ap.fade_len)
+        };
 
-            let quad = Quad {
-                bounds,
-                border_radius: border_radius.top.into(),
-                border_width: 0.,
-                border_color: Color::TRANSPARENT,
-            };
+        let (mut right, r_mul) = if right < bounds.width {
+            (right, 0.)
+        } else {
+            (bounds.width, (right - bounds.width) / ap.fade_len)
+        };
 
-            renderer.fill_quad(quad, color.top);
-        }
+        center /= bounds.width;
+        left /= bounds.width;
+        right /= bounds.width;
 
-        // Right border
-        if thickness.right != 0. {
-            let bounds = Rectangle {
-                x: bounds.x + bounds.width,
-                y: bounds.y + radius.right,
-                width: thickness.right,
-                height: bounds.height - radius.right - radius.bottom,
-            };
+        let mut grad = Linear::new(Degrees(180.));
 
-            let quad = Quad {
-                bounds,
-                border_radius: border_radius.left.into(),
-                border_width: 0.,
-                border_color: Color::TRANSPARENT,
-            };
+        let m = ap.mouse_color;
+        let f = ap.fade_color;
 
-            renderer.fill_quad(quad, color.right);
-        }
+        grad = grad.add_stop(left, Color::from_rgba(
+            m.r * l_mul + f.r * (1. - l_mul),
+            m.g * l_mul + f.g * (1. - l_mul),
+            m.b * l_mul + f.b * (1. - l_mul),
+            m.a * l_mul + f.a * (1. - l_mul),
+        ));
 
-        // Bottom border
-        if thickness.bottom != 0. {
-            let bounds = Rectangle {
-                x: bounds.x + radius.bottom_left(),
-                y: bounds.y + bounds.height,
-                width: bounds.width - radius.bottom_left() - radius.bottom_right(),
-                height: thickness.bottom,
-            };
+        grad = grad.add_stop(center, m);
 
-            let quad = Quad {
-                bounds,
-                border_radius: border_radius.bottom.into(),
-                border_width: 0.,
-                border_color: Color::TRANSPARENT,
-            };
-
-            renderer.fill_quad(quad, color.bottom);
-        }
-
-        // The other features are not supported yet
+        grad = grad.add_stop(right, Color::from_rgba(
+            m.r * r_mul + f.r * (1. - r_mul),
+            m.g * r_mul + f.g * (1. - r_mul),
+            m.b * r_mul + f.b * (1. - r_mul),
+            m.a * r_mul + f.a * (1. - r_mul),
+        ));
 
         let quad = Quad {
             bounds,
-            border_radius: radius.into(),
+            border_radius: ap.border_radius.into(),
             border_width: 0.,
             border_color: Color::TRANSPARENT,
         };
 
-        let bg = theme.background(&self.style);
-        renderer.fill_quad(quad, bg);
+        renderer.fill_quad(quad, Background::Gradient(Gradient::Linear(grad)));
 
         self.child.as_widget().draw(
             &state.children[0],
@@ -304,51 +298,29 @@ where
     }
 }
 
-impl<'a, Message, Renderer> From<Border<'a, Message, Renderer>>
+impl<'a, Message, Renderer> From<CursorGrad<'a, Message, Renderer>>
     for Element<'a, Message, Renderer>
 where
     Renderer: iced_core::Renderer + 'a,
     Renderer::Theme: StyleSheet,
     Message: 'a,
 {
-    fn from(value: Border<'a, Message, Renderer>) -> Self {
+    fn from(value: CursorGrad<'a, Message, Renderer>) -> Self {
         Self::new(value)
     }
+}
+
+pub struct Appearance {
+    pub border_radius: Sides<f32>,
+    pub mouse_color: Color,
+    pub fade_color: Color,
+    pub fade_len: f32,
 }
 
 pub trait StyleSheet {
     type Style: Default;
 
-    fn background(&self, style: &Self::Style) -> Background;
+    fn active(&self, style: &Self::Style) -> Option<Appearance>;
 
-    /// Thickness of the sides of the border
-    fn border_thickness(&self, style: &Self::Style) -> Sides<f32>;
-
-    /// Thickness of the border in corners
-    fn corner_thickness(&self, style: &Self::Style) -> Sides<f32> {
-        self.border_thickness(style)
-    }
-
-    /// Border radius of the corners
-    fn border_radius(&self, style: &Self::Style) -> Sides<f32>;
-
-    /// Returns the radius of the borders
-    fn border_border_radius(&self, style: &Self::Style) -> Sides<Sides<f32>> {
-        _ = style;
-        let s: Sides<f32> = 0.into();
-        s.into()
-    }
-
-    /// Returns the radius of the borders
-    fn corner_border_radius(&self, style: &Self::Style) -> Sides<Sides<f32>> {
-        _ = style;
-        let s: Sides<f32> = 0.into();
-        s.into()
-    }
-
-    /// Returns the color of the borders
-    fn border_color(&self, style: &Self::Style) -> Sides<Background>;
-
-    /// Returns the color of the corner borders
-    fn corner_color(&self, style: &Self::Style) -> Sides<Color>;
+    fn hovered(&self, style: &Self::Style) -> Option<Appearance>;
 }

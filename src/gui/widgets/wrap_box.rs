@@ -442,12 +442,21 @@ where
     ) -> event::Status {
         let mut state = self.state.get();
 
+        // mouse up
+        if matches!(
+            event,
+            Event::Mouse(mouse::Event::ButtonReleased(Button::Left))
+        ) {
+            state.pressed = ScrollbarInteraction::None;
+        }
+
         let cursor_position =
             if let iced_core::mouse::Cursor::Available(cursor_position) =
                 cursor
             {
                 cursor_position
             } else {
+                self.state.set(state);
                 return event::Status::Ignored;
             };
 
