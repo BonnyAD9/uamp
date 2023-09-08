@@ -81,16 +81,17 @@ gen_struct! {
 pub enum MainPage {
     /// All songs page
     #[default]
-    Songs,
+    Library,
     /// Current playlist page
     Playlist,
+    Settings,
 }
 
 impl GuiState {
     /// Creates default gui state
     pub fn new() -> Self {
         GuiState {
-            page: MainPage::Songs,
+            page: MainPage::Library,
             wb_states: default_states(),
             song_timestamp: None,
             seek_drag: None,
@@ -221,8 +222,9 @@ impl GuiState {
 impl UampApp {
     fn main_view(&self) -> Element {
         let page = match self.gui.page {
-            MainPage::Songs => self.library_page(),
+            MainPage::Library => self.library_page(),
             MainPage::Playlist => self.playlist_page(),
+            MainPage::Settings => self.settings_page(),
         };
 
         row![
@@ -236,13 +238,31 @@ impl UampApp {
     fn left_menu(&self) -> Element {
         container(
             col![
-                self.left_menu_item("Library", MainPage::Songs),
+                row![
+                    svg(icons::UAMP)
+                        .height(60)
+                        .width(60),
+                    text("Uamp")
+                        .width(Fill)
+                        .height(Fill)
+                        .size(40)
+                        .style(Text::Default)
+                        .font(Font {
+                            weight: Weight::Semibold,
+                            ..Default::default()
+                        }),
+                ]
+                .height(60),
+                space(Fill, 22),
+                self.left_menu_item("Library", MainPage::Library),
                 space(Fill, 5),
                 self.left_menu_item("Playlist", MainPage::Playlist),
+                space(Fill, Fill),
+                self.left_menu_item("Settings", MainPage::Settings),
             ]
         )
         .style(Container::Gray)
-        .padding([20, 20, 0, 20])
+        .padding([20, 20, 20, 20])
         .width(250)
         .height(Fill)
         .into()
@@ -294,7 +314,7 @@ impl UampApp {
             .height(Fill)
             .padding([5, 20, 5, 20])
             .height(80)
-            .style(Container::Gray),
+            .style(Container::TopGrad),
             container(
                 self.song_list(self.library.filter(Filter::All).collect(), &self.gui.wb_states[WB_SONGS], false)
             ).style(Container::Black).width(Fill).height(Fill)
@@ -346,10 +366,62 @@ impl UampApp {
             .height(Fill)
             .padding([5, 20, 5, 20])
             .height(80)
-            .style(Container::Gray),
+            .style(Container::TopGrad),
             container(
                 self.song_list(self.player.playlist().as_arc(), &self.gui.wb_states[WB_PLAYLIST], true)
             ).style(Container::Black).width(Fill).height(Fill)
+        ]
+        .height(Fill)
+        .into()
+    }
+
+    fn settings_page(&self) -> Element {
+        col![
+            container(
+                row![
+                    text("Settings")
+                        .width(300)
+                        .height(Fill)
+                        .size(40)
+                        .vertical_alignment(Vertical::Center)
+                        .style(Text::Default)
+                        .font(Font {
+                            weight: Weight::Semibold,
+                            ..Default::default()
+                        }),
+                ],
+            )
+            .width(Fill)
+            .height(Fill)
+            .padding([5, 20, 5, 20])
+            .height(80)
+            .style(Container::TopGrad),
+            container(
+                col![
+                    button(
+                        cursor_grad(
+                            text("Search for new songs")
+                                .horizontal_alignment(Horizontal::Center)
+                                .vertical_alignment(Vertical::Center)
+                                .width(Fill)
+                                .height(Fill)
+                                .style(Text::NoForeground)
+                        )
+                        .width(Fill)
+                        .height(Fill)
+                    )
+                    .width(200)
+                    .height(30)
+                    .padding(0)
+                    .on_press(Msg::Control(ControlMsg::LoadNewSongs))
+                    .style(Button::MenuItem),
+                    space(Fill, Fill),
+                ]
+                .padding([0, 0, 0, 20])
+            )
+            .style(Container::Dark)
+            .width(Fill)
+            .height(Fill)
         ]
         .height(Fill)
         .into()
@@ -366,12 +438,17 @@ impl UampApp {
 
         if numbered {
             items.push(
-                text("#")
-                    .width(50)
-                    .height(Fill)
-                    .style(Text::Gray)
-                    .size(14)
-                    .into()
+                container(
+                    text("#")
+                        .width(Fill)
+                        .height(Fill)
+                        .style(Text::Gray)
+                        .size(14)
+                )
+                .width(50)
+                .padding([0, 0, 0, 10])
+                .height(Fill)
+                .into()
             )
         }
 
@@ -421,7 +498,7 @@ impl UampApp {
             )
             .width(Fill)
             .height(22)
-            .style(Container::TopGrad),
+            .style(Container::Dark),
             wrap_box(
                 (0..songs.len())
                     .map(|i| self.song_list_item(i, songs.clone(), numbered))

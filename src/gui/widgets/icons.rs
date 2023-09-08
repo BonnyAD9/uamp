@@ -59,6 +59,12 @@ pub const REWIND: SvgData =
 pub const CIRCLE: SvgData =
     SvgData::new(include_bytes!("../../../assets/svg/circle.svg").as_slice());
 
+pub const UAMP_LIGHT: SvgData =
+    SvgData::new(include_bytes!("../../../assets/svg/icon_light.svg").as_slice());
+
+pub const UAMP: SvgData =
+    SvgData::new(include_bytes!("../../../assets/svg/icon.svg").as_slice());
+
 /// contains svg data, can be created with const function, implements [`Into<iced::svg::Handle>`]
 #[derive(Clone, Copy)]
 pub struct SvgData(&'static [u8]);

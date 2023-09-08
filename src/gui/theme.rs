@@ -272,6 +272,7 @@ pub enum Container {
     #[default]
     Default,
     Gray,
+    Dark,
     Black,
     ToInvis,
     FromInvis,
@@ -323,6 +324,10 @@ impl container::StyleSheet for Theme {
                         },
                     ]),
                 ))),
+                ..default
+            },
+            Container::Dark => container::Appearance {
+                background: Some(Background::Color(const_color!(0x181818))),
                 ..default
             }
         }
