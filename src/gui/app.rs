@@ -7,6 +7,7 @@ use std::{
     time::Duration,
 };
 
+use iced::widget::Space;
 use iced_core::{
     alignment::{Horizontal, Vertical},
     font::{Family, Weight},
@@ -35,11 +36,11 @@ use crate::{
 use super::{
     ids::*,
     msg::Message,
-    theme::{Border, Button, Svg, SvgButton, Text, Container},
+    theme::{Border, Button, Svg, SvgButton, Text, Container, CursorGrad},
     wid::{
         self, border, button, center, center_x, center_y, container,
         line_text, nothing, slider, space, svg, svg_button, text, wrap_box,
-        Command, Element, GridItem, WrapBoxState, cursor_grad, LineText,
+        Command, Element, GridItem, WrapBoxState, cursor_grad, LineText, row,
     },
     widgets::{
         grid::SpanLen::{Fixed, Relative},
@@ -219,22 +220,139 @@ impl GuiState {
 
 impl UampApp {
     fn main_view(&self) -> Element {
+        let page = match self.gui.page {
+            MainPage::Songs => self.library_page(),
+            MainPage::Playlist => self.playlist_page(),
+        };
+
         row![
             self.left_menu(),
-            self.library_page(),
+            page,
         ]
         .height(Fill)
         .into()
     }
 
     fn left_menu(&self) -> Element {
-        container(space(Fill, Fill)).style(Container::Gray).width(300).height(Fill).into()
+        container(
+            col![
+                self.left_menu_item("Library", MainPage::Songs),
+                space(Fill, 5),
+                self.left_menu_item("Playlist", MainPage::Playlist),
+            ]
+        )
+        .style(Container::Gray)
+        .padding([20, 20, 0, 20])
+        .width(250)
+        .height(Fill)
+        .into()
+    }
+
+    fn left_menu_item(&self, name: &'static str, page: MainPage) -> Element {
+        border(
+            button(
+                cursor_grad(
+                    text(name)
+                        .width(Fill)
+                        .height(Fill)
+                        .vertical_alignment(Vertical::Center)
+                        .style(Text::NoForeground)
+                )
+                .width(Fill)
+                .height(Fill)
+                .padding([0, 0, 0, 5])
+            )
+            .style(Button::MenuItem)
+            .on_press(Msg::Gui(Message::SetPage(page)))
+            .width(Fill)
+            .height(Fill)
+            .padding(0)
+        )
+        .height(30)
+        .padding([0, 0, 0, 5])
+        .style(Border::LeftRound(self.gui.page == page))
+        .into()
     }
 
     fn library_page(&self) -> Element {
-        container(
-            self.song_list(self.library.filter(Filter::All).collect(), &self.gui.wb_states[WB_SONGS])
-        ).style(Container::Black).width(Fill).height(Fill).into()
+        col![
+            container(
+                row![
+                    text("Library")
+                        .width(300)
+                        .height(Fill)
+                        .size(40)
+                        .vertical_alignment(Vertical::Center)
+                        .style(Text::Default)
+                        .font(Font {
+                            weight: Weight::Semibold,
+                            ..Default::default()
+                        }),
+                ],
+            )
+            .width(Fill)
+            .height(Fill)
+            .padding([5, 20, 5, 20])
+            .height(80)
+            .style(Container::Gray),
+            container(
+                self.song_list(self.library.filter(Filter::All).collect(), &self.gui.wb_states[WB_SONGS], false)
+            ).style(Container::Black).width(Fill).height(Fill)
+        ]
+        .height(Fill)
+        .into()
+    }
+
+    fn playlist_page(&self) -> Element {
+        col![
+            container(
+                row![
+                    text("Playlist")
+                        .width(300)
+                        .height(Fill)
+                        .size(40)
+                        .vertical_alignment(Vertical::Center)
+                        .style(Text::Default)
+                        .font(Font {
+                            weight: Weight::Semibold,
+                            ..Default::default()
+                        }),
+                    space(Fill, Fill),
+                    col![
+                        space(Fill, Fill),
+                        button(
+                            cursor_grad(
+                                text("Shuffle")
+                                    .horizontal_alignment(Horizontal::Center)
+                                    .vertical_alignment(Vertical::Center)
+                                    .width(Fill)
+                                    .height(Fill)
+                                    .style(Text::NoForeground)
+                            )
+                            .width(Fill)
+                            .height(Fill)
+                        )
+                        .width(Fill)
+                        .height(30)
+                        .padding(0)
+                        .on_press(Msg::Control(ControlMsg::Shuffle))
+                        .style(Button::MenuItem)
+                    ]
+                    .width(70)
+                    .height(Fill)
+                ],
+            )
+            .width(Fill)
+            .height(Fill)
+            .padding([5, 20, 5, 20])
+            .height(80)
+            .style(Container::Gray),
+            container(
+                self.song_list(self.player.playlist().as_arc(), &self.gui.wb_states[WB_PLAYLIST], true)
+            ).style(Container::Black).width(Fill).height(Fill)
+        ]
+        .height(Fill)
+        .into()
     }
 
     /// Creates a song list
@@ -242,39 +360,59 @@ impl UampApp {
         &'a self,
         songs: Arc<[SongId]>,
         state: &'a WrapBoxState,
+        numbered: bool,
     ) -> Element {
+        let mut items: Vec<Element> = Vec::new();
+
+        if numbered {
+            items.push(
+                text("#")
+                    .width(50)
+                    .height(Fill)
+                    .style(Text::Gray)
+                    .size(14)
+                    .into()
+            )
+        }
+
+        items.extend([
+            line_text("TITLE / ARTIST")
+                .width(FillPortion(18))
+                .height(Fill)
+                .style(Text::Gray)
+                .elipsis("...")
+                .size(14)
+                .into(),
+            line_text("ALBUM / YEAR")
+                .width(FillPortion(15))
+                .height(Fill)
+                .style(Text::Gray)
+                .elipsis("...")
+                .size(14)
+                .into(),
+            line_text("T / D")
+                .width(FillPortion(2))
+                .height(Fill)
+                .style(Text::Gray)
+                .elipsis("...")
+                .size(14)
+                .into(),
+            line_text("LENGTH / GENRE")
+                .width(FillPortion(3))
+                .height(Fill)
+                .style(Text::Gray)
+                .elipsis("...")
+                .size(14)
+                .into(),
+        ]);
+
         col![
             container(
                 border(
                     container(
-                        row![
-                            line_text("TITLE / ARTIST")
-                                .width(FillPortion(18))
-                                .height(Fill)
-                                .style(Text::Gray)
-                                .elipsis("...")
-                                .size(14),
-                            line_text("ALBUM / YEAR")
-                                .width(FillPortion(15))
-                                .height(Fill)
-                                .style(Text::Gray)
-                                .elipsis("...")
-                                .size(14),
-                            line_text("T / D")
-                                .width(FillPortion(2))
-                                .height(Fill)
-                                .style(Text::Gray)
-                                .elipsis("...")
-                                .size(14),
-                            line_text("LENGTH / GENRE")
-                                .width(FillPortion(3))
-                                .height(Fill)
-                                .style(Text::Gray)
-                                .elipsis("...")
-                                .size(14),
-                        ]
-                        .height(Fill)
-                        .width(Fill)
+                        row(items)
+                            .height(Fill)
+                            .width(Fill)
                     )
                     .height(Fill)
                     .width(Fill)
@@ -286,7 +424,7 @@ impl UampApp {
             .style(Container::TopGrad),
             wrap_box(
                 (0..songs.len())
-                    .map(|i| self.song_list_item(i, songs.clone()))
+                    .map(|i| self.song_list_item(i, songs.clone(), numbered))
                     .collect(),
                 state,
             )
@@ -301,6 +439,7 @@ impl UampApp {
         &self,
         song: usize,
         songs: Arc<[SongId]>,
+        numbered: bool,
     ) -> Element<'static> {
         let text_style = if Some(songs[song]) == self.player.now_playing() {
             Text::Contrast
@@ -310,98 +449,111 @@ impl UampApp {
 
         let s = &self.library[songs[song]];
 
-        border(
-            button(
-                cursor_grad(
-                    col![
-                        row![
-                            line_text(s.title().to_owned())
-                                .width(FillPortion(18))
-                                .height(Fill)
-                                .style(text_style)
-                                .elipsis("...")
-                                .size(14),
-                            line_text(s.album().to_owned())
-                                .width(FillPortion(15))
-                                .height(Fill)
-                                .style(text_style)
-                                .elipsis("...")
-                                .size(14),
-                            line_text(s.track_str())
-                                .width(FillPortion(2))
-                                .height(Fill)
-                                .style(text_style)
-                                .elipsis("...")
-                                .size(14),
-                            line_text(s.length_str())
-                                .width(FillPortion(3))
-                                .height(Fill)
-                                .style(text_style)
-                                .elipsis("...")
-                                .size(14),
-                        ]
-                        .width(Fill)
-                        .height(FillPortion(3))
-                        .padding([4, 0, 0, 0]),
-                        row![
-                            container(
-                                line_text(s.artist().to_owned())
-                                    .width(Fill)
-                                    .height(Fill)
-                                    .style(Text::Gray)
-                                    .elipsis("...")
-                                    .size(10),
-                            )
-                            .width(FillPortion(18))
-                            .height(Fill)
-                            .padding([0, 0, 0, 2]),
-                            container(
-                                line_text(s.year_str())
-                                    .width(Fill)
-                                    .height(Fill)
-                                    .style(Text::Gray)
-                                    .elipsis("...")
-                                    .size(10),
-                            )
-                            .width(FillPortion(15))
-                            .height(Fill)
-                            .padding([0, 0, 0, 2]),
-                            container(
-                                line_text(s.disc_str())
-                                    .width(Fill)
-                                    .height(Fill)
-                                    .style(Text::Gray)
-                                    .elipsis("...")
-                                    .size(10),
-                            )
-                            .width(FillPortion(2))
-                            .height(Fill)
-                            .padding([0, 0, 0, 2]),
-                            container(
-                                line_text(s.genre().to_owned())
-                                    .width(Fill)
-                                    .height(Fill)
-                                    .style(Text::Gray)
-                                    .elipsis("...")
-                                .size(10),
-                            )
-                            .width(FillPortion(3))
-                            .height(Fill)
-                            .padding([0, 0, 0, 2]),
-                        ]
-                        .width(Fill)
-                        .height(FillPortion(2)),
-                    ]
-                    .width(Fill)
-                    .height(FillPortion(1))
-                    .padding([0, 10, 0, 10])
-                ),
-            )
-            .padding(0)
-            .on_press(Msg::PlaySong(song, songs))
-            .height(Fill)
+        let info = col![
+            row![
+                line_text(s.title().to_owned())
+                    .width(FillPortion(18))
+                    .height(Fill)
+                    .style(text_style)
+                    .elipsis("...")
+                    .size(14),
+                line_text(s.album().to_owned())
+                    .width(FillPortion(15))
+                    .height(Fill)
+                    .style(text_style)
+                    .elipsis("...")
+                    .size(14),
+                line_text(s.track_str())
+                    .width(FillPortion(2))
+                    .height(Fill)
+                    .style(text_style)
+                    .elipsis("...")
+                    .size(14),
+                line_text(s.length_str())
+                    .width(FillPortion(3))
+                    .height(Fill)
+                    .style(text_style)
+                    .elipsis("...")
+                    .size(14),
+            ]
             .width(Fill)
-            .style(Button::Item)
+            .height(FillPortion(3))
+            .padding([4, 0, 0, 0]),
+            row![
+                container(
+                    line_text(s.artist().to_owned())
+                        .width(Fill)
+                        .height(Fill)
+                        .style(Text::Gray)
+                        .elipsis("...")
+                        .size(10),
+                )
+                .width(FillPortion(18))
+                .height(Fill)
+                .padding([0, 0, 0, 2]),
+                container(
+                    line_text(s.year_str())
+                        .width(Fill)
+                        .height(Fill)
+                        .style(Text::Gray)
+                        .elipsis("...")
+                        .size(10),
+                )
+                .width(FillPortion(15))
+                .height(Fill)
+                .padding([0, 0, 0, 2]),
+                container(
+                    line_text(s.disc_str())
+                        .width(Fill)
+                        .height(Fill)
+                        .style(Text::Gray)
+                        .elipsis("...")
+                        .size(10),
+                )
+                .width(FillPortion(2))
+                .height(Fill)
+                .padding([0, 0, 0, 2]),
+                container(
+                    line_text(s.genre().to_owned())
+                        .width(Fill)
+                        .height(Fill)
+                        .style(Text::Gray)
+                        .elipsis("...")
+                    .size(10),
+                )
+                .width(FillPortion(3))
+                .height(Fill)
+                .padding([0, 0, 0, 2]),
+            ]
+            .width(Fill)
+            .height(FillPortion(2)),
+        ]
+        .width(Fill)
+        .height(Fill);
+
+        let item: Element = if numbered {
+            row![
+                text(song.to_string())
+                    .width(50)
+                    .height(Fill)
+                    .vertical_alignment(Vertical::Center)
+                    .style(Text::Gray),
+                info,
+            ]
+            .height(Fill)
+            .padding([0, 10, 0, 10])
+            .into()
+        } else {
+            info.padding([0, 10, 0, 10]).into()
+        };
+
+        border(
+            button(cursor_grad(item).style(CursorGrad::Long))
+                .padding(0)
+                .on_press(Msg::PlaySong(song, songs))
+                .height(Fill)
+                .width(Fill)
+                .style(Button::Item)
         )
         .style(Border::SongItem)
         .into()

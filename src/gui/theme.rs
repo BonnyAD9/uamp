@@ -107,6 +107,7 @@ pub enum Button {
     /// Even items in list
     ItemEven,
     Item,
+    MenuItem,
 }
 
 impl button::StyleSheet for Theme {
@@ -156,6 +157,13 @@ impl button::StyleSheet for Theme {
                 border_width: 0.,
                 border_radius: 6.0.into(),
                 ..default
+            },
+            Button::MenuItem => button::Appearance {
+                background: None,
+                border_width: 0.,
+                border_radius: 6.0.into(),
+                text_color: FOREGROUND,
+                ..default
             }
         }
     }
@@ -184,6 +192,11 @@ impl button::StyleSheet for Theme {
                 background: Some(Background::Color(Color::TRANSPARENT)),
                 ..base
             },
+            Button::MenuItem => button::Appearance {
+                background: Some(Background::Color(Color::TRANSPARENT)),
+                text_color: CONTRAST,
+                ..base
+            },
             _ => base,
         }
     }
@@ -210,6 +223,11 @@ impl button::StyleSheet for Theme {
             },
             Button::Item => button::Appearance {
                 background: Some(Background::Color(const_color!(0x222222))),
+                ..base
+            },
+            Button::MenuItem => button::Appearance {
+                background: Some(Background::Color(const_color!(0x222222))),
+                text_color: BRIGHT_CONTRAST,
                 ..base
             },
             _ => base,
@@ -600,9 +618,11 @@ pub enum Text {
     /// The default text style
     #[default]
     Default,
+    NoForeground,
     /// Text with contrast color as foreground
     Contrast,
     Gray,
+    Dark,
 }
 
 impl text::StyleSheet for Theme {
@@ -612,8 +632,10 @@ impl text::StyleSheet for Theme {
         text::Appearance {
             color: match style {
                 Text::Default => Some(FOREGROUND),
+                Text::NoForeground => None,
                 Text::Contrast => Some(CONTRAST),
                 Text::Gray => Some(const_color!(0x777777)),
+                Text::Dark => Some(const_color!(0x141414)),
             },
         }
     }
@@ -791,6 +813,8 @@ pub enum Border {
     TopGrad,
     SongItem,
     Bot,
+    BotRound(bool),
+    LeftRound(bool),
 }
 
 impl border::StyleSheet for Theme {
@@ -820,6 +844,10 @@ impl border::StyleSheet for Theme {
             Border::None => 0.into(),
             Border::TopGrad => 0.into(),
             Border::Bot => [0, 0, 2, 0].into(),
+            Border::BotRound(true) => [0, 0, 4, 0].into(),
+            Border::BotRound(false) => 0.into(),
+            Border::LeftRound(true) => [0, 0, 0, 4].into(),
+            Border::LeftRound(false) => 0.into(),
             Border::SongItem => [1, 0, 0, 0].into(),
         }
     }
@@ -829,6 +857,8 @@ impl border::StyleSheet for Theme {
             Border::None => 0.into(),
             Border::TopGrad => 0.into(),
             Border::Bot => 15.into(),
+            Border::BotRound(_) => 0.into(),
+            Border::LeftRound(_) => 0.into(),
             Border::SongItem => 6.into(),
         }
     }
@@ -838,12 +868,21 @@ impl border::StyleSheet for Theme {
             Border::None => OUTLINE_BG.into(),
             Border::TopGrad => OUTLINE_BG.into(),
             Border::Bot => Background::Color(const_color!(0x333333)).into(),
+            Border::BotRound(_) => CONTRAST_BG.into(),
+            Border::LeftRound(_) => CONTRAST_BG.into(),
             Border::SongItem => Background::Color(const_color!(0x444444)).into(),
         }
     }
 
     fn corner_color(&self, style: &Self::Style) -> Sides<Color> {
         OUTLINE.into()
+    }
+
+    fn border_border_radius(&self, style: &Self::Style) -> Sides<Sides<f32>> {
+        match style {
+            Border::LeftRound(_) => Sides::from(2.).into(),
+            _ => Sides::from(0.).into()
+        }
     }
 }
 
@@ -961,25 +1000,37 @@ impl line_text::StyleSheet for Theme {
     fn foreground(&self, style: &Self::Style) -> Option<Color> {
         match style {
             Text::Default => Some(FOREGROUND),
+            Text::NoForeground => None,
             Text::Contrast => Some(CONTRAST),
             Text::Gray => Some(const_color!(0x777777)),
+            Text::Dark => Some(const_color!(0x101010)),
         }
     }
 }
 
+#[derive(Default, Clone, Copy, Debug)]
+pub enum CursorGrad {
+    #[default]
+    Short,
+    Long,
+}
+
 impl cursor_grad::StyleSheet for Theme {
-    type Style = ();
+    type Style = CursorGrad;
 
     fn active(&self, _style: &Self::Style) -> Option<cursor_grad::Appearance> {
         None
     }
 
-    fn hovered(&self, _style: &Self::Style) -> Option<cursor_grad::Appearance> {
+    fn hovered(&self, style: &Self::Style) -> Option<cursor_grad::Appearance> {
         Some(cursor_grad::Appearance {
             border_radius: 6.into(),
             mouse_color: Color::from_rgba8(0x99, 0x99, 0x99, 0.05),
             fade_color: Color::from_rgba8(0x99, 0x99, 0x99, 0.),
-            fade_len: 700.
+            fade_len: match style {
+                CursorGrad::Long => 700.,
+                CursorGrad::Short => 100.,
+            }
         })
     }
 }
