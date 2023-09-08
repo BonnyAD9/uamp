@@ -253,7 +253,7 @@ impl UampApp {
                         }),
                 ]
                 .height(60),
-                space(Fill, 22),
+                space(Fill, 23),
                 self.left_menu_item("Library", MainPage::Library),
                 space(Fill, 5),
                 self.left_menu_item("Playlist", MainPage::Playlist),
@@ -497,7 +497,7 @@ impl UampApp {
                 ).height(20).style(Border::Bot)
             )
             .width(Fill)
-            .height(22)
+            .height(23)
             .style(Container::Dark),
             wrap_box(
                 (0..songs.len())
