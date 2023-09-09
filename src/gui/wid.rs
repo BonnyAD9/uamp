@@ -85,7 +85,7 @@ macro_rules! wrap_box {
 
 /// Creates button widget with the given child
 pub fn button<'a>(child: impl Into<Element<'a>>) -> Button<'a> {
-    Button::new(child)
+    Button::new(child).width(Fill).height(Fill).padding(0)
 }
 
 /// Creates button widget
@@ -115,7 +115,7 @@ macro_rules! button {
 
 /// Creates text widget with the given string content
 pub fn text<'a>(content: impl Into<Cow<'a, str>>) -> Text<'a> {
-    Text::new(content)
+    Text::new(content).width(Fill).height(Fill)
 }
 
 /// Creates text widgets
@@ -143,7 +143,7 @@ macro_rules! text {
 
 /// Creates column widget with the given children
 pub fn column<'a>(children: Vec<Element<'a>>) -> Column<'a> {
-    Column::with_children(children)
+    Column::with_children(children).width(Fill).height(Fill)
 }
 
 /// Creates column widget
@@ -167,7 +167,7 @@ macro_rules! col {
 
 /// Creates row widget with the given children
 pub fn row<'a>(children: Vec<Element<'a>>) -> Row<'a> {
-    Row::with_children(children)
+    Row::with_children(children).width(Fill).height(Fill)
 }
 
 /// Creates row widget
@@ -191,7 +191,7 @@ macro_rules! row {
 
 /// Creates svg widget
 pub fn svg(handle: impl Into<widget::svg::Handle>) -> Svg {
-    Svg::new(handle)
+    Svg::new(handle).height(Fill)
 }
 
 /// Creates space widget
@@ -199,7 +199,7 @@ pub fn space(width: impl Into<Length>, height: impl Into<Length>) -> Space {
     Space::new(width, height)
 }
 
-/// Creates widget that shrinks
+/// Creates widget that fills
 pub fn nothing() -> Space {
     space(Fill, Fill)
 }
@@ -215,7 +215,7 @@ pub fn slider<'a, T: Copy + From<u8> + std::cmp::PartialOrd>(
 
 /// Creates container widget with the given child
 pub fn container<'a>(child: impl Into<Element<'a>>) -> Container<'a> {
-    widget::container(child)
+    widget::container(child).width(Fill).height(Fill)
 }
 
 /// Creates container that centers its child
@@ -277,7 +277,7 @@ where
 
 /// Creates text widget with the given string content
 pub fn line_text<'a>(content: impl Into<Cow<'a, str>>) -> LineText<'a> {
-    LineText::new(content)
+    LineText::new(content).width(Fill).height(Fill)
 }
 
 /// Creates text widgets

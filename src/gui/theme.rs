@@ -934,6 +934,7 @@ impl svg_button::StyleSheet for Theme {
                 background: Background::Color(FOREGROUND),
                 border_thickness: 0.,
                 border_radius: (*r).into(),
+                svg_color: Some(const_color!(0x181818)),
                 ..default
             },
             SvgButton::TransparentCircle(r) => svg_button::Appearance {
