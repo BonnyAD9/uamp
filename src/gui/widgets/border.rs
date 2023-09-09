@@ -253,7 +253,9 @@ where
             let bounds = Rectangle {
                 x: bounds.x + radius.bottom_left(),
                 y: bounds.y + bounds.height,
-                width: bounds.width - radius.bottom_left() - radius.bottom_right(),
+                width: bounds.width
+                    - radius.bottom_left()
+                    - radius.bottom_right(),
                 height: thickness.bottom,
             };
 

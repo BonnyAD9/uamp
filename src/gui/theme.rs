@@ -14,7 +14,9 @@ use iced_core::{
 };
 use serde::de;
 
-use super::widgets::{border, line_text, sides::Sides, svg_button, wrap_box, cursor_grad};
+use super::widgets::{
+    border, cursor_grad, line_text, sides::Sides, svg_button, wrap_box,
+};
 
 /// Creates const color from hex
 ///
@@ -164,7 +166,7 @@ impl button::StyleSheet for Theme {
                 border_radius: 6.0.into(),
                 text_color: FOREGROUND,
                 ..default
-            }
+            },
         }
     }
 
@@ -290,7 +292,7 @@ impl container::StyleSheet for Theme {
         match style {
             Container::Default => default,
             Container::Gray => container::Appearance {
-                background: Some(Background::Color(const_color!(0x1E1E1E)),),
+                background: Some(Background::Color(const_color!(0x1E1E1E))),
                 ..default
             },
             Container::Black => container::Appearance {
@@ -298,17 +300,33 @@ impl container::StyleSheet for Theme {
                 ..default
             },
             Container::ToInvis => container::Appearance {
-                background: Some(Background::Gradient(Gradient::Linear(Linear::new(Degrees(180.)).add_stops([
-                    ColorStop { offset: 0., color: const_color!(0x1E1E1E) },
-                    ColorStop { offset: 1., color: Color::from_rgba8(0x1E, 0x1E, 0x1E, 0.) },
-                ])))),
+                background: Some(Background::Gradient(Gradient::Linear(
+                    Linear::new(Degrees(180.)).add_stops([
+                        ColorStop {
+                            offset: 0.,
+                            color: const_color!(0x1E1E1E),
+                        },
+                        ColorStop {
+                            offset: 1.,
+                            color: Color::from_rgba8(0x1E, 0x1E, 0x1E, 0.),
+                        },
+                    ]),
+                ))),
                 ..default
             },
             Container::FromInvis => container::Appearance {
-                background: Some(Background::Gradient(Gradient::Linear(Linear::new(Degrees(180.)).add_stops([
-                    ColorStop { offset: 0., color: Color::from_rgba8(0x1E, 0x1E, 0x1E, 0.) },
-                    ColorStop { offset: 1., color: const_color!(0x1E1E1E) },
-                ])))),
+                background: Some(Background::Gradient(Gradient::Linear(
+                    Linear::new(Degrees(180.)).add_stops([
+                        ColorStop {
+                            offset: 0.,
+                            color: Color::from_rgba8(0x1E, 0x1E, 0x1E, 0.),
+                        },
+                        ColorStop {
+                            offset: 1.,
+                            color: const_color!(0x1E1E1E),
+                        },
+                    ]),
+                ))),
                 ..default
             },
             Container::TopGrad => container::Appearance {
@@ -329,7 +347,7 @@ impl container::StyleSheet for Theme {
             Container::Dark => container::Appearance {
                 background: Some(Background::Color(const_color!(0x181818))),
                 ..default
-            }
+            },
         }
     }
 }
@@ -743,10 +761,7 @@ impl wrap_box::StyleSheet for Theme {
                 FOREGROUND
             };
 
-            wrap_box::ButtonStyle {
-                square,
-                foreground,
-            }
+            wrap_box::ButtonStyle { square, foreground }
         }
     }
 
@@ -828,7 +843,7 @@ impl border::StyleSheet for Theme {
     fn background(&self, style: &Self::Style) -> Background {
         match style {
             Border::None => Background::Color(Color::TRANSPARENT),
-            Border::TopGrad=> Background::Gradient(Gradient::Linear(
+            Border::TopGrad => Background::Gradient(Gradient::Linear(
                 Linear::new(Degrees(270.)).add_stops([
                     ColorStop {
                         offset: 0.,
@@ -875,7 +890,9 @@ impl border::StyleSheet for Theme {
             Border::Bot => Background::Color(const_color!(0x333333)).into(),
             Border::BotRound(_) => CONTRAST_BG.into(),
             Border::LeftRound(_) => CONTRAST_BG.into(),
-            Border::SongItem => Background::Color(const_color!(0x444444)).into(),
+            Border::SongItem => {
+                Background::Color(const_color!(0x444444)).into()
+            }
         }
     }
 
@@ -886,7 +903,7 @@ impl border::StyleSheet for Theme {
     fn border_border_radius(&self, style: &Self::Style) -> Sides<Sides<f32>> {
         match style {
             Border::LeftRound(_) => Sides::from(2.).into(),
-            _ => Sides::from(0.).into()
+            _ => Sides::from(0.).into(),
         }
     }
 }
@@ -1036,7 +1053,7 @@ impl cursor_grad::StyleSheet for Theme {
             fade_len: match style {
                 CursorGrad::Long => 700.,
                 CursorGrad::Short => 100.,
-            }
+            },
         })
     }
 }

@@ -135,7 +135,10 @@ where
         renderer: &Renderer,
         limits: &iced_core::layout::Limits,
     ) -> Node {
-        let limits = limits.width(self.width).height(self.height).pad(self.padding.into());
+        let limits = limits
+            .width(self.width)
+            .height(self.height)
+            .pad(self.padding.into());
 
         let font_size = self.size.unwrap_or_else(|| renderer.default_size());
         let font = self.font.unwrap_or_else(|| renderer.default_font());

@@ -1,10 +1,11 @@
 use iced_core::{
+    gradient::Linear,
     layout::{Limits, Node},
     mouse::Cursor,
     renderer::{Quad, Style},
     widget::Tree,
-    Background, BorderRadius, Color, Element, Layout, Length, Rectangle, Size,
-    Vector, Widget, gradient::Linear, Radians, Degrees, Gradient,
+    Background, BorderRadius, Color, Degrees, Element, Gradient, Layout,
+    Length, Radians, Rectangle, Size, Vector, Widget,
 };
 
 use super::sides::Sides;
@@ -248,21 +249,27 @@ where
         let m = ap.mouse_color;
         let f = ap.fade_color;
 
-        grad = grad.add_stop(left, Color::from_rgba(
-            m.r * l_mul + f.r * (1. - l_mul),
-            m.g * l_mul + f.g * (1. - l_mul),
-            m.b * l_mul + f.b * (1. - l_mul),
-            m.a * l_mul + f.a * (1. - l_mul),
-        ));
+        grad = grad.add_stop(
+            left,
+            Color::from_rgba(
+                m.r * l_mul + f.r * (1. - l_mul),
+                m.g * l_mul + f.g * (1. - l_mul),
+                m.b * l_mul + f.b * (1. - l_mul),
+                m.a * l_mul + f.a * (1. - l_mul),
+            ),
+        );
 
         grad = grad.add_stop(center, m);
 
-        grad = grad.add_stop(right, Color::from_rgba(
-            m.r * r_mul + f.r * (1. - r_mul),
-            m.g * r_mul + f.g * (1. - r_mul),
-            m.b * r_mul + f.b * (1. - r_mul),
-            m.a * r_mul + f.a * (1. - r_mul),
-        ));
+        grad = grad.add_stop(
+            right,
+            Color::from_rgba(
+                m.r * r_mul + f.r * (1. - r_mul),
+                m.g * r_mul + f.g * (1. - r_mul),
+                m.b * r_mul + f.b * (1. - r_mul),
+                m.a * r_mul + f.a * (1. - r_mul),
+            ),
+        );
 
         let quad = Quad {
             bounds,

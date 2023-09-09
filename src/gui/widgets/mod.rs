@@ -1,4 +1,5 @@
 pub mod border;
+pub mod cursor_grad;
 pub mod grid;
 ///! This module contains custom widgets for iced that are either
 ///! faster, more customizable, or with more features.
@@ -9,4 +10,3 @@ pub mod line_text;
 pub mod sides;
 pub mod svg_button;
 pub mod wrap_box;
-pub mod cursor_grad;

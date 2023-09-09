@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     cell::Cell,
     default,
     fs::{create_dir_all, File},
@@ -12,8 +13,8 @@ use iced_core::{
     alignment::{Horizontal, Vertical},
     font::{Family, Weight},
     Font,
-    Length::{Fill, FillPortion, Shrink},
-    Widget,
+    Length::{self, Fill, FillPortion, Shrink},
+    Pixels, Widget,
 };
 use log::{error, info};
 use serde::{Deserialize, Serialize};
@@ -28,6 +29,7 @@ use crate::{
         Result,
     },
     gen_struct, grid,
+    gui::widgets::icons::SvgData,
     library::{Filter, SongId},
     player::TimeStamp,
     row, text,
@@ -36,11 +38,11 @@ use crate::{
 use super::{
     ids::*,
     msg::Message,
-    theme::{Border, Button, Svg, SvgButton, Text, Container, CursorGrad},
+    theme::{Border, Button, Container, CursorGrad, Svg, SvgButton, Text},
     wid::{
         self, border, button, center, center_x, center_y, container,
-        line_text, nothing, slider, space, svg, svg_button, text, wrap_box,
-        Command, Element, GridItem, WrapBoxState, cursor_grad, LineText, row,
+        cursor_grad, line_text, nothing, row, slider, space, svg, svg_button,
+        text, wrap_box, Command, Element, GridItem, LineText, WrapBoxState,
     },
     widgets::{
         grid::SpanLen::{Fixed, Relative},
@@ -227,37 +229,27 @@ impl UampApp {
             MainPage::Settings => self.settings_page(),
         };
 
-        row![
-            self.left_menu(),
-            page,
-        ]
-        .height(Fill)
-        .into()
+        row![self.left_menu(), page,].height(Fill).into()
     }
 
     fn left_menu(&self) -> Element {
         container(
             col![
                 row![
-                    svg(icons::UAMP)
-                        .height(60)
-                        .width(60),
-                    text("Uamp")
-                        .size(40)
-                        .style(Text::Default)
-                        .font(Font {
-                            weight: Weight::Semibold,
-                            ..Default::default()
-                        }),
+                    svg(icons::UAMP).height(60).width(60),
+                    text("Uamp").size(40).style(Text::Default).font(Font {
+                        weight: Weight::Semibold,
+                        ..Default::default()
+                    }),
                 ]
                 .height(60),
-                space(Fill, 23),
+                space(Fill, 13),
                 self.left_menu_item("Library", MainPage::Library),
-                space(Fill, 5),
                 self.left_menu_item("Playlist", MainPage::Playlist),
                 space(Fill, Fill),
                 self.left_menu_item("Settings", MainPage::Settings),
             ]
+            .spacing(5),
         )
         .style(Container::Gray)
         .padding([20, 20, 20, 20])
@@ -271,13 +263,13 @@ impl UampApp {
                 cursor_grad(
                     text(name)
                         .vertical_alignment(Vertical::Center)
-                        .style(Text::NoForeground)
+                        .style(Text::NoForeground),
                 )
-                .padding([0, 0, 0, 5])
+                .padding([0, 0, 0, 5]),
             )
             .style(Button::MenuItem)
             .on_press(Msg::Gui(Message::SetPage(page)))
-            .padding(0)
+            .padding(0),
         )
         .height(30)
         .padding([0, 0, 0, 5])
@@ -287,28 +279,23 @@ impl UampApp {
 
     fn library_page(&self) -> Element {
         col![
-            container(
-                row![
-                    text("Library")
-                        .width(300)
-                        .size(40)
-                        .vertical_alignment(Vertical::Center)
-                        .style(Text::Default)
-                        .font(Font {
-                            weight: Weight::Semibold,
-                            ..Default::default()
-                        }),
-                ],
-            )
+            container(row![text("Library")
+                .width(300)
+                .size(40)
+                .vertical_alignment(Vertical::Center)
+                .style(Text::Default)
+                .font(Font {
+                    weight: Weight::Semibold,
+                    ..Default::default()
+                }),],)
             .padding([5, 20, 5, 20])
             .height(80)
             .style(Container::TopGrad),
-            container(
-                self.song_list(
-                    self.library.filter(Filter::All).collect(),
-                    &self.gui.wb_states[WB_SONGS], false
-                )
-            )
+            container(self.song_list(
+                self.library.filter(Filter::All).collect(),
+                &self.gui.wb_states[WB_SONGS],
+                false
+            ))
             .style(Container::Black)
         ]
         .height(Fill)
@@ -317,42 +304,33 @@ impl UampApp {
 
     fn playlist_page(&self) -> Element {
         col![
-            container(
-                row![
-                    text("Playlist")
-                        .width(300)
-                        .size(40)
-                        .vertical_alignment(Vertical::Center)
-                        .style(Text::Default)
-                        .font(Font {
-                            weight: Weight::Semibold,
-                            ..Default::default()
-                        }),
+            container(row![
+                text("Playlist")
+                    .width(300)
+                    .size(40)
+                    .vertical_alignment(Vertical::Center)
+                    .style(Text::Default)
+                    .font(Font {
+                        weight: Weight::Semibold,
+                        ..Default::default()
+                    }),
+                nothing(),
+                col![
                     nothing(),
-                    col![
-                        nothing(),
-                        button(
-                            cursor_grad(
-                                text("Shuffle")
-                                    .horizontal_alignment(Horizontal::Center)
-                                    .vertical_alignment(Vertical::Center)
-                                    .style(Text::NoForeground)
-                            )
-                        )
-                        .height(30)
-                        .padding(0)
+                    Self::the_button("Shuffle", Fill)
                         .on_press(Msg::Control(ControlMsg::Shuffle))
-                        .style(Button::MenuItem)
-                    ]
-                    .width(70)
-                ],
-            )
+                ]
+                .width(70)
+            ],)
             .padding([5, 20, 5, 20])
             .height(80)
             .style(Container::TopGrad),
-            container(
-                self.song_list(self.player.playlist().as_arc(), &self.gui.wb_states[WB_PLAYLIST], true)
-            ).style(Container::Black)
+            container(self.song_list(
+                self.player.playlist().as_arc(),
+                &self.gui.wb_states[WB_PLAYLIST],
+                true
+            ))
+            .style(Container::Black)
         ]
         .height(Fill)
         .into()
@@ -360,37 +338,22 @@ impl UampApp {
 
     fn settings_page(&self) -> Element {
         col![
-            container(
-                row![
-                    text("Settings")
-                        .width(300)
-                        .size(40)
-                        .vertical_alignment(Vertical::Center)
-                        .style(Text::Default)
-                        .font(Font {
-                            weight: Weight::Semibold,
-                            ..Default::default()
-                        }),
-                ],
-            )
+            container(row![text("Settings")
+                .width(300)
+                .size(40)
+                .vertical_alignment(Vertical::Center)
+                .style(Text::Default)
+                .font(Font {
+                    weight: Weight::Semibold,
+                    ..Default::default()
+                }),],)
             .padding([5, 20, 5, 20])
             .height(80)
             .style(Container::TopGrad),
             container(
                 col![
-                    button(
-                        cursor_grad(
-                            text("Search for new songs")
-                                .horizontal_alignment(Horizontal::Center)
-                                .vertical_alignment(Vertical::Center)
-                                .style(Text::NoForeground)
-                        )
-                    )
-                    .width(200)
-                    .height(30)
-                    .padding(0)
-                    .on_press(Msg::Control(ControlMsg::LoadNewSongs))
-                    .style(Button::MenuItem),
+                    Self::the_button("Search for new songs", 200)
+                        .on_press(Msg::Control(ControlMsg::LoadNewSongs)),
                     nothing(),
                 ]
                 .padding([0, 0, 0, 20])
@@ -398,6 +361,23 @@ impl UampApp {
             .style(Container::Dark)
         ]
         .into()
+    }
+
+    fn the_button<'a, S, L>(s: S, width: L) -> wid::Button<'a>
+    where
+        S: Into<Cow<'a, str>>,
+        L: Into<Length>,
+    {
+        button(cursor_grad(
+            text(s)
+                .horizontal_alignment(Horizontal::Center)
+                .vertical_alignment(Vertical::Center)
+                .style(Text::NoForeground),
+        ))
+        .width(width)
+        .height(30)
+        .padding(0)
+        .style(Button::MenuItem)
     }
 
     /// Creates a song list
@@ -411,51 +391,34 @@ impl UampApp {
 
         if numbered {
             items.push(
-                container(
-                    text("#")
-                        .style(Text::Gray)
-                        .size(14)
-                )
-                .width(50)
-                .padding([0, 0, 0, 10])
-                .into()
+                container(text("#").style(Text::Gray).size(14))
+                    .width(50)
+                    .padding([0, 0, 0, 10])
+                    .into(),
             )
         }
 
+        fn make_title<'a>(s: &'static str, portion: u16) -> Element<'a> {
+            line_text(s)
+                .width(FillPortion(portion))
+                .style(Text::Gray)
+                .elipsis("...")
+                .size(14)
+                .into()
+        }
+
         items.extend([
-            line_text("TITLE / ARTIST")
-                .width(FillPortion(18))
-                .style(Text::Gray)
-                .elipsis("...")
-                .size(14)
-                .into(),
-            line_text("ALBUM / YEAR")
-                .width(FillPortion(15))
-                .style(Text::Gray)
-                .elipsis("...")
-                .size(14)
-                .into(),
-            line_text("T / D")
-                .width(FillPortion(2))
-                .style(Text::Gray)
-                .elipsis("...")
-                .size(14)
-                .into(),
-            line_text("LENGTH / GENRE")
-                .width(FillPortion(3))
-                .style(Text::Gray)
-                .elipsis("...")
-                .size(14)
-                .into(),
+            make_title("TITLE / ARTIST", 18),
+            make_title("ALBUM / YEAR", 15),
+            make_title("T / D", 2),
+            make_title("LENGTH / GENRE", 3),
         ]);
 
         col![
             container(
-                border(
-                    container(row(items)).padding([0, 40, 0, 20])
-                )
-                .height(20)
-                .style(Border::Bot)
+                border(container(row(items)).padding([0, 40, 0, 20]))
+                    .height(20)
+                    .style(Border::Bot)
             )
             .height(23)
             .style(Container::Dark),
@@ -486,64 +449,42 @@ impl UampApp {
 
         let s = &self.library[songs[song]];
 
+        fn top_text<'a, S>(s: S, portion: u16, style: Text) -> Element<'a>
+        where
+            S: Into<Cow<'a, str>>,
+        {
+            line_text(s)
+                .width(FillPortion(portion))
+                .style(style)
+                .elipsis("...")
+                .size(14)
+                .into()
+        }
+
+        fn bot_text<'a, S>(s: S, portion: u16) -> Element<'a>
+        where
+            S: Into<Cow<'a, str>>,
+        {
+            container(line_text(s).style(Text::Gray).elipsis("...").size(10))
+                .width(FillPortion(portion))
+                .padding([0, 0, 0, 2])
+                .into()
+        }
+
         let info = col![
             row![
-                line_text(s.title().to_owned())
-                    .width(FillPortion(18))
-                    .style(text_style)
-                    .elipsis("...")
-                    .size(14),
-                line_text(s.album().to_owned())
-                    .width(FillPortion(15))
-                    .style(text_style)
-                    .elipsis("...")
-                    .size(14),
-                line_text(s.track_str())
-                    .width(FillPortion(2))
-                    .style(text_style)
-                    .elipsis("...")
-                    .size(14),
-                line_text(s.length_str())
-                    .width(FillPortion(3))
-                    .style(text_style)
-                    .elipsis("...")
-                    .size(14),
+                top_text(s.title().to_owned(), 18, text_style),
+                top_text(s.album().to_owned(), 15, text_style),
+                top_text(s.track_str(), 2, text_style),
+                top_text(s.length_str(), 3, text_style),
             ]
             .height(FillPortion(3))
             .padding([4, 0, 0, 0]),
             row![
-                container(
-                    line_text(s.artist().to_owned())
-                        .style(Text::Gray)
-                        .elipsis("...")
-                        .size(10),
-                )
-                .width(FillPortion(18))
-                .padding([0, 0, 0, 2]),
-                container(
-                    line_text(s.year_str())
-                        .style(Text::Gray)
-                        .elipsis("...")
-                        .size(10),
-                )
-                .width(FillPortion(15))
-                .padding([0, 0, 0, 2]),
-                container(
-                    line_text(s.disc_str())
-                        .style(Text::Gray)
-                        .elipsis("...")
-                        .size(10),
-                )
-                .width(FillPortion(2))
-                .padding([0, 0, 0, 2]),
-                container(
-                    line_text(s.genre().to_owned())
-                        .style(Text::Gray)
-                        .elipsis("...")
-                    .size(10),
-                )
-                .width(FillPortion(3))
-                .padding([0, 0, 0, 2]),
+                bot_text(s.artist().to_owned(), 18),
+                bot_text(s.year_str(), 15),
+                bot_text(s.disc_str(), 2),
+                bot_text(s.genre().to_owned(), 3),
             ]
             .height(FillPortion(2)),
         ];
@@ -566,7 +507,7 @@ impl UampApp {
             button(cursor_grad(item).style(CursorGrad::Long))
                 .padding(0)
                 .on_press(Msg::PlaySong(song, songs))
-                .style(Button::Item)
+                .style(Button::Item),
         )
         .style(Border::SongItem)
         .into()
@@ -589,7 +530,10 @@ impl UampApp {
                     ..Font::default()
                 })
                 .elipsis("..."),
-            ).column(0..2).row(0..2).padding([15, 0, 0, 15]),
+            )
+            .column(0..2)
+            .row(0..2)
+            .padding([15, 0, 0, 15]),
             GridItem::new(
                 line_text(artist)
                     .elipsis("...")
@@ -600,7 +544,9 @@ impl UampApp {
                         weight: Weight::Medium,
                         ..Font::default()
                     }),
-            ).row(1).padding([0, 0, 0, 20]),
+            )
+            .row(1)
+            .padding([0, 0, 0, 20]),
             GridItem::new(self.play_menu()).column(1..4).row(0..2),
             GridItem::new(self.volume_menu()).column(4).row(0..2),
         ])
@@ -615,44 +561,35 @@ impl UampApp {
         } else {
             icons::PLAY
         };
+
+        fn mk_button<'a>(icon: SvgData, msg: ControlMsg) -> Element<'a> {
+            svg_button(icon)
+                .height(30)
+                .width(30)
+                .padding(5)
+                .on_click(Msg::Control(msg))
+                .style(SvgButton::TransparentCircle(30.))
+                .into()
+        }
+
         col![
             center_x(
                 row![
-                    svg_button(icons::PREVIOUS)
-                        .height(30)
-                        .width(30)
-                        .padding(5)
-                        .on_click(Msg::Control(ControlMsg::PrevSong(1)))
-                        .style(SvgButton::TransparentCircle(30.)),
-                    space(15, Fill),
-                    svg_button(icons::REWIND)
-                        .height(30)
-                        .width(30)
-                        .padding(5)
-                        .on_click(Msg::Control(ControlMsg::Rewind(None)))
-                        .style(SvgButton::TransparentCircle(30.)),
-                    space(15, Fill),
+                    mk_button(icons::PREVIOUS, ControlMsg::PrevSong(1)),
+                    mk_button(icons::REWIND, ControlMsg::Rewind(None)),
                     svg_button(pp_svg)
                         .padding(6)
                         .width(30)
                         .height(30)
                         .on_click(Msg::Control(ControlMsg::PlayPause(None)))
                         .style(SvgButton::WhiteCircle(30.)),
-                    space(15, Fill),
-                    svg_button(icons::FAST_FORWARD)
-                        .height(30)
-                        .width(30)
-                        .padding(5)
-                        .on_click(Msg::Control(ControlMsg::FastForward(None)))
-                        .style(SvgButton::TransparentCircle(30.)),
-                    space(15, Fill),
-                    svg_button(icons::NEXT)
-                        .height(30)
-                        .width(30)
-                        .padding(5)
-                        .on_click(Msg::Control(ControlMsg::NextSong(1)))
-                        .style(SvgButton::TransparentCircle(30.))
+                    mk_button(
+                        icons::FAST_FORWARD,
+                        ControlMsg::FastForward(None)
+                    ),
+                    mk_button(icons::NEXT, ControlMsg::NextSong(1))
                 ]
+                .spacing(15)
                 .width(Shrink)
                 .padding([10, 0, 0, 0])
             )
@@ -664,68 +601,57 @@ impl UampApp {
     }
 
     fn seek_slider(&self) -> Element {
-        let mut ts = match self.gui.song_timestamp {
-            Some(ts) => ts,
-            None => {
-                return row![
-                    text!("--:--")
-                        .style(Text::Gray)
-                        .size(14)
-                        .horizontal_alignment(Horizontal::Center)
-                        .vertical_alignment(Vertical::Center)
-                        .width(50)
-                        .height(30),
-                    space(10, Fill),
-                    slider(0.0..=1., 0., |_| {
-                        Msg::Gui(Message::SeekSliderMove(Duration::ZERO))
-                    })
+        let (cur, end, slider) = match self.gui.song_timestamp {
+            Some(mut ts) => {
+                if let Some(d) = self.gui.seek_drag {
+                    ts.current = d;
+                }
+                (
+                    duration_to_string(ts.current, true),
+                    duration_to_string(ts.total, true),
+                    slider(
+                        0.0..=ts.total.as_secs_f32(),
+                        ts.current.as_secs_f32(),
+                        |c| {
+                            Msg::Gui(Message::SeekSliderMove(
+                                Duration::from_secs_f32(c),
+                            ))
+                        },
+                    )
+                    .on_release(Msg::Gui(Message::SeekSliderEnd))
+                    .step(0.1)
                     .width(Fill)
                     .height(10),
-                    space(10, Fill),
-                    text!("--:--")
-                        .style(Text::Gray)
-                        .size(14)
-                        .horizontal_alignment(Horizontal::Center)
-                        .vertical_alignment(Vertical::Center)
-                        .width(50)
-                        .height(30),
-                ]
-                .height(30)
-                .into()
+                )
             }
+            None => (
+                "--:--".to_owned(),
+                "--:--".to_owned(),
+                slider(0.0..=1., 0., |_| {
+                    Msg::Gui(Message::SeekSliderMove(Duration::ZERO))
+                })
+                .width(Fill)
+                .height(10),
+            ),
         };
 
-        if let Some(d) = self.gui.seek_drag {
-            ts.current = d;
+        fn mk_text<'a>(s: String) -> Element<'a> {
+            text(s)
+                .style(Text::Gray)
+                .size(14)
+                .horizontal_alignment(Horizontal::Center)
+                .vertical_alignment(Vertical::Center)
+                .width(50)
+                .height(30)
+                .into()
         }
+
         row![
-            text!("{}", duration_to_string(ts.current, true))
-                .style(Text::Gray)
-                .size(14)
-                .horizontal_alignment(Horizontal::Center)
-                .vertical_alignment(Vertical::Center)
-                .width(50)
-                .height(30),
+            mk_text(cur),
             space(10, Fill),
-            slider(
-                0.0..=ts.total.as_secs_f32(),
-                ts.current.as_secs_f32(),
-                |c| Msg::Gui(Message::SeekSliderMove(
-                    Duration::from_secs_f32(c)
-                )),
-            )
-            .on_release(Msg::Gui(Message::SeekSliderEnd))
-            .step(0.1)
-            .width(Fill)
-            .height(10),
+            slider,
             space(10, Fill),
-            text!("{}", duration_to_string(ts.total, true))
-                .style(Text::Gray)
-                .size(14)
-                .horizontal_alignment(Horizontal::Center)
-                .vertical_alignment(Vertical::Center)
-                .width(50)
-                .height(30),
+            mk_text(end),
         ]
         .height(30)
         .into()
@@ -741,8 +667,18 @@ impl UampApp {
         grid![
             Relative(1.), Fixed(40.), Fixed(30.), Fixed(160.);
             Fixed(40.), Relative(1.);
-            GridItem::new(center_y(self.mute_button())).column(1).row(1).padding([0, 10, 0, 0]),
-            GridItem::new(text!("{:.0}", self.player.volume() * 100.).style(vol_style).width(30).vertical_alignment(Vertical::Center)).column(2).row(1),
+            GridItem::new(center_y(self.mute_button()))
+                    .column(1)
+                    .row(1)
+                    .padding([0, 10, 0, 0]),
+            GridItem::new(
+                text!("{:.0}", self.player.volume() * 100.)
+                    .style(vol_style)
+                    .width(30)
+                    .vertical_alignment(Vertical::Center)
+            )
+            .column(2)
+            .row(1),
             GridItem::new(
                 center_y(
                     slider(0.0..=1., self.player.volume(), |v| {
@@ -752,9 +688,12 @@ impl UampApp {
                 )
                 .width(150)
                 .padding([0, 5])
-            ).column(3).row(1)
+            )
+            .column(3)
+            .row(1)
             .padding([0, 10, 0, 0])
-        ].into()
+        ]
+        .into()
     }
 
     fn mute_button(&self) -> Element {

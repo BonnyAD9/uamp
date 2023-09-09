@@ -1,9 +1,12 @@
-use std::{path::{Path, PathBuf}, time::Duration};
+use std::{
+    path::{Path, PathBuf},
+    time::Duration,
+};
 
 use audiotags::Tag;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::core::{Result, extensions::duration_to_string};
+use crate::core::{extensions::duration_to_string, Result};
 
 /// Describes song
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -44,7 +47,10 @@ impl Song {
             track: tag.track().0.unwrap_or_default() as u32,
             disc: tag.disc().0.unwrap_or_default() as u32,
             year: tag.year().unwrap_or(i32::MAX),
-            length: tag.duration().map(|s| Duration::from_secs_f64(s)).unwrap_or(Duration::ZERO),
+            length: tag
+                .duration()
+                .map(|s| Duration::from_secs_f64(s))
+                .unwrap_or(Duration::ZERO),
             genre: tag.genre().unwrap_or("-").to_owned(),
             deleted: false,
         })
