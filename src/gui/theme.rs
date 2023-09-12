@@ -1,5 +1,3 @@
-use std::{default, f32::consts::PI, sync::Condvar};
-
 use iced::{
     application,
     overlay::menu,
@@ -10,9 +8,8 @@ use iced::{
 };
 use iced_core::{
     gradient::{ColorStop, Linear},
-    Background, Color, Degrees, Gradient, Padding, Vector,
+    Background, Color, Degrees, Gradient, Vector,
 };
-use serde::de;
 
 use super::widgets::{
     border, cursor_grad, line_text, sides::Sides, svg_button, wrap_box,
@@ -36,22 +33,31 @@ macro_rules! const_color {
 
 // some default colors to use
 
-/// The primary color
-const PRIMARY: Color = const_color!(0x222222);
-/// Primary color as background
-const PRIMARY_BG: Background = Background::Color(PRIMARY);
-/// Secondary color
-const SECONDARY: Color = const_color!(0x181818);
-/// Secondary color as background
-const SECONDARY_BG: Background = Background::Color(SECONDARY);
+const TRANSPARENT: Color = Color::TRANSPARENT;
+const TRANSPARENT_BG: Background = Background::Color(TRANSPARENT);
+const BG_BRIGHT: Color = const_color!(0x222222);
+const BG_BRIGHT_BG: Background = Background::Color(BG_BRIGHT);
+const BG_GRAY: Color = const_color!(0x1E1E1E);
+const BG_GRAY_BG: Background = Background::Color(BG_GRAY);
+const BG_DARK: Color = const_color!(0x181818);
+const BG_DARK_BG: Background = Background::Color(BG_DARK);
 /// The outline color
 const OUTLINE: Color = const_color!(0x555555);
 /// The outline color as background
 const OUTLINE_BG: Background = Background::Color(OUTLINE);
+/// The outline color
+const GRAY_OUTLINE: Color = const_color!(0x444444);
+/// The outline color as background
+const GRAY_OUTLINE_BG: Background = Background::Color(GRAY_OUTLINE);
+/// The outline color
+const DARK_OUTLINE: Color = const_color!(0x333333);
+/// The outline color as background
+const DARK_OUTLINE_BG: Background = Background::Color(DARK_OUTLINE);
 /// The foreground color
 const FOREGROUND: Color = const_color!(0xEEEEEE);
+const FOREGROUND_BG: Background = Background::Color(FOREGROUND);
 /// The inactice foreground color
-const DARK_FOREGROUND: Color = const_color!(0x777777);
+const GRAY_FG: Color = const_color!(0x777777);
 /// The color of pressed button
 const PRESSED: Color = const_color!(0x333333);
 /// The color of pressed button as background
@@ -73,9 +79,7 @@ const BRIGHT_CONTRAST: Color = const_color!(0xEEEE33);
 /// The contras color as background
 const BRIGHT_CONTRAST_BG: Background = Background::Color(BRIGHT_CONTRAST);
 /// The border radius
-const RADIUS: f32 = 4.;
-/// The border thickness
-const THICKNESS: f32 = 1.;
+const RADIUS: f32 = 6.;
 
 /// The theme of uamp app
 #[derive(Default, Clone)]
@@ -86,7 +90,7 @@ impl application::StyleSheet for Theme {
 
     fn appearance(&self, _style: &Self::Style) -> application::Appearance {
         application::Appearance {
-            background_color: PRIMARY,
+            background_color: BG_DARK,
             text_color: FOREGROUND,
         }
     }
@@ -98,18 +102,6 @@ pub enum Button {
     /// Default button style
     #[default]
     Default,
-    /// Circle with white background
-    WhiteCircle(f32),
-    /// Circle with transparent background
-    TransparentCircle(f32),
-    /// Gradient that is lighter on top and bottom
-    GradItem,
-    /// Odd items in list
-    ItemOdd,
-    /// Even items in list
-    ItemEven,
-    Item,
-    MenuItem,
 }
 
 impl button::StyleSheet for Theme {
@@ -118,120 +110,35 @@ impl button::StyleSheet for Theme {
     fn active(&self, style: &Self::Style) -> button::Appearance {
         let default = button::Appearance {
             shadow_offset: Vector::ZERO,
-            background: Some(SECONDARY_BG),
+            background: None,
             border_radius: RADIUS.into(),
-            border_width: THICKNESS,
-            border_color: OUTLINE,
+            border_width: 0.,
+            border_color: TRANSPARENT,
             text_color: FOREGROUND,
         };
 
         match style {
-            Button::Default => default,
-            Button::ItemEven => button::Appearance {
-                border_color: PRESSED,
-                ..default
-            },
-            Button::ItemOdd => button::Appearance {
-                background: Some(PRIMARY_BG),
-                border_width: 0.,
-                ..default
-            },
-            Button::WhiteCircle(r) => button::Appearance {
-                background: Some(Background::Color(FOREGROUND)),
-                border_width: 0.,
-                border_radius: (*r).into(),
-                ..default
-            },
-            Button::TransparentCircle(r) => button::Appearance {
-                background: Some(Background::Color(Color::TRANSPARENT)),
-                border_width: 0.,
-                border_radius: (*r).into(),
-                ..default
-            },
-            Button::GradItem => button::Appearance {
-                background: Some(Background::Color(Color::TRANSPARENT)),
-                border_width: 0.,
-                border_radius: 4.0.into(),
-                ..default
-            },
-            Button::Item => button::Appearance {
-                background: None,
-                border_width: 0.,
-                border_radius: 6.0.into(),
-                ..default
-            },
-            Button::MenuItem => button::Appearance {
-                background: None,
-                border_width: 0.,
-                border_radius: 6.0.into(),
-                text_color: FOREGROUND,
-                ..default
-            },
+            _ => default,
         }
     }
 
     fn hovered(&self, style: &Self::Style) -> button::Appearance {
         let base = button::Appearance {
-            background: Some(PRESSED_BG),
-            border_color: CONTRAST,
+            text_color: CONTRAST,
             ..self.active(style)
         };
         match style {
-            Button::ItemOdd => button::Appearance {
-                border_width: THICKNESS,
-                border_color: CONTRAST,
-                ..base
-            },
-            Button::WhiteCircle(_) => button::Appearance {
-                background: Some(CONTRAST_BG),
-                ..base
-            },
-            Button::TransparentCircle(_) => button::Appearance {
-                background: Some(Background::Color(Color::TRANSPARENT)),
-                ..base
-            },
-            Button::Item => button::Appearance {
-                background: Some(Background::Color(Color::TRANSPARENT)),
-                ..base
-            },
-            Button::MenuItem => button::Appearance {
-                background: Some(Background::Color(Color::TRANSPARENT)),
-                text_color: CONTRAST,
-                ..base
-            },
             _ => base,
         }
     }
 
     fn pressed(&self, style: &Self::Style) -> button::Appearance {
         let base = button::Appearance {
-            background: Some(SELECTED_BG),
-            border_color: BRIGHT_CONTRAST,
+            text_color: BRIGHT_CONTRAST,
             ..self.active(style)
         };
 
         match style {
-            Button::ItemOdd => button::Appearance {
-                border_width: THICKNESS,
-                ..base
-            },
-            Button::WhiteCircle(_) => button::Appearance {
-                background: Some(BRIGHT_CONTRAST_BG),
-                ..base
-            },
-            Button::TransparentCircle(_) => button::Appearance {
-                background: Some(Background::Color(Color::TRANSPARENT)),
-                ..base
-            },
-            Button::Item => button::Appearance {
-                background: Some(Background::Color(const_color!(0x222222))),
-                ..base
-            },
-            Button::MenuItem => button::Appearance {
-                background: Some(Background::Color(const_color!(0x222222))),
-                text_color: BRIGHT_CONTRAST,
-                ..base
-            },
             _ => base,
         }
     }
@@ -248,10 +155,10 @@ impl checkbox::StyleSheet for Theme {
         is_checked: bool,
     ) -> checkbox::Appearance {
         checkbox::Appearance {
-            background: SECONDARY_BG,
+            background: BG_DARK_BG,
             icon_color: CONTRAST,
             border_radius: RADIUS.into(),
-            border_width: THICKNESS,
+            border_width: 0.,
             border_color: OUTLINE,
             text_color: if is_checked { Some(CONTRAST) } else { None },
         }
@@ -275,9 +182,6 @@ pub enum Container {
     Default,
     Gray,
     Dark,
-    Black,
-    ToInvis,
-    FromInvis,
     TopGrad,
 }
 
@@ -292,41 +196,7 @@ impl container::StyleSheet for Theme {
         match style {
             Container::Default => default,
             Container::Gray => container::Appearance {
-                background: Some(Background::Color(const_color!(0x1E1E1E))),
-                ..default
-            },
-            Container::Black => container::Appearance {
-                background: Some(Background::Color(Color::BLACK)),
-                ..default
-            },
-            Container::ToInvis => container::Appearance {
-                background: Some(Background::Gradient(Gradient::Linear(
-                    Linear::new(Degrees(180.)).add_stops([
-                        ColorStop {
-                            offset: 0.,
-                            color: const_color!(0x1E1E1E),
-                        },
-                        ColorStop {
-                            offset: 1.,
-                            color: Color::from_rgba8(0x1E, 0x1E, 0x1E, 0.),
-                        },
-                    ]),
-                ))),
-                ..default
-            },
-            Container::FromInvis => container::Appearance {
-                background: Some(Background::Gradient(Gradient::Linear(
-                    Linear::new(Degrees(180.)).add_stops([
-                        ColorStop {
-                            offset: 0.,
-                            color: Color::from_rgba8(0x1E, 0x1E, 0x1E, 0.),
-                        },
-                        ColorStop {
-                            offset: 1.,
-                            color: const_color!(0x1E1E1E),
-                        },
-                    ]),
-                ))),
+                background: Some(Background::Color(BG_GRAY)),
                 ..default
             },
             Container::TopGrad => container::Appearance {
@@ -334,18 +204,18 @@ impl container::StyleSheet for Theme {
                     Linear::new(Degrees(270.)).add_stops([
                         ColorStop {
                             offset: 0.,
-                            color: const_color!(0x1E1E1E),
+                            color: BG_GRAY,
                         },
                         ColorStop {
                             offset: 0.8,
-                            color: const_color!(0x181818),
+                            color: BG_DARK,
                         },
                     ]),
                 ))),
                 ..default
             },
             Container::Dark => container::Appearance {
-                background: Some(Background::Color(const_color!(0x181818))),
+                background: Some(Background::Color(BG_DARK)),
                 ..default
             },
         }
@@ -364,7 +234,7 @@ impl slider::StyleSheet for Theme {
             },
             handle: slider::Handle {
                 shape: slider::HandleShape::Circle { radius: 0. },
-                color: Color::TRANSPARENT,
+                color: TRANSPARENT,
                 border_width: 0.,
                 border_color: OUTLINE,
             },
@@ -403,8 +273,8 @@ impl menu::StyleSheet for Theme {
     fn appearance(&self, _style: &Self::Style) -> menu::Appearance {
         menu::Appearance {
             text_color: FOREGROUND,
-            background: PRIMARY_BG,
-            border_width: THICKNESS,
+            background: BG_GRAY_BG,
+            border_width: 0.,
             border_radius: RADIUS.into(),
             border_color: OUTLINE,
             selected_text_color: CONTRAST,
@@ -422,11 +292,11 @@ impl pick_list::StyleSheet for Theme {
     ) -> pick_list::Appearance {
         pick_list::Appearance {
             text_color: FOREGROUND,
-            placeholder_color: DARK_FOREGROUND,
+            placeholder_color: GRAY_FG,
             handle_color: CONTRAST,
-            background: SECONDARY_BG,
+            background: BG_DARK_BG,
             border_radius: RADIUS.into(),
-            border_width: THICKNESS,
+            border_width: 0.,
             border_color: OUTLINE,
         }
     }
@@ -451,9 +321,9 @@ impl radio::StyleSheet for Theme {
         is_selected: bool,
     ) -> radio::Appearance {
         radio::Appearance {
-            background: SECONDARY_BG,
+            background: BG_DARK_BG,
             dot_color: if is_selected { CONTRAST } else { SELECTED },
-            border_width: THICKNESS,
+            border_width: 0.,
             border_color: OUTLINE,
             text_color: if is_selected { Some(FOREGROUND) } else { None },
         }
@@ -480,9 +350,9 @@ impl toggler::StyleSheet for Theme {
         is_active: bool,
     ) -> toggler::Appearance {
         toggler::Appearance {
-            background: PRIMARY,
+            background: BG_GRAY,
             background_border: None,
-            foreground: if is_active { DARK_FOREGROUND } else { SELECTED },
+            foreground: if is_active { GRAY_FG } else { SELECTED },
             foreground_border: None,
         }
     }
@@ -505,21 +375,21 @@ impl pane_grid::StyleSheet for Theme {
     fn picked_split(&self, _style: &Self::Style) -> Option<pane_grid::Line> {
         Some(pane_grid::Line {
             color: OUTLINE,
-            width: THICKNESS,
+            width: 0.,
         })
     }
 
     fn hovered_split(&self, _style: &Self::Style) -> Option<pane_grid::Line> {
         Some(pane_grid::Line {
             color: CONTRAST,
-            width: THICKNESS,
+            width: 0.,
         })
     }
 
     fn hovered_region(&self, _style: &Self::Style) -> pane_grid::Appearance {
         pane_grid::Appearance {
             background: SELECTED_BG,
-            border_width: THICKNESS,
+            border_width: 0.,
             border_color: OUTLINE,
             border_radius: RADIUS.into(),
         }
@@ -531,7 +401,7 @@ impl progress_bar::StyleSheet for Theme {
 
     fn appearance(&self, _style: &Self::Style) -> progress_bar::Appearance {
         progress_bar::Appearance {
-            background: SECONDARY_BG,
+            background: BG_DARK_BG,
             bar: CONTRAST_BG,
             border_radius: RADIUS.into(),
         }
@@ -544,7 +414,7 @@ impl rule::StyleSheet for Theme {
     fn appearance(&self, _style: &Self::Style) -> rule::Appearance {
         rule::Appearance {
             color: SELECTED,
-            width: THICKNESS as u16,
+            width: 4,
             radius: RADIUS.into(),
             fill_mode: rule::FillMode::Full,
         }
@@ -556,11 +426,6 @@ pub enum Svg {
     /// Original svg color
     #[default]
     Original,
-    /// Use white
-    Light,
-    Gray,
-    /// Use black
-    Dark,
 }
 
 impl svg::StyleSheet for Theme {
@@ -568,16 +433,7 @@ impl svg::StyleSheet for Theme {
 
     fn appearance(&self, style: &Self::Style) -> svg::Appearance {
         match style {
-            Svg::Original => svg::Appearance::default(),
-            Svg::Light => svg::Appearance {
-                color: Some(FOREGROUND),
-            },
-            Svg::Dark => svg::Appearance {
-                color: Some(const_color!(0x181818)),
-            },
-            Svg::Gray => svg::Appearance {
-                color: Some(const_color!(0x777777)),
-            },
+            _ => svg::Appearance::default()
         }
     }
 }
@@ -589,12 +445,12 @@ impl scrollable::StyleSheet for Theme {
         scrollable::Scrollbar {
             background: None,
             border_radius: RADIUS.into(),
-            border_width: THICKNESS,
+            border_width: 0.,
             border_color: OUTLINE,
             scroller: scrollable::Scroller {
-                color: PRIMARY,
+                color: BG_GRAY,
                 border_radius: RADIUS.into(),
-                border_width: THICKNESS,
+                border_width: 0.,
                 border_color: OUTLINE,
             },
         }
@@ -611,7 +467,7 @@ impl scrollable::StyleSheet for Theme {
                 color: if is_mouse_over_scrollbar {
                     SELECTED
                 } else {
-                    PRIMARY
+                    BG_GRAY
                 },
                 ..base.scroller
             },
@@ -642,10 +498,8 @@ pub enum Text {
     #[default]
     Default,
     NoForeground,
-    /// Text with contrast color as foreground
     Contrast,
     Gray,
-    Dark,
 }
 
 impl text::StyleSheet for Theme {
@@ -657,8 +511,7 @@ impl text::StyleSheet for Theme {
                 Text::Default => Some(FOREGROUND),
                 Text::NoForeground => None,
                 Text::Contrast => Some(CONTRAST),
-                Text::Gray => Some(const_color!(0x777777)),
-                Text::Dark => Some(const_color!(0x141414)),
+                Text::Gray => Some(GRAY_FG),
             },
         }
     }
@@ -669,24 +522,24 @@ impl text_input::StyleSheet for Theme {
 
     fn active(&self, _style: &Self::Style) -> text_input::Appearance {
         text_input::Appearance {
-            background: SECONDARY_BG,
+            background: BG_DARK_BG,
             border_radius: RADIUS.into(),
-            border_width: THICKNESS,
+            border_width: 0.,
             border_color: OUTLINE,
-            icon_color: PRIMARY,
+            icon_color: BG_GRAY,
         }
     }
 
     fn focused(&self, style: &Self::Style) -> text_input::Appearance {
         let base = self.active(style);
         text_input::Appearance {
-            border_color: PRIMARY,
+            border_color: BG_GRAY,
             ..base
         }
     }
 
     fn placeholder_color(&self, _style: &Self::Style) -> Color {
-        DARK_FOREGROUND
+        GRAY_FG
     }
 
     fn value_color(&self, _style: &Self::Style) -> Color {
@@ -717,8 +570,8 @@ impl wrap_box::StyleSheet for Theme {
         _pos: wrap_box::MousePos,
     ) -> wrap_box::SquareStyle {
         wrap_box::SquareStyle {
-            background: Background::Color(const_color!(0x181818)),
-            border: Color::BLACK,
+            background: BG_DARK_BG,
+            border: TRANSPARENT,
             border_thickness: 0.,
             border_radius: 0.0.into(),
         }
@@ -733,8 +586,8 @@ impl wrap_box::StyleSheet for Theme {
         relative_scroll: f32,
     ) -> wrap_box::ButtonStyle {
         let square = wrap_box::SquareStyle {
-            background: Background::Color(Color::TRANSPARENT),
-            border: Color::TRANSPARENT,
+            background:TRANSPARENT_BG,
+            border: TRANSPARENT,
             border_thickness: 0.0.into(),
             border_radius: RADIUS.into(),
         };
@@ -748,7 +601,7 @@ impl wrap_box::StyleSheet for Theme {
                     border_thickness: 0.,
                     ..square
                 },
-                foreground: DARK_FOREGROUND,
+                foreground: GRAY_FG,
             }
         } else {
             // active
@@ -773,10 +626,10 @@ impl wrap_box::StyleSheet for Theme {
         _relative_scroll: f32,
     ) -> wrap_box::SquareStyle {
         let square = wrap_box::SquareStyle {
-            background: PRIMARY_BG,
-            border: OUTLINE,
+            background: BG_BRIGHT_BG,
+            border: TRANSPARENT,
             border_thickness: 0.,
-            border_radius: 6.0.into(),
+            border_radius: RADIUS.into(),
         };
 
         if pressed {
@@ -804,13 +657,13 @@ impl wrap_box::StyleSheet for Theme {
         _relative_scroll: f32,
     ) -> wrap_box::SquareStyle {
         wrap_box::SquareStyle {
-            background: SECONDARY_BG,
+            background: BG_DARK_BG,
             border: PRESSED,
             border_thickness: 0.0,
             border_radius: if is_start {
-                [6., 6., 0., 0.].into()
+                [RADIUS, RADIUS, 0., 0.].into()
             } else {
-                [0., 0., 6., 6.].into()
+                [0., 0., RADIUS, RADIUS].into()
             },
         }
     }
@@ -830,10 +683,8 @@ impl wrap_box::LayoutStyleSheet<()> for Theme {
 pub enum Border {
     #[default]
     None,
-    TopGrad,
     SongItem,
     Bot,
-    BotRound(bool),
     LeftRound(bool),
 }
 
@@ -842,30 +693,15 @@ impl border::StyleSheet for Theme {
 
     fn background(&self, style: &Self::Style) -> Background {
         match style {
-            Border::None => Background::Color(Color::TRANSPARENT),
-            Border::TopGrad => Background::Gradient(Gradient::Linear(
-                Linear::new(Degrees(270.)).add_stops([
-                    ColorStop {
-                        offset: 0.,
-                        color: const_color!(0x1E1E1E),
-                    },
-                    ColorStop {
-                        offset: 0.8,
-                        color: const_color!(0x181818),
-                    },
-                ]),
-            )),
-            _ => Background::Color(Color::TRANSPARENT),
+            Border::None => TRANSPARENT_BG,
+            _ => TRANSPARENT_BG,
         }
     }
 
     fn border_thickness(&self, style: &Self::Style) -> Sides<f32> {
         match style {
             Border::None => 0.into(),
-            Border::TopGrad => 0.into(),
             Border::Bot => [0, 0, 2, 0].into(),
-            Border::BotRound(true) => [0, 0, 4, 0].into(),
-            Border::BotRound(false) => 0.into(),
             Border::LeftRound(true) => [0, 0, 0, 4].into(),
             Border::LeftRound(false) => 0.into(),
             Border::SongItem => [1, 0, 0, 0].into(),
@@ -875,9 +711,7 @@ impl border::StyleSheet for Theme {
     fn border_radius(&self, style: &Self::Style) -> Sides<f32> {
         match style {
             Border::None => 0.into(),
-            Border::TopGrad => 0.into(),
             Border::Bot => 15.into(),
-            Border::BotRound(_) => 0.into(),
             Border::LeftRound(_) => 0.into(),
             Border::SongItem => 6.into(),
         }
@@ -886,17 +720,15 @@ impl border::StyleSheet for Theme {
     fn border_color(&self, style: &Self::Style) -> Sides<Background> {
         match style {
             Border::None => OUTLINE_BG.into(),
-            Border::TopGrad => OUTLINE_BG.into(),
-            Border::Bot => Background::Color(const_color!(0x333333)).into(),
-            Border::BotRound(_) => CONTRAST_BG.into(),
+            Border::Bot => DARK_OUTLINE_BG.into(),
             Border::LeftRound(_) => CONTRAST_BG.into(),
             Border::SongItem => {
-                Background::Color(const_color!(0x444444)).into()
+                GRAY_OUTLINE_BG.into()
             }
         }
     }
 
-    fn corner_color(&self, style: &Self::Style) -> Sides<Color> {
+    fn corner_color(&self, _style: &Self::Style) -> Sides<Color> {
         OUTLINE.into()
     }
 
@@ -918,10 +750,6 @@ pub enum SvgButton {
     WhiteCircle(f32),
     /// Circle with transparent background
     TransparentCircle(f32),
-    /// Odd items in list
-    ItemOdd,
-    /// Even items in list
-    ItemEven,
 }
 
 impl svg_button::StyleSheet for Theme {
@@ -929,34 +757,22 @@ impl svg_button::StyleSheet for Theme {
 
     fn active(&self, style: &Self::Style) -> svg_button::Appearance {
         let default = svg_button::Appearance {
-            background: SECONDARY_BG,
+            background: TRANSPARENT_BG,
             border_radius: RADIUS.into(),
-            border_thickness: THICKNESS,
-            border_color: OUTLINE,
+            border_thickness: 0.,
+            border_color: TRANSPARENT,
             svg_color: None,
         };
 
         match style {
             SvgButton::Default => default,
-            SvgButton::ItemEven => svg_button::Appearance {
-                border_color: PRESSED,
-                ..default
-            },
-            SvgButton::ItemOdd => svg_button::Appearance {
-                background: PRIMARY_BG,
-                border_thickness: 0.,
-                ..default
-            },
             SvgButton::WhiteCircle(r) => svg_button::Appearance {
-                background: Background::Color(FOREGROUND),
-                border_thickness: 0.,
+                background: FOREGROUND_BG,
                 border_radius: (*r).into(),
-                svg_color: Some(const_color!(0x181818)),
+                svg_color: Some(BG_DARK),
                 ..default
             },
             SvgButton::TransparentCircle(r) => svg_button::Appearance {
-                background: Background::Color(Color::TRANSPARENT),
-                border_thickness: 0.,
                 border_radius: (*r).into(),
                 svg_color: Some(FOREGROUND),
                 ..default
@@ -966,23 +782,15 @@ impl svg_button::StyleSheet for Theme {
 
     fn hovered(&self, style: &Self::Style) -> svg_button::Appearance {
         let base = svg_button::Appearance {
-            background: PRESSED_BG,
-            border_color: CONTRAST,
             ..self.active(style)
         };
         match style {
-            SvgButton::ItemOdd => svg_button::Appearance {
-                border_thickness: THICKNESS,
-                border_color: CONTRAST,
-                ..base
-            },
             SvgButton::WhiteCircle(_) => svg_button::Appearance {
                 background: CONTRAST_BG,
                 ..base
             },
             SvgButton::TransparentCircle(_) => svg_button::Appearance {
                 svg_color: Some(CONTRAST),
-                background: Background::Color(Color::TRANSPARENT),
                 ..self.active(style)
             },
             _ => base,
@@ -991,23 +799,16 @@ impl svg_button::StyleSheet for Theme {
 
     fn pressed(&self, style: &Self::Style) -> svg_button::Appearance {
         let base = svg_button::Appearance {
-            background: SELECTED_BG,
-            border_color: BRIGHT_CONTRAST,
             ..self.active(style)
         };
 
         match style {
-            SvgButton::ItemOdd => svg_button::Appearance {
-                border_thickness: THICKNESS,
-                ..base
-            },
             SvgButton::WhiteCircle(_) => svg_button::Appearance {
                 background: BRIGHT_CONTRAST_BG,
                 ..base
             },
             SvgButton::TransparentCircle(_) => svg_button::Appearance {
                 svg_color: Some(BRIGHT_CONTRAST),
-                background: Background::Color(Color::TRANSPARENT),
                 ..base
             },
             _ => base,
@@ -1025,8 +826,7 @@ impl line_text::StyleSheet for Theme {
             Text::Default => Some(FOREGROUND),
             Text::NoForeground => None,
             Text::Contrast => Some(CONTRAST),
-            Text::Gray => Some(const_color!(0x777777)),
-            Text::Dark => Some(const_color!(0x101010)),
+            Text::Gray => Some(GRAY_FG),
         }
     }
 }

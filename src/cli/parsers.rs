@@ -25,7 +25,7 @@ parse_arg! {ControlMsg as parse_control_message, auto_instance_help:
     "previous-song" | "ps" [=usize] => PrevSong(1);
 
     ? "Set the volume to the given value. Value must be in range from 0 to 1"
-    "volume" | "vol" | "v" =f32 => SetVolume: |v| (0.0..0.).contains(v);
+    "volume" | "vol" | "v" =f32 => SetVolume: |v| (0.0..1.).contains(v);
 
     ? "Mute/Unmute, if the argument is not specified, toggles between
        the states"

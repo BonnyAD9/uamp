@@ -267,7 +267,6 @@ impl UampApp {
                 )
                 .padding([0, 0, 0, 5]),
             )
-            .style(Button::MenuItem)
             .on_press(Msg::Gui(Message::SetPage(page)))
             .padding(0),
         )
@@ -296,7 +295,6 @@ impl UampApp {
                 &self.gui.wb_states[WB_SONGS],
                 false
             ))
-            .style(Container::Black)
         ]
         .height(Fill)
         .into()
@@ -330,7 +328,6 @@ impl UampApp {
                 &self.gui.wb_states[WB_PLAYLIST],
                 true
             ))
-            .style(Container::Black)
         ]
         .height(Fill)
         .into()
@@ -377,7 +374,6 @@ impl UampApp {
         .width(width)
         .height(30)
         .padding(0)
-        .style(Button::MenuItem)
     }
 
     /// Creates a song list
@@ -507,7 +503,6 @@ impl UampApp {
             button(cursor_grad(item).style(CursorGrad::Long))
                 .padding(0)
                 .on_press(Msg::PlaySong(song, songs))
-                .style(Button::Item),
         )
         .style(Border::SongItem)
         .into()
@@ -518,7 +513,7 @@ impl UampApp {
         let title = song.map(|s| s.title()).unwrap_or("-");
         let artist = song.map(|s| s.artist()).unwrap_or("-");
 
-        border(grid![
+        container(grid![
             Relative(2.), Relative(1.), Fixed(210.), Relative(1.), Relative(2.);
             Fixed(40.), Relative(1.);
             GridItem::new(
@@ -551,7 +546,7 @@ impl UampApp {
             GridItem::new(self.volume_menu()).column(4).row(0..2),
         ])
         .height(80)
-        .style(Border::TopGrad)
+        .style(Container::TopGrad)
         .into()
     }
 
