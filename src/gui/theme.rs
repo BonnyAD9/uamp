@@ -433,7 +433,7 @@ impl svg::StyleSheet for Theme {
 
     fn appearance(&self, style: &Self::Style) -> svg::Appearance {
         match style {
-            _ => svg::Appearance::default()
+            _ => svg::Appearance::default(),
         }
     }
 }
@@ -586,7 +586,7 @@ impl wrap_box::StyleSheet for Theme {
         relative_scroll: f32,
     ) -> wrap_box::ButtonStyle {
         let square = wrap_box::SquareStyle {
-            background:TRANSPARENT_BG,
+            background: TRANSPARENT_BG,
             border: TRANSPARENT,
             border_thickness: 0.0.into(),
             border_radius: RADIUS.into(),
@@ -722,9 +722,7 @@ impl border::StyleSheet for Theme {
             Border::None => OUTLINE_BG.into(),
             Border::Bot => DARK_OUTLINE_BG.into(),
             Border::LeftRound(_) => CONTRAST_BG.into(),
-            Border::SongItem => {
-                GRAY_OUTLINE_BG.into()
-            }
+            Border::SongItem => GRAY_OUTLINE_BG.into(),
         }
     }
 

@@ -3,8 +3,8 @@ use iced_core::{
     mouse::Cursor,
     renderer::{Quad, Style},
     widget::Tree,
-    Background, Color, Element, Layout, Length, Rectangle, Size,
-    Vector, Widget,
+    Background, Color, Element, Layout, Length, Rectangle, Size, Vector,
+    Widget,
 };
 
 use super::sides::Sides;

@@ -4,6 +4,7 @@ This update was focused on a new gui.
 ## New features
 - Add option to disable server
 - Uamp now remembers its window position and size
+- Library is saved on another thread
 
 ## Bugfixes
 - Use proper types: fast-forward, rewind, and seek_jump now use Duration

@@ -17,7 +17,7 @@ use crate::{
     core::{
         messenger::{self, Messenger},
         msg::{ComMsg, ControlMsg, Msg},
-        Result,
+        Error, Result,
     },
     gui::{
         app::GuiState,
@@ -54,6 +54,9 @@ pub struct UampApp {
     /// The server listener
     pub listener: Cell<Option<TcpListener>>,
 
+    /// Messages that can be processed only if there are no running processes
+    pub pending_close: bool,
+
     /// When was last save
     pub last_save: Instant,
 }
@@ -65,8 +68,13 @@ pub struct UampApp {
 impl UampApp {
     /// Saves all the data that is saved by uamp
     pub fn save_all(&mut self) {
-        if let Err(e) = self.library.to_default_json(&self.config) {
-            error!("Failed to save library: {e}");
+        match self
+            .library
+            .start_to_default_json(&self.config, self.sender.clone())
+        {
+            Err(Error::InvalidOperation(_)) => {}
+            Err(e) => error!("Failed to start library save: {e}"),
+            _ => {}
         }
         if let Err(e) = self.player.to_default_json(&self.config) {
             error!("Failed to save play state: {e}");
@@ -111,10 +119,20 @@ impl Application for UampApp {
             Msg::WindowChange(msg) => self.win_event(msg),
         };
 
+        // The recursion that follows is all tail call recursion that will be
+        // optimized so that there is no recursion
+
         let com = match com {
             ComMsg::Command(com) => com,
             ComMsg::Msg(msg) => return self.update(msg),
         };
+
+        if self.pending_close {
+            if !self.library.any_process() {
+                self.pending_close = false;
+                return self.update(Msg::Control(ControlMsg::Close));
+            }
+        }
 
         if self
             .config
@@ -122,6 +140,7 @@ impl Application for UampApp {
             .map(|t| Instant::now() - self.last_save >= t.0)
             .unwrap_or_default()
         {
+            self.library.any_process();
             self.save_all()
         }
 
@@ -211,6 +230,8 @@ impl UampApp {
 
             hotkey_mgr,
             listener,
+
+            pending_close: false,
 
             last_save: Instant::now(),
         }

@@ -122,6 +122,10 @@ impl UampApp {
             }
             ControlMsg::Close => {
                 self.save_all();
+                if self.library.any_process() {
+                    self.pending_close = true;
+                    return ComMsg::none();
+                }
                 return ComMsg::Command(window::close());
             }
             ControlMsg::Shuffle => self.player.shuffle(),

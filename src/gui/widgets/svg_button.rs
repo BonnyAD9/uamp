@@ -5,8 +5,7 @@ use iced_core::{
     renderer::{Quad, Style},
     svg::{self, Handle},
     widget::{tree, Tree},
-    Background, Color, Element, Event, Layout, Length,
-    Rectangle, Widget,
+    Background, Color, Element, Event, Layout, Length, Rectangle, Widget,
 };
 
 use super::sides::Sides;

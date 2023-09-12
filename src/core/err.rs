@@ -4,10 +4,7 @@ use flexi_logger::FlexiLoggerError;
 use log::error;
 use thiserror::Error;
 
-use crate::{
-    cli::CliError,
-    hotkeys::HotkeyError,
-};
+use crate::{cli::CliError, hotkeys::HotkeyError};
 
 /// Result with the unified error type of uamp
 pub type Result<T> = std::result::Result<T, Error>;

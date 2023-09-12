@@ -1,4 +1,4 @@
-use log::{error, info, warn};
+use log::{error, info};
 use serde_derive::{Deserialize, Serialize};
 use tokio::sync::mpsc::UnboundedSender;
 
@@ -8,7 +8,7 @@ use std::{
     ops::Index,
     path::Path,
     sync::Arc,
-    thread,
+    thread::{self, JoinHandle},
     time::Instant,
 };
 
@@ -37,6 +37,8 @@ gen_struct! {
         ; // Other fields
         #[serde(skip)]
         load_process: Option<LibraryLoad>,
+        #[serde(skip)]
+        save_process: Option<JoinHandle<Result<()>>>,
         /// invalid song
         #[serde(skip, default = "default_ghost")]
         ghost: Song,
@@ -55,6 +57,7 @@ impl Library {
         Library {
             songs: Vec::new(),
             load_process: None,
+            save_process: None,
             change: Cell::new(true),
             ghost: Song::invalid(),
         }
@@ -84,21 +87,42 @@ impl Library {
         }
     }
 
-    /// Saves the library to the default path. Save doesn't happen if
-    /// the library didn't change from the last time.
-    ///
-    /// # Errors
-    /// - Fails to create the parent directory
-    /// - Fails to write file
-    /// - Fails to serialize
-    pub fn to_default_json(&self, conf: &Config) -> Result<()> {
+    pub fn start_to_default_json(
+        &mut self,
+        conf: &Config,
+        sender: Arc<UnboundedSender<Msg>>,
+    ) -> Result<()> {
         if !self.change.get() {
             return Ok(());
         }
-        if let Some(p) = conf.library_path() {
-            self.to_json(p)?;
+
+        // End panicked processes
+        self.any_process();
+
+        if self.save_process.is_some() {
+            return Err(Error::InvalidOperation(
+                "Library load is already in progress",
+            ));
         }
+
+        if let Some(p) = conf.library_path() {
+            let path = p.clone();
+            let me = self.clone();
+
+            let handle = thread::spawn(move || -> Result<()> {
+                let path = path;
+                me.to_json(path)?;
+                if let Err(e) = sender.send(Msg::Library(Message::SaveEnded)) {
+                    error!("Library save failed to send message: {e}");
+                }
+                Ok(())
+            });
+
+            self.save_process = Some(handle);
+        }
+
         self.change.set(false);
+
         Ok(())
     }
 
@@ -125,6 +149,9 @@ impl Library {
         conf: &Config,
         sender: Arc<UnboundedSender<Msg>>,
     ) -> Result<()> {
+        // End panicked processes
+        self.any_process();
+
         if self.load_process.is_some() {
             return Err(Error::InvalidOperation(
                 "Library load is already in progress",
@@ -158,6 +185,33 @@ impl Library {
 
         Ok(())
     }
+
+    /// Checks if there are any running operations on another thread.
+    pub fn any_process(&mut self) -> bool {
+        let mut res = false;
+
+        if let Some(p) = &self.load_process {
+            if p.handle.is_finished() {
+                if let Err(e) = self.finish_get_new_songs() {
+                    println!("Failed to get new songs: {e}");
+                }
+            } else {
+                res = true;
+            }
+        }
+
+        if let Some(p) = &self.save_process {
+            if p.is_finished() {
+                if let Err(e) = self.finish_save_songs() {
+                    println!("Failed to save songs: {e}");
+                }
+            } else {
+                res = true;
+            }
+        }
+
+        res
+    }
 }
 
 impl Index<SongId> for Library {
@@ -190,8 +244,18 @@ impl UampApp {
                 if let Err(e) = self.library.finish_get_new_songs() {
                     error!("Failed to finsih getting new songs: {e}")
                 }
-                if let Err(e) = self.library.to_default_json(&self.config) {
-                    warn!("Failed to save library: {e}");
+                match self
+                    .library
+                    .start_to_default_json(&self.config, self.sender.clone())
+                {
+                    Err(Error::InvalidOperation(_)) => {}
+                    Err(e) => error!("Failed to start library save: {e}"),
+                    _ => {}
+                }
+            }
+            Message::SaveEnded => {
+                if let Err(e) = self.library.finish_save_songs() {
+                    error!("Failed to finsih saving songs: {e}")
                 }
             }
         }
@@ -227,6 +291,21 @@ impl Library {
                 *self.songs_mut() = s;
             }
             Ok(())
+        } else {
+            Err(Error::InvalidOperation("No load was running"))
+        }
+    }
+
+    /// Finishes the loading of songs started by `start_get_new_songs`
+    fn finish_save_songs(&mut self) -> Result<()> {
+        if let Some(p) = self.save_process.take() {
+            match p.join().map_err(|_| Error::ThreadPanicked).and_then(|e| e) {
+                Err(e) => {
+                    self.change.set(true);
+                    Err(e)
+                }
+                Ok(_) => Ok(()),
+            }
         } else {
             Err(Error::InvalidOperation("No load was running"))
         }
@@ -318,6 +397,18 @@ impl Library {
         }
 
         new_songs
+    }
+}
+
+impl Clone for Library {
+    fn clone(&self) -> Self {
+        Self {
+            songs: self.songs.clone(),
+            load_process: None,
+            save_process: None,
+            ghost: self.ghost.clone(),
+            change: self.change.clone(),
+        }
     }
 }
 

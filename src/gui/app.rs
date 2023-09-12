@@ -37,9 +37,9 @@ use super::{
     msg::Message,
     theme::{Border, Container, CursorGrad, SvgButton, Text},
     wid::{
-        self, border, button, center_x, center_y, container,
-        cursor_grad, line_text, nothing, row, slider, space, svg, svg_button,
-        text, wrap_box, Command, Element, GridItem, WrapBoxState,
+        self, border, button, center_x, center_y, container, cursor_grad,
+        line_text, nothing, row, slider, space, svg, svg_button, text,
+        wrap_box, Command, Element, GridItem, WrapBoxState,
     },
     widgets::{
         grid::SpanLen::{Fixed, Relative},
@@ -499,7 +499,7 @@ impl UampApp {
         border(
             button(cursor_grad(item).style(CursorGrad::Long))
                 .padding(0)
-                .on_press(Msg::PlaySong(song, songs))
+                .on_press(Msg::PlaySong(song, songs)),
         )
         .style(Border::SongItem)
         .into()
