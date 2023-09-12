@@ -2,7 +2,7 @@ use std::{fs::File, time::Duration};
 
 use raplay::{
     sink::CallbackInfo,
-    source::{symph::SymphOptions, Symph},
+    source::{symph::SymphOptions, Symph, Source},
     Sink,
 };
 
@@ -36,12 +36,23 @@ impl SinkWrapper {
     /// - only with synchronization, shouldn't happen
     pub fn load(
         &mut self,
-        lib: &Library,
+        lib: &mut Library,
         id: SongId,
         play: bool,
     ) -> Result<()> {
         let file = File::open(lib[id].path())?;
         let src = Symph::try_new(file, &self.symph)?;
+
+
+        const SMALL_TIME: f64 = 0.1;
+
+        if let Some((_, total)) = src.get_time() {
+
+            if (lib[id].length().as_secs_f64() - total.as_secs_f64()).abs() > SMALL_TIME {
+                lib[id].set_length(total);
+            }
+        }
+
         self.sink.load(src, play)?;
         Ok(())
     }

@@ -104,17 +104,17 @@ impl UampApp {
         match msg {
             ControlMsg::PlayPause(p) => {
                 self.player.play_pause(
-                    &self.library,
+                    &mut self.library,
                     p.unwrap_or(!self.player.is_playing()),
                 );
                 return ComMsg::tick();
             }
             ControlMsg::NextSong(n) => {
-                self.player.play_next(&self.library, n);
+                self.player.play_next(&mut self.library, n);
                 return ComMsg::tick();
             }
             ControlMsg::PrevSong(n) => {
-                self.player.play_prev(&self.library, n);
+                self.player.play_prev(&mut self.library, n);
                 if let Err(e) = self.config.delete_old_logs() {
                     error!("Failed to remove logs: {e}");
                 }
@@ -144,7 +144,7 @@ impl UampApp {
             ),
             ControlMsg::PlaylistJump(i) => {
                 self.player.play_at(
-                    &self.library,
+                    &mut self.library,
                     i,
                     self.player.is_playing(),
                 );

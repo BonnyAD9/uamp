@@ -135,7 +135,7 @@ impl Song {
         }
     }
 
-    pub fn _length(&self) -> Duration {
+    pub fn length(&self) -> Duration {
         self.length
     }
 
@@ -145,6 +145,10 @@ impl Song {
         } else {
             duration_to_string(self.length, true)
         }
+    }
+
+    pub fn set_length(&mut self, len: Duration) {
+        self.length = len;
     }
 
     pub fn genre(&self) -> &str {

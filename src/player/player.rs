@@ -71,7 +71,7 @@ impl Player {
     /// Tries to load a song into the library. Stops on failure.
     pub fn try_load(
         &mut self,
-        lib: &Library,
+        lib: &mut Library,
         index: Option<usize>,
         play: bool,
     ) {
@@ -83,7 +83,7 @@ impl Player {
 
     /// Toggles the states play/pause, also plays if the state is Stopped and
     /// current is [`Some`]
-    pub fn play_pause(&mut self, lib: &Library, play: bool) {
+    pub fn play_pause(&mut self, lib: &mut Library, play: bool) {
         match self.state {
             Playback::Stopped => {
                 if let Some(id) = self.current {
@@ -115,7 +115,7 @@ impl Player {
     /// Loads the given playlist at the given index
     pub fn play_playlist(
         &mut self,
-        lib: &Library,
+        lib: &mut Library,
         songs: impl Into<Playlist>,
         index: Option<usize>,
         play: bool,
@@ -135,7 +135,7 @@ impl Player {
     }
 
     /// Plays the `n`th next song in the playlist
-    pub fn play_next(&mut self, lib: &Library, n: usize) {
+    pub fn play_next(&mut self, lib: &mut Library, n: usize) {
         let s = self.state.is_stopped();
         self.jump_to(lib, self.current().map(|i| i + n));
         if !s & self.state.is_stopped() {
@@ -148,17 +148,17 @@ impl Player {
     }
 
     /// Plays the `n`th previous song in the playlist
-    pub fn play_prev(&mut self, lib: &Library, n: usize) {
+    pub fn play_prev(&mut self, lib: &mut Library, n: usize) {
         self.jump_to(lib, self.current().and_then(|i| i.checked_sub(n)))
     }
 
     /// Jumps to the given index in the playlist if set.
-    pub fn jump_to(&mut self, lib: &Library, index: Option<usize>) {
+    pub fn jump_to(&mut self, lib: &mut Library, index: Option<usize>) {
         self.try_load(lib, index, self.is_playing())
     }
 
     /// Jumps to the given index in the playlist.
-    pub fn play_at(&mut self, lib: &Library, index: usize, play: bool) {
+    pub fn play_at(&mut self, lib: &mut Library, index: usize, play: bool) {
         if index >= self.playlist().len() {
             self.stop();
             return;
@@ -284,7 +284,7 @@ impl UampApp {
     pub fn player_event(&mut self, msg: Message) -> ComMsg {
         match msg {
             Message::SongEnd => {
-                self.player.play_next(&self.library, 1);
+                self.player.play_next(&mut self.library, 1);
             }
         }
         ComMsg::none()
@@ -298,7 +298,7 @@ impl UampApp {
 impl Player {
     /// Loads a song into the player.
     /// doesn't check that the index is valid
-    fn load(&mut self, lib: &Library, index: usize, play: bool) {
+    fn load(&mut self, lib: &mut Library, index: usize, play: bool) {
         self.current_set(Some(index));
 
         match self.inner.load(lib, self.playlist()[index], play) {

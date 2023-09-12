@@ -5,7 +5,7 @@ use tokio::sync::mpsc::UnboundedSender;
 use std::{
     cell::Cell,
     fs::{create_dir_all, read_dir, File},
-    ops::Index,
+    ops::{Index, IndexMut},
     path::Path,
     sync::Arc,
     thread::{self, JoinHandle},
@@ -225,6 +225,20 @@ impl Index<SongId> for Library {
                 &self.ghost
             } else {
                 r
+            }
+        }
+    }
+}
+
+impl IndexMut<SongId> for Library {
+    fn index_mut(&mut self, index: SongId) -> &mut Song {
+        if index.0 >= self.songs().len() {
+            &mut self.ghost
+        } else {
+            if self.songs()[index.0].is_deleted() {
+                &mut self.ghost
+            } else {
+                &mut self.songs_mut()[index.0]
             }
         }
     }

@@ -104,7 +104,7 @@ impl Application for UampApp {
         let com = match message {
             Msg::PlaySong(index, songs) => {
                 self.player.play_playlist(
-                    &self.library,
+                    &mut self.library,
                     songs,
                     Some(index),
                     true,
