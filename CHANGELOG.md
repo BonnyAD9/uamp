@@ -1,4 +1,20 @@
 # CHANGELOG
+## v0.3.0
+This update was focused on a new gui.
+
+### New features
+- Add option to disable server
+- Uamp now remembers its window position and size
+- Library is saved on another thread
+- New gui
+
+### Bugfixes
+- Use proper types: fast-forward, rewind, and seek_jump now use Duration
+- You can now scroll with scrollbar after opening playlist
+- Auto scroll would never scroll to the last item
+- Errors when loading from json files weren't logged
+- Some icons were incorrectly constructed
+
 ## v0.2.0
 
 ### New features

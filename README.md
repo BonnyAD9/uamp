@@ -16,6 +16,10 @@ If you enable shortcuts in the configuration, this is what they are:
 - **`Ctrl` + `Alt` + `PgDown`:** Next song
 - **`Ctrl` + `Alt` + `Up`:** Volume up
 - **`Ctrl` + `Alt` + `Down`:** Volume down
+- **`Ctrl` + `Alt` + `PgUp`:** Previous song
+- **`Ctrl` + `Alt` + `PgDown`:** Previous song
+- **`Ctrl` + `Alt` + `Left`:** Rewind
+- **`Ctrl` + `Alt` + `Right`:** Fast forward
 You can customize the shortcuts in `config.json`
 
 For example to play/pause you can use the command:
@@ -31,7 +35,7 @@ uamp i pp
 This is the output of help:
 ```
 Welcome in uamp by BonnyAD9
-Version 0.2.0
+Version 0.3.0
 
 Usage:
   uamp
@@ -99,14 +103,14 @@ Instance actions:
   exit  close  x
     Exits the instance
 
-  seek-to  seek=[[[<h>]:][<m>]:][<s>[.<s>]]
+  seek-to  seek=<Duration>
     Seeks to the given timestamp. Timestamp is in format 'h:m:s'.
 
-  fast-forward  ff[=<f32>]
+  fast-forward  ff[=<Duration>]
     Seeks forward by the given amout in seconds. If the parameter is not
     present, seek by the default amount.
 
-  rewind  rw[=<f32>]
+  rewind  rw[=<Duration>]
     Seeks backward by the given amout in seconds. If the parameter is not
     present, seek by the default amount.
 ```
