@@ -3,7 +3,7 @@ use iced_core::{
     mouse::Cursor,
     renderer::{Quad, Style},
     widget::Tree,
-    Background, BorderRadius, Color, Element, Layout, Length, Rectangle, Size,
+    Background, Color, Element, Layout, Length, Rectangle, Size,
     Vector, Widget,
 };
 

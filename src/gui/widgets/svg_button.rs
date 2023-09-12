@@ -1,6 +1,3 @@
-use std::default;
-
-use iced::widget::Svg;
 use iced_core::{
     event::Status,
     layout::{Limits, Node},
@@ -8,8 +5,8 @@ use iced_core::{
     renderer::{Quad, Style},
     svg::{self, Handle},
     widget::{tree, Tree},
-    Background, BorderRadius, Color, Element, Event, Layout, Length,
-    Rectangle, Size, Vector, Widget,
+    Background, Color, Element, Event, Layout, Length,
+    Rectangle, Widget,
 };
 
 use super::sides::Sides;

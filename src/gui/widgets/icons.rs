@@ -25,7 +25,7 @@ pub const PAUSE: SvgData =
     SvgData::new(include_bytes!("../../../assets/svg/pause.svg").as_slice());
 
 /// filled square '[]', it is used as the stop button
-pub const STOP: SvgData =
+pub const _STOP: SvgData =
     SvgData::new(include_bytes!("../../../assets/svg/stop.svg").as_slice());
 
 /// triangle pointing to the right and a line '|>|', it is used as the next button
@@ -56,10 +56,10 @@ pub const REWIND: SvgData =
     SvgData::new(include_bytes!("../../../assets/svg/rewind.svg").as_slice());
 
 /// Icon signifying fast rewind, '<|<|'
-pub const CIRCLE: SvgData =
+pub const _CIRCLE: SvgData =
     SvgData::new(include_bytes!("../../../assets/svg/circle.svg").as_slice());
 
-pub const UAMP_LIGHT: SvgData = SvgData::new(
+pub const _UAMP_LIGHT: SvgData = SvgData::new(
     include_bytes!("../../../assets/svg/icon_light.svg").as_slice(),
 );
 

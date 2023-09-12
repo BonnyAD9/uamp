@@ -90,18 +90,18 @@ macro_rules! extract {
 
 /// Messanger message
 impl Message {
-    extract!(error, Error, Error);
-    extract!(request, Request, Request);
-    extract!(control, ControlMsg, Control);
-    extract!(info, Info, Info);
+    extract!(_error, Error, Error);
+    extract!(_request, Request, Request);
+    extract!(_control, ControlMsg, Control);
+    extract!(_info, Info, Info);
 
     /// Returns true if the message is error message
-    pub fn is_error(&self) -> bool {
+    pub fn _is_error(&self) -> bool {
         matches!(self, Message::Error(_))
     }
 
     /// Returns true if the message is success message
-    pub fn is_success(&self) -> bool {
+    pub fn _is_success(&self) -> bool {
         matches!(self, Message::Success)
     }
 

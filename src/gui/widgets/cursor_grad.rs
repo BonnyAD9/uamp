@@ -4,8 +4,8 @@ use iced_core::{
     mouse::Cursor,
     renderer::{Quad, Style},
     widget::Tree,
-    Background, BorderRadius, Color, Degrees, Element, Gradient, Layout,
-    Length, Radians, Rectangle, Size, Vector, Widget,
+    Background, Color, Degrees, Element, Gradient, Layout,
+    Length, Rectangle, Size, Vector, Widget,
 };
 
 use super::sides::Sides;

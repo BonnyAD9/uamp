@@ -6,7 +6,7 @@ use thiserror::Error;
 
 use crate::{
     cli::CliError,
-    hotkeys::{self, HotkeyError},
+    hotkeys::HotkeyError,
 };
 
 /// Result with the unified error type of uamp

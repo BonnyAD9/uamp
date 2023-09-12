@@ -123,7 +123,7 @@ impl Song {
         self.deleted
     }
 
-    pub fn year(&self) -> i32 {
+    pub fn _year(&self) -> i32 {
         self.year
     }
 
@@ -135,7 +135,7 @@ impl Song {
         }
     }
 
-    pub fn length(&self) -> Duration {
+    pub fn _length(&self) -> Duration {
         self.length
     }
 

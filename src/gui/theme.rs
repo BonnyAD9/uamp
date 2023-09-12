@@ -73,7 +73,7 @@ const CONTRAST_BG: Background = Background::Color(CONTRAST);
 /// The contras color
 const DARK_CONTRAST: Color = const_color!(0xBBBB33);
 /// The contras color as background
-const DARK_CONTRAST_BG: Background = Background::Color(DARK_CONTRAST);
+const _DARK_CONTRAST_BG: Background = Background::Color(DARK_CONTRAST);
 /// Brighter version of contrast color
 const BRIGHT_CONTRAST: Color = const_color!(0xEEEE33);
 /// The contras color as background

@@ -1,10 +1,10 @@
 use std::borrow::Cow;
 
 use iced_core::{
-    alignment::{self, Horizontal, Vertical},
+    alignment::{Horizontal, Vertical},
     layout::Node,
-    text::{self, Hit, Shaping},
-    Color, Element, Length, Pixels, Point, Size, Text, Widget,
+    text::{self, Shaping},
+    Color, Element, Length, Pixels, Size, Text, Widget,
 };
 
 use super::sides::Sides;
@@ -160,23 +160,23 @@ where
 
     fn draw(
         &self,
-        state: &iced_core::widget::Tree,
+        _state: &iced_core::widget::Tree,
         renderer: &mut Renderer,
         theme: &<Renderer as iced_core::Renderer>::Theme,
         style: &iced_core::renderer::Style,
         layout: iced_core::Layout<'_>,
-        cursor: iced_core::mouse::Cursor,
-        viewport: &iced_core::Rectangle,
+        _cursor: iced_core::mouse::Cursor,
+        _viewport: &iced_core::Rectangle,
     ) {
-        let bounds = layout.bounds();
+        let mut bounds = layout.bounds();
 
-        let x = match self.horizontal_alignment {
+        bounds.x = match self.horizontal_alignment {
             Horizontal::Left => bounds.x,
             Horizontal::Center => bounds.center_x(),
             Horizontal::Right => bounds.x + bounds.width,
         };
 
-        let y = match self.vertical_alignment {
+        bounds.y = match self.vertical_alignment {
             Vertical::Top => bounds.y,
             Vertical::Center => bounds.center_y(),
             Vertical::Bottom => bounds.y + bounds.height,

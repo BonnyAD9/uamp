@@ -39,8 +39,6 @@ pub type Row<'a> = widget::Row<'a, Msg, Renderer>;
 pub type Svg = widget::Svg<Renderer>;
 /// Space widget as used in uamp
 pub type Space = widget::Space;
-/// Scrollable widget as used in uamp
-pub type Scrollable<'a> = widget::Scrollable<'a, Msg, Renderer>;
 /// Slider widget as used in uamp
 pub type Slider<'a, T> = widget::Slider<'a, T, Msg, Renderer>;
 /// Container widget as used in uamp
@@ -219,7 +217,7 @@ pub fn container<'a>(child: impl Into<Element<'a>>) -> Container<'a> {
 }
 
 /// Creates container that centers its child
-pub fn center<'a>(child: impl Into<Element<'a>>) -> Row<'a> {
+pub fn _center<'a>(child: impl Into<Element<'a>>) -> Row<'a> {
     center_x(center_y(child))
 }
 

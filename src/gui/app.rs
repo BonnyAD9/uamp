@@ -1,27 +1,24 @@
 use std::{
     borrow::Cow,
     cell::Cell,
-    default,
     fs::{create_dir_all, File},
     path::Path,
     sync::Arc,
     time::Duration,
 };
 
-use iced::widget::Space;
 use iced_core::{
     alignment::{Horizontal, Vertical},
-    font::{Family, Weight},
+    font::Weight,
     Font,
     Length::{self, Fill, FillPortion, Shrink},
-    Pixels, Widget,
 };
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     app::UampApp,
-    button, col,
+    col,
     config::Config,
     core::{
         extensions::duration_to_string,
@@ -38,11 +35,11 @@ use crate::{
 use super::{
     ids::*,
     msg::Message,
-    theme::{Border, Button, Container, CursorGrad, Svg, SvgButton, Text},
+    theme::{Border, Container, CursorGrad, SvgButton, Text},
     wid::{
-        self, border, button, center, center_x, center_y, container,
+        self, border, button, center_x, center_y, container,
         cursor_grad, line_text, nothing, row, slider, space, svg, svg_button,
-        text, wrap_box, Command, Element, GridItem, LineText, WrapBoxState,
+        text, wrap_box, Command, Element, GridItem, WrapBoxState,
     },
     widgets::{
         grid::SpanLen::{Fixed, Relative},
