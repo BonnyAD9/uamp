@@ -1,7 +1,6 @@
 # Roadmap
 
 ## v0.3.0
-- no warnings
 - Don't block on large IO (library save)
 
 ## v1.0.0
