@@ -16,8 +16,6 @@ If you enable shortcuts in the configuration, this is what they are:
 - **`Ctrl` + `Alt` + `PgDown`:** Next song
 - **`Ctrl` + `Alt` + `Up`:** Volume up
 - **`Ctrl` + `Alt` + `Down`:** Volume down
-- **`Ctrl` + `Alt` + `PgUp`:** Previous song
-- **`Ctrl` + `Alt` + `PgDown`:** Previous song
 - **`Ctrl` + `Alt` + `Left`:** Rewind
 - **`Ctrl` + `Alt` + `Right`:** Fast forward
 You can customize the shortcuts in `config.json`
@@ -116,10 +114,7 @@ Instance actions:
 ```
 
 ## How it looks
-The gui is in state: at least there is gui. It looks horrible but it has the
-necesary elements.
-![image](https://github.com/BonnyAD9/uamp/assets/46282097/b3e5f1f1-5aaf-4f4d-a9ba-bf8e65c498eb)
-
+![image](https://github.com/BonnyAD9/uamp/assets/46282097/639c9849-f0f2-4fad-91f3-949ef68e9a3e)
 
 ## How to get it
 To use the player you have to compile it yourself, but that shouldn't be any
