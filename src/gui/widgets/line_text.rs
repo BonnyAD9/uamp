@@ -4,7 +4,7 @@ use iced_core::{
     alignment::{Horizontal, Vertical},
     layout::Node,
     text::{self, Shaping},
-    Color, Element, Length, Pixels, Size, Text, Widget,
+    Color, Element, Length, Pixels, Text, Widget,
 };
 
 use super::{limit_size, sides::Sides};

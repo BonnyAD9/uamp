@@ -16,7 +16,7 @@ use super::{
     elements::the_button,
     ids::WB_PLAYLIST,
     theme::{Container, Text},
-    wid::{container, nothing, text, Element, space},
+    wid::{container, nothing, space, text, Element},
 };
 
 impl UampApp {

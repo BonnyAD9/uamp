@@ -2,7 +2,7 @@ use iced_core::{
     alignment::Vertical,
     font::Weight,
     Font,
-    Length::{self, Fill, Shrink},
+    Length::{Fill, Shrink},
 };
 
 use crate::{

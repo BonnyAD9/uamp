@@ -2,7 +2,7 @@ use std::{borrow::Cow, sync::Arc};
 
 use iced_core::{
     alignment::{Horizontal, Vertical},
-    Length::{self, FillPortion, Shrink},
+    Length::{FillPortion, Shrink},
 };
 
 use crate::{

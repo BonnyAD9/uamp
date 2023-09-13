@@ -5,7 +5,7 @@ use iced_core::{
     renderer::{Quad, Style},
     widget::Tree,
     Background, Color, Degrees, Element, Gradient, Layout, Length, Rectangle,
-    Size, Vector, Widget,
+    Vector, Widget,
 };
 
 use super::{limit_size, sides::Sides};
