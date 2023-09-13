@@ -51,6 +51,8 @@ pub type CursorGrad<'a> = widgets::cursor_grad::CursorGrad<'a, Msg, Renderer>;
 pub type Grid<'a> = widgets::grid::Grid<'a, Msg, Renderer>;
 /// Item in a grid
 pub type GridItem<'a> = widgets::grid::GridItem<'a, Msg, Renderer>;
+/// Toggler
+pub type Switch<'a> = widgets::switch::Switch<'a, Msg, Renderer>;
 
 pub type WrapBoxState = Cell<widgets::wrap_box::State>;
 
@@ -73,11 +75,8 @@ pub fn wrap_box<'a>(
 /// ```
 #[macro_export]
 macro_rules! wrap_box {
-    ($s:expr) => (
-        $crate::wid::WrapBox::new($s)
-    );
     ($s:expr, $($x:expr),+ $(,)?) => (
-        $crate::wid::wrap_box(vec![$($Element::from($x)),+], $s)
+        $crate::gui::wid::wrap_box(vec![$($crate::gui::wid::Element::from($x)),+], $s)
     );
 }
 
@@ -306,4 +305,11 @@ where
     E: Into<Element<'a>>,
 {
     CursorGrad::new(child.into())
+}
+
+pub fn switch<'a, E>(child: E, is_toggled: bool) -> Switch<'a>
+where
+    E: Into<Element<'a>>,
+{
+    Switch::new(child, is_toggled)
 }

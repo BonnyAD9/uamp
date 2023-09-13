@@ -8,7 +8,7 @@ use iced_core::{
     Size, Vector, Widget,
 };
 
-use super::sides::Sides;
+use super::{limit_size, sides::Sides};
 
 pub struct CursorGrad<'a, Message, Renderer>
 where
@@ -98,23 +98,29 @@ where
 
     fn layout(&self, renderer: &Renderer, limits: &Limits) -> Node {
         let lim = limits.width(self.width).height(self.height);
-        let size = lim.fill();
 
-        let child_limits = Limits::new(
-            Size::new(0., 0.),
-            Size::new(
-                size.width - self.padding.left - self.padding.right,
-                size.height - self.padding.top - self.padding.bottom,
-            ),
-        );
+        let child_limits = lim.pad(self.padding.into());
+
+        let child = self
+            .child
+            .as_widget()
+            .layout(renderer, &child_limits)
+            .translate(Vector::new(self.padding.left, self.padding.top));
+
+        let child_size = child.size();
+        let min_size = lim.min();
+
+        let lim = lim
+            .min_width(
+                min_size.width + child_size.width + self.padding.lr_sum(),
+            )
+            .min_height(
+                min_size.height + child_size.height + self.padding.tb_sum(),
+            );
 
         Node::with_children(
-            size,
-            vec![self
-                .child
-                .as_widget()
-                .layout(renderer, &child_limits)
-                .translate(Vector::new(self.padding.left, self.padding.top))],
+            limit_size(&lim, self.width, self.height),
+            vec![child],
         )
     }
 

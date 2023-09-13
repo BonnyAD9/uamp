@@ -117,6 +117,7 @@ impl Application for UampApp {
             Msg::Library(msg) => self.library_event(msg),
             Msg::Delegate(d) => d.update(self),
             Msg::WindowChange(msg) => self.win_event(msg),
+            Msg::Config(msg) => self.config_event(msg),
         };
 
         // The recursion that follows is all tail call recursion that will be

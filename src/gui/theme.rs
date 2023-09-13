@@ -8,11 +8,11 @@ use iced::{
 };
 use iced_core::{
     gradient::{ColorStop, Linear},
-    Background, Color, Degrees, Gradient, Vector,
+    Background, Color, Degrees, Gradient, Size, Vector,
 };
 
 use super::widgets::{
-    border, cursor_grad, line_text, sides::Sides, svg_button, wrap_box,
+    border, cursor_grad, line_text, sides::Sides, svg_button, switch, wrap_box,
 };
 
 /// Creates const color from hex
@@ -71,9 +71,9 @@ const CONTRAST: Color = const_color!(0xEEEE55);
 /// The contras color as background
 const CONTRAST_BG: Background = Background::Color(CONTRAST);
 /// The contras color
-const DARK_CONTRAST: Color = const_color!(0xBBBB33);
+const DARK_CONTRAST: Color = const_color!(0xBBAA22);
 /// The contras color as background
-const _DARK_CONTRAST_BG: Background = Background::Color(DARK_CONTRAST);
+const DARK_CONTRAST_BG: Background = Background::Color(DARK_CONTRAST);
 /// Brighter version of contrast color
 const BRIGHT_CONTRAST: Color = const_color!(0xEEEE33);
 /// The contras color as background
@@ -350,9 +350,9 @@ impl toggler::StyleSheet for Theme {
         is_active: bool,
     ) -> toggler::Appearance {
         toggler::Appearance {
-            background: BG_GRAY,
+            background: if is_active { DARK_CONTRAST } else { OUTLINE },
             background_border: None,
-            foreground: if is_active { GRAY_FG } else { SELECTED },
+            foreground: FOREGROUND,
             foreground_border: None,
         }
     }
@@ -363,7 +363,7 @@ impl toggler::StyleSheet for Theme {
         is_active: bool,
     ) -> toggler::Appearance {
         toggler::Appearance {
-            background: SELECTED,
+            foreground: CONTRAST,
             ..self.active(style, is_active)
         }
     }
@@ -853,5 +853,48 @@ impl cursor_grad::StyleSheet for Theme {
                 CursorGrad::Short => 100.,
             },
         })
+    }
+}
+
+impl switch::StyleSheet for Theme {
+    type Style = ();
+
+    fn active(&self, style: &Self::Style) -> switch::Appearance {
+        switch::Appearance {
+            rail_color: DARK_CONTRAST_BG,
+            ..self.inactive(style)
+        }
+    }
+
+    fn inactive(&self, _style: &Self::Style) -> switch::Appearance {
+        switch::Appearance {
+            rail_size: Size::new(40., 20.),
+            thumb_size: Size::new(16., 16.),
+            rail_border_color: TRANSPARENT,
+            thumb_border_color: TRANSPARENT,
+            rail_border_radius: 15.into(),
+            thumb_border_radius: 13.into(),
+            rail_border_thickness: 0.,
+            thumb_border_thickness: 0.,
+            rail_color: OUTLINE_BG,
+            thumb_color: FOREGROUND_BG,
+            text_color: Some(FOREGROUND),
+        }
+    }
+
+    fn active_hovered(&self, style: &Self::Style) -> switch::Appearance {
+        switch::Appearance {
+            thumb_color: CONTRAST_BG,
+            text_color: Some(CONTRAST),
+            ..self.active(style)
+        }
+    }
+
+    fn inactive_hovered(&self, style: &Self::Style) -> switch::Appearance {
+        switch::Appearance {
+            thumb_color: CONTRAST_BG,
+            text_color: Some(CONTRAST),
+            ..self.inactive(style)
+        }
     }
 }

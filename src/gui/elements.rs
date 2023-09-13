@@ -2,7 +2,7 @@ use std::{borrow::Cow, sync::Arc};
 
 use iced_core::{
     alignment::{Horizontal, Vertical},
-    Length::{self, FillPortion},
+    Length::{self, FillPortion, Shrink},
 };
 
 use crate::{
@@ -179,18 +179,22 @@ impl UampApp {
     }
 }
 
-pub(super) fn the_button<'a, S, L>(s: S, width: L) -> wid::Button<'a>
+pub(super) fn the_button<'a, S>(s: S) -> wid::Button<'a>
 where
     S: Into<Cow<'a, str>>,
-    L: Into<Length>,
 {
-    button(cursor_grad(
-        text(s)
-            .horizontal_alignment(Horizontal::Center)
-            .vertical_alignment(Vertical::Center)
-            .style(Text::NoForeground),
-    ))
-    .width(width)
+    button(
+        cursor_grad(
+            text(s)
+                .horizontal_alignment(Horizontal::Center)
+                .vertical_alignment(Vertical::Center)
+                .style(Text::NoForeground)
+                .width(Shrink),
+        )
+        .width(Shrink)
+        .padding([0, 10, 0, 10]),
+    )
+    .width(Shrink)
     .height(30)
     .padding(0)
 }

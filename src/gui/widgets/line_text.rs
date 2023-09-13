@@ -7,7 +7,7 @@ use iced_core::{
     Color, Element, Length, Pixels, Size, Text, Widget,
 };
 
-use super::sides::Sides;
+use super::{limit_size, sides::Sides};
 
 /// Text that will not wrap
 pub struct LineText<'a, Renderer>
@@ -148,14 +148,11 @@ where
             font_size,
             font,
             self.shaping,
-        );
+        ) + 1.;
 
-        let size = limits.max();
-        if width < size.width {
-            Node::new(limits.fill())
-        } else {
-            Node::new(Size::new(size.width, limits.fill().height))
-        }
+        let lim = limits.min_width(width).min_height(font_size);
+
+        Node::new(limit_size(&lim, self.width, self.height))
     }
 
     fn draw(

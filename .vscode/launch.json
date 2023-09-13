@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["i", "pp", "-a", "https://kgpcb4bx-8267.euw.devtunnels.ms", "-p", "8080"],
+            "args": [],
             "cwd": "${workspaceFolder}"
         },
         {

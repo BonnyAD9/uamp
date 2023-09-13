@@ -208,6 +208,12 @@ where
     }
 }
 
+impl<T> From<T> for Wrap<T> {
+    fn from(value: T) -> Self {
+        Wrap(value)
+    }
+}
+
 impl Serialize for Wrap<Duration> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

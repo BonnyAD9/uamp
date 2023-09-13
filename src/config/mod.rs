@@ -1,3 +1,4 @@
 mod config;
+mod msg;
 
-pub use config::*;
+pub use self::{config::*, msg::Message as ConfMessage};

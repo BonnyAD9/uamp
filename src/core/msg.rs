@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     app::UampApp,
+    config::ConfMessage,
     gui::{wid::Command, GuiMessage, WinMessage},
     library::{LibraryMessage, SongId},
     player::PlayerMessage,
@@ -32,6 +33,7 @@ pub enum Msg {
     Delegate(Arc<dyn MessageDelegate>),
     /// The window has changed its parameters
     WindowChange(WinMessage),
+    Config(ConfMessage),
 }
 
 impl Msg {

@@ -1,4 +1,9 @@
-use iced_core::{alignment::Vertical, font::Weight, Font, Length::Fill};
+use iced_core::{
+    alignment::Vertical,
+    font::Weight,
+    Font,
+    Length::{Fill, Shrink},
+};
 
 use crate::{
     app::UampApp,
@@ -11,7 +16,7 @@ use super::{
     elements::the_button,
     ids::WB_PLAYLIST,
     theme::{Container, Text},
-    wid::{container, nothing, text, Element},
+    wid::{container, nothing, text, Element, space},
 };
 
 impl UampApp {
@@ -29,12 +34,12 @@ impl UampApp {
                     }),
                 nothing(),
                 col![
-                    nothing(),
-                    the_button("Shuffle", Fill)
+                    space(Shrink, Fill),
+                    the_button("Shuffle")
                         .on_press(Msg::Control(ControlMsg::Shuffle))
                 ]
-                .width(70)
-            ],)
+                .width(Shrink)
+            ])
             .padding([5, 20, 5, 20])
             .height(80)
             .style(Container::TopGrad),
