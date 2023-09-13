@@ -1,9 +1,7 @@
 use std::{
-    borrow::Cow,
     cell::Cell,
     fs::{create_dir_all, File},
     path::Path,
-    sync::Arc,
     time::Duration,
 };
 
@@ -11,7 +9,7 @@ use iced_core::{
     alignment::{Horizontal, Vertical},
     font::Weight,
     Font,
-    Length::{self, Fill, FillPortion, Shrink},
+    Length::{Fill, Shrink},
 };
 use log::{error, info};
 use serde::{Deserialize, Serialize};
@@ -27,7 +25,6 @@ use crate::{
     },
     gen_struct, grid,
     gui::widgets::icons::SvgData,
-    library::{Filter, SongId},
     player::TimeStamp,
     row, text,
 };
@@ -35,11 +32,10 @@ use crate::{
 use super::{
     ids::*,
     msg::Message,
-    theme::{Border, Container, CursorGrad, SvgButton, Text},
+    theme::{Container, SvgButton, Text},
     wid::{
-        self, border, button, center_x, center_y, container, cursor_grad,
-        line_text, nothing, row, slider, space, svg, svg_button, text,
-        wrap_box, Command, Element, GridItem, WrapBoxState,
+        center_x, center_y, container, line_text, slider, space, svg,
+        svg_button, text, Command, Element, GridItem, WrapBoxState,
     },
     widgets::{
         grid::SpanLen::{Fixed, Relative},
@@ -61,10 +57,10 @@ gen_struct! {
         ; // other fields
         /// The current page
         #[serde(skip)]
-        page: MainPage,
+        pub (super) page: MainPage,
         /// States of WrapBoxes
         #[serde(skip, default = "default_states")]
-        wb_states: Vec<WrapBoxState>,
+        pub (super) wb_states: Vec<WrapBoxState>,
 
         #[serde(skip)]
         song_timestamp: Option<TimeStamp>,
@@ -251,257 +247,6 @@ impl UampApp {
         .style(Container::Gray)
         .padding([20, 20, 20, 20])
         .width(250)
-        .into()
-    }
-
-    fn left_menu_item(&self, name: &'static str, page: MainPage) -> Element {
-        border(
-            button(
-                cursor_grad(
-                    text(name)
-                        .vertical_alignment(Vertical::Center)
-                        .style(Text::NoForeground),
-                )
-                .padding([0, 0, 0, 5]),
-            )
-            .on_press(Msg::Gui(Message::SetPage(page)))
-            .padding(0),
-        )
-        .height(30)
-        .padding([0, 0, 0, 5])
-        .style(Border::LeftRound(self.gui.page == page))
-        .into()
-    }
-
-    fn library_page(&self) -> Element {
-        col![
-            container(row![text("Library")
-                .width(300)
-                .size(40)
-                .vertical_alignment(Vertical::Center)
-                .style(Text::Default)
-                .font(Font {
-                    weight: Weight::Semibold,
-                    ..Default::default()
-                }),],)
-            .padding([5, 20, 5, 20])
-            .height(80)
-            .style(Container::TopGrad),
-            container(self.song_list(
-                self.library.filter(Filter::All).collect(),
-                &self.gui.wb_states[WB_SONGS],
-                false
-            ))
-        ]
-        .height(Fill)
-        .into()
-    }
-
-    fn playlist_page(&self) -> Element {
-        col![
-            container(row![
-                text("Playlist")
-                    .width(300)
-                    .size(40)
-                    .vertical_alignment(Vertical::Center)
-                    .style(Text::Default)
-                    .font(Font {
-                        weight: Weight::Semibold,
-                        ..Default::default()
-                    }),
-                nothing(),
-                col![
-                    nothing(),
-                    Self::the_button("Shuffle", Fill)
-                        .on_press(Msg::Control(ControlMsg::Shuffle))
-                ]
-                .width(70)
-            ],)
-            .padding([5, 20, 5, 20])
-            .height(80)
-            .style(Container::TopGrad),
-            container(self.song_list(
-                self.player.playlist().as_arc(),
-                &self.gui.wb_states[WB_PLAYLIST],
-                true
-            ))
-        ]
-        .height(Fill)
-        .into()
-    }
-
-    fn settings_page(&self) -> Element {
-        col![
-            container(row![text("Settings")
-                .width(300)
-                .size(40)
-                .vertical_alignment(Vertical::Center)
-                .style(Text::Default)
-                .font(Font {
-                    weight: Weight::Semibold,
-                    ..Default::default()
-                }),],)
-            .padding([5, 20, 5, 20])
-            .height(80)
-            .style(Container::TopGrad),
-            container(
-                col![
-                    Self::the_button("Search for new songs", 200)
-                        .on_press(Msg::Control(ControlMsg::LoadNewSongs)),
-                    nothing(),
-                ]
-                .padding([0, 0, 0, 20])
-            )
-            .style(Container::Dark)
-        ]
-        .into()
-    }
-
-    fn the_button<'a, S, L>(s: S, width: L) -> wid::Button<'a>
-    where
-        S: Into<Cow<'a, str>>,
-        L: Into<Length>,
-    {
-        button(cursor_grad(
-            text(s)
-                .horizontal_alignment(Horizontal::Center)
-                .vertical_alignment(Vertical::Center)
-                .style(Text::NoForeground),
-        ))
-        .width(width)
-        .height(30)
-        .padding(0)
-    }
-
-    /// Creates a song list
-    fn song_list<'a>(
-        &'a self,
-        songs: Arc<[SongId]>,
-        state: &'a WrapBoxState,
-        numbered: bool,
-    ) -> Element {
-        let mut items: Vec<Element> = Vec::new();
-
-        if numbered {
-            items.push(
-                container(text("#").style(Text::Gray).size(14))
-                    .width(50)
-                    .padding([0, 0, 0, 10])
-                    .into(),
-            )
-        }
-
-        fn make_title<'a>(s: &'static str, portion: u16) -> Element<'a> {
-            line_text(s)
-                .width(FillPortion(portion))
-                .style(Text::Gray)
-                .elipsis("...")
-                .size(14)
-                .into()
-        }
-
-        items.extend([
-            make_title("TITLE / ARTIST", 18),
-            make_title("ALBUM / YEAR", 15),
-            make_title("T / D", 2),
-            make_title("LENGTH / GENRE", 3),
-        ]);
-
-        col![
-            container(
-                border(container(row(items)).padding([0, 40, 0, 20]))
-                    .height(20)
-                    .style(Border::Bot)
-            )
-            .height(23)
-            .style(Container::Dark),
-            wrap_box(
-                (0..songs.len())
-                    .map(|i| self.song_list_item(i, songs.clone(), numbered))
-                    .collect(),
-                state,
-            )
-            .item_height(40)
-            .from_layout_style(&self.theme)
-        ]
-        .into()
-    }
-
-    /// Creates a song list item
-    fn song_list_item(
-        &self,
-        song: usize,
-        songs: Arc<[SongId]>,
-        numbered: bool,
-    ) -> Element<'static> {
-        let text_style = if Some(songs[song]) == self.player.now_playing() {
-            Text::Contrast
-        } else {
-            Text::Default
-        };
-
-        let s = &self.library[songs[song]];
-
-        fn top_text<'a, S>(s: S, portion: u16, style: Text) -> Element<'a>
-        where
-            S: Into<Cow<'a, str>>,
-        {
-            line_text(s)
-                .width(FillPortion(portion))
-                .style(style)
-                .elipsis("...")
-                .size(14)
-                .into()
-        }
-
-        fn bot_text<'a, S>(s: S, portion: u16) -> Element<'a>
-        where
-            S: Into<Cow<'a, str>>,
-        {
-            container(line_text(s).style(Text::Gray).elipsis("...").size(10))
-                .width(FillPortion(portion))
-                .padding([0, 0, 0, 2])
-                .into()
-        }
-
-        let info = col![
-            row![
-                top_text(s.title().to_owned(), 18, text_style),
-                top_text(s.album().to_owned(), 15, text_style),
-                top_text(s.track_str(), 2, text_style),
-                top_text(s.length_str(), 3, text_style),
-            ]
-            .height(FillPortion(3))
-            .padding([4, 0, 0, 0]),
-            row![
-                bot_text(s.artist().to_owned(), 18),
-                bot_text(s.year_str(), 15),
-                bot_text(s.disc_str(), 2),
-                bot_text(s.genre().to_owned(), 3),
-            ]
-            .height(FillPortion(2)),
-        ];
-
-        let item: Element = if numbered {
-            row![
-                text(song.to_string())
-                    .width(50)
-                    .vertical_alignment(Vertical::Center)
-                    .style(Text::Gray),
-                info,
-            ]
-            .padding([0, 10, 0, 10])
-            .into()
-        } else {
-            info.padding([0, 10, 0, 10]).into()
-        };
-
-        border(
-            button(cursor_grad(item).style(CursorGrad::Long))
-                .padding(0)
-                .on_press(Msg::PlaySong(song, songs)),
-        )
-        .style(Border::SongItem)
         .into()
     }
 

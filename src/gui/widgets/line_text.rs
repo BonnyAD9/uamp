@@ -217,6 +217,7 @@ where
         );
 
         let width = bounds.width - elipsis_width;
+
         // Hit test is bugged and doesn't work
         /*let hit = renderer.hit_test(
             &self.content,
