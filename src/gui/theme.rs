@@ -80,6 +80,7 @@ const BRIGHT_CONTRAST: Color = const_color!(0xEEEE33);
 const BRIGHT_CONTRAST_BG: Background = Background::Color(BRIGHT_CONTRAST);
 /// The border radius
 const RADIUS: f32 = 6.;
+const RED: Color = const_color!(0xEE5555);
 
 /// The theme of uamp app
 #[derive(Default, Clone)]
@@ -748,6 +749,7 @@ pub enum SvgButton {
     WhiteCircle(f32),
     /// Circle with transparent background
     TransparentCircle(f32),
+    RedHover,
 }
 
 impl svg_button::StyleSheet for Theme {
@@ -772,9 +774,9 @@ impl svg_button::StyleSheet for Theme {
             },
             SvgButton::TransparentCircle(r) => svg_button::Appearance {
                 border_radius: (*r).into(),
-                svg_color: Some(FOREGROUND),
                 ..default
             },
+            _ => default,
         }
     }
 
@@ -790,6 +792,10 @@ impl svg_button::StyleSheet for Theme {
             SvgButton::TransparentCircle(_) => svg_button::Appearance {
                 svg_color: Some(CONTRAST),
                 ..self.active(style)
+            },
+            SvgButton::RedHover => svg_button::Appearance {
+                svg_color: Some(RED),
+                ..base
             },
             _ => base,
         }

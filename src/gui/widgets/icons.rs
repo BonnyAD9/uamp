@@ -66,6 +66,9 @@ pub const _UAMP_LIGHT: SvgData = SvgData::new(
 pub const UAMP: SvgData =
     SvgData::new(include_bytes!("../../../assets/svg/icon.svg").as_slice());
 
+pub const TRASH: SvgData =
+    SvgData::new(include_bytes!("../../../assets/svg/trash.svg").as_slice());
+
 /// contains svg data, can be created with const function, implements [`Into<iced::svg::Handle>`]
 #[derive(Clone, Copy)]
 pub struct SvgData(&'static [u8]);

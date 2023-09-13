@@ -166,6 +166,8 @@ where
         _viewport: &iced_core::Rectangle,
     ) {
         let mut bounds = layout.bounds();
+        bounds.x += self.padding.left;
+        bounds.y += self.padding.top;
 
         bounds.x = match self.horizontal_alignment {
             Horizontal::Left => bounds.x,
