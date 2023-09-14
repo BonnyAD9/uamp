@@ -41,6 +41,8 @@ const BG_GRAY: Color = const_color!(0x1E1E1E);
 const BG_GRAY_BG: Background = Background::Color(BG_GRAY);
 const BG_DARK: Color = const_color!(0x181818);
 const BG_DARK_BG: Background = Background::Color(BG_DARK);
+const BG_BRIGHT_RED: Color = const_color!(0x361818);
+const BG_BRIGHT_RED_BG: Background = Background::Color(BG_BRIGHT_RED);
 /// The outline color
 const OUTLINE: Color = const_color!(0x555555);
 /// The outline color as background
@@ -81,6 +83,7 @@ const BRIGHT_CONTRAST_BG: Background = Background::Color(BRIGHT_CONTRAST);
 /// The border radius
 const RADIUS: f32 = 6.;
 const RED: Color = const_color!(0xEE5555);
+const BRIGHT_RED: Color = const_color!(0xEE3333);
 
 /// The theme of uamp app
 #[derive(Default, Clone)]
@@ -518,24 +521,42 @@ impl text::StyleSheet for Theme {
     }
 }
 
-impl text_input::StyleSheet for Theme {
-    type Style = ();
+#[derive(Default)]
+pub enum TextInput {
+    #[default]
+    Default,
+    Invalid,
+}
 
-    fn active(&self, _style: &Self::Style) -> text_input::Appearance {
-        text_input::Appearance {
-            background: BG_DARK_BG,
+impl text_input::StyleSheet for Theme {
+    type Style = TextInput;
+
+    fn active(&self, style: &Self::Style) -> text_input::Appearance {
+        let default = text_input::Appearance {
+            background: TRANSPARENT_BG,
             border_radius: RADIUS.into(),
             border_width: 0.,
             border_color: OUTLINE,
             icon_color: BG_GRAY,
+        };
+
+        match style {
+            TextInput::Invalid => text_input::Appearance {
+                background: BG_BRIGHT_RED_BG,
+                ..default
+            },
+            _ => default,
         }
     }
 
     fn focused(&self, style: &Self::Style) -> text_input::Appearance {
         let base = self.active(style);
-        text_input::Appearance {
-            border_color: BG_GRAY,
-            ..base
+        match style {
+            TextInput::Default => text_input::Appearance {
+                background: BG_BRIGHT_BG,
+                ..base
+            },
+            _ => base,
         }
     }
 
@@ -552,7 +573,7 @@ impl text_input::StyleSheet for Theme {
     }
 
     fn selection_color(&self, _style: &Self::Style) -> Color {
-        FOREGROUND
+        DARK_CONTRAST
     }
 
     fn disabled(&self, style: &Self::Style) -> text_input::Appearance {
@@ -803,7 +824,7 @@ impl svg_button::StyleSheet for Theme {
 
     fn pressed(&self, style: &Self::Style) -> svg_button::Appearance {
         let base = svg_button::Appearance {
-            ..self.active(style)
+            ..self.hovered(style)
         };
 
         match style {
@@ -813,6 +834,10 @@ impl svg_button::StyleSheet for Theme {
             },
             SvgButton::TransparentCircle(_) => svg_button::Appearance {
                 svg_color: Some(BRIGHT_CONTRAST),
+                ..base
+            },
+            SvgButton::RedHover => svg_button::Appearance {
+                svg_color: Some(BRIGHT_RED),
                 ..base
             },
             _ => base,

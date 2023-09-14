@@ -191,6 +191,16 @@ where
         cursor: Cursor,
         viewport: &Rectangle,
     ) {
+        self.child.as_widget().draw(
+            &state.children[0],
+            renderer,
+            theme,
+            style,
+            layout.children().next().unwrap(),
+            cursor,
+            viewport,
+        );
+
         let bounds = layout.bounds();
 
         let ap = if cursor.is_over(bounds) {
@@ -202,30 +212,12 @@ where
         let ap = if let Some(ap) = ap {
             ap
         } else {
-            self.child.as_widget().draw(
-                &state.children[0],
-                renderer,
-                theme,
-                style,
-                layout.children().next().unwrap(),
-                cursor,
-                viewport,
-            );
             return;
         };
 
         let pos = if let Some(p) = cursor.position() {
             p
         } else {
-            self.child.as_widget().draw(
-                &state.children[0],
-                renderer,
-                theme,
-                style,
-                layout.children().next().unwrap(),
-                cursor,
-                viewport,
-            );
             return;
         };
 
@@ -285,16 +277,6 @@ where
         };
 
         renderer.fill_quad(quad, Background::Gradient(Gradient::Linear(grad)));
-
-        self.child.as_widget().draw(
-            &state.children[0],
-            renderer,
-            theme,
-            style,
-            layout.children().next().unwrap(),
-            cursor,
-            viewport,
-        );
     }
 
     fn overlay<'b>(

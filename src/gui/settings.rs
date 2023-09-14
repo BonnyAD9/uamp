@@ -1,4 +1,7 @@
-use std::borrow::Cow;
+use std::{
+    borrow::Cow,
+    mem::replace,
+};
 
 use iced_core::{
     alignment::Vertical,
@@ -11,22 +14,68 @@ use crate::{
     app::UampApp,
     col,
     config::ConfMessage,
-    core::msg::{ControlMsg, Msg},
+    core::msg::{ComMsg, ControlMsg, Msg},
     gui::ids::WB_SETTINGS,
     row, wrap_box,
 };
 
 use super::{
     elements::the_button,
-    theme::{Container, SvgButton, Text},
+    theme::{Container, SvgButton, Text, TextInput},
     wid::{
-        self, column, container, cursor_grad, line_text,
-        svg_button, switch, text, Element,
+        self, column, container, cursor_grad, line_text, svg_button, switch,
+        text, Element, text_input,
     },
     widgets::icons,
+    GuiMessage,
 };
 
+#[derive(Default)]
+pub struct SetState {
+    extension_state: String,
+    search_path_state: String,
+}
+
+#[derive(Clone, Debug)]
+pub enum SetMessage {
+    ExtensionInput(String),
+    ExtensionConfirm,
+    SearchPathInput(String),
+    SearchPathConfirm,
+}
+
 impl UampApp {
+    pub(super) fn settings_event(&mut self, msg: SetMessage) -> ComMsg {
+        match msg {
+            SetMessage::ExtensionInput(s) => {
+                self.gui.set_state.extension_state = s
+            }
+            SetMessage::ExtensionConfirm => {
+                let s = replace(
+                    &mut self.gui.set_state.extension_state,
+                    String::new(),
+                );
+                return ComMsg::Msg(Msg::Config(
+                    ConfMessage::AddAudioExtension(s),
+                ));
+            }
+            SetMessage::SearchPathInput(s) => {
+                self.gui.set_state.search_path_state = s
+            }
+            SetMessage::SearchPathConfirm => {
+                let s = replace(
+                    &mut self.gui.set_state.search_path_state,
+                    String::new(),
+                );
+                return ComMsg::Msg(Msg::Config(
+                    ConfMessage::AddSearchPath(s.into()),
+                ));
+            }
+        }
+
+        ComMsg::none()
+    }
+
     pub(super) fn settings_page(&self) -> Element {
         col![
             container(row![text("Settings")
@@ -69,14 +118,35 @@ impl UampApp {
                     .map(|p| p.to_string_lossy()),
                 ConfMessage::RemoveSearchPath
             ),
+            container(
+                add_input(
+                    "path",
+                    &self.gui.set_state.search_path_state,
+                    SetMessage::SearchPathInput,
+                    |_| true,
+                    SetMessage::SearchPathConfirm
+                )
+            )
+            .width(400)
+            .height(Shrink)
+            .padding([0, 0, 0, 25]),
             title("Song extensions"),
             delete_list(
-                self.config
-                    .audio_extensions()
-                    .iter()
-                    .map(|p| p.into()),
+                self.config.audio_extensions().iter().map(|p| p.into()),
                 ConfMessage::RemoveAudioExtension
             ),
+            container(
+                add_input(
+                    "extension",
+                    &self.gui.set_state.extension_state,
+                    SetMessage::ExtensionInput,
+                    |s| !s.find('.').is_some(),
+                    SetMessage::ExtensionConfirm
+                )
+            )
+            .width(200)
+            .height(Shrink)
+            .padding([0, 0, 0, 25]),
         ]
         .padding([0, 0, 0, 20])
         .spacing_y(5)
@@ -157,4 +227,44 @@ where
     .padding([0, 0, 0, 25])
     .height(Shrink)
     .spacing(5)
+}
+
+fn add_input<'a, F, C>(
+    placeholder: &'static str,
+    text: &'a str,
+    change: C,
+    validator: F,
+    confirm: SetMessage,
+) -> wid::CursorGrad<'a>
+where
+    F: Fn(&'a str) -> bool,
+    C: Fn(String) -> SetMessage + 'a,
+{
+    let valid = text.is_empty() || validator(text);
+
+    let mut but = svg_button(icons::ADD)
+        .width(30)
+        .height(Fill)
+        .padding(6)
+        .style(if valid {
+            SvgButton::TransparentCircle(6.)
+        } else {
+            SvgButton::RedHover
+        });
+    let mut input = text_input(placeholder, text)
+        .style(if valid {
+            TextInput::Default
+        } else {
+            TextInput::Invalid
+        })
+        .on_input(move |s| Msg::Gui(GuiMessage::Setings(change(s))));
+
+    if valid && !text.is_empty() {
+        but = but.on_click(Msg::Gui(GuiMessage::Setings(confirm.clone())));
+        input = input.on_submit(Msg::Gui(GuiMessage::Setings(confirm)))
+    }
+
+    cursor_grad(row![but, input,].padding([0, 0, 0, 4]))
+        .width(Fill)
+        .height(30)
 }

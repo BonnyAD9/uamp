@@ -30,13 +30,17 @@ impl UampApp {
     pub fn config_event(&mut self, msg: Message) -> ComMsg {
         match msg {
             Message::AddSearchPath(p) => {
-                self.config.search_paths_mut().push(p);
+                if !self.config.search_paths().contains(&p) {
+                    self.config.search_paths_mut().push(p);
+                }
             }
             Message::RemoveSearchPath(i) => {
                 self.config.search_paths_mut().remove(i);
             }
             Message::AddAudioExtension(s) => {
-                self.config.audio_extensions_mut().push(s);
+                if !self.config.audio_extensions().contains(&s) {
+                    self.config.audio_extensions_mut().push(s);
+                }
             }
             Message::RemoveAudioExtension(i) => {
                 self.config.audio_extensions_mut().remove(i);

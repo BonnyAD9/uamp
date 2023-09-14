@@ -32,6 +32,7 @@ use crate::{
 use super::{
     ids::*,
     msg::Message,
+    settings::SetState,
     theme::{Container, SvgButton, Text},
     wid::{
         center_x, center_y, container, line_text, slider, space, svg,
@@ -61,6 +62,8 @@ gen_struct! {
         /// States of WrapBoxes
         #[serde(skip, default = "default_states")]
         pub (super) wb_states: Vec<WrapBoxState>,
+        #[serde(skip)]
+        pub (super) set_state: SetState,
 
         #[serde(skip)]
         song_timestamp: Option<TimeStamp>,
@@ -94,6 +97,7 @@ impl GuiState {
             window_y: default_window_y(),
             window_width: default_window_width(),
             window_height: default_window_height(),
+            set_state: Default::default(),
             change: Cell::new(false),
         }
     }
@@ -151,6 +155,7 @@ impl UampApp {
                     st.scroll_to = self.player.current();
                 }
             }
+            Message::Setings(msg) => return self.settings_event(msg),
         }
         ComMsg::Command(Command::none())
     }

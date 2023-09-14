@@ -53,6 +53,7 @@ pub type Grid<'a> = widgets::grid::Grid<'a, Msg, Renderer>;
 pub type GridItem<'a> = widgets::grid::GridItem<'a, Msg, Renderer>;
 /// Toggler
 pub type Switch<'a> = widgets::switch::Switch<'a, Msg, Renderer>;
+pub type TextInput<'a> = widget::TextInput<'a, Msg, Renderer>;
 
 pub type WrapBoxState = Cell<widgets::wrap_box::State>;
 
@@ -312,4 +313,8 @@ where
     E: Into<Element<'a>>,
 {
     Switch::new(child, is_toggled)
+}
+
+pub fn text_input<'a>(placeholder: &'a str, value: &'a str) -> TextInput<'a> {
+    TextInput::new(placeholder, value)
 }

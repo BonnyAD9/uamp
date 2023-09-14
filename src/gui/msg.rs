@@ -1,9 +1,9 @@
 use std::time::Duration;
 
-use super::app::MainPage;
+use super::{app::MainPage, settings::SetMessage};
 
 /// A gui message
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub enum Message {
     /// Jump to the main page
     SetPage(MainPage),
@@ -13,6 +13,7 @@ pub enum Message {
     SeekSliderEnd,
     /// Ticks every set amount of time (used for example for the seek slider)
     Tick,
+    Setings(SetMessage),
 }
 
 /// Window has changed its parameters
