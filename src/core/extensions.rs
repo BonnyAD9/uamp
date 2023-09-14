@@ -60,6 +60,10 @@ pub fn str_to_duration(s: &str) -> Option<Duration> {
     const HOUR: u64 = 60 * MIN;
     const DAY: u64 = 24 * HOUR;
 
+    if s.is_empty() {
+        return None;
+    }
+
     let r = s.split('d').collect_vec();
     let (d, hmsn) = match r.len() {
         1 => ("", r[0]),
@@ -75,16 +79,13 @@ pub fn str_to_duration(s: &str) -> Option<Duration> {
         _ => return None,
     };
 
-    if sn.is_empty() {
-        return None;
-    }
-
     let r = sn.split('.').collect_vec();
-    let (s, mut n) = match (r.len(), sn.chars().next().unwrap()) {
+    let (s, mut n) = match (r.len(), sn.chars().next()) {
         (2, _) => (r[0], r[1]),
-        (1, '.') => ("", r[0]),
+        (1, Some('.')) => ("", r[0]),
         (1, _) => (r[0], ""),
-        _ => return None,
+        (0, _) => ("", ""),
+        _ => return None
     };
 
     let mut res = Duration::ZERO;

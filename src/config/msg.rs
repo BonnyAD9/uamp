@@ -2,7 +2,7 @@ use std::{path::PathBuf, time::Duration};
 
 use crate::{app::UampApp, core::msg::ComMsg};
 
-#[allow(dead_code)] // Some variants are never constructed
+//#[allow(dead_code)] // Some variants are never constructed
 #[derive(Debug, Clone)]
 pub enum Message {
     AddSearchPath(PathBuf),

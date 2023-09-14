@@ -15,7 +15,7 @@ use crate::{
     app::UampApp,
     col,
     config::ConfMessage,
-    core::msg::{ComMsg, ControlMsg, Msg},
+    core::{msg::{ComMsg, ControlMsg, Msg}, extensions::{duration_to_string, str_to_duration}},
     gui::ids::WB_SETTINGS,
     row, wrap_box,
 };
@@ -36,6 +36,9 @@ pub struct SetState {
     extension_state: String,
     search_path_state: String,
     volume_jump_state: String,
+    save_timeout_state: String,
+    seek_jump_state: String,
+    delete_logs_after_state: String,
 }
 
 #[derive(Clone, Debug)]
@@ -46,6 +49,12 @@ pub enum SetMessage {
     SearchPathConfirm,
     VolumeJumpInput(String),
     VolumeJumpConfirm,
+    SaveTimeoutInput(String),
+    SaveTimeoutConfirm,
+    SeekJumpInput(String),
+    SeekJumpConfirm,
+    DeleteLogsAfterInput(String),
+    DeleteLogsAfterConfirm,
 }
 
 impl UampApp {
@@ -91,6 +100,68 @@ impl UampApp {
                     }
                     Err(e) => {
                         error!("Failed to parse volume jump: {e}");
+                    }
+                }
+            }
+            SetMessage::SaveTimeoutInput(s) => {
+                self.gui.set_state.save_timeout_state = s
+            }
+            SetMessage::SaveTimeoutConfirm => {
+                let s = replace(
+                    &mut self.gui.set_state.save_timeout_state,
+                    String::new(),
+                );
+                if s.is_empty() {
+                    return ComMsg::Msg(Msg::Config(
+                        ConfMessage::SaveTimeout(None),
+                    ))
+                }
+                match str_to_duration(&s) {
+                    Some(d) => {
+                        return ComMsg::Msg(Msg::Config(
+                            ConfMessage::SaveTimeout(Some(d)),
+                        ))
+                    }
+                    None => {
+                        error!("Failed to parse save timeout");
+                    }
+                }
+            }
+            SetMessage::SeekJumpInput(s) => {
+                self.gui.set_state.seek_jump_state = s
+            }
+            SetMessage::SeekJumpConfirm => {
+                let s = replace(
+                    &mut self.gui.set_state.seek_jump_state,
+                    String::new(),
+                );
+                match str_to_duration(&s) {
+                    Some(d) => {
+                        return ComMsg::Msg(Msg::Config(
+                            ConfMessage::SeekJump(d),
+                        ))
+                    }
+                    None => {
+                        error!("Failed to parse save timeout");
+                    }
+                }
+            }
+            SetMessage::DeleteLogsAfterInput(s) => {
+                self.gui.set_state.delete_logs_after_state = s
+            }
+            SetMessage::DeleteLogsAfterConfirm => {
+                let s = replace(
+                    &mut self.gui.set_state.delete_logs_after_state,
+                    String::new(),
+                );
+                match str_to_duration(&s) {
+                    Some(d) => {
+                        return ComMsg::Msg(Msg::Config(
+                            ConfMessage::DeleteLogsAfter(d),
+                        ))
+                    }
+                    None => {
+                        error!("Failed to parse save timeout");
                     }
                 }
             }
@@ -178,11 +249,71 @@ impl UampApp {
             .vertical_alignment(Vertical::Bottom)
             .width(Shrink),
             container(add_input(
-                "0 - 100",
+                "2.5",
                 &self.gui.set_state.volume_jump_state,
                 SetMessage::VolumeJumpInput,
                 |s| s.parse::<f32>().is_ok(),
                 SetMessage::VolumeJumpConfirm,
+                icons::CHECK,
+                EmptyBehaviour::Ignore,
+            ))
+            .padding([0, 0, 0, 25])
+            .width(200)
+            .height(Shrink),
+            line_text(format!(
+                "Save timeout: {}",
+                self.config
+                    .save_timeout()
+                    .map(|t| duration_to_string(t.0, false))
+                    .unwrap_or("never".to_owned())
+            ))
+            .height(30)
+            .vertical_alignment(Vertical::Bottom)
+            .width(Shrink),
+            container(add_input(
+                "03:00",
+                &self.gui.set_state.save_timeout_state,
+                SetMessage::SaveTimeoutInput,
+                |s| str_to_duration(s).is_some(),
+                SetMessage::SaveTimeoutConfirm,
+                icons::CHECK,
+                EmptyBehaviour::Allow,
+            ))
+            .padding([0, 0, 0, 25])
+            .width(200)
+            .height(Shrink),
+            line_text(format!(
+                "Seek jump: {}",
+                duration_to_string(self.config.seek_jump().0, false)
+            ))
+            .height(30)
+            .vertical_alignment(Vertical::Bottom)
+            .width(Shrink),
+            container(add_input(
+                "00:10",
+                &self.gui.set_state.seek_jump_state,
+                SetMessage::SeekJumpInput,
+                |s| str_to_duration(s).is_some(),
+                SetMessage::SeekJumpConfirm,
+                icons::CHECK,
+                EmptyBehaviour::Ignore,
+            ))
+            .padding([0, 0, 0, 25])
+            .width(200)
+            .height(Shrink),
+            line_text(format!(
+                "Delete logs after: {}",
+                duration_to_string(self.config.delete_logs_after().0, false)
+            ))
+            .height(30)
+            .vertical_alignment(Vertical::Bottom)
+            .width(Shrink),
+            container(add_input(
+                "3d00:00",
+                &self.gui.set_state.delete_logs_after_state,
+                SetMessage::DeleteLogsAfterInput,
+                |s| str_to_duration(s).is_some(),
+                SetMessage::DeleteLogsAfterConfirm,
                 icons::CHECK,
                 EmptyBehaviour::Ignore,
             ))
@@ -273,7 +404,7 @@ where
 
 #[derive(Copy, Clone, Debug)]
 enum EmptyBehaviour {
-    _Allow,
+    Allow,
     Ignore,
     _Invalid,
 }
@@ -293,9 +424,8 @@ where
     I: Into<svg::Handle>,
 {
     let valid = match empty {
-        EmptyBehaviour::_Allow => validator(text),
-        EmptyBehaviour::Ignore => text.is_empty() || validator(text),
         EmptyBehaviour::_Invalid => !text.is_empty() && validator(text),
+        _ => text.is_empty() || validator(text),
     };
 
     let mut but =
@@ -317,7 +447,7 @@ where
         .on_input(move |s| Msg::Gui(GuiMessage::Setings(change(s))));
 
     let act = match empty {
-        EmptyBehaviour::_Allow => valid,
+        EmptyBehaviour::Allow => valid || text.is_empty(),
         _ => valid && !text.is_empty(),
     };
 
