@@ -1,7 +1,4 @@
-use std::{
-    borrow::Cow,
-    mem::replace,
-};
+use std::{borrow::Cow, mem::replace};
 
 use iced_core::{
     alignment::Vertical,
@@ -24,7 +21,7 @@ use super::{
     theme::{Container, SvgButton, Text, TextInput},
     wid::{
         self, column, container, cursor_grad, line_text, svg_button, switch,
-        text, Element, text_input,
+        text, text_input, Element,
     },
     widgets::icons,
     GuiMessage,
@@ -67,9 +64,9 @@ impl UampApp {
                     &mut self.gui.set_state.search_path_state,
                     String::new(),
                 );
-                return ComMsg::Msg(Msg::Config(
-                    ConfMessage::AddSearchPath(s.into()),
-                ));
+                return ComMsg::Msg(Msg::Config(ConfMessage::AddSearchPath(
+                    s.into(),
+                )));
             }
         }
 
@@ -118,15 +115,13 @@ impl UampApp {
                     .map(|p| p.to_string_lossy()),
                 ConfMessage::RemoveSearchPath
             ),
-            container(
-                add_input(
-                    "path",
-                    &self.gui.set_state.search_path_state,
-                    SetMessage::SearchPathInput,
-                    |_| true,
-                    SetMessage::SearchPathConfirm
-                )
-            )
+            container(add_input(
+                "path",
+                &self.gui.set_state.search_path_state,
+                SetMessage::SearchPathInput,
+                |_| true,
+                SetMessage::SearchPathConfirm
+            ))
             .width(400)
             .height(Shrink)
             .padding([0, 0, 0, 25]),
@@ -135,15 +130,13 @@ impl UampApp {
                 self.config.audio_extensions().iter().map(|p| p.into()),
                 ConfMessage::RemoveAudioExtension
             ),
-            container(
-                add_input(
-                    "extension",
-                    &self.gui.set_state.extension_state,
-                    SetMessage::ExtensionInput,
-                    |s| !s.find('.').is_some(),
-                    SetMessage::ExtensionConfirm
-                )
-            )
+            container(add_input(
+                "extension",
+                &self.gui.set_state.extension_state,
+                SetMessage::ExtensionInput,
+                |s| !s.find('.').is_some(),
+                SetMessage::ExtensionConfirm
+            ))
             .width(200)
             .height(Shrink)
             .padding([0, 0, 0, 25]),

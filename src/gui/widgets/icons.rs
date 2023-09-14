@@ -38,24 +38,29 @@ pub const PREVIOUS: SvgData = SvgData::new(
 );
 
 /// icon signifying volume
-pub const VOLUME_0: SvgData =
-    SvgData::new(include_bytes!("../../../assets/svg/volume_0.svg").as_slice());
+pub const VOLUME_0: SvgData = SvgData::new(
+    include_bytes!("../../../assets/svg/volume_0.svg").as_slice(),
+);
 
 /// icon signifying volume
-pub const VOLUME_1: SvgData =
-    SvgData::new(include_bytes!("../../../assets/svg/volume_1.svg").as_slice());
+pub const VOLUME_1: SvgData = SvgData::new(
+    include_bytes!("../../../assets/svg/volume_1.svg").as_slice(),
+);
 
 /// icon signifying volume
-pub const VOLUME_2: SvgData =
-    SvgData::new(include_bytes!("../../../assets/svg/volume_2.svg").as_slice());
+pub const VOLUME_2: SvgData = SvgData::new(
+    include_bytes!("../../../assets/svg/volume_2.svg").as_slice(),
+);
 
 /// icon signifying volume
-pub const VOLUME_3: SvgData =
-    SvgData::new(include_bytes!("../../../assets/svg/volume_3.svg").as_slice());
+pub const VOLUME_3: SvgData = SvgData::new(
+    include_bytes!("../../../assets/svg/volume_3.svg").as_slice(),
+);
 
 /// icon signifying volume
-pub const VOLUME_4: SvgData =
-    SvgData::new(include_bytes!("../../../assets/svg/volume_4.svg").as_slice());
+pub const VOLUME_4: SvgData = SvgData::new(
+    include_bytes!("../../../assets/svg/volume_4.svg").as_slice(),
+);
 
 /// icon signifying mute (crossed volume)
 pub const NO_VOLUME_0: SvgData = SvgData::new(

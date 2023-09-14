@@ -135,13 +135,16 @@ fn make_settings(conf: Config) -> Settings<(Config, GuiState)> {
 /// - cannot load from env
 /// - cannot start the logger
 fn start_logger() -> Result<()> {
-    flexi_logger::Logger::try_with_env()?
-        .log_to_file(
-            flexi_logger::FileSpec::default()
-                .directory(config::default_config_path().join("log")),
-        )
-        .write_mode(flexi_logger::WriteMode::BufferAndFlush)
-        .start()?;
+    match flexi_logger::Logger::try_with_env_or_str("warn") {
+        Ok(l) => l,
+        Err(_) => flexi_logger::Logger::try_with_str("warn")?,
+    }
+    .log_to_file(
+        flexi_logger::FileSpec::default()
+            .directory(config::default_config_path().join("log")),
+    )
+    .write_mode(flexi_logger::WriteMode::BufferAndFlush)
+    .start()?;
     Ok(())
 }
 
