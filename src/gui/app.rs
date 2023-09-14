@@ -440,9 +440,9 @@ impl UampApp {
 
     fn mute_button(&self) -> Element {
         svg_button(if self.player.mute() {
-            icons::NO_VOLUME
+            icons::no_volume(self.player.volume())
         } else {
-            icons::VOLUME
+            icons::volume(self.player.volume())
         })
         .padding(5)
         .style(SvgButton::TransparentCircle(30.))
