@@ -113,6 +113,9 @@ pub const TRASH: SvgData =
 pub const ADD: SvgData =
     SvgData::new(include_bytes!("../../../assets/svg/add.svg").as_slice());
 
+pub const CHECK: SvgData =
+    SvgData::new(include_bytes!("../../../assets/svg/check.svg").as_slice());
+
 pub fn volume(volume: f32) -> SvgData {
     match volume {
         v if v <= 0. => VOLUME_0,

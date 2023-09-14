@@ -1,11 +1,15 @@
-use std::{borrow::Cow, mem::replace};
+use std::{
+    borrow::Cow,
+    mem::replace,
+};
 
 use iced_core::{
     alignment::Vertical,
     font::Weight,
-    Font,
+    svg, Font,
     Length::{Fill, Shrink},
 };
+use log::error;
 
 use crate::{
     app::UampApp,
@@ -31,6 +35,7 @@ use super::{
 pub struct SetState {
     extension_state: String,
     search_path_state: String,
+    volume_jump_state: String,
 }
 
 #[derive(Clone, Debug)]
@@ -39,6 +44,8 @@ pub enum SetMessage {
     ExtensionConfirm,
     SearchPathInput(String),
     SearchPathConfirm,
+    VolumeJumpInput(String),
+    VolumeJumpConfirm,
 }
 
 impl UampApp {
@@ -67,6 +74,25 @@ impl UampApp {
                 return ComMsg::Msg(Msg::Config(ConfMessage::AddSearchPath(
                     s.into(),
                 )));
+            }
+            SetMessage::VolumeJumpInput(s) => {
+                self.gui.set_state.volume_jump_state = s
+            }
+            SetMessage::VolumeJumpConfirm => {
+                let s = replace(
+                    &mut self.gui.set_state.volume_jump_state,
+                    String::new(),
+                );
+                match s.parse::<f32>() {
+                    Ok(f) => {
+                        return ComMsg::Msg(Msg::Config(
+                            ConfMessage::VolumeJump(f / 100.),
+                        ))
+                    }
+                    Err(e) => {
+                        error!("Failed to parse volume jump: {e}");
+                    }
+                }
             }
         }
 
@@ -120,7 +146,9 @@ impl UampApp {
                 &self.gui.set_state.search_path_state,
                 SetMessage::SearchPathInput,
                 |_| true,
-                SetMessage::SearchPathConfirm
+                SetMessage::SearchPathConfirm,
+                icons::ADD,
+                EmptyBehaviour::Ignore,
             ))
             .width(400)
             .height(Shrink)
@@ -135,11 +163,32 @@ impl UampApp {
                 &self.gui.set_state.extension_state,
                 SetMessage::ExtensionInput,
                 |s| !s.find('.').is_some(),
-                SetMessage::ExtensionConfirm
+                SetMessage::ExtensionConfirm,
+                icons::ADD,
+                EmptyBehaviour::Ignore,
             ))
             .width(200)
             .height(Shrink)
             .padding([0, 0, 0, 25]),
+            line_text(format!(
+                "Volume jump: {}",
+                self.config.volume_jump() * 100.
+            ))
+            .height(30)
+            .vertical_alignment(Vertical::Bottom)
+            .width(Shrink),
+            container(add_input(
+                "0 - 100",
+                &self.gui.set_state.volume_jump_state,
+                SetMessage::VolumeJumpInput,
+                |s| s.parse::<f32>().is_ok(),
+                SetMessage::VolumeJumpConfirm,
+                icons::CHECK,
+                EmptyBehaviour::Ignore,
+            ))
+            .padding([0, 0, 0, 25])
+            .width(200)
+            .height(Shrink),
         ]
         .padding([0, 0, 0, 20])
         .spacing_y(5)
@@ -222,28 +271,43 @@ where
     .spacing(5)
 }
 
-fn add_input<'a, F, C>(
-    placeholder: &'static str,
+#[derive(Copy, Clone, Debug)]
+enum EmptyBehaviour {
+    _Allow,
+    Ignore,
+    _Invalid,
+}
+
+fn add_input<'a, F, C, I>(
+    placeholder: &'a str,
     text: &'a str,
     change: C,
     validator: F,
     confirm: SetMessage,
+    icon: I,
+    empty: EmptyBehaviour,
 ) -> wid::CursorGrad<'a>
 where
     F: Fn(&'a str) -> bool,
     C: Fn(String) -> SetMessage + 'a,
+    I: Into<svg::Handle>,
 {
-    let valid = text.is_empty() || validator(text);
+    let valid = match empty {
+        EmptyBehaviour::_Allow => validator(text),
+        EmptyBehaviour::Ignore => text.is_empty() || validator(text),
+        EmptyBehaviour::_Invalid => !text.is_empty() && validator(text),
+    };
 
-    let mut but = svg_button(icons::ADD)
-        .width(30)
-        .height(Fill)
-        .padding(6)
-        .style(if valid {
-            SvgButton::TransparentCircle(6.)
-        } else {
-            SvgButton::RedHover
-        });
+    let mut but =
+        svg_button(icon)
+            .width(30)
+            .height(Fill)
+            .padding(6)
+            .style(if valid {
+                SvgButton::TransparentCircle(6.)
+            } else {
+                SvgButton::RedHover
+            });
     let mut input = text_input(placeholder, text)
         .style(if valid {
             TextInput::Default
@@ -252,7 +316,12 @@ where
         })
         .on_input(move |s| Msg::Gui(GuiMessage::Setings(change(s))));
 
-    if valid && !text.is_empty() {
+    let act = match empty {
+        EmptyBehaviour::_Allow => valid,
+        _ => valid && !text.is_empty(),
+    };
+
+    if act {
         but = but.on_click(Msg::Gui(GuiMessage::Setings(confirm.clone())));
         input = input.on_submit(Msg::Gui(GuiMessage::Setings(confirm)))
     }
