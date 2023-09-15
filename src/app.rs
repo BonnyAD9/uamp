@@ -16,7 +16,7 @@ use crate::{
     core::{
         messenger::{self, Messenger},
         msg::{ComMsg, ControlMsg, Msg},
-        Error, Result,
+        Error, Result, extensions::duration_to_string,
     },
     gui::{
         app::GuiState,
@@ -241,6 +241,12 @@ impl UampApp {
             error!("Failed to send init message: {e}")
         }
 
+        let server_address = conf.enable_server().then(|| format!(
+            "{}:{}",
+            conf.server_address(),
+            conf.port()
+        ));
+
         UampApp {
             config: conf,
             library: lib,
@@ -291,7 +297,7 @@ impl UampApp {
     }
 
     fn server_subscription(&self) -> Subscription {
-        let id = app_id() + " server";
+        let id = format!("{} server ({}:{})", app_id(), self.config.server_address(), self.config.port());
         if let Some(l) = self.listener.take() {
             iced::subscription::unfold(id, l, |listener| async {
                 loop {
@@ -352,7 +358,7 @@ impl UampApp {
 
     fn clock_subscription(&self, tick: Duration) -> Subscription {
         iced::subscription::unfold(
-            app_id() + " tick",
+            format!("{} tick ({})", app_id(), duration_to_string(tick, false)),
             Instant::now(),
             move |i| async move {
                 let now = Instant::now();

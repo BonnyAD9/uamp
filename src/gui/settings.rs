@@ -42,6 +42,8 @@ pub struct SetState {
     seek_jump_state: String,
     delete_logs_after_state: String,
     hotkey_state: String,
+    tick_length_state: String,
+    port_state: String,
 }
 
 #[derive(Clone, Debug)]
@@ -60,6 +62,10 @@ pub enum SetMessage {
     DeleteLogsAfterConfirm,
     HotkeyInput(String),
     HotkeyConfirm,
+    TickLengthInput(String),
+    TickLengthConfirm,
+    PortInput(String),
+    PortConfirm,
 }
 
 impl UampApp {
@@ -181,6 +187,44 @@ impl UampApp {
                     s[0].to_string(),
                     s[1].to_string(),
                 )));
+            }
+            SetMessage::TickLengthInput(s) => {
+                self.gui.set_state.tick_length_state = s
+            }
+            SetMessage::TickLengthConfirm => {
+                let s = replace(
+                    &mut self.gui.set_state.tick_length_state,
+                    String::new(),
+                );
+                match str_to_duration(&s) {
+                    Some(d) => {
+                        return ComMsg::Msg(Msg::Config(
+                            ConfMessage::TickLength(d),
+                        ))
+                    }
+                    None => {
+                        error!("Failed to parse tick length");
+                    }
+                }
+            }
+            SetMessage::PortInput(s) => {
+                self.gui.set_state.port_state = s
+            }
+            SetMessage::PortConfirm => {
+                let s = replace(
+                    &mut self.gui.set_state.port_state,
+                    String::new(),
+                );
+                match s.parse::<u16>() {
+                    Ok(u) => {
+                        return ComMsg::Msg(Msg::Config(
+                            ConfMessage::Port(u),
+                        ))
+                    }
+                    Err(e) => {
+                        error!("Failed to parse server port: {e}");
+                    }
+                }
             }
         }
 
@@ -369,6 +413,45 @@ impl UampApp {
             .padding([0, 0, 0, 25])
             .width(200)
             .height(Shrink),
+            line_text(format!(
+                "Tick length: {}",
+                duration_to_string(self.config.tick_length().0, false)
+            ))
+            .height(30)
+            .vertical_alignment(Vertical::Bottom)
+            .width(Shrink),
+            container(add_input(
+                "00:01",
+                &self.gui.set_state.tick_length_state,
+                SetMessage::TickLengthInput,
+                |s| str_to_duration(s).is_some(),
+                SetMessage::TickLengthConfirm,
+                icons::CHECK,
+                EmptyBehaviour::Ignore,
+            ))
+            .padding([0, 0, 0, 25])
+            .width(200)
+            .height(Shrink),
+            /*line_text(format!(
+                "Port: {}",
+                self.config.port()
+            ))
+            .height(30)
+            .vertical_alignment(Vertical::Bottom)
+            .width(Shrink),
+            container(add_input(
+                "8267 / 33284",
+                &self.gui.set_state.port_state,
+                SetMessage::PortInput,
+                |s| s
+                    .parse::<u32>().is_ok(),
+                SetMessage::PortConfirm,
+                icons::CHECK,
+                EmptyBehaviour::Ignore,
+            ))
+            .padding([0, 0, 0, 25])
+            .width(200)
+            .height(Shrink),*/
         ]
         .padding([0, 0, 0, 20])
         .spacing_y(5)

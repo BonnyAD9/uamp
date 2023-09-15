@@ -1,4 +1,4 @@
-use std::{path::PathBuf, time::Duration};
+use std::{path::PathBuf, time::Duration, net::TcpListener};
 
 use log::error;
 
@@ -136,14 +136,20 @@ impl UampApp {
             }
             Message::TickLength(d) => {
                 self.config.tick_length_set(d.into());
-                todo!("Refresh tick");
             }
             Message::SeekJump(d) => {
                 self.config.seek_jump_set(d.into());
             }
             Message::Port(u) => {
-                self.config.port_set(u);
-                todo!("Restart server")
+                if self.config.port() != u {
+                    match TcpListener::bind(format!("{}:{}", self.config.server_address(), u)) {
+                        Ok(l) => {
+                            self.listener.set(Some(l));
+                            self.config.port_set(u);
+                        }
+                        Err(e) => error!("Failed to create server: {e}"),
+                    }
+                }
             }
             Message::DeleteLogsAfter(d) => {
                 self.config.delete_logs_after_set(d.into());
