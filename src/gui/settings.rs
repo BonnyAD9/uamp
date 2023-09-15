@@ -268,7 +268,7 @@ impl UampApp {
                 ConfMessage::RemoveGlobalHotkey
             ),
             container(add_input(
-                "extension",
+                "hotkey: action",
                 &self.gui.set_state.hotkey_state,
                 SetMessage::HotkeyInput,
                 |s| {
