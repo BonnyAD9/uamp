@@ -18,7 +18,8 @@ use crate::{
         msg::{ComMsg, ControlMsg, Msg},
     },
     gui::ids::WB_SETTINGS,
-    row, wrap_box, hotkeys::{Hotkey, Action},
+    hotkeys::{Action, Hotkey},
+    row, wrap_box,
 };
 
 use super::{
@@ -116,9 +117,9 @@ impl UampApp {
                     String::new(),
                 );
                 if s.is_empty() {
-                    return ComMsg::Msg(Msg::Config(ConfMessage::SaveTimeout(
-                        None,
-                    )));
+                    return ComMsg::Msg(Msg::Config(
+                        ConfMessage::SaveTimeout(None),
+                    ));
                 }
                 match str_to_duration(&s) {
                     Some(d) => {
@@ -170,18 +171,17 @@ impl UampApp {
                     }
                 }
             }
-            SetMessage::HotkeyInput(s) => {
-                self.gui.set_state.hotkey_state = s
-            }
+            SetMessage::HotkeyInput(s) => self.gui.set_state.hotkey_state = s,
             SetMessage::HotkeyConfirm => {
                 let s = replace(
                     &mut self.gui.set_state.hotkey_state,
                     String::new(),
                 );
                 let s = s.split(':').map(|s| s.trim()).collect_vec();
-                return ComMsg::Msg(Msg::Config(
-                    ConfMessage::AddGlobalHotkey(s[0].to_string(), s[1].to_string()),
-                ))
+                return ComMsg::Msg(Msg::Config(ConfMessage::AddGlobalHotkey(
+                    s[0].to_string(),
+                    s[1].to_string(),
+                )));
             }
         }
 
@@ -261,7 +261,10 @@ impl UampApp {
             .padding([0, 0, 0, 25]),
             title("Global hotkeys"),
             delete_list(
-                self.config.global_hotkeys().iter().map(|(h, a)| format!("{h}: {a}").into()),
+                self.config
+                    .global_hotkeys()
+                    .iter()
+                    .map(|(h, a)| format!("{h}: {a}").into()),
                 ConfMessage::RemoveGlobalHotkey
             ),
             container(add_input(
@@ -270,7 +273,9 @@ impl UampApp {
                 SetMessage::HotkeyInput,
                 |s| {
                     let s = s.split(':').collect_vec();
-                    s.len() == 2 && s[0].parse::<Hotkey>().is_ok() && s[1].parse::<Action>().is_ok()
+                    s.len() == 2
+                        && s[0].parse::<Hotkey>().is_ok()
+                        && s[1].parse::<Action>().is_ok()
                 },
                 SetMessage::HotkeyConfirm,
                 icons::ADD,
@@ -290,7 +295,10 @@ impl UampApp {
                 "2.5",
                 &self.gui.set_state.volume_jump_state,
                 SetMessage::VolumeJumpInput,
-                |s| s.parse::<f32>().map(|v| (0.0..=1.).contains(&v)).unwrap_or(false),
+                |s| s
+                    .parse::<f32>()
+                    .map(|v| (0.0..=1.).contains(&v))
+                    .unwrap_or(false),
                 SetMessage::VolumeJumpConfirm,
                 icons::CHECK,
                 EmptyBehaviour::Ignore,

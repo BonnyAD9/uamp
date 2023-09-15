@@ -1,4 +1,3 @@
-use global_hotkey::GlobalHotKeyManager;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -6,15 +5,12 @@ use std::{
     collections::HashMap,
     fs::{create_dir_all, read_dir, remove_file, File},
     path::{Path, PathBuf},
-    sync::Arc,
     time::Duration,
 };
-use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{
-    core::{extensions::Wrap, msg::Msg, Result},
+    core::{extensions::Wrap, Result},
     gen_struct,
-    hotkeys::HotkeyMgr,
 };
 
 gen_struct! {

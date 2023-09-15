@@ -8,7 +8,7 @@ use crate::{
     hotkeys::{Action, Hotkey},
 };
 
-//#[allow(dead_code)] // Some variants are never constructed
+#[allow(dead_code)] // Some variants are never constructed
 #[derive(Debug, Clone)]
 pub enum Message {
     AddSearchPath(PathBuf),
@@ -72,7 +72,9 @@ impl UampApp {
                 }
             }
             Message::RemoveGlobalHotkey(i) => {
-                let (h, a) = if let Some((h, a)) = self.config.global_hotkeys().iter().nth(i) {
+                let (h, a) = if let Some((h, a)) =
+                    self.config.global_hotkeys().iter().nth(i)
+                {
                     (h.clone(), a.clone())
                 } else {
                     return ComMsg::none();

@@ -6,7 +6,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use global_hotkey::GlobalHotKeyManager;
 use iced::{executor, window, Application};
 use iced_core::Event;
 use log::{error, warn};
