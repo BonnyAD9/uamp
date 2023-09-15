@@ -20,7 +20,7 @@ impl Eq for Hotkey {}
 
 impl Hotkey {
     /// Creates [`HotKey`] from this hotkey
-    pub fn as_hot_key(&self) -> HotKey {
+    pub(super) fn as_hot_key(&self) -> HotKey {
         HotKey::new(Some(self.modifiers), self.code)
     }
 }

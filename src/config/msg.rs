@@ -1,8 +1,14 @@
 use std::{path::PathBuf, time::Duration};
 
-use crate::{app::UampApp, core::msg::ComMsg};
+use log::error;
 
-#[allow(dead_code)] // Some variants are never constructed
+use crate::{
+    app::UampApp,
+    core::msg::ComMsg,
+    hotkeys::{Action, Hotkey},
+};
+
+//#[allow(dead_code)] // Some variants are never constructed
 #[derive(Debug, Clone)]
 pub enum Message {
     AddSearchPath(PathBuf),
@@ -46,11 +52,51 @@ impl UampApp {
                 self.config.audio_extensions_mut().remove(i);
             }
             Message::AddGlobalHotkey(h, a) => {
-                self.config.global_hotkeys_mut().add_hotkey(h, a);
-                todo!("refresh the hotkeys")
+                let hotkey = match h.parse::<Hotkey>() {
+                    Ok(h) => h,
+                    Err(e) => {
+                        error!("Failed to parse hotkey: {e}");
+                        return ComMsg::none();
+                    }
+                };
+                let action = match a.parse::<Action>() {
+                    Ok(a) => a,
+                    Err(e) => {
+                        error!("Failed to parse hotkey action: {e}");
+                        return ComMsg::none();
+                    }
+                };
+                self.config.global_hotkeys_mut().insert(h, a);
+                if let Err(e) = self.hotkey_mgr.add_hotkey(hotkey, action) {
+                    error!("Failed to register hotkey: {e}");
+                }
             }
             Message::RemoveGlobalHotkey(i) => {
-                todo!("remove hotkey at index {i}, refresh hotkeys")
+                let (h, a) = if let Some((h, a)) = self.config.global_hotkeys().iter().nth(i) {
+                    (h.clone(), a.clone())
+                } else {
+                    return ComMsg::none();
+                };
+                self.config.global_hotkeys_mut().remove(&h);
+
+                let hotkey = match h.parse::<Hotkey>() {
+                    Ok(h) => h,
+                    Err(e) => {
+                        error!("Failed to parse hotkey: {e}");
+                        return ComMsg::none();
+                    }
+                };
+                let action = match a.parse::<Action>() {
+                    Ok(a) => a,
+                    Err(e) => {
+                        error!("Failed to parse hotkey action: {e}");
+                        return ComMsg::none();
+                    }
+                };
+                if let Err(e) = self.hotkey_mgr.remove_hotkey(&hotkey, &action)
+                {
+                    error!("Failed to unregister hotkey: {e}");
+                }
             }
             Message::ServerAddress(s) => {
                 *self.config.server_address_mut() = s;

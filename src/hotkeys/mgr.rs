@@ -1,81 +1,79 @@
-use std::{collections::HashMap, str::FromStr, sync::Arc};
+use std::{
+    collections::HashMap,
+    str::FromStr,
+    sync::{Arc, Mutex},
+};
 
 use global_hotkey::{GlobalHotKeyEvent, GlobalHotKeyManager};
 use log::error;
-use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::UnboundedSender;
 
-use crate::core::msg::Msg;
+use crate::core::{err::Result, msg::Msg, Error};
 
-use super::{action::Action, err, hotkey::Hotkey};
+use super::{action::Action, hotkey::Hotkey};
 
 /// Parses hotkeys and registers them
-#[derive(Clone)]
 pub struct HotkeyMgr {
-    unparsed: HashMap<String, String>,
+    mapping: Option<Arc<Mutex<HashMap<u32, Action>>>>,
+    inner: Option<GlobalHotKeyManager>,
 }
+
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
 
 impl HotkeyMgr {
     /// Creates new [`HotkeyMgr`]
     pub fn new() -> Self {
         Self {
-            unparsed: HashMap::new(),
+            mapping: None,
+            inner: None,
         }
-    }
-
-    /// Parses the hotkeys in the unparsed hashmap
-    fn parse(&mut self) -> HashMap<Hotkey, Action> {
-        let mut parsed: HashMap<Hotkey, Action> = HashMap::new();
-
-        for (h, ha) in self.unparsed.iter() {
-            let h = match Hotkey::from_str(h) {
-                Ok(r) => r,
-                Err(e) => {
-                    error!("Failed to parse hotkey: {e}");
-                    continue;
-                }
-            };
-            let ha = match Action::from_str(ha) {
-                Ok(r) => r,
-                Err(e) => {
-                    error!("Failed to parse hotkey action: {e}");
-                    continue;
-                }
-            };
-
-            // If the hotkey is present, combine them
-            if let Some(a) = parsed.get_mut(&h) {
-                a.join(ha);
-            } else {
-                parsed.insert(h, ha);
-            }
-        }
-
-        parsed
     }
 
     /// Parses and registers the hotkeys
-    pub fn register(
+    pub fn init<I>(
         &mut self,
         sender: Arc<UnboundedSender<Msg>>,
-    ) -> Result<GlobalHotKeyManager, err::Error> {
-        let parsed = self.parse();
+        hotkeys: I,
+    ) -> Result<()>
+    where
+        I: Iterator<Item = (Hotkey, Action)>,
+    {
+        // Drop previous
+        self.inner = None;
+        self.mapping = None;
 
         let res = GlobalHotKeyManager::new()?;
 
-        let mut hotkeys = HashMap::new();
+        let mut map: HashMap<u32, Action> = HashMap::new();
 
-        for (h, a) in parsed.iter() {
+        for (h, a) in hotkeys {
             let h = h.as_hot_key();
-            hotkeys.insert(h.id(), a.clone());
+            if let Some(oa) = map.get_mut(&h.id()) {
+                oa.join(a);
+                continue;
+            }
+            map.insert(h.id(), a);
             if let Err(e) = res.register(h) {
                 error!("Failed to register hotkey: {e}")
             }
         }
 
+        let map = Arc::new(Mutex::new(map));
+        self.mapping = Some(map.clone());
+
         GlobalHotKeyEvent::set_event_handler(Some(
             move |e: GlobalHotKeyEvent| {
-                let a = match hotkeys.get(&e.id) {
+                let map = match map.lock() {
+                    Ok(m) => m,
+                    Err(e) => {
+                        error!("Failed to lock shortcut map: {e}");
+                        return;
+                    }
+                };
+
+                let a = match map.get(&e.id) {
                     Some(a) => a,
                     None => return,
                 };
@@ -88,32 +86,66 @@ impl HotkeyMgr {
             },
         ));
 
-        Ok(res)
+        self.inner = Some(res);
+
+        Ok(())
     }
 
     /// Adds hotkey
-    pub fn add_hotkey<S>(&mut self, hotkey: S, action: S)
-    where
-        S: Into<String>,
-    {
-        self.unparsed.insert(hotkey.into(), action.into());
+    pub fn add_hotkey(&self, hotkey: Hotkey, action: Action) -> Result<()> {
+        let (mgr, map) = if let (Some(i), Some(m)) =
+            (&self.inner, &self.mapping)
+        {
+            (i, m)
+        } else {
+            return Err(Error::InvalidOperation("Cannot register hotkey: the hotkey manager is not initialized"));
+        };
+
+        let hotkey = hotkey.as_hot_key();
+
+        {
+            let mut map = map.lock()?;
+            if let Some(a) = map.get_mut(&hotkey.id()) {
+                a.join(action);
+                return Ok(());
+            }
+            map.insert(hotkey.id(), action);
+        }
+
+        //map.lock()?.insert(hotkey.id(), action);
+
+        mgr.register(hotkey)?;
+
+        Ok(())
+    }
+
+    pub fn remove_hotkey(
+        &self,
+        hotkey: &Hotkey,
+        action: &Action,
+    ) -> Result<()> {
+        let (mgr, map) = if let (Some(i), Some(m)) =
+            (&self.inner, &self.mapping)
+        {
+            (i, m)
+        } else {
+            return Err(Error::InvalidOperation("Cannot register hotkey: the hotkey manager is not initialized"));
+        };
+
+        let hotkey = hotkey.as_hot_key();
+
+        let mut map = map.lock()?;
+        if let Some(mut a) = map.remove(&hotkey.id()) {
+            a.strip(&action);
+            if a.controls.is_empty() {
+                mgr.unregister(hotkey)?;
+            }
+        }
+
+        Ok(())
     }
 }
 
-impl Serialize for HotkeyMgr {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        self.unparsed.serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for HotkeyMgr {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        HashMap::deserialize(deserializer).map(|r| Self { unparsed: r })
-    }
-}
+//===========================================================================//
+//                                  Private                                  //
+//===========================================================================//

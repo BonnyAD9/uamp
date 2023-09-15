@@ -45,6 +45,8 @@ pub enum Error {
     /// Time dowsn't work :||
     #[error(transparent)]
     Time(#[from] SystemTimeError),
+    #[error("Failed to lock: {0}")]
+    Poison(String),
     /// Any other error
     #[error(transparent)]
     Other(anyhow::Error),
@@ -57,6 +59,12 @@ impl From<anyhow::Error> for Error {
         } else {
             Self::Other(value)
         }
+    }
+}
+
+impl<T> From<std::sync::PoisonError<T>> for Error {
+    fn from(value: std::sync::PoisonError<T>) -> Self {
+        Self::Poison(value.to_string())
     }
 }
 

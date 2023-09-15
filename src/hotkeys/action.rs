@@ -15,8 +15,27 @@ pub struct Action {
 
 impl Action {
     /// Appends this action with the other action
-    pub fn join(&mut self, mut other: Action) {
+    pub(super) fn join(&mut self, mut other: Action) {
         self.controls.append(&mut other.controls);
+    }
+
+    /// Remuves the given part of this action
+    pub(super) fn strip(&mut self, other: &Action) {
+        let mut i = 0;
+
+        'outer: while self.controls.len() - i >= other.controls.len() {
+            let mut j = 0;
+            while j < other.controls.len() {
+                if self.controls[j + i] != other.controls[j + i] {
+                    i += 1;
+                    continue 'outer;
+                }
+                j += 1;
+            }
+
+            self.controls.drain(i..i + other.controls.len());
+            return;
+        }
     }
 }
 

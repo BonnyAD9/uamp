@@ -25,6 +25,7 @@ use crate::{
         wid::{Command, Element, Subscription},
         GuiMessage, WinMessage,
     },
+    hotkeys::{Action, Hotkey, HotkeyMgr},
     library::Library,
     player::Player,
 };
@@ -50,7 +51,7 @@ pub struct UampApp {
     pub gui: GuiState,
 
     /// hotkey manager
-    pub hotkey_mgr: Option<GlobalHotKeyManager>,
+    pub hotkey_mgr: HotkeyMgr,
     /// The server listener
     pub listener: Cell<Option<TcpListener>>,
 
@@ -118,6 +119,7 @@ impl Application for UampApp {
             Msg::Delegate(d) => d.update(self),
             Msg::WindowChange(msg) => self.win_event(msg),
             Msg::Config(msg) => self.config_event(msg),
+            Msg::Init => self.init(),
         };
 
         // The recursion that follows is all tail call recursion that will be
@@ -183,7 +185,7 @@ impl Application for UampApp {
 //===========================================================================//
 
 impl UampApp {
-    fn new(mut conf: Config, gui: GuiState) -> Self {
+    fn new(conf: Config, gui: GuiState) -> Self {
         let mut lib = Library::from_config(&conf);
 
         let (sender, reciever) = mpsc::unbounded_channel::<Msg>();
@@ -198,14 +200,6 @@ impl UampApp {
         let mut player = Player::from_config(sender.clone(), &conf);
         player.load_config(&conf);
 
-        let hotkey_mgr = match conf.register_hotkeys(sender.clone()) {
-            Ok(r) => r,
-            Err(e) => {
-                error!("Failed to register global hotkeys: {e}");
-                None
-            }
-        };
-
         let listener = if conf.enable_server() {
             match Self::start_server(&conf) {
                 Ok(l) => Cell::new(Some(l)),
@@ -218,6 +212,10 @@ impl UampApp {
             Cell::new(None)
         };
 
+        if let Err(e) = sender.send(Msg::Init) {
+            error!("Failed to send init message: {e}")
+        }
+
         UampApp {
             config: conf,
             library: lib,
@@ -229,13 +227,43 @@ impl UampApp {
             theme: Theme::default(),
             gui,
 
-            hotkey_mgr,
+            hotkey_mgr: HotkeyMgr::new(),
             listener,
 
             pending_close: false,
 
             last_save: Instant::now(),
         }
+    }
+
+    fn init(&mut self) -> ComMsg {
+        if self.config.register_global_hotkeys() {
+            if let Err(e) = self.hotkey_mgr.init(
+                self.sender.clone(),
+                self.config.global_hotkeys().iter().filter_map(|(h, a)| {
+                    let h = match h.parse::<Hotkey>() {
+                        Ok(h) => h,
+                        Err(e) => {
+                            error!("Failed to parse hotkey: {e}");
+                            return None;
+                        }
+                    };
+                    let a = match a.parse::<Action>() {
+                        Ok(a) => a,
+                        Err(e) => {
+                            error!("Failed to parse hotkey action: {e}");
+                            return None;
+                        }
+                    };
+
+                    Some((h, a))
+                }),
+            ) {
+                error!("Failed to initialize hotkeys: {e}");
+            }
+        }
+
+        ComMsg::none()
     }
 
     /// Starts the tcp server

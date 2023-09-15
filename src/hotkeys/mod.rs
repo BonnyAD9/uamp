@@ -5,4 +5,6 @@ mod hotkey;
 mod mgr;
 mod modifier;
 
-pub use self::{err::Error as HotkeyError, mgr::*};
+pub use self::{
+    action::Action, err::Error as HotkeyError, hotkey::Hotkey, mgr::*,
+};

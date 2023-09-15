@@ -85,7 +85,7 @@ pub fn str_to_duration(s: &str) -> Option<Duration> {
         (1, Some('.')) => ("", r[0]),
         (1, _) => (r[0], ""),
         (0, _) => ("", ""),
-        _ => return None
+        _ => return None,
     };
 
     let mut res = Duration::ZERO;

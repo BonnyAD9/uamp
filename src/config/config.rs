@@ -3,6 +3,7 @@ use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::{
     cell::Cell,
+    collections::HashMap,
     fs::{create_dir_all, read_dir, remove_file, File},
     path::{Path, PathBuf},
     sync::Arc,
@@ -54,15 +55,15 @@ gen_struct! {
             ]
         },
 
-        global_hotkeys: HotkeyMgr { pub, pub } => () {
-            let mut hm = HotkeyMgr::new();
-            hm.add_hotkey("ctrl+alt+home", "pp");
-            hm.add_hotkey("ctrl+alt+pg_down", "ns");
-            hm.add_hotkey("ctrl+alt+pg_up", "ps");
-            hm.add_hotkey("ctrl+alt+up", "vu");
-            hm.add_hotkey("ctrl+alt+down", "vd");
-            hm.add_hotkey("ctrl+alt+left", "rw");
-            hm.add_hotkey("ctrl+alt+right", "ff");
+        global_hotkeys: HashMap<String, String> { pub, pub } => () {
+            let mut hm = HashMap::new();
+            hm.insert("ctrl+alt+home".to_owned(), "pp".to_owned());
+            hm.insert("ctrl+alt+pg_down".to_owned(), "ns".to_owned());
+            hm.insert("ctrl+alt+pg_up".to_owned(), "ps".to_owned());
+            hm.insert("ctrl+alt+up".to_owned(), "vu".to_owned());
+            hm.insert("ctrl+alt+down".to_owned(), "vd".to_owned());
+            hm.insert("ctrl+alt+left".to_owned(), "rw".to_owned());
+            hm.insert("ctrl+alt+right".to_owned(), "ff".to_owned());
             hm
         },
 
@@ -129,19 +130,6 @@ gen_struct! {
 //===========================================================================//
 
 impl Config {
-    /// Registers the hotkeys saved in the [`HotkeyMgr`] `global_hotkeys`
-    pub fn register_hotkeys(
-        &mut self,
-        sender: Arc<UnboundedSender<Msg>>,
-    ) -> Result<Option<GlobalHotKeyManager>> {
-        if self.register_global_hotkeys() {
-            // Intentionaly mutate the global_hotkeys without the setter
-            Ok(Some(self.global_hotkeys.register(sender)?))
-        } else {
-            Ok(None)
-        }
-    }
-
     /// Returns true if some of the saved data changed from the last save.
     pub fn changed(&self) -> bool {
         self.change.get()

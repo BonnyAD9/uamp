@@ -34,6 +34,7 @@ pub enum Msg {
     /// The window has changed its parameters
     WindowChange(WinMessage),
     Config(ConfMessage),
+    Init,
 }
 
 impl Msg {
@@ -47,7 +48,7 @@ impl Msg {
 }
 
 /// only simple messages that can be safely send across threads and copied
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum ControlMsg {
     /// Toggle/set between play/pause, [`None`] to toggle, [`Some`] to set
     PlayPause(Option<bool>),
