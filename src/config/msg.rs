@@ -1,4 +1,4 @@
-use std::{path::PathBuf, time::Duration, net::TcpListener};
+use std::{net::TcpListener, path::PathBuf, time::Duration};
 
 use log::error;
 
@@ -101,8 +101,20 @@ impl UampApp {
                 }
             }
             Message::ServerAddress(s) => {
-                *self.config.server_address_mut() = s;
-                todo!("restart server")
+                if self.config.server_address() != &s {
+                    match TcpListener::bind(format!(
+                        "{}:{}",
+                        s,
+                        self.config.port()
+                    )) {
+                        Ok(l) => {
+                            self.stop_server();
+                            self.listener.set(Some(l));
+                            *self.config.server_address_mut() = s;
+                        }
+                        Err(e) => error!("Failed to create server: {e}"),
+                    }
+                }
             }
             Message::RecursiveSearch(b) => {
                 self.config.recursive_search_set(b);
@@ -142,8 +154,13 @@ impl UampApp {
             }
             Message::Port(u) => {
                 if self.config.port() != u {
-                    match TcpListener::bind(format!("{}:{}", self.config.server_address(), u)) {
+                    match TcpListener::bind(format!(
+                        "{}:{}",
+                        self.config.server_address(),
+                        u
+                    )) {
                         Ok(l) => {
+                            self.stop_server();
                             self.listener.set(Some(l));
                             self.config.port_set(u);
                         }
@@ -155,8 +172,24 @@ impl UampApp {
                 self.config.delete_logs_after_set(d.into());
             }
             Message::EnableServer(b) => {
-                self.config.enable_server_set(b);
-                todo!("start/stop server")
+                if self.config.enable_server() != b {
+                    if b {
+                        match TcpListener::bind(format!(
+                            "{}:{}",
+                            self.config.server_address(),
+                            self.config.port()
+                        )) {
+                            Ok(l) => {
+                                self.listener.set(Some(l));
+                                self.config.enable_server_set(b);
+                            }
+                            Err(e) => error!("Failed to create server: {e}"),
+                        }
+                    } else {
+                        self.stop_server();
+                        self.config.enable_server_set(b);
+                    }
+                }
             }
         }
 

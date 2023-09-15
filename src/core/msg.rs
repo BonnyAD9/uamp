@@ -35,6 +35,8 @@ pub enum Msg {
     WindowChange(WinMessage),
     Config(ConfMessage),
     Init,
+    /// Do nothing
+    None,
 }
 
 impl Msg {

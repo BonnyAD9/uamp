@@ -1,6 +1,6 @@
 use std::{
     cell::Cell,
-    net::TcpListener,
+    net::{TcpListener, TcpStream},
     sync::Arc,
     thread,
     time::{Duration, Instant},
@@ -14,9 +14,10 @@ use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use crate::{
     config::{app_id, Config},
     core::{
-        messenger::{self, Messenger},
+        extensions::duration_to_string,
+        messenger::{self, Messenger, MsgMessage},
         msg::{ComMsg, ControlMsg, Msg},
-        Error, Result, extensions::duration_to_string,
+        Error, Result,
     },
     gui::{
         app::GuiState,
@@ -114,6 +115,27 @@ impl UampApp {
             error!("Failed to initialize hotkeys: {e}");
         }
     }
+
+    pub fn stop_server(&self) {
+        let adr =
+            format!("{}:{}", self.config.server_address(), self.config.port());
+        thread::spawn(move || {
+            let err = (|| -> Result<()> {
+                let s = TcpStream::connect(adr)?;
+                if let Err(e) = s.set_nodelay(true) {
+                    warn!("Failed to set no delay when stopping server: {e}");
+                }
+                s.set_write_timeout(Some(Duration::from_secs(5)))?;
+                let mut msg = Messenger::try_new(&s)?;
+                msg.send(MsgMessage::WaitExit(Duration::from_secs(5)))?;
+                Ok(())
+            })();
+
+            if let Err(e) = err {
+                error!("Failed to stop server: {e}");
+            }
+        });
+    }
 }
 
 impl Application for UampApp {
@@ -145,6 +167,7 @@ impl Application for UampApp {
             Msg::WindowChange(msg) => self.win_event(msg),
             Msg::Config(msg) => self.config_event(msg),
             Msg::Init => self.init(),
+            Msg::None => ComMsg::none(),
         };
 
         // The recursion that follows is all tail call recursion that will be
@@ -241,12 +264,6 @@ impl UampApp {
             error!("Failed to send init message: {e}")
         }
 
-        let server_address = conf.enable_server().then(|| format!(
-            "{}:{}",
-            conf.server_address(),
-            conf.port()
-        ));
-
         UampApp {
             config: conf,
             library: lib,
@@ -297,7 +314,12 @@ impl UampApp {
     }
 
     fn server_subscription(&self) -> Subscription {
-        let id = format!("{} server ({}:{})", app_id(), self.config.server_address(), self.config.port());
+        let id = format!(
+            "{} server ({}:{})",
+            app_id(),
+            self.config.server_address(),
+            self.config.port()
+        );
         if let Some(l) = self.listener.take() {
             iced::subscription::unfold(id, l, |listener| async {
                 loop {
@@ -307,6 +329,10 @@ impl UampApp {
                     let rec = msgr.recieve();
 
                     let rec = match rec {
+                        Ok(MsgMessage::WaitExit(d)) => {
+                            thread::sleep(d);
+                            break (Msg::None, listener);
+                        }
                         Ok(m) => m,
                         Err(e) => {
                             warn!("Failed to recieve message: {e}");

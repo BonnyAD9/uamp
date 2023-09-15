@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use serde::{Deserialize, Serialize};
 
 use crate::{core::msg::ControlMsg, library::Song, player::TimeStamp};
@@ -15,6 +17,8 @@ pub enum Message {
     Info(Info),
     /// Message indicating success
     Success,
+    /// Wait for the given time and exit
+    WaitExit(Duration),
 }
 
 /// Describes error over the internet

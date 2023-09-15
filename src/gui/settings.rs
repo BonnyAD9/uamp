@@ -26,8 +26,8 @@ use super::{
     elements::the_button,
     theme::{Container, SvgButton, Text, TextInput},
     wid::{
-        self, column, container, cursor_grad, line_text, svg_button, switch,
-        text, text_input, Element,
+        self, column, container, cursor_grad, line_text, space, svg_button,
+        switch, text, text_input, Element,
     },
     widgets::icons,
     GuiMessage,
@@ -44,6 +44,7 @@ pub struct SetState {
     hotkey_state: String,
     tick_length_state: String,
     port_state: String,
+    server_address_state: String,
 }
 
 #[derive(Clone, Debug)]
@@ -66,6 +67,8 @@ pub enum SetMessage {
     TickLengthConfirm,
     PortInput(String),
     PortConfirm,
+    ServerAddressInput(String),
+    ServerAddressConfirm,
 }
 
 impl UampApp {
@@ -183,10 +186,12 @@ impl UampApp {
                     String::new(),
                 );
                 let s = s.split(':').map(|s| s.trim()).collect_vec();
-                return ComMsg::Msg(Msg::Config(ConfMessage::AddGlobalHotkey(
-                    s[0].to_string(),
-                    s[1].to_string(),
-                )));
+                return ComMsg::Msg(Msg::Config(
+                    ConfMessage::AddGlobalHotkey(
+                        s[0].to_string(),
+                        s[1].to_string(),
+                    ),
+                ));
             }
             SetMessage::TickLengthInput(s) => {
                 self.gui.set_state.tick_length_state = s
@@ -207,24 +212,30 @@ impl UampApp {
                     }
                 }
             }
-            SetMessage::PortInput(s) => {
-                self.gui.set_state.port_state = s
-            }
+            SetMessage::PortInput(s) => self.gui.set_state.port_state = s,
             SetMessage::PortConfirm => {
-                let s = replace(
-                    &mut self.gui.set_state.port_state,
-                    String::new(),
-                );
+                let s =
+                    replace(&mut self.gui.set_state.port_state, String::new());
                 match s.parse::<u16>() {
                     Ok(u) => {
-                        return ComMsg::Msg(Msg::Config(
-                            ConfMessage::Port(u),
-                        ))
+                        return ComMsg::Msg(Msg::Config(ConfMessage::Port(u)))
                     }
                     Err(e) => {
                         error!("Failed to parse server port: {e}");
                     }
                 }
+            }
+            SetMessage::ServerAddressInput(s) => {
+                self.gui.set_state.server_address_state = s
+            }
+            SetMessage::ServerAddressConfirm => {
+                let s = replace(
+                    &mut self.gui.set_state.server_address_state,
+                    String::new(),
+                );
+                return ComMsg::Msg(Msg::Config(ConfMessage::ServerAddress(
+                    s,
+                )));
             }
         }
 
@@ -337,6 +348,7 @@ impl UampApp {
             ))
             .height(30)
             .vertical_alignment(Vertical::Bottom)
+            .padding([0, 0, 0, 10])
             .width(Shrink),
             container(add_input(
                 "2.5",
@@ -362,6 +374,7 @@ impl UampApp {
             ))
             .height(30)
             .vertical_alignment(Vertical::Bottom)
+            .padding([0, 0, 0, 10])
             .width(Shrink),
             container(add_input(
                 "03:00",
@@ -381,6 +394,7 @@ impl UampApp {
             ))
             .height(30)
             .vertical_alignment(Vertical::Bottom)
+            .padding([0, 0, 0, 10])
             .width(Shrink),
             container(add_input(
                 "00:10",
@@ -400,6 +414,7 @@ impl UampApp {
             ))
             .height(30)
             .vertical_alignment(Vertical::Bottom)
+            .padding([0, 0, 0, 10])
             .width(Shrink),
             container(add_input(
                 "3d00:00",
@@ -419,6 +434,7 @@ impl UampApp {
             ))
             .height(30)
             .vertical_alignment(Vertical::Bottom)
+            .padding([0, 0, 0, 10])
             .width(Shrink),
             container(add_input(
                 "00:01",
@@ -432,26 +448,53 @@ impl UampApp {
             .padding([0, 0, 0, 25])
             .width(200)
             .height(Shrink),
-            /*line_text(format!(
-                "Port: {}",
-                self.config.port()
-            ))
-            .height(30)
-            .vertical_alignment(Vertical::Bottom)
-            .width(Shrink),
-            container(add_input(
-                "8267 / 33284",
-                &self.gui.set_state.port_state,
-                SetMessage::PortInput,
-                |s| s
-                    .parse::<u32>().is_ok(),
-                SetMessage::PortConfirm,
-                icons::CHECK,
-                EmptyBehaviour::Ignore,
-            ))
+            toggle(
+                "Enable server for CLI",
+                self.config.enable_server(),
+                ConfMessage::EnableServer,
+            ),
+            col![
+                line_text(format!("Server port: {}", self.config.port()))
+                    .height(30)
+                    .vertical_alignment(Vertical::Bottom)
+                    .padding([0, 0, 0, 10])
+                    .width(Shrink),
+                container(add_input(
+                    "8267 / 33284",
+                    &self.gui.set_state.port_state,
+                    SetMessage::PortInput,
+                    |s| s.parse::<u32>().is_ok(),
+                    SetMessage::PortConfirm,
+                    icons::CHECK,
+                    EmptyBehaviour::Ignore,
+                ))
+                .padding([0, 0, 0, 25])
+                .width(200)
+                .height(Shrink),
+                line_text(format!(
+                    "Server address: {}",
+                    self.config.server_address()
+                ))
+                .height(30)
+                .vertical_alignment(Vertical::Bottom)
+                .padding([0, 0, 0, 10])
+                .width(Shrink),
+                container(add_input(
+                    "127.0.0.1",
+                    &self.gui.set_state.server_address_state,
+                    SetMessage::ServerAddressInput,
+                    |_| true,
+                    SetMessage::ServerAddressConfirm,
+                    icons::CHECK,
+                    EmptyBehaviour::Ignore,
+                ))
+                .padding([0, 0, 0, 25])
+                .width(200)
+                .height(Shrink),
+            ]
             .padding([0, 0, 0, 25])
-            .width(200)
-            .height(Shrink),*/
+            .height(Shrink),
+            space(Fill, 20),
         ]
         .padding([0, 0, 0, 20])
         .spacing_y(5)
