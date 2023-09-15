@@ -159,7 +159,6 @@ impl UampApp {
                     &mut self.gui.set_state.delete_logs_after_state,
                     String::new(),
                 );
-                s.split(':');
                 match str_to_duration(&s) {
                     Some(d) => {
                         return ComMsg::Msg(Msg::Config(
@@ -259,7 +258,11 @@ impl UampApp {
             .width(200)
             .height(Shrink)
             .padding([0, 0, 0, 25]),
-            title("Global hotkeys"),
+            toggle(
+                "Global hotkeys",
+                self.config.register_global_hotkeys(),
+                ConfMessage::RegisterGlobalHotkeys
+            ),
             delete_list(
                 self.config
                     .global_hotkeys()
@@ -398,17 +401,12 @@ where
 fn title<'a>(s: &'static str) -> wid::Container<'a> {
     container(
         line_text(s)
-            .font(Font {
-                weight: Weight::Semibold,
-                ..Default::default()
-            })
             .vertical_alignment(Vertical::Bottom)
-            .size(20)
             .width(Shrink)
             .height(Fill),
     )
     .width(Shrink)
-    .height(40)
+    .height(30)
     .padding([0, 10, 0, 10])
 }
 

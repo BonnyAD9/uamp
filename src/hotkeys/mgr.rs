@@ -143,6 +143,11 @@ impl HotkeyMgr {
 
         Ok(())
     }
+
+    pub fn disable(&mut self) {
+        self.inner = None;
+        self.mapping = None;
+    }
 }
 
 //===========================================================================//

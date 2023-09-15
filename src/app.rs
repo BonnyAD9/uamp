@@ -88,6 +88,32 @@ impl UampApp {
 
         self.last_save = Instant::now();
     }
+
+    pub fn register_global_hotkeys(&mut self) {
+        if let Err(e) = self.hotkey_mgr.init(
+            self.sender.clone(),
+            self.config.global_hotkeys().iter().filter_map(|(h, a)| {
+                let h = match h.parse::<Hotkey>() {
+                    Ok(h) => h,
+                    Err(e) => {
+                        error!("Failed to parse hotkey: {e}");
+                        return None;
+                    }
+                };
+                let a = match a.parse::<Action>() {
+                    Ok(a) => a,
+                    Err(e) => {
+                        error!("Failed to parse hotkey action: {e}");
+                        return None;
+                    }
+                };
+
+                Some((h, a))
+            }),
+        ) {
+            error!("Failed to initialize hotkeys: {e}");
+        }
+    }
 }
 
 impl Application for UampApp {
@@ -237,29 +263,7 @@ impl UampApp {
 
     fn init(&mut self) -> ComMsg {
         if self.config.register_global_hotkeys() {
-            if let Err(e) = self.hotkey_mgr.init(
-                self.sender.clone(),
-                self.config.global_hotkeys().iter().filter_map(|(h, a)| {
-                    let h = match h.parse::<Hotkey>() {
-                        Ok(h) => h,
-                        Err(e) => {
-                            error!("Failed to parse hotkey: {e}");
-                            return None;
-                        }
-                    };
-                    let a = match a.parse::<Action>() {
-                        Ok(a) => a,
-                        Err(e) => {
-                            error!("Failed to parse hotkey action: {e}");
-                            return None;
-                        }
-                    };
-
-                    Some((h, a))
-                }),
-            ) {
-                error!("Failed to initialize hotkeys: {e}");
-            }
+            self.register_global_hotkeys();
         }
 
         ComMsg::none()

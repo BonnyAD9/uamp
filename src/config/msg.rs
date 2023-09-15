@@ -111,8 +111,14 @@ impl UampApp {
                 self.config.update_library_on_start_set(b);
             }
             Message::RegisterGlobalHotkeys(b) => {
-                self.config.register_global_hotkeys_set(b);
-                todo!("unregister/register global hotkeys")
+                if !self.config.register_global_hotkeys_set(b) {
+                    return ComMsg::none();
+                }
+                if b {
+                    self.register_global_hotkeys();
+                } else {
+                    self.hotkey_mgr.disable();
+                }
             }
             Message::VolumeJump(f) => {
                 self.config.volume_jump_set(f);
@@ -140,7 +146,7 @@ impl UampApp {
                 todo!("Restart server")
             }
             Message::DeleteLogsAfter(d) => {
-                self.config.delete_logs_after_set(d.into())
+                self.config.delete_logs_after_set(d.into());
             }
             Message::EnableServer(b) => {
                 self.config.enable_server_set(b);

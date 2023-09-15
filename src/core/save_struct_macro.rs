@@ -116,10 +116,13 @@ macro_rules! gen_struct {
                 }
 
                 place_macro::place! {
-                    $dsfv fn __ident__($dfi _set)(&mut self, v: $dft) {
+                    $dsfv fn __ident__($dfi _set)(&mut self, v: $dft) -> bool {
                         if self.$dfi != v {
                             self.change.set(true);
                             self.$dfi = v;
+                            true
+                        } else {
+                            false
                         }
                     }
                 }

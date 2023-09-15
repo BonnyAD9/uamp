@@ -97,7 +97,7 @@ impl Player {
     /// Sets the playback volume. It is not set on error.
     pub fn set_volume(&mut self, volume: f32) {
         match self.inner.set_volume(volume) {
-            Ok(_) => self.volume_set(volume),
+            Ok(_) => _ = self.volume_set(volume),
             Err(e) => error!("Failed to set volume: {}", e),
         }
     }
@@ -107,7 +107,7 @@ impl Player {
         let vol = if mute { 0. } else { self.volume() };
 
         match self.inner.set_volume(vol) {
-            Ok(_) => self.mute_set(mute),
+            Ok(_) => _ = self.mute_set(mute),
             Err(e) => error!("Failed to mute: {}", e),
         }
     }
