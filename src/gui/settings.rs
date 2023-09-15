@@ -45,6 +45,7 @@ pub struct SetState {
     tick_length_state: String,
     port_state: String,
     server_address_state: String,
+    fade_play_pause_state: String,
 }
 
 #[derive(Clone, Debug)]
@@ -69,6 +70,8 @@ pub enum SetMessage {
     PortConfirm,
     ServerAddressInput(String),
     ServerAddressConfirm,
+    FadePlayPauseInput(String),
+    FadePlayPauseConfirm,
 }
 
 impl UampApp {
@@ -237,6 +240,25 @@ impl UampApp {
                     s,
                 )));
             }
+            SetMessage::FadePlayPauseInput(s) => {
+                self.gui.set_state.fade_play_pause_state = s
+            }
+            SetMessage::FadePlayPauseConfirm => {
+                let s = replace(
+                    &mut self.gui.set_state.fade_play_pause_state,
+                    String::new(),
+                );
+                match str_to_duration(&s) {
+                    Some(d) => {
+                        return ComMsg::Msg(Msg::Config(
+                            ConfMessage::FadePlayPause(d),
+                        ))
+                    }
+                    None => {
+                        error!("Failed to parse save timeout");
+                    }
+                }
+            }
         }
 
         ComMsg::none()
@@ -342,6 +364,31 @@ impl UampApp {
             .width(400)
             .height(Shrink)
             .padding([0, 0, 0, 25]),
+            line_text(format!(
+                "Fade play/pause: {}",
+                duration_to_string(self.config.fade_play_pause().0, false)
+            ))
+            .height(30)
+            .vertical_alignment(Vertical::Bottom)
+            .padding([0, 0, 0, 10])
+            .width(Shrink),
+            container(add_input(
+                "00:00.15",
+                &self.gui.set_state.fade_play_pause_state,
+                SetMessage::FadePlayPauseInput,
+                |s| str_to_duration(s).is_some(),
+                SetMessage::FadePlayPauseConfirm,
+                icons::CHECK,
+                EmptyBehaviour::Ignore,
+            ))
+            .padding([0, 0, 0, 25])
+            .width(200)
+            .height(Shrink),
+            toggle(
+                "Gapless playback",
+                self.config.gapless(),
+                ConfMessage::Gapless,
+            ),
             line_text(format!(
                 "Volume jump: {}",
                 self.config.volume_jump() * 100.

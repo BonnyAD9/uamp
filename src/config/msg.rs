@@ -8,7 +8,6 @@ use crate::{
     hotkeys::{Action, Hotkey},
 };
 
-#[allow(dead_code)] // Some variants are never constructed
 #[derive(Debug, Clone)]
 pub enum Message {
     AddSearchPath(PathBuf),
@@ -140,11 +139,11 @@ impl UampApp {
             }
             Message::FadePlayPause(d) => {
                 self.config.fade_play_pause_set(d.into());
-                todo!("Update fade in player")
+                self.player.fade_play_pause(d);
             }
             Message::Gapless(b) => {
                 self.config.gapless_set(b);
-                todo!("Update gapless in player")
+                self.player.load_config(&self.config);
             }
             Message::TickLength(d) => {
                 self.config.tick_length_set(d.into());
