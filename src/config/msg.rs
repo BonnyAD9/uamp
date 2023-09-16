@@ -101,13 +101,14 @@ impl UampApp {
             }
             Message::ServerAddress(s) => {
                 if self.config.server_address() != &s {
-                    match TcpListener::bind(format!(
+                    let adr = format!(
                         "{}:{}",
                         s,
                         self.config.port()
-                    )) {
+                    );
+                    match TcpListener::bind(&adr) {
                         Ok(l) => {
-                            self.stop_server();
+                            self.stop_server(Some(adr));
                             self.listener.set(Some(l));
                             *self.config.server_address_mut() = s;
                         }
@@ -153,13 +154,14 @@ impl UampApp {
             }
             Message::Port(u) => {
                 if self.config.port() != u {
-                    match TcpListener::bind(format!(
+                    let adr = format!(
                         "{}:{}",
                         self.config.server_address(),
                         u
-                    )) {
+                    );
+                    match TcpListener::bind(&adr) {
                         Ok(l) => {
-                            self.stop_server();
+                            self.stop_server(Some(adr));
                             self.listener.set(Some(l));
                             self.config.port_set(u);
                         }
@@ -185,7 +187,7 @@ impl UampApp {
                             Err(e) => error!("Failed to create server: {e}"),
                         }
                     } else {
-                        self.stop_server();
+                        self.stop_server(None);
                         self.config.enable_server_set(b);
                     }
                 }

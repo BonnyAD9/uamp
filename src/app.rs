@@ -116,18 +116,34 @@ impl UampApp {
         }
     }
 
-    pub fn stop_server(&self) {
+    pub fn stop_server(&self, wait: Option<String>) {
         let adr =
             format!("{}:{}", self.config.server_address(), self.config.port());
         thread::spawn(move || {
             let err = (|| -> Result<()> {
+                if let Some(adr) = wait {
+                    let s = TcpStream::connect(adr)?;
+                    if let Err(e) = s.set_nodelay(true) {
+                        warn!("Failed to set no delay when waiting to stop server: {e}");
+                    }
+                    s.set_write_timeout(Some(Duration::from_secs(5)))?;
+                    let mut msg = Messenger::try_new(&s)?;
+                    msg.send(MsgMessage::WaitExit(Duration::from_secs(5)))?;
+                    match msg.recieve()? {
+                        MsgMessage::Success => {},
+                        m => {
+                            warn!("Unexpected response when pinging new server before stopping the old one: {m:?}");
+                        }
+                    }
+                }
+
                 let s = TcpStream::connect(adr)?;
                 if let Err(e) = s.set_nodelay(true) {
                     warn!("Failed to set no delay when stopping server: {e}");
                 }
                 s.set_write_timeout(Some(Duration::from_secs(5)))?;
                 let mut msg = Messenger::try_new(&s)?;
-                msg.send(MsgMessage::WaitExit(Duration::from_secs(5)))?;
+                msg.send(MsgMessage::WaitExit(Duration::from_secs(0)))?;
                 Ok(())
             })();
 
@@ -332,6 +348,12 @@ impl UampApp {
                         Ok(MsgMessage::WaitExit(d)) => {
                             thread::sleep(d);
                             break (Msg::None, listener);
+                        },
+                        Ok(MsgMessage::Ping) => {
+                            if let Err(e) = msgr.send(MsgMessage::Success) {
+                                error!("Failed to respond to ping: {e}");
+                            }
+                            continue;
                         }
                         Ok(m) => m,
                         Err(e) => {

@@ -19,6 +19,7 @@ pub enum Message {
     Success,
     /// Wait for the given time and exit
     WaitExit(Duration),
+    Ping,
 }
 
 /// Describes error over the internet
