@@ -288,6 +288,8 @@ impl UampApp {
             &self.gui.wb_states[WB_SETTINGS],
             the_button("Search for new songs")
                 .on_press(Msg::Control(ControlMsg::LoadNewSongs)),
+            the_button("Save")
+                .on_press(Msg::Control(ControlMsg::Save)),
             toggle(
                 "Recursive search for new songs",
                 self.config.recursive_search(),

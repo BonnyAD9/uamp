@@ -1,3 +1,4 @@
 # Unreleased
-- Add some options to settings
+- Add all options to settings
 - Fancy volume icon
+- Add option to trigger save (GUI and CLI)

@@ -41,16 +41,16 @@ parse_arg! {ControlMsg as parse_control_message, auto_instance_help:
     "exit" | "close" | "x" => Close;
 
     ? "Seeks to the given timestamp. Timestamp is in format 'h:m:s'."
-    "seek-to" | "seek" =Duration
-        => SeekTo;
+    "seek-to" | "seek" =Duration  => SeekTo;
 
     ? "Seeks forward by the given amout in seconds. If the parameter is not
        present, seek by the default amount."
-    "fast-forward" | "ff" [=Duration]
-        => FastForward;
+    "fast-forward" | "ff" [=Duration] => FastForward;
 
     ? "Seeks backward by the given amout in seconds. If the parameter is not
        present, seek by the default amount."
-    "rewind" | "rw" [=Duration]
-        => Rewind;
+    "rewind" | "rw" [=Duration] => Rewind;
+
+    ? "Triggers save (saves only if there is change)"
+    "save" => Save;
 }

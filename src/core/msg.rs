@@ -80,6 +80,8 @@ pub enum ControlMsg {
     FastForward(Option<Duration>),
     /// Seeks backward
     Rewind(Option<Duration>),
+    /// Thriggers save
+    Save,
 }
 
 /// Message returned after proccessing message, either starts a iced command,
@@ -208,7 +210,8 @@ impl UampApp {
                     self.player.seek_to(pos);
                     return ComMsg::tick();
                 }
-            }
+            },
+            ControlMsg::Save => self.save_all(),
         };
 
         ComMsg::none()
@@ -243,7 +246,8 @@ pub fn get_control_string(m: &ControlMsg) -> String {
         ControlMsg::Rewind(None) => "rw".to_owned(),
         ControlMsg::Rewind(Some(d)) => {
             format!("rw={}", duration_to_string(*d, false))
-        }
+        },
+        ControlMsg::Save => "save".to_owned(),
     }
 }
 
