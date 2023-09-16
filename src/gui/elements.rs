@@ -50,7 +50,7 @@ impl UampApp {
         &self,
         name: &'static str,
         click: Message,
-        is_selected: bool
+        is_selected: bool,
     ) -> Element {
         border(
             button(

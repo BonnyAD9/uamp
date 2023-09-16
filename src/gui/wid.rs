@@ -54,6 +54,8 @@ pub type GridItem<'a> = widgets::grid::GridItem<'a, Msg, Renderer>;
 /// Toggler
 pub type Switch<'a> = widgets::switch::Switch<'a, Msg, Renderer>;
 pub type TextInput<'a> = widget::TextInput<'a, Msg, Renderer>;
+pub type MouseInteraction<'a> =
+    widgets::mouse_interaction::MouseInteraction<'a, Msg, Renderer>;
 
 pub type WrapBoxState = Cell<widgets::wrap_box::State>;
 
@@ -317,4 +319,11 @@ where
 
 pub fn text_input<'a>(placeholder: &'a str, value: &'a str) -> TextInput<'a> {
     TextInput::new(placeholder, value)
+}
+
+pub fn mouse_int<'a, E>(child: E) -> MouseInteraction<'a>
+where
+    E: Into<Element<'a>>,
+{
+    MouseInteraction::new(child.into())
 }

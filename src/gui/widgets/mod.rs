@@ -9,6 +9,7 @@ pub mod cursor_grad;
 pub mod grid;
 pub mod icons;
 pub mod line_text;
+pub mod mouse_interaction;
 pub mod sides;
 pub mod svg_button;
 pub mod switch;

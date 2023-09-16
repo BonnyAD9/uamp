@@ -3,11 +3,10 @@ use iced_core::{
     mouse::Cursor,
     renderer::{Quad, Style},
     widget::Tree,
-    Background, Color, Element, Layout, Length, Rectangle, Vector,
-    Widget,
+    Background, Color, Element, Layout, Length, Rectangle, Vector, Widget,
 };
 
-use super::{sides::Sides, limit_size};
+use super::{limit_size, sides::Sides};
 
 pub struct Border<'a, Message, Renderer>
 where

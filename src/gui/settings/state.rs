@@ -10,10 +10,14 @@ use crate::{
         extensions::str_to_duration,
         msg::{ComMsg, Msg},
     },
+    gui::ids::WB_SETTINGS_HELP,
 };
+
+use super::help::SetHelp;
 
 #[derive(Default)]
 pub struct SetState {
+    pub(super) help: Option<&'static SetHelp>,
     pub(super) category: Category,
     pub(super) extension_state: String,
     pub(super) search_path_state: String,
@@ -41,6 +45,7 @@ pub enum Category {
 #[derive(Clone, Debug)]
 pub enum SetMessage {
     SetCategory(Category),
+    ShowHelp(&'static SetHelp),
     ExtensionInput(String),
     ExtensionConfirm,
     SearchPathInput(String),
@@ -68,7 +73,18 @@ pub enum SetMessage {
 impl UampApp {
     pub(super) fn settings_event_inner(&mut self, msg: SetMessage) -> ComMsg {
         match msg {
-            SetMessage::SetCategory(c) => self.gui.set_state.category = c,
+            SetMessage::SetCategory(c) => {
+                self.gui.set_state.category = c;
+                self.gui.set_state.help = None;
+            }
+            SetMessage::ShowHelp(h) => {
+                if let Some(oh) = self.gui.set_state.help {
+                    if !std::ptr::eq(oh, h) {
+                        //self.gui.wb_states[WB_SETTINGS_HELP].get_mut()
+                    }
+                }
+                self.gui.set_state.help = Some(h);
+            }
             SetMessage::ExtensionInput(s) => {
                 self.gui.set_state.extension_state = s
             }

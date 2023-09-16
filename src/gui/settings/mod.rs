@@ -1,34 +1,50 @@
-use crate::{app::UampApp, core::msg::ComMsg, col, row};
+use crate::{app::UampApp, col, core::msg::ComMsg, row, wrap_box};
 
-mod state;
+pub mod elements;
+mod help;
+mod hotkeys;
 mod library;
 mod other;
 mod playback;
 mod server;
-mod hotkeys;
-pub mod elements;
+mod state;
 
-use iced_core::{alignment::Vertical, Font, font::Weight, Length::Shrink};
+use iced_core::{alignment::Vertical, font::Weight, Font, Length::Shrink};
 pub use state::{SetMessage, SetState};
 
 use self::state::Category;
 
-use super::{wid::{Element, container, line_text, nothing}, theme::Container, GuiMessage};
+use super::{
+    ids::WB_SETTINGS_HELP,
+    theme::Container,
+    wid::{container, line_text, nothing, Element},
+    GuiMessage,
+};
 
 impl UampApp {
     pub(super) fn settings_event(&mut self, msg: SetMessage) -> ComMsg {
         self.settings_event_inner(msg)
     }
 
-
     pub(super) fn settings_page(&self) -> Element {
-        let content = match self.gui.set_state.category {
+        let mut content = match self.gui.set_state.category {
             Category::Library => self.library(),
             Category::Playback => self.playback(),
             Category::Hotkeys => self.hotkeys(),
             Category::Server => self.server(),
             Category::Other => self.other(),
         };
+
+        if let Some(h) = self.gui.set_state.help {
+            content = row![
+                content,
+                wrap_box![
+                    &self.gui.wb_states[WB_SETTINGS_HELP],
+                    h.get_element()
+                ]
+            ]
+            .into()
+        }
 
         col![
             container(row![
@@ -40,11 +56,7 @@ impl UampApp {
                         weight: Weight::Semibold,
                         ..Default::default()
                     }),
-                col![
-                    nothing(),
-                    self.categories(),
-                ]
-                .padding([0, 0, 10, 10])
+                col![nothing(), self.categories(),].padding([0, 0, 10, 10])
             ])
             .padding([5, 20, 5, 20])
             .height(80)
@@ -73,7 +85,7 @@ impl UampApp {
         self.top_menu_item(
             s,
             GuiMessage::Setings(SetMessage::SetCategory(category)),
-            self.gui.set_state.category == category
+            self.gui.set_state.category == category,
         )
     }
 }

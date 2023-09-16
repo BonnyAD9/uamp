@@ -1,22 +1,33 @@
-use iced_core::Length::{Shrink, Fill};
+use iced_core::Length::{Fill, Shrink};
 use itertools::Itertools;
 
-use crate::{app::UampApp, gui::{wid::{Element, space, container}, ids::WB_SETTINGS_HOTKEYS, widgets::icons}, wrap_box, config::ConfMessage, hotkeys::{Hotkey, Action}};
+use crate::{
+    app::UampApp,
+    config::ConfMessage,
+    gui::{
+        ids::WB_SETTINGS_HOTKEYS,
+        wid::{container, space, Element},
+        widgets::icons,
+    },
+    hotkeys::{Action, Hotkey},
+    wrap_box,
+};
 
-use super::{elements::{toggle, delete_list, add_input, EmptyBehaviour}, SetMessage};
+use super::{
+    elements::{add_input, delete_list, toggle, EmptyBehaviour},
+    SetMessage,
+};
 
 impl UampApp {
     pub(super) fn hotkeys(&self) -> Element {
         wrap_box![
             &self.gui.wb_states[WB_SETTINGS_HOTKEYS],
-
             //=========================================<< Global hotkeys toggle
             toggle(
                 "Global hotkeys",
                 self.config.register_global_hotkeys(),
                 ConfMessage::RegisterGlobalHotkeys
             ),
-
             //=====================================<< Global hotkeys list + add
             delete_list(
                 self.config
@@ -42,7 +53,6 @@ impl UampApp {
             .width(400)
             .height(Shrink)
             .padding([0, 0, 0, 25]),
-
             space(Fill, 20),
         ]
         .padding([0, 0, 0, 20])

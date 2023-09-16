@@ -71,7 +71,7 @@ gen_struct! {
 
         update_library_on_start: bool { pub, pub } => () true,
 
-        register_global_hotkeys: bool { pub, pub } => () true,
+        register_global_hotkeys: bool { pub, pub } => () false,
 
         volume_jump: f32 { pub, pub } => () 0.025,
 

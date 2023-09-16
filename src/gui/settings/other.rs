@@ -1,19 +1,34 @@
-use iced_core::{Length::{Shrink, Fill}, alignment::Vertical};
+use iced_core::{
+    alignment::Vertical,
+    Length::{Fill, Shrink},
+};
 
-use crate::{app::UampApp, gui::{wid::{Element, space, line_text, container}, ids::WB_SETTINGS_OTHER, elements::the_button, widgets::icons}, wrap_box, core::{msg::{Msg, ControlMsg}, extensions::{duration_to_string, str_to_duration}}};
+use crate::{
+    app::UampApp,
+    core::{
+        extensions::{duration_to_string, str_to_duration},
+        msg::{ControlMsg, Msg},
+    },
+    gui::{
+        elements::the_button,
+        ids::WB_SETTINGS_OTHER,
+        wid::{container, line_text, space, Element},
+        widgets::icons,
+    },
+    wrap_box,
+};
 
-use super::{elements::{add_input, EmptyBehaviour}, SetMessage};
-
+use super::{
+    elements::{add_input, EmptyBehaviour},
+    SetMessage,
+};
 
 impl UampApp {
     pub(super) fn other(&self) -> Element {
         wrap_box![
             &self.gui.wb_states[WB_SETTINGS_OTHER],
-
             //===================================================<< Save button
-            the_button("Save")
-                .on_press(Msg::Control(ControlMsg::Save)),
-
+            the_button("Save").on_press(Msg::Control(ControlMsg::Save)),
             //============================================<< Save timeout input
             line_text(format!(
                 "Save timeout: {}",
@@ -38,7 +53,6 @@ impl UampApp {
             .padding([0, 0, 0, 25])
             .width(200)
             .height(Shrink),
-
             //=======================================<< Delete logs after input
             line_text(format!(
                 "Delete logs after: {}",
@@ -60,7 +74,6 @@ impl UampApp {
             .padding([0, 0, 0, 25])
             .width(200)
             .height(Shrink),
-
             //=============================================<< Tick length input
             line_text(format!(
                 "Tick length: {}",
@@ -82,7 +95,6 @@ impl UampApp {
             .padding([0, 0, 0, 25])
             .width(200)
             .height(Shrink),
-
             space(Fill, 20),
         ]
         .padding([0, 0, 0, 20])

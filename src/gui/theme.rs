@@ -754,7 +754,9 @@ impl border::StyleSheet for Theme {
 
     fn border_border_radius(&self, style: &Self::Style) -> Sides<Sides<f32>> {
         match style {
-            Border::LeftRound(_) | Border::BotRound(_) => Sides::from(2.).into(),
+            Border::LeftRound(_) | Border::BotRound(_) => {
+                Sides::from(2.).into()
+            }
             _ => Sides::from(0.).into(),
         }
     }

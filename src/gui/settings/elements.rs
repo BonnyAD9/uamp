@@ -1,12 +1,33 @@
 use std::borrow::Cow;
 
-use iced_core::{alignment::Vertical, Length::{Shrink, Fill}, svg};
+use iced_core::{
+    alignment::Vertical,
+    svg,
+    Length::{Fill, Shrink},
+};
 
-use crate::{gui::{wid::{self, cursor_grad, switch, line_text, container, column, svg_button, text_input}, theme::{Text, SvgButton, TextInput}, widgets::icons, GuiMessage}, config::ConfMessage, core::msg::Msg, row};
+use crate::{
+    config::ConfMessage,
+    core::msg::Msg,
+    gui::{
+        theme::{SvgButton, Text, TextInput},
+        wid::{
+            self, column, container, cursor_grad, line_text, svg_button,
+            switch, text_input,
+        },
+        widgets::icons,
+        GuiMessage,
+    },
+    row,
+};
 
 use super::SetMessage;
 
-pub fn toggle<'a, M>(s: &'static str, value: bool, msg: M) -> wid::CursorGrad<'a>
+pub fn toggle<'a, M>(
+    s: &'static str,
+    value: bool,
+    msg: M,
+) -> wid::CursorGrad<'a>
 where
     M: Fn(bool) -> ConfMessage + 'static,
 {

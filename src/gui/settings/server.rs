@@ -1,10 +1,24 @@
-use iced_core::{alignment::Vertical, Length::{Shrink, Fill}};
+use iced_core::{
+    alignment::Vertical,
+    Length::{Fill, Shrink},
+};
 
-use crate::{app::UampApp, gui::{wid::{Element, line_text, container, space}, ids::WB_SETTINGS_SERVER, widgets::icons}, wrap_box, config::ConfMessage, col};
+use crate::{
+    app::UampApp,
+    col,
+    config::ConfMessage,
+    gui::{
+        ids::WB_SETTINGS_SERVER,
+        wid::{container, line_text, space, Element},
+        widgets::icons,
+    },
+    wrap_box,
+};
 
-use super::{elements::{toggle, add_input, EmptyBehaviour}, SetMessage};
-
-
+use super::{
+    elements::{add_input, toggle, EmptyBehaviour},
+    SetMessage,
+};
 
 impl UampApp {
     pub(super) fn server(&self) -> Element {
@@ -16,7 +30,6 @@ impl UampApp {
                 self.config.enable_server(),
                 ConfMessage::EnableServer,
             ),
-
             col![
                 //=========================================<< Server port input
                 line_text(format!("Server port: {}", self.config.port()))
@@ -36,7 +49,6 @@ impl UampApp {
                 .padding([0, 0, 0, 25])
                 .width(200)
                 .height(Shrink),
-
                 //======================================<< Server address input
                 line_text(format!(
                     "Server address: {}",
@@ -61,7 +73,6 @@ impl UampApp {
             ]
             .padding([0, 0, 0, 25])
             .height(Shrink),
-
             space(Fill, 20),
         ]
         .padding([0, 0, 0, 20])
