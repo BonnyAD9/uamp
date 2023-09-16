@@ -101,11 +101,7 @@ impl UampApp {
             }
             Message::ServerAddress(s) => {
                 if self.config.server_address() != &s {
-                    let adr = format!(
-                        "{}:{}",
-                        s,
-                        self.config.port()
-                    );
+                    let adr = format!("{}:{}", s, self.config.port());
                     match TcpListener::bind(&adr) {
                         Ok(l) => {
                             self.stop_server(Some(adr));
@@ -154,11 +150,8 @@ impl UampApp {
             }
             Message::Port(u) => {
                 if self.config.port() != u {
-                    let adr = format!(
-                        "{}:{}",
-                        self.config.server_address(),
-                        u
-                    );
+                    let adr =
+                        format!("{}:{}", self.config.server_address(), u);
                     match TcpListener::bind(&adr) {
                         Ok(l) => {
                             self.stop_server(Some(adr));

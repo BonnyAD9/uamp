@@ -130,7 +130,7 @@ impl UampApp {
                     let mut msg = Messenger::try_new(&s)?;
                     msg.send(MsgMessage::WaitExit(Duration::from_secs(5)))?;
                     match msg.recieve()? {
-                        MsgMessage::Success => {},
+                        MsgMessage::Success => {}
                         m => {
                             warn!("Unexpected response when pinging new server before stopping the old one: {m:?}");
                         }
@@ -348,7 +348,7 @@ impl UampApp {
                         Ok(MsgMessage::WaitExit(d)) => {
                             thread::sleep(d);
                             break (Msg::None, listener);
-                        },
+                        }
                         Ok(MsgMessage::Ping) => {
                             if let Err(e) = msgr.send(MsgMessage::Success) {
                                 error!("Failed to respond to ping: {e}");
@@ -358,9 +358,15 @@ impl UampApp {
                         Ok(m) => m,
                         Err(e) => {
                             warn!("Failed to recieve message: {e}");
-                            if let Err(e) = msgr.send(messenger::msg::Message::Error(
+                            if let Err(e) = msgr.send(messenger
+                                        ::msg
+                                        ::Message
+                                        ::Error(
                                     messenger::msg::Error::new(
-                                    messenger::msg::ErrorType::DeserializeFailed,
+                                    messenger
+                                        ::msg
+                                        ::ErrorType
+                                        ::DeserializeFailed,
                                     e.to_string(),
                                 )
                                 )) {
