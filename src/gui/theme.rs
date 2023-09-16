@@ -708,6 +708,7 @@ pub enum Border {
     SongItem,
     Bot,
     LeftRound(bool),
+    BotRound(bool),
 }
 
 impl border::StyleSheet for Theme {
@@ -722,20 +723,19 @@ impl border::StyleSheet for Theme {
 
     fn border_thickness(&self, style: &Self::Style) -> Sides<f32> {
         match style {
-            Border::None => 0.into(),
             Border::Bot => [0, 0, 2, 0].into(),
             Border::LeftRound(true) => [0, 0, 0, 4].into(),
-            Border::LeftRound(false) => 0.into(),
+            Border::BotRound(true) => [0, 0, 4, 0].into(),
             Border::SongItem => [1, 0, 0, 0].into(),
+            _ => 0.into(),
         }
     }
 
     fn border_radius(&self, style: &Self::Style) -> Sides<f32> {
         match style {
-            Border::None => 0.into(),
             Border::Bot => 15.into(),
-            Border::LeftRound(_) => 0.into(),
             Border::SongItem => 6.into(),
+            _ => 0.into(),
         }
     }
 
@@ -743,8 +743,8 @@ impl border::StyleSheet for Theme {
         match style {
             Border::None => OUTLINE_BG.into(),
             Border::Bot => DARK_OUTLINE_BG.into(),
-            Border::LeftRound(_) => CONTRAST_BG.into(),
             Border::SongItem => GRAY_OUTLINE_BG.into(),
+            Border::LeftRound(_) | Border::BotRound(_) => CONTRAST_BG.into(),
         }
     }
 
@@ -754,7 +754,7 @@ impl border::StyleSheet for Theme {
 
     fn border_border_radius(&self, style: &Self::Style) -> Sides<Sides<f32>> {
         match style {
-            Border::LeftRound(_) => Sides::from(2.).into(),
+            Border::LeftRound(_) | Border::BotRound(_) => Sides::from(2.).into(),
             _ => Sides::from(0.).into(),
         }
     }

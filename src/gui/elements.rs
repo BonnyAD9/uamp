@@ -46,6 +46,34 @@ impl UampApp {
         .into()
     }
 
+    pub(super) fn top_menu_item(
+        &self,
+        name: &'static str,
+        click: Message,
+        is_selected: bool
+    ) -> Element {
+        border(
+            button(
+                cursor_grad(
+                    line_text(name)
+                        .vertical_alignment(Vertical::Center)
+                        .style(Text::NoForeground)
+                        .width(Shrink),
+                )
+                .width(Shrink)
+                .padding([0, 5, 0, 5]),
+            )
+            .on_press(Msg::Gui(click))
+            .width(Shrink)
+            .padding(0),
+        )
+        .width(Shrink)
+        .height(35)
+        .padding([0, 0, 5, 0])
+        .style(Border::BotRound(is_selected))
+        .into()
+    }
+
     /// Creates a song list
     pub(super) fn song_list<'a>(
         &'a self,

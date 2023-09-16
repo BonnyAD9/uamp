@@ -6,4 +6,13 @@ macro_rules! make_ids {
 }
 
 // Wrapbox state ids
-make_ids![WB_SONGS, WB_PLAYLIST, WB_SETTINGS, WB_STATE_COUNT];
+make_ids![
+    WB_SONGS,
+    WB_PLAYLIST,
+    WB_SETTINGS_LIBRARY,
+    WB_SETTINGS_PLAYBACK,
+    WB_SETTINGS_SERVER,
+    WB_SETTINGS_HOTKEYS,
+    WB_SETTINGS_OTHER,
+    WB_STATE_COUNT
+];
