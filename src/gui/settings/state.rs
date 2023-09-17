@@ -10,7 +10,6 @@ use crate::{
         extensions::str_to_duration,
         msg::{ComMsg, Msg},
     },
-    gui::ids::WB_SETTINGS_HELP,
 };
 
 use super::help::SetHelp;

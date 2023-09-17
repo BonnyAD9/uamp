@@ -168,9 +168,10 @@ Keys are combination of any \
 number of modifier keys (e.g. ctrl, alt, shift,...) and single Code (e.g. \
 c, home, up, numpad5...).
 
-Action is the same as instance action in CLI. There can be any number of the \
-actions for single hotkey, separated by whitespace. If there are multiple \
-actions they are executed in the same order as they are written.
+Action is the same as instance action in CLI. Try 'uamp h i' to see all the \
+actions. There can be any number of the actions for single hotkey, separated \
+by whitespace. If there are multiple actions they are executed in the same \
+order as they are written.
 
 If you have multiple same Keys, the actions are combined, but there is no \
 way to know the order of the actions so it is not recommended to do that."

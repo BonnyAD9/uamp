@@ -6,18 +6,18 @@ use iced_core::{
 use crate::{
     app::UampApp,
     config::ConfMessage,
-    core::extensions::{duration_to_string, str_to_duration},
+    core::{extensions::{duration_to_string, str_to_duration}, msg::Msg},
     gui::{
         ids::WB_SETTINGS_PLAYBACK,
-        wid::{container, line_text, space, Element},
-        widgets::icons,
+        wid::{container, line_text, space, Element, mouse_int},
+        widgets::icons, GuiMessage,
     },
-    wrap_box,
+    wrap_box, col,
 };
 
 use super::{
     elements::{add_input, toggle, EmptyBehaviour},
-    SetMessage,
+    SetMessage, help,
 };
 
 impl UampApp {
@@ -25,77 +25,110 @@ impl UampApp {
         wrap_box![
             &self.gui.wb_states[WB_SETTINGS_PLAYBACK],
             //=======================================<< Gapless playback toggle
-            toggle(
-                "Gapless playback",
-                self.config.gapless(),
-                ConfMessage::Gapless,
-            ),
+            mouse_int(
+                toggle(
+                    "Gapless playback",
+                    self.config.gapless(),
+                    ConfMessage::Gapless,
+                ),
+            )
+            .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
+                SetMessage::ShowHelp(&help::GAPLESS_PLAYBACK)
+            ))),
             //================================<< Fade play/pause duration input
-            line_text(format!(
-                "Fade play/pause: {}",
-                duration_to_string(self.config.fade_play_pause().0, false)
-            ))
-            .height(30)
-            .vertical_alignment(Vertical::Bottom)
-            .padding([0, 0, 0, 10])
-            .width(Shrink),
-            container(add_input(
-                "00:00.15",
-                &self.gui.set_state.fade_play_pause_state,
-                SetMessage::FadePlayPauseInput,
-                |s| str_to_duration(s).is_some(),
-                SetMessage::FadePlayPauseConfirm,
-                icons::CHECK,
-                EmptyBehaviour::Ignore,
-            ))
-            .padding([0, 0, 0, 25])
-            .width(200)
-            .height(Shrink),
+            mouse_int(
+                col![
+                    line_text(format!(
+                        "Fade play/pause: {}",
+                        duration_to_string(self.config.fade_play_pause().0, false)
+                    ))
+                    .height(30)
+                    .vertical_alignment(Vertical::Bottom)
+                    .padding([0, 0, 0, 10])
+                    .width(Shrink),
+                    container(add_input(
+                        "00:00.15",
+                        &self.gui.set_state.fade_play_pause_state,
+                        SetMessage::FadePlayPauseInput,
+                        |s| str_to_duration(s).is_some(),
+                        SetMessage::FadePlayPauseConfirm,
+                        icons::CHECK,
+                        EmptyBehaviour::Ignore,
+                    ))
+                    .padding([0, 0, 0, 25])
+                    .width(200)
+                    .height(Shrink),
+                ]
+                .spacing(5)
+                .height(Shrink)
+            )
+            .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
+                SetMessage::ShowHelp(&help::FADE_PLAY_PAUSE)
+            ))),
             //=============================================<< Volume jump input
-            line_text(format!(
-                "Volume jump: {}",
-                self.config.volume_jump() * 100.
-            ))
-            .height(30)
-            .vertical_alignment(Vertical::Bottom)
-            .padding([0, 0, 0, 10])
-            .width(Shrink),
-            container(add_input(
-                "2.5",
-                &self.gui.set_state.volume_jump_state,
-                SetMessage::VolumeJumpInput,
-                |s| s
-                    .parse::<f32>()
-                    .map(|v| (0.0..=1.).contains(&v))
-                    .unwrap_or(false),
-                SetMessage::VolumeJumpConfirm,
-                icons::CHECK,
-                EmptyBehaviour::Ignore,
-            ))
-            .padding([0, 0, 0, 25])
-            .width(200)
-            .height(Shrink),
+            mouse_int(
+                col![
+                    line_text(format!(
+                        "Volume jump: {}",
+                        self.config.volume_jump() * 100.
+                    ))
+                    .height(30)
+                    .vertical_alignment(Vertical::Bottom)
+                    .padding([0, 0, 0, 10])
+                    .width(Shrink),
+                    container(add_input(
+                        "2.5",
+                        &self.gui.set_state.volume_jump_state,
+                        SetMessage::VolumeJumpInput,
+                        |s| s
+                            .parse::<f32>()
+                            .map(|v| (0.0..=1.).contains(&v))
+                            .unwrap_or(false),
+                        SetMessage::VolumeJumpConfirm,
+                        icons::CHECK,
+                        EmptyBehaviour::Ignore,
+                    ))
+                    .padding([0, 0, 0, 25])
+                    .width(200)
+                    .height(Shrink),
+                ]
+                .spacing(5)
+                .height(Shrink)
+            )
+            .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
+                SetMessage::ShowHelp(&help::VOLUME_JUMP)
+            ))),
             //===============================================<< Seek jump input
-            line_text(format!(
-                "Seek jump: {}",
-                duration_to_string(self.config.seek_jump().0, false)
-            ))
-            .height(30)
-            .vertical_alignment(Vertical::Bottom)
-            .padding([0, 0, 0, 10])
-            .width(Shrink),
-            container(add_input(
-                "00:10",
-                &self.gui.set_state.seek_jump_state,
-                SetMessage::SeekJumpInput,
-                |s| str_to_duration(s).is_some(),
-                SetMessage::SeekJumpConfirm,
-                icons::CHECK,
-                EmptyBehaviour::Ignore,
-            ))
-            .padding([0, 0, 0, 25])
-            .width(200)
-            .height(Shrink),
+            mouse_int(
+                col![
+                    line_text(format!(
+                        "Seek jump: {}",
+                        duration_to_string(self.config.seek_jump().0, false)
+                    ))
+                    .height(30)
+                    .vertical_alignment(Vertical::Bottom)
+                    .padding([0, 0, 0, 10])
+                    .width(Shrink),
+                    container(add_input(
+                        "00:10",
+                        &self.gui.set_state.seek_jump_state,
+                        SetMessage::SeekJumpInput,
+                        |s| str_to_duration(s).is_some(),
+                        SetMessage::SeekJumpConfirm,
+                        icons::CHECK,
+                        EmptyBehaviour::Ignore,
+                    ))
+                    .padding([0, 0, 0, 25])
+                    .width(200)
+                    .height(Shrink),
+                ]
+                .spacing(5)
+                .height(Shrink)
+            )
+            .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
+                SetMessage::ShowHelp(&help::SEEK_JUMP)
+            ))),
+
             space(Fill, 20),
         ]
         .padding([0, 0, 0, 20])
