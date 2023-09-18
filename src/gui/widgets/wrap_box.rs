@@ -464,6 +464,7 @@ where
             && !layout.bounds().contains(cursor_position)
             && matches!(state.pressed, ScrollbarInteraction::None)
         {
+            self.state.set(state);
             return event::Status::Ignored;
         }
 
