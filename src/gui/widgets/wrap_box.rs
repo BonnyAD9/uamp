@@ -114,7 +114,7 @@ where
             min_thumb_size: DEFAULT_MIN_THUMB_SIZE,
             primary_direction: ItemDirection::LeftToRight,
             secondary_direction: ItemDirection::TopToBottom,
-            primary_scrollbar: Behaviour::Enabled,
+            primary_scrollbar: Behaviour::Hidden,
             secondary_scrollbar: Behaviour::Disabled,
             children: childern,
             state,
@@ -776,15 +776,28 @@ where
             })
         });
 
-        if self.primary_scrollbar == Behaviour::Enabled {
-            self.draw_scrollbar(
+        match self.primary_scrollbar {
+            Behaviour::Enabled => self.draw_scrollbar(
                 child,
                 layout.bounds(),
                 &state,
                 cursor,
                 renderer,
                 theme,
-            );
+            ),
+            Behaviour::Hidden => {
+                if child.bounds().height > view_bounds.height {
+                    self.draw_scrollbar(
+                        child,
+                        layout.bounds(),
+                        &state,
+                        cursor,
+                        renderer,
+                        theme,
+                    );
+                }
+            }
+            Behaviour::Disabled => {}
         }
     }
 
@@ -991,11 +1004,11 @@ where
             size.height - self.padding.top - self.padding.bottom,
         );
 
-        if self.primary_scrollbar == Behaviour::Enabled {
+        if self.primary_scrollbar != Behaviour::Disabled {
             size.width -= self.scrollbar_width;
         }
 
-        if self.secondary_scrollbar == Behaviour::Enabled {
+        if self.secondary_scrollbar != Behaviour::Disabled {
             size.height -= self.scrollbar_width;
         }
 
