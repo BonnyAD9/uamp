@@ -1,8 +1,8 @@
 # Roadmap
 
 ## v0.4.0
-- GUI for settings
 - Option to disable help
+- Option to reset setting to default value
 
 ## v0.5.0
 - Pictures
