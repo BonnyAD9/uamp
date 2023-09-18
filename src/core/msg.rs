@@ -135,7 +135,10 @@ impl UampApp {
                 }
                 return ComMsg::Command(window::close());
             }
-            ControlMsg::Shuffle => self.player.shuffle(),
+            ControlMsg::Shuffle => {
+                self.player.shuffle();
+                return ComMsg::tick();
+            },
             ControlMsg::SetVolume(v) => {
                 self.player.set_volume(v.clamp(0., 1.))
             }
