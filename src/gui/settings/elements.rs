@@ -85,14 +85,15 @@ where
                     ]
                     .width(Shrink),
                 )
-                .height(30)
                 .width(Shrink)
+                .height(30)
                 .padding([0, 10, 0, 4])
                 .into()
             })
             .collect(),
     )
     .padding([0, 0, 0, 25])
+    .width(Shrink)
     .height(Shrink)
     .spacing(5)
 }

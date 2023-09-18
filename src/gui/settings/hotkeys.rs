@@ -63,6 +63,7 @@ impl UampApp {
                     .padding([0, 0, 0, 25]),
                 ]
                 .spacing(5)
+                .width(Shrink)
                 .height(Shrink)
             )
             .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
