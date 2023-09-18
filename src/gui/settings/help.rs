@@ -54,7 +54,7 @@ pub const UPDATE_LIBRARY_ON_START: SetHelp = SetHelp {
     default_value: Some("true"),
     description: "When enabled, uamp will automatically start search for new \
 songs when it starts. It is the same search as if you pressed the 'Search for \
-new songs' button."
+new songs' button.",
 };
 
 pub const LIBRARY_SEARCH_PATHS: SetHelp = SetHelp {
@@ -64,7 +64,7 @@ pub const LIBRARY_SEARCH_PATHS: SetHelp = SetHelp {
     default_value: Some("Your music folder or CWD (Current Working Director)"),
     description: "This contains all the paths where uamp will search for new \
 songs. If the path doesn't exist, it will be just skipped. By removing a path \
-from here, no songs are removed from your library."
+from here, no songs are removed from your library.",
 };
 
 pub const SONG_EXTENSIONS: SetHelp = SetHelp {
@@ -76,7 +76,7 @@ pub const SONG_EXTENSIONS: SetHelp = SetHelp {
 will check only files with one of these extensions. If you add a extension of \
 a file format that is not supported, uamp will try to load that file and \
 fails. That is no problem, but it can slow the library load if there are a \
-lot of these files in the library search paths (such as images)."
+lot of these files in the library search paths (such as images).",
 };
 
 pub const GAPLESS_PLAYBACK: SetHelp = SetHelp {
@@ -88,7 +88,7 @@ pub const GAPLESS_PLAYBACK: SetHelp = SetHelp {
 If the gapless playback is enabled, uamp will skip that silence.
 
 This will also affect the displayed length of the track, but it will update \
-only when the track is played."
+only when the track is played.",
 };
 
 pub const FADE_PLAY_PAUSE: SetHelp = SetHelp {
@@ -102,7 +102,7 @@ change that by gradually silencing the song before it is paused, and \
 gradually increase the volume when the song is played.
 
 This setting sets the duration of the silencing/increasing of the volume. \
-If this behaviour is not what you want, set the value to 0."
+If this behaviour is not what you want, set the value to 0.",
 };
 
 pub const VOLUME_JUMP: SetHelp = SetHelp {
@@ -115,7 +115,7 @@ the volume it changes the volume by some amount. This option specifies that \
 amount.
 
 Note that here (in the GUI) the value is in range 0 to 100 (as 0% to 100%),
-but in json, the value is scaled to range from 0 to 1"
+but in json, the value is scaled to range from 0 to 1",
 };
 
 pub const SEEK_JUMP: SetHelp = SetHelp {
@@ -125,7 +125,7 @@ pub const SEEK_JUMP: SetHelp = SetHelp {
     default_value: Some("00:10"),
     description: "This value specifies how much the song should be rewinded/\
 fast forwarded when you click on the rewind/fast forward button or use \
-shortcut or the CLI."
+shortcut or the CLI.",
 };
 
 pub const ENABLE_GLOBAL_HOTKEYS: SetHelp = SetHelp {
@@ -147,21 +147,24 @@ Wayland the hotkeys may not work before you allow it in your system settings.
 As you can see, the hotkeys may not be very reliable. Because of that it is \
 recomended that you set hotkeys in your system settings using the uamp CLI \
 (there is no setting for that in Windows without third party apps as far as I \
-know)."
+know).",
 };
 
 pub const GLOBAL_HOTKEY: SetHelp = SetHelp {
     title: "Global hotkeys",
     json_field_name: Some("global_hotkeys"),
     value_type: Some("Keys: Vec<instance action>"),
-    default_value: Some("ctrl+alt+home: pp
+    default_value: Some(
+        "ctrl+alt+home: pp
 ctrl+alt+pg_down: ns
 ctrl+alt+pg_up: ps
 ctrl+alt+up: vu
 ctrl+alt+down: vd
 ctrl+alt+left: rw
-ctrl+alt+right: ff"),
-    description: "Here you can add/remove global hotkeys and choose what they \
+ctrl+alt+right: ff",
+    ),
+    description:
+        "Here you can add/remove global hotkeys and choose what they \
 do. Each hotkey consists of Keys and Actions.
 
 Keys are combination of any \
@@ -174,7 +177,7 @@ by whitespace. If there are multiple actions they are executed in the same \
 order as they are written.
 
 If you have multiple same Keys, the actions are combined, but there is no \
-way to know the order of the actions so it is not recommended to do that."
+way to know the order of the actions so it is not recommended to do that.",
 };
 
 pub const ENABLE_SERVER_FOR_CLI: SetHelp = SetHelp {
@@ -185,7 +188,7 @@ pub const ENABLE_SERVER_FOR_CLI: SetHelp = SetHelp {
     description: "Here you can disable the TCP server that uamp uses to \
 comunicate between instances (mostly in CLI).
 
-If you disable this, any of the instance options in CLI won't work."
+If you disable this, any of the instance options in CLI won't work.",
 };
 
 pub const SERVER_PORT: SetHelp = SetHelp {
@@ -195,7 +198,7 @@ pub const SERVER_PORT: SetHelp = SetHelp {
     default_value: Some("8267 (33284 in debug)"),
     description: "Uamp creates TCP server so it can comunicate between \
 instances. This is mainly used by the CLI. Here you can choose the port on \
-which the server listens."
+which the server listens.",
 };
 
 pub const SERVER_ADDRESS: SetHelp = SetHelp {
@@ -203,8 +206,9 @@ pub const SERVER_ADDRESS: SetHelp = SetHelp {
     json_field_name: Some("server_address"),
     value_type: Some("address"),
     default_value: Some("127.0.0.1"),
-    description: "This controls the address on which the TCP server that uamp \
-creates listens. The default value is equivalent to 'localhost'."
+    description:
+        "This controls the address on which the TCP server that uamp \
+creates listens. The default value is equivalent to 'localhost'.",
 };
 
 pub const SAVE_BUTTON: SetHelp = SetHelp {
@@ -212,10 +216,11 @@ pub const SAVE_BUTTON: SetHelp = SetHelp {
     json_field_name: None,
     value_type: None,
     default_value: None,
-    description: "By default, uamp saves its changes (such as settings or the \
+    description:
+        "By default, uamp saves its changes (such as settings or the \
 currently playing song and playlist) periodicaly, and every time you close \
 it. However you may want to trigger the save (for example you change port for \
-server and you want to use CLI). This button does that."
+server and you want to use CLI). This button does that.",
 };
 
 pub const SAVE_TIMEOUT: SetHelp = SetHelp {
@@ -223,7 +228,8 @@ pub const SAVE_TIMEOUT: SetHelp = SetHelp {
     json_field_name: Some("save_timeout"),
     value_type: Some("Option<Duration>"),
     default_value: Some("01:00"),
-    description: "When you change settings, volume or start a new playlist or \
+    description:
+        "When you change settings, volume or start a new playlist or \
 modify the library, the changes are applied immidietly, but not saved. All \
 the changes (if any) are always saved when you close uamp (with the 'x' \
 button). But sometimes uamp is closed by different means (you turn off your \
@@ -231,7 +237,7 @@ computer, or uamp crashes). This is why uamp perodicaly saves. This value \
 tells uamp how often it should save.
 
 If you don't want uamp to save periodically, you can confirm empty field (or \
-set tis to 'null' in json) and periodical saves will be disabled."
+set tis to 'null' in json) and periodical saves will be disabled.",
 };
 
 pub const DELETE_LOGS_AFTER: SetHelp = SetHelp {
@@ -244,10 +250,10 @@ ignored into a file so that it is easier to diagnoze any potential problems. \
 But there is no reason why would you need the history of all the logs that \
 uamp may create. This is why uamp automatically deletes old logs when you \
 close it. This setting sets how old the logs must be so that uamp deletes \
-them. It is 3 days by default."
+them. It is 3 days by default.",
 };
 
-pub const  TICK_LENGTH: SetHelp = SetHelp {
+pub const TICK_LENGTH: SetHelp = SetHelp {
     title: "Tick length",
     json_field_name: Some("tick_length"),
     value_type: Some("Duration"),
@@ -260,7 +266,7 @@ Setting this to large values (e.g. 00:10) or very small values (e.g. \
 00:00.001) is not recomended.
 
 Don't wory about the clock precision, it is made in a way that errors don't \
-accumulate."
+accumulate.",
 };
 
 pub const SHUFFLE_NOW_PLAYING: SetHelp = SetHelp {
@@ -270,7 +276,7 @@ pub const SHUFFLE_NOW_PLAYING: SetHelp = SetHelp {
     default_value: Some("true"),
     description: "When you click shuffle, the now playing is shuffled into \
 the playlist. If you disable this, the now playing song will be the first in \
-the playlist."
+the playlist.",
 };
 
 impl SetHelp {
@@ -318,7 +324,7 @@ impl SetHelp {
                         .padding([0, 0, 0, 20]),
                 ]
                 .height(Shrink)
-                .into()
+                .into(),
             );
         }
 
@@ -328,7 +334,7 @@ impl SetHelp {
             .width(Fill)
             .height(Shrink)
             .spacing(10)
-            .padding(20)
+            .padding([20, 0, 20, 0])
             .into()
     }
 }

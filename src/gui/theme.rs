@@ -37,6 +37,8 @@ const TRANSPARENT: Color = Color::TRANSPARENT;
 const TRANSPARENT_BG: Background = Background::Color(TRANSPARENT);
 const BG_BRIGHT: Color = const_color!(0x222222);
 const BG_BRIGHT_BG: Background = Background::Color(BG_BRIGHT);
+const BG_BRIGHTER: Color = const_color!(0x282828);
+const BG_BRIGHTER_BG: Background = Background::Color(BG_BRIGHTER);
 const BG_GRAY: Color = const_color!(0x1E1E1E);
 const BG_GRAY_BG: Background = Background::Color(BG_GRAY);
 const BG_DARK: Color = const_color!(0x181818);
@@ -187,6 +189,7 @@ pub enum Container {
     Gray,
     Dark,
     TopGrad,
+    Float,
 }
 
 impl container::StyleSheet for Theme {
@@ -198,9 +201,8 @@ impl container::StyleSheet for Theme {
         };
 
         match style {
-            Container::Default => default,
             Container::Gray => container::Appearance {
-                background: Some(Background::Color(BG_GRAY)),
+                background: Some(BG_GRAY_BG),
                 ..default
             },
             Container::TopGrad => container::Appearance {
@@ -219,9 +221,15 @@ impl container::StyleSheet for Theme {
                 ..default
             },
             Container::Dark => container::Appearance {
-                background: Some(Background::Color(BG_DARK)),
+                background: Some(BG_DARK_BG),
                 ..default
             },
+            Container::Float => container::Appearance {
+                background: Some(BG_BRIGHT_BG),
+                border_radius: 6.0.into(),
+                ..default
+            },
+            _ => default,
         }
     }
 }
@@ -583,19 +591,34 @@ impl text_input::StyleSheet for Theme {
     // fn disabled_color(&self, style: &Self::Style) -> Color;
 }
 
+#[derive(Default, Clone)]
+pub enum WrapBox {
+    #[default]
+    Dark,
+    Bright,
+}
+
 impl wrap_box::StyleSheet for Theme {
-    type Style = ();
+    type Style = WrapBox;
 
     fn background(
         &self,
-        _style: &Self::Style,
+        style: &Self::Style,
         _pos: wrap_box::MousePos,
     ) -> wrap_box::SquareStyle {
-        wrap_box::SquareStyle {
+        let base = wrap_box::SquareStyle {
             background: BG_DARK_BG,
             border: TRANSPARENT,
             border_thickness: 0.,
             border_radius: 0.0.into(),
+        };
+
+        match style {
+            WrapBox::Bright => wrap_box::SquareStyle {
+                background: TRANSPARENT_BG,
+                ..base
+            },
+            _ => base,
         }
     }
 
@@ -642,28 +665,34 @@ impl wrap_box::StyleSheet for Theme {
 
     fn thumb_style(
         &self,
-        _style: &Self::Style,
+        style: &Self::Style,
         pos: wrap_box::MousePos,
         pressed: bool,
         _relative_scroll: f32,
     ) -> wrap_box::SquareStyle {
-        let square = wrap_box::SquareStyle {
+        let mut square = wrap_box::SquareStyle {
             background: BG_BRIGHT_BG,
             border: TRANSPARENT,
             border_thickness: 0.,
             border_radius: RADIUS.into(),
         };
 
+        square = match style {
+            WrapBox::Bright => wrap_box::SquareStyle {
+                background: BG_BRIGHTER_BG,
+                ..square
+            },
+            _ => square,
+        };
+
         if pressed {
             wrap_box::SquareStyle {
                 background: SELECTED_BG,
-                border: BRIGHT_CONTRAST,
                 ..square
             }
         } else if pos == wrap_box::MousePos::DirectlyOver {
             wrap_box::SquareStyle {
                 background: PRESSED_BG,
-                border: CONTRAST,
                 ..square
             }
         } else {
@@ -679,7 +708,7 @@ impl wrap_box::StyleSheet for Theme {
         _relative_scroll: f32,
     ) -> wrap_box::SquareStyle {
         wrap_box::SquareStyle {
-            background: BG_DARK_BG,
+            background: TRANSPARENT_BG,
             border: PRESSED,
             border_thickness: 0.0,
             border_radius: if is_start {

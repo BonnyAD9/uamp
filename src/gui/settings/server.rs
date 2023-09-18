@@ -7,17 +7,19 @@ use crate::{
     app::UampApp,
     col,
     config::ConfMessage,
+    core::msg::Msg,
     gui::{
         ids::WB_SETTINGS_SERVER,
-        wid::{container, line_text, space, Element, mouse_int},
-        widgets::icons, GuiMessage,
+        wid::{container, line_text, mouse_int, space, Element},
+        widgets::icons,
+        GuiMessage,
     },
-    wrap_box, core::msg::Msg,
+    wrap_box,
 };
 
 use super::{
     elements::{add_input, toggle, EmptyBehaviour},
-    SetMessage, help,
+    help, SetMessage,
 };
 
 impl UampApp {
@@ -25,13 +27,11 @@ impl UampApp {
         wrap_box![
             &self.gui.wb_states[WB_SETTINGS_SERVER],
             //==================================<< Enable server for CLI toggle
-            mouse_int(
-                toggle(
-                    "Enable server for CLI",
-                    self.config.enable_server(),
-                    ConfMessage::EnableServer,
-                ),
-            )
+            mouse_int(toggle(
+                "Enable server for CLI",
+                self.config.enable_server(),
+                ConfMessage::EnableServer,
+            ),)
             .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
                 SetMessage::ShowHelp(&help::ENABLE_SERVER_FOR_CLI)
             ))),
@@ -39,11 +39,14 @@ impl UampApp {
                 //=========================================<< Server port input
                 mouse_int(
                     col![
-                        line_text(format!("Server port: {}", self.config.port()))
-                            .height(30)
-                            .vertical_alignment(Vertical::Bottom)
-                            .padding([0, 0, 0, 10])
-                            .width(Shrink),
+                        line_text(format!(
+                            "Server port: {}",
+                            self.config.port()
+                        ))
+                        .height(30)
+                        .vertical_alignment(Vertical::Bottom)
+                        .padding([0, 0, 0, 10])
+                        .width(Shrink),
                         container(add_input(
                             "8267 / 33284",
                             &self.gui.set_state.port_state,
@@ -60,9 +63,11 @@ impl UampApp {
                     .spacing(5)
                     .height(Shrink)
                 )
-                .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
-                    SetMessage::ShowHelp(&help::SERVER_PORT)
-                ))),
+                .on_mouse_enter(Msg::Gui(
+                    GuiMessage::Setings(SetMessage::ShowHelp(
+                        &help::SERVER_PORT
+                    ))
+                )),
                 //======================================<< Server address input
                 mouse_int(
                     col![
@@ -90,9 +95,11 @@ impl UampApp {
                     .spacing(5)
                     .height(Shrink)
                 )
-                .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
-                    SetMessage::ShowHelp(&help::SERVER_ADDRESS)
-                ))),
+                .on_mouse_enter(Msg::Gui(
+                    GuiMessage::Setings(SetMessage::ShowHelp(
+                        &help::SERVER_ADDRESS
+                    ))
+                )),
             ]
             .padding([0, 0, 0, 25])
             .height(Shrink),

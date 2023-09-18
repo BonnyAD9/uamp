@@ -2,6 +2,7 @@ use iced_core::Length::{Fill, Shrink};
 
 use crate::{
     app::UampApp,
+    col,
     config::ConfMessage,
     core::msg::{ControlMsg, Msg},
     gui::{
@@ -11,13 +12,12 @@ use crate::{
         widgets::icons,
         GuiMessage,
     },
-    wrap_box, col,
+    wrap_box,
 };
 
 use super::{
     elements::{add_input, delete_list, title, toggle, EmptyBehaviour},
-    help,
-    SetMessage,
+    help, SetMessage,
 };
 
 impl UampApp {
@@ -33,24 +33,20 @@ impl UampApp {
                 SetMessage::ShowHelp(&help::SEARCH_FOR_NEW_SONGS)
             ))),
             //=========================<< Recursive search for new songs toggle
-            mouse_int(
-                toggle(
-                    "Recursive search for new songs",
-                    self.config.recursive_search(),
-                    ConfMessage::RecursiveSearch
-                )
-            )
+            mouse_int(toggle(
+                "Recursive search for new songs",
+                self.config.recursive_search(),
+                ConfMessage::RecursiveSearch
+            ))
             .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
                 SetMessage::ShowHelp(&help::RECURSIVE_SEARCH_FOR_NEW_SONGS)
             ))),
             //================================<< Update library on start toggle
-            mouse_int(
-                toggle(
-                    "Update library on start",
-                    self.config.update_library_on_start(),
-                    ConfMessage::UpdateLibraryOnStart,
-                )
-            )
+            mouse_int(toggle(
+                "Update library on start",
+                self.config.update_library_on_start(),
+                ConfMessage::UpdateLibraryOnStart,
+            ))
             .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
                 SetMessage::ShowHelp(&help::UPDATE_LIBRARY_ON_START)
             ))),
@@ -90,7 +86,10 @@ impl UampApp {
                 col![
                     title("Song extensions"),
                     delete_list(
-                        self.config.audio_extensions().iter().map(|p| p.into()),
+                        self.config
+                            .audio_extensions()
+                            .iter()
+                            .map(|p| p.into()),
                         ConfMessage::RemoveAudioExtension
                     ),
                     container(add_input(
@@ -112,7 +111,6 @@ impl UampApp {
             .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
                 SetMessage::ShowHelp(&help::SONG_EXTENSIONS)
             ))),
-
             space(Fill, 20),
         ]
         .padding([0, 0, 0, 20])

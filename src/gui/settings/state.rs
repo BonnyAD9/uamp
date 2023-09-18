@@ -10,6 +10,7 @@ use crate::{
         extensions::str_to_duration,
         msg::{ComMsg, Msg},
     },
+    gui::ids::WB_SETTINGS_HELP,
 };
 
 use super::help::SetHelp;
@@ -79,7 +80,9 @@ impl UampApp {
             SetMessage::ShowHelp(h) => {
                 if let Some(oh) = self.gui.set_state.help {
                     if !std::ptr::eq(oh, h) {
-                        //self.gui.wb_states[WB_SETTINGS_HELP].get_mut()
+                        self.gui.wb_states[WB_SETTINGS_HELP]
+                            .get_mut()
+                            .scroll_to_top()
                     }
                 }
                 self.gui.set_state.help = Some(h);

@@ -138,7 +138,7 @@ impl UampApp {
             ControlMsg::Shuffle => {
                 self.player.shuffle();
                 return ComMsg::tick();
-            },
+            }
             ControlMsg::SetVolume(v) => {
                 self.player.set_volume(v.clamp(0., 1.))
             }

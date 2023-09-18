@@ -123,7 +123,6 @@ impl UampApp {
                 state,
             )
             .item_height(40)
-            .from_layout_style(&self.theme)
         ]
         .into()
     }

@@ -3,19 +3,22 @@ use itertools::Itertools;
 
 use crate::{
     app::UampApp,
+    col,
     config::ConfMessage,
+    core::msg::Msg,
     gui::{
         ids::WB_SETTINGS_HOTKEYS,
-        wid::{container, space, Element, mouse_int},
-        widgets::icons, GuiMessage,
+        wid::{container, mouse_int, space, Element},
+        widgets::icons,
+        GuiMessage,
     },
     hotkeys::{Action, Hotkey},
-    wrap_box, core::msg::Msg, col,
+    wrap_box,
 };
 
 use super::{
     elements::{add_input, delete_list, toggle, EmptyBehaviour},
-    SetMessage, help,
+    help, SetMessage,
 };
 
 impl UampApp {
@@ -23,13 +26,11 @@ impl UampApp {
         wrap_box![
             &self.gui.wb_states[WB_SETTINGS_HOTKEYS],
             //=========================================<< Global hotkeys toggle
-            mouse_int(
-                toggle(
-                    "Global hotkeys",
-                    self.config.register_global_hotkeys(),
-                    ConfMessage::RegisterGlobalHotkeys
-                ),
-            )
+            mouse_int(toggle(
+                "Global hotkeys",
+                self.config.register_global_hotkeys(),
+                ConfMessage::RegisterGlobalHotkeys
+            ),)
             .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
                 SetMessage::ShowHelp(&help::ENABLE_GLOBAL_HOTKEYS)
             ))),
@@ -67,7 +68,6 @@ impl UampApp {
             .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
                 SetMessage::ShowHelp(&help::GLOBAL_HOTKEY)
             ))),
-
             space(Fill, 20),
         ]
         .padding([0, 0, 0, 20])

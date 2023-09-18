@@ -776,29 +776,21 @@ where
             })
         });
 
-        match self.primary_scrollbar {
-            Behaviour::Enabled => self.draw_scrollbar(
-                child,
-                layout.bounds(),
-                &state,
-                cursor,
-                renderer,
-                theme,
-            ),
-            Behaviour::Hidden => {
-                if child.bounds().height > view_bounds.height {
-                    self.draw_scrollbar(
-                        child,
-                        layout.bounds(),
-                        &state,
-                        cursor,
-                        renderer,
-                        theme,
-                    );
-                }
-            }
-            Behaviour::Disabled => {}
-        }
+        let draw_scroll = match self.primary_scrollbar {
+            Behaviour::Enabled => true,
+            Behaviour::Hidden => child.bounds().height > view_bounds.height,
+            Behaviour::Disabled => false,
+        };
+
+        self.draw_scrollbar(
+            child,
+            layout.bounds(),
+            &state,
+            cursor,
+            renderer,
+            theme,
+            draw_scroll,
+        );
     }
 
     fn overlay<'b>(
@@ -1151,6 +1143,7 @@ where
         cursor: mouse::Cursor,
         renderer: &mut Renderer,
         theme: &Renderer::Theme,
+        draw_scroll: bool,
     ) {
         // the childern.next will always be Some
         let view_size = self.pad_size(bounds.size());
@@ -1173,6 +1166,10 @@ where
                 MousePos::from_bools(mo_wrap, mo_scroll, mo_wrap),
             )
             .draw(renderer, bounds);
+
+        if !draw_scroll {
+            return;
+        }
 
         // draw the top scrollbar button
         let top_button = self.top_button_bounds(bounds);
@@ -1295,6 +1292,10 @@ pub struct State {
 }
 
 impl State {
+    pub fn scroll_to_top(&mut self) {
+        self.offset_y = 0.;
+    }
+
     /// Creates new [`WrapBox`] state, (not scrolled and not pressed)
     fn new() -> Self {
         Self {

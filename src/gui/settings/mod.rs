@@ -16,7 +16,7 @@ use self::state::Category;
 
 use super::{
     ids::WB_SETTINGS_HELP,
-    theme::Container,
+    theme::{Container, WrapBox},
     wid::{container, line_text, nothing, Element},
     GuiMessage,
 };
@@ -38,10 +38,18 @@ impl UampApp {
         if let Some(h) = self.gui.set_state.help {
             content = row![
                 content,
-                wrap_box![
-                    &self.gui.wb_states[WB_SETTINGS_HELP],
-                    h.get_element()
-                ]
+                container(
+                    container(
+                        wrap_box![
+                            &self.gui.wb_states[WB_SETTINGS_HELP],
+                            h.get_element()
+                        ]
+                        .padding(20)
+                        .style(WrapBox::Bright)
+                    )
+                    .style(Container::Float)
+                )
+                .padding(20)
             ]
             .into()
         }

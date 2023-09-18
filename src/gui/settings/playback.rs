@@ -5,19 +5,24 @@ use iced_core::{
 
 use crate::{
     app::UampApp,
+    col,
     config::ConfMessage,
-    core::{extensions::{duration_to_string, str_to_duration}, msg::Msg},
+    core::{
+        extensions::{duration_to_string, str_to_duration},
+        msg::Msg,
+    },
     gui::{
         ids::WB_SETTINGS_PLAYBACK,
-        wid::{container, line_text, space, Element, mouse_int},
-        widgets::icons, GuiMessage,
+        wid::{container, line_text, mouse_int, space, Element},
+        widgets::icons,
+        GuiMessage,
     },
-    wrap_box, col,
+    wrap_box,
 };
 
 use super::{
     elements::{add_input, toggle, EmptyBehaviour},
-    SetMessage, help,
+    help, SetMessage,
 };
 
 impl UampApp {
@@ -25,24 +30,20 @@ impl UampApp {
         wrap_box![
             &self.gui.wb_states[WB_SETTINGS_PLAYBACK],
             //=======================================<< Gapless playback toggle
-            mouse_int(
-                toggle(
-                    "Gapless playback",
-                    self.config.gapless(),
-                    ConfMessage::Gapless,
-                ),
-            )
+            mouse_int(toggle(
+                "Gapless playback",
+                self.config.gapless(),
+                ConfMessage::Gapless,
+            ),)
             .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
                 SetMessage::ShowHelp(&help::GAPLESS_PLAYBACK)
             ))),
             //===========================================<< Shuffle now playing
-            mouse_int(
-                toggle(
-                    "Shuffle now playing",
-                    self.config.shuffle_current(),
-                    ConfMessage::ShuffleCurrent,
-                ),
-            )
+            mouse_int(toggle(
+                "Shuffle now playing",
+                self.config.shuffle_current(),
+                ConfMessage::ShuffleCurrent,
+            ),)
             .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
                 SetMessage::ShowHelp(&help::SHUFFLE_NOW_PLAYING)
             ))),
@@ -51,7 +52,10 @@ impl UampApp {
                 col![
                     line_text(format!(
                         "Fade play/pause: {}",
-                        duration_to_string(self.config.fade_play_pause().0, false)
+                        duration_to_string(
+                            self.config.fade_play_pause().0,
+                            false
+                        )
                     ))
                     .height(30)
                     .vertical_alignment(Vertical::Bottom)
@@ -139,7 +143,6 @@ impl UampApp {
             .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
                 SetMessage::ShowHelp(&help::SEEK_JUMP)
             ))),
-
             space(Fill, 20),
         ]
         .padding([0, 0, 0, 20])

@@ -5,6 +5,7 @@ use iced_core::{
 
 use crate::{
     app::UampApp,
+    col,
     core::{
         extensions::{duration_to_string, str_to_duration},
         msg::{ControlMsg, Msg},
@@ -12,15 +13,16 @@ use crate::{
     gui::{
         elements::the_button,
         ids::WB_SETTINGS_OTHER,
-        wid::{container, line_text, space, Element, mouse_int},
-        widgets::icons, GuiMessage,
+        wid::{container, line_text, mouse_int, space, Element},
+        widgets::icons,
+        GuiMessage,
     },
-    wrap_box, col,
+    wrap_box,
 };
 
 use super::{
     elements::{add_input, EmptyBehaviour},
-    SetMessage, help,
+    help, SetMessage,
 };
 
 impl UampApp {
@@ -72,7 +74,10 @@ impl UampApp {
                 col![
                     line_text(format!(
                         "Delete logs after: {}",
-                        duration_to_string(self.config.delete_logs_after().0, false)
+                        duration_to_string(
+                            self.config.delete_logs_after().0,
+                            false
+                        )
                     ))
                     .height(30)
                     .vertical_alignment(Vertical::Bottom)
