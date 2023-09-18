@@ -263,6 +263,16 @@ Don't wory about the clock precision, it is made in a way that errors don't \
 accumulate."
 };
 
+pub const SHUFFLE_NOW_PLAYING: SetHelp = SetHelp {
+    title: "Shuffle now playing",
+    json_field_name: Some("shuffle_current"),
+    value_type: Some("bool"),
+    default_value: Some("true"),
+    description: "When you click shuffle, the now playing is shuffled into \
+the playlist. If you disable this, the now playing song will be the first in \
+the playlist."
+};
+
 impl SetHelp {
     pub fn get_element(&self) -> Element {
         let mut items: Vec<Element> = Vec::new();

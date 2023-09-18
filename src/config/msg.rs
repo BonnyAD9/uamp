@@ -29,6 +29,7 @@ pub enum Message {
     Port(u16),
     DeleteLogsAfter(Duration),
     EnableServer(bool),
+    ShuffleCurrent(bool),
 }
 
 impl UampApp {
@@ -183,6 +184,11 @@ impl UampApp {
                         self.stop_server(None);
                         self.config.enable_server_set(b);
                     }
+                }
+            }
+            Message::ShuffleCurrent(b) => {
+                if self.config.shuffle_current_set(b) {
+                    self.player.shuffle_current = b;
                 }
             }
         }

@@ -36,6 +36,7 @@ gen_struct! {
         volume: f32 { pub, pri },
         mute: bool { pub, pri },
         ; // other
+        pub shuffle_current: bool,
         state: Playback,
         inner: SinkWrapper,
     }
@@ -182,6 +183,12 @@ impl Player {
         // find the currently playing in the shuffled playlist
         if let Some(id) = id {
             self.current = self.playlist().iter().position(|i| *i == id);
+            if !self.shuffle_current {
+                if let Some(c) = self.current {
+                    self.playlist_mut()[..].swap(c, 0);
+                    self.current = Some(0);
+                }
+            }
         }
     }
 
@@ -241,6 +248,7 @@ impl Player {
             current: data.current,
             volume: data.volume,
             mute: data.mute,
+            shuffle_current: true,
             change: Cell::new(false),
         };
 
@@ -259,6 +267,7 @@ impl Player {
     pub fn load_config(&mut self, conf: &Config) {
         self.fade_play_pause(conf.fade_play_pause().0);
         self.inner.set_gapless(conf.gapless());
+        self.shuffle_current = conf.shuffle_current();
     }
 
     /// Gets timestamp of the current playback, returns [`None`] if nothing
@@ -339,6 +348,7 @@ impl Player {
             state: Playback::Stopped,
             inner: SinkWrapper::new(),
             change: Cell::new(true),
+            shuffle_current: true,
         };
 
         res.init_inner(sender);

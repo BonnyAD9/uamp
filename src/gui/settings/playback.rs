@@ -35,6 +35,17 @@ impl UampApp {
             .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
                 SetMessage::ShowHelp(&help::GAPLESS_PLAYBACK)
             ))),
+            //===========================================<< Shuffle now playing
+            mouse_int(
+                toggle(
+                    "Shuffle now playing",
+                    self.config.shuffle_current(),
+                    ConfMessage::ShuffleCurrent,
+                ),
+            )
+            .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
+                SetMessage::ShowHelp(&help::SHUFFLE_NOW_PLAYING)
+            ))),
             //================================<< Fade play/pause duration input
             mouse_int(
                 col![

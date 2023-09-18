@@ -67,6 +67,8 @@ gen_struct! {
 
         ; // fields passed by value:
 
+        shuffle_current: bool { pub, pub } => () true,
+
         recursive_search: bool { pub, pub } => () true,
 
         update_library_on_start: bool { pub, pub } => () true,
@@ -230,6 +232,7 @@ impl Config {
             server_address: default_server_address(),
             delete_logs_after: default_delete_logs_after(),
             enable_server: default_enable_server(),
+            shuffle_current: default_shuffle_current(),
             change: Cell::new(true),
         }
     }
