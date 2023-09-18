@@ -334,7 +334,7 @@ impl SetHelp {
             .width(Fill)
             .height(Shrink)
             .spacing(10)
-            .padding([20, 0, 20, 0])
+            .padding([0, 0, 20, 0])
             .into()
     }
 }
