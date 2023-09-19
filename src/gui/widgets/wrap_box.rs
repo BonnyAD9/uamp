@@ -442,32 +442,6 @@ where
     ) -> event::Status {
         let mut state = self.state.get();
 
-        // mouse up
-        if matches!(
-            event,
-            Event::Mouse(mouse::Event::ButtonReleased(Button::Left))
-        ) {
-            state.pressed = ScrollbarInteraction::None;
-        }
-
-        let cursor_position =
-            if let iced_core::mouse::Cursor::Available(cursor_position) =
-                cursor
-            {
-                cursor_position
-            } else {
-                self.state.set(state);
-                return event::Status::Ignored;
-            };
-
-        if matches!(event, Event::Mouse(_))
-            && !layout.bounds().contains(cursor_position)
-            && matches!(state.pressed, ScrollbarInteraction::None)
-        {
-            self.state.set(state);
-            return event::Status::Ignored;
-        }
-
         let child = layout.children().next().unwrap();
 
         let view_size = self.pad_size(layout.bounds().size());
@@ -506,37 +480,26 @@ where
 
             captured = true;
 
-            if self.top_button_bounds(bounds).contains(cursor_position) {
+            if cursor.is_over(self.top_button_bounds(bounds)) {
                 state.pressed = ScrollbarInteraction::Up;
-            } else if self.bot_button_bounds(bounds).contains(cursor_position)
-            {
+            } else if cursor.is_over(self.bot_button_bounds(bounds)) {
                 state.pressed = ScrollbarInteraction::Down;
-            } else if self
-                .thumb_bounds(bounds, thumb_size, offset)
-                .contains(cursor_position)
+            } else if cursor
+                .is_over(self.thumb_bounds(bounds, thumb_size, offset))
             {
-                state.pressed = ScrollbarInteraction::Thumb {
-                    relative: offset,
-                    cursor: cursor_position,
-                };
+                if let Some(cursor) = cursor.position() {
+                    state.pressed = ScrollbarInteraction::Thumb {
+                        relative: offset,
+                        cursor,
+                    };
+                }
             } else {
                 let trough =
                     self.top_trough_bounds(bounds, thumb_size, offset);
-                if trough.contains(cursor_position) {
-                    let relative = offset * (cursor_position.y - trough.y)
-                        / trough.height;
-                    state.pressed = ScrollbarInteraction::Thumb {
-                        relative,
-                        cursor: cursor_position,
-                    };
-                    state.scroll_relative_y(view_size, content_size, relative);
-                } else {
-                    let trough =
-                        self.bot_trough_bounds(bounds, thumb_size, offset);
-                    if trough.contains(cursor_position) {
-                        let relative = offset
-                            + (1. - offset) * (cursor_position.y - trough.y)
-                                / trough.height;
+                if cursor.is_over(trough) {
+                    if let Some(cursor_position) = cursor.position() {
+                        let relative = offset * (cursor_position.y - trough.y)
+                            / trough.height;
                         state.pressed = ScrollbarInteraction::Thumb {
                             relative,
                             cursor: cursor_position,
@@ -546,6 +509,26 @@ where
                             content_size,
                             relative,
                         );
+                    }
+                } else {
+                    let trough =
+                        self.bot_trough_bounds(bounds, thumb_size, offset);
+                    if cursor.is_over(trough) {
+                        if let Some(cursor_position) = cursor.position() {
+                            let relative = offset
+                                + (1. - offset)
+                                    * (cursor_position.y - trough.y)
+                                    / trough.height;
+                            state.pressed = ScrollbarInteraction::Thumb {
+                                relative,
+                                cursor: cursor_position,
+                            };
+                            state.scroll_relative_y(
+                                view_size,
+                                content_size,
+                                relative,
+                            );
+                        }
                     } else {
                         captured = false;
                     }
@@ -562,17 +545,13 @@ where
 
             match state.pressed {
                 ScrollbarInteraction::Up => {
-                    if self
-                        .top_button_bounds(layout.bounds())
-                        .contains(cursor_position)
+                    if cursor.is_over(self.top_button_bounds(layout.bounds()))
                     {
                         state.offset_y -= view_bounds.height;
                     }
                 }
                 ScrollbarInteraction::Down => {
-                    if self
-                        .bot_button_bounds(layout.bounds())
-                        .contains(cursor_position)
+                    if cursor.is_over(self.bot_button_bounds(layout.bounds()))
                     {
                         state.offset_y += view_bounds.height;
                     }
@@ -588,8 +567,10 @@ where
             event,
             event::Event::Mouse(mouse::Event::CursorMoved { .. })
         ) {
-            if let ScrollbarInteraction::Thumb { relative, cursor } =
-                state.pressed
+            if let (
+                ScrollbarInteraction::Thumb { relative, cursor },
+                Some(cursor_position),
+            ) = (state.pressed, cursor.position())
             {
                 let bounds = layout.bounds();
                 let relative = relative
@@ -627,16 +608,21 @@ where
             return event::Status::Captured;
         }
 
-        if matches!(event, Event::Mouse(_))
-            && !view_bounds.contains(cursor_position)
-        {
+        if matches!(event, Event::Mouse(_)) && !cursor.is_over(view_bounds) {
             return event::Status::Ignored;
         }
 
         let (cor_x, cor_y) = self.scroll_offset(&state);
 
-        let cursor_position =
-            Point::new(cursor_position.x + cor_x, cursor_position.y + cor_y);
+        let cursor_position = cursor
+            .position()
+            .map(|cursor_position| {
+                mouse::Cursor::Available(Point::new(
+                    cursor_position.x + cor_x,
+                    cursor_position.y + cor_y,
+                ))
+            })
+            .unwrap_or(mouse::Cursor::Unavailable);
 
         self.visible_mut(view_size, &state)
             .zip(child.children())
@@ -645,7 +631,7 @@ where
                     &mut tree.children[i],
                     event.clone(),
                     layout,
-                    iced_core::mouse::Cursor::Available(cursor_position),
+                    cursor_position,
                     renderer,
                     clipboard,
                     shell,
