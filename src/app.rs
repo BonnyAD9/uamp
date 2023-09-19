@@ -60,6 +60,8 @@ pub struct UampApp {
 
     /// When was last save
     pub last_save: Instant,
+
+    pub last_prev: Instant,
 }
 
 //===========================================================================//
@@ -297,6 +299,7 @@ impl UampApp {
             pending_close: false,
 
             last_save: Instant::now(),
+            last_prev: Instant::now(),
         }
     }
 

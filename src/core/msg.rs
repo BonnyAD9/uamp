@@ -1,5 +1,8 @@
 use core::fmt::Debug;
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::Arc,
+    time::{Duration, Instant}, mem::replace,
+};
 
 use iced::window;
 use log::{error, info};
@@ -57,7 +60,7 @@ pub enum ControlMsg {
     /// Jump to the Nth next song
     NextSong(usize),
     /// Jump to the Nth previous song
-    PrevSong(usize),
+    PrevSong(Option<usize>),
     /// Set the volume
     SetVolume(f32),
     /// Increase the volume by `vol_jump * .0`
@@ -121,7 +124,18 @@ impl UampApp {
                 return ComMsg::tick();
             }
             ControlMsg::PrevSong(n) => {
-                self.player.play_prev(&mut self.library, n);
+                if let Some(t) = self.config.previous_timeout() {
+                    if n.is_none() {
+                        let now = Instant::now();
+                        if now - replace(&mut self.last_prev, now) >= t.0 {
+                            return ComMsg::Msg(Msg::Control(
+                                ControlMsg::SeekTo(Duration::ZERO),
+                            ));
+                        }
+                    }
+                }
+
+                self.player.play_prev(&mut self.library, n.unwrap_or(1));
                 if let Err(e) = self.config.delete_old_logs() {
                     error!("Failed to remove logs: {e}");
                 }
@@ -229,7 +243,8 @@ pub fn get_control_string(m: &ControlMsg) -> String {
             if *v { "pp=play" } else { "pp=pause" }.to_owned()
         }
         ControlMsg::NextSong(v) => format!("ns={v}"),
-        ControlMsg::PrevSong(v) => format!("ps={v}"),
+        ControlMsg::PrevSong(None) => format!("ps"),
+        ControlMsg::PrevSong(Some(v)) => format!("ps={v}"),
         ControlMsg::SetVolume(v) => format!("v={v}"),
         ControlMsg::VolumeUp(None) => "vu".to_owned(),
         ControlMsg::VolumeUp(Some(v)) => format!("vu={v}"),

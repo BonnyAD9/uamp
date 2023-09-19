@@ -5,8 +5,13 @@ use iced_core::{
 
 use crate::{
     col,
-    gui::{wid::{column, container, line_text, text, Element}, elements::the_button},
-    row, config::{DefMessage, ConfMessage}, core::msg::Msg,
+    config::{ConfMessage, DefMessage},
+    core::msg::Msg,
+    gui::{
+        elements::the_button,
+        wid::{column, container, line_text, text, Element},
+    },
+    row,
 };
 
 #[derive(Debug)]
@@ -308,6 +313,23 @@ pub const SHOW_HELP: SetHelp = SetHelp {
     description: "If you disable this, you won't see this help.",
 };
 
+pub const PREVIOUS_TIMEOUT: SetHelp = SetHelp {
+    title: "Previous timeout",
+    json_field_name: Some("previous_timeout"),
+    value_type: Some("Option<Duration>"),
+    default_value: Some("null"),
+    reset_message: Some(DefMessage::PreviousTimeout),
+    description: "This option changes the behaviour of the previous action. \
+When not set, the button jumps to the previous song. If the value is set, \
+the button will seek to the start of the song, unless the press is another \
+within the given time.
+
+In simpeler words, if the value is set, single click will seek to start, \
+double click will jump to previous song.
+
+To unset, confirm empty field."
+};
+
 impl SetHelp {
     pub fn get_element(&self) -> Element {
         let mut items: Vec<Element> = Vec::new();
@@ -345,7 +367,8 @@ impl SetHelp {
         }
 
         if let Some(dv) = self.default_value {
-            let mut def: Element = text("Default value:").height(Shrink).into();
+            let mut def: Element =
+                text("Default value:").height(Shrink).into();
             if let Some(msg) = self.reset_message {
                 def = row![
                     def,

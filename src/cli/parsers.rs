@@ -22,7 +22,7 @@ parse_arg! {ControlMsg as parse_control_message, auto_instance_help:
     ? "Jump to the previous song, arguments specifies how much to jump
        (e.g. with argument '2' skips the previous song and plays the
        second previous song)."
-    "previous-song" | "ps" [=usize] => PrevSong(1);
+    "previous-song" | "ps" [=usize] => PrevSong;
 
     ? "Set the volume to the given value. Value must be in range from 0 to 1"
     "volume" | "vol" | "v" =f32 => SetVolume: |v| (0.0..=1.).contains(v);

@@ -117,6 +117,9 @@ gen_struct! {
 
         enable_server: bool { pub, pub } => pub(super) () true,
 
+        previous_timeout: Option<Wrap<Duration>> { pub, pub }
+            => pub(super) () None,
+
         ; // fields that aren't serialized
 
         #[serde(skip_serializing, default = "default_config_path_json")]
@@ -238,6 +241,7 @@ impl Config {
             enable_server: default_enable_server(),
             shuffle_current: default_shuffle_current(),
             show_help: default_show_help(),
+            previous_timeout: default_previous_timeout(),
             change: Cell::new(true),
         }
     }

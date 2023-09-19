@@ -30,6 +30,7 @@ pub struct SetState {
     pub(super) port_state: String,
     pub(super) server_address_state: String,
     pub(super) fade_play_pause_state: String,
+    pub(super) previous_timeout_state: String,
 }
 
 #[derive(Default, Clone, Copy, Debug, PartialEq)]
@@ -68,6 +69,8 @@ pub enum SetMessage {
     ServerAddressConfirm,
     FadePlayPauseInput(String),
     FadePlayPauseConfirm,
+    PreviousTimeoutInput(String),
+    PreviousTimeoutConfirm,
 }
 
 impl UampApp {
@@ -262,6 +265,30 @@ impl UampApp {
                     Some(d) => {
                         return ComMsg::Msg(Msg::Config(
                             ConfMessage::FadePlayPause(d),
+                        ))
+                    }
+                    None => {
+                        error!("Failed to parse save timeout");
+                    }
+                }
+            }
+            SetMessage::PreviousTimeoutInput(s) => {
+                self.gui.set_state.previous_timeout_state = s
+            }
+            SetMessage::PreviousTimeoutConfirm => {
+                let s = replace(
+                    &mut self.gui.set_state.previous_timeout_state,
+                    String::new(),
+                );
+                if s.is_empty() {
+                    return ComMsg::Msg(Msg::Config(
+                        ConfMessage::PreviousTimeout(None),
+                    ));
+                }
+                match str_to_duration(&s) {
+                    Some(d) => {
+                        return ComMsg::Msg(Msg::Config(
+                            ConfMessage::PreviousTimeout(Some(d)),
                         ))
                     }
                     None => {

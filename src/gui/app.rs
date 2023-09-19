@@ -317,7 +317,7 @@ impl UampApp {
         col![
             center_x(
                 row![
-                    mk_button(icons::PREVIOUS, ControlMsg::PrevSong(1)),
+                    mk_button(icons::PREVIOUS, ControlMsg::PrevSong(None)),
                     mk_button(icons::REWIND, ControlMsg::Rewind(None)),
                     svg_button(pp_svg)
                         .padding(6)

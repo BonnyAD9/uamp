@@ -143,6 +143,39 @@ impl UampApp {
             .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
                 SetMessage::ShowHelp(&help::SEEK_JUMP)
             ))),
+            //========================================<< Previous timeout input
+            mouse_int(
+                col![
+                    line_text(format!(
+                        "Previous timeout: {}",
+                        self.config
+                            .previous_timeout()
+                            .map(|t| duration_to_string(t.0, false))
+                            .unwrap_or("disabled".to_owned())
+                    ))
+                    .height(30)
+                    .vertical_alignment(Vertical::Bottom)
+                    .padding([0, 0, 0, 10])
+                    .width(Shrink),
+                    container(add_input(
+                        "",
+                        &self.gui.set_state.previous_timeout_state,
+                        SetMessage::PreviousTimeoutInput,
+                        |s| str_to_duration(s).is_some(),
+                        SetMessage::PreviousTimeoutConfirm,
+                        icons::CHECK,
+                        EmptyBehaviour::Allow,
+                    ))
+                    .padding([0, 0, 0, 25])
+                    .width(200)
+                    .height(Shrink),
+                ]
+                .spacing(5)
+                .height(Shrink)
+            )
+            .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
+                SetMessage::ShowHelp(&help::PREVIOUS_TIMEOUT)
+            ))),
             space(Fill, 20),
         ]
         .padding([0, 0, 0, 20])

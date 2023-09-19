@@ -12,6 +12,7 @@ use super::config;
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    Reset(DefMessage),
     AddSearchPath(PathBuf),
     RemoveSearchPath(usize),
     AddAudioExtension(String),
@@ -33,7 +34,7 @@ pub enum Message {
     EnableServer(bool),
     ShuffleCurrent(bool),
     ShowHelp(bool),
-    Reset(DefMessage),
+    PreviousTimeout(Option<Duration>),
 }
 
 #[derive(Clone, Debug, Copy)]
@@ -56,11 +57,15 @@ pub enum DefMessage {
     EnableServer,
     ShuffleCurrent,
     ShowHelp,
+    PreviousTimeout,
 }
 
 impl UampApp {
     pub fn config_event(&mut self, msg: Message) -> ComMsg {
         match msg {
+            Message::Reset(msg) => {
+                return self.reset_event(msg);
+            }
             Message::AddSearchPath(p) => {
                 if !self.config.search_paths().contains(&p) {
                     self.config.search_paths_mut().push(p);
@@ -220,8 +225,8 @@ impl UampApp {
             Message::ShowHelp(b) => {
                 self.config.show_help_set(b);
             }
-            Message::Reset(msg) => {
-                return self.reset_event(msg);
+            Message::PreviousTimeout(t) => {
+                self.config.previous_timeout_set(t.map(|t| t.into()));
             }
         }
 
@@ -308,6 +313,9 @@ impl UampApp {
             }
             DefMessage::ShowHelp => {
                 self.config.show_help_set(config::default_show_help());
+            }
+            DefMessage::PreviousTimeout => {
+                self.config.previous_timeout_set(config::default_previous_timeout());
             }
         }
 

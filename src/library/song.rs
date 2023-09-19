@@ -1,14 +1,16 @@
 use std::{
+    fmt::Debug,
+    fs::File,
     path::{Path, PathBuf},
-    time::Duration, fs::File, fmt::Debug,
+    time::Duration,
 };
 
 use audiotags::Tag;
 use log::warn;
-use raplay::source::{Symph, Source};
+use raplay::source::{Source, Symph};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::core::{extensions::duration_to_string, Result, Error};
+use crate::core::{extensions::duration_to_string, Error, Result};
 
 /// Describes song
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -60,7 +62,9 @@ impl Song {
         match (|| -> Result<Duration> {
             let f = File::open(&path)?;
             let s = Symph::try_new(f, &Default::default())?;
-            Ok(s.get_time().ok_or(Error::InvalidOperation("Not supported"))?.1)
+            Ok(s.get_time()
+                .ok_or(Error::InvalidOperation("Not supported"))?
+                .1)
         })() {
             Ok(d) => s.length = d,
             Err(e) => warn!("Failed to get true duration of {:?}: {e}", path),

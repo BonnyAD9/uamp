@@ -136,6 +136,11 @@
             "description": "When true, you will see help in the settings when you hover over something.",
             "type": "boolean",
             "default": true
+        },
+        "previous_timeout": {
+            "description": "When not null, the action for previous will go to previous only if the last previous action was in the given time, otherwise it will rewind to start",
+            "type": ["string", "null"],
+            "default": null
         }
     }
 }
