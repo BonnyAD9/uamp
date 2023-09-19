@@ -213,7 +213,7 @@ where
 {
     button(
         cursor_grad(
-            text(s)
+            line_text(s)
                 .horizontal_alignment(Horizontal::Center)
                 .vertical_alignment(Vertical::Center)
                 .style(Text::NoForeground)
