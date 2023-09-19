@@ -1,7 +1,8 @@
 use core::fmt::Debug;
 use std::{
+    mem::replace,
     sync::Arc,
-    time::{Duration, Instant}, mem::replace,
+    time::{Duration, Instant},
 };
 
 use iced::window;

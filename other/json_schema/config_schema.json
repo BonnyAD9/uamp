@@ -141,6 +141,9 @@
             "description": "When not null, the action for previous will go to previous only if the last previous action was in the given time, otherwise it will rewind to start",
             "type": ["string", "null"],
             "default": null
+        },
+        "show_remaining_time": {
+            "description": "When enabled, the time to the right of the seek slider will show the remaining time instead of total time."
         }
     }
 }

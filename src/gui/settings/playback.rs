@@ -47,6 +47,15 @@ impl UampApp {
             .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
                 SetMessage::ShowHelp(&help::SHUFFLE_NOW_PLAYING)
             ))),
+            //===========================================<< Show remaining time
+            mouse_int(toggle(
+                "Show remaining time",
+                self.config.show_remaining_time(),
+                ConfMessage::ShowRemainingTime,
+            ),)
+            .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
+                SetMessage::ShowHelp(&help::SHOW_REMAINING_TIME)
+            ))),
             //================================<< Fade play/pause duration input
             mouse_int(
                 col![

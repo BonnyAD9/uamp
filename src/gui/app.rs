@@ -350,7 +350,14 @@ impl UampApp {
                 }
                 (
                     duration_to_string(ts.current, true),
-                    duration_to_string(ts.total, true),
+                    if self.config.show_remaining_time() {
+                        format!(
+                            "-{}",
+                            duration_to_string(ts.total - ts.current, true)
+                        )
+                    } else {
+                        duration_to_string(ts.total, true)
+                    },
                     slider(
                         0.0..=ts.total.as_secs_f32(),
                         ts.current.as_secs_f32(),

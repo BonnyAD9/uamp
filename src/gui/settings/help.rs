@@ -327,7 +327,17 @@ within the given time.
 In simpeler words, if the value is set, single click will seek to start, \
 double click will jump to previous song.
 
-To unset, confirm empty field."
+To unset, confirm empty field.",
+};
+
+pub const SHOW_REMAINING_TIME: SetHelp = SetHelp {
+    title: "Show remaining time",
+    json_field_name: Some("show_remaining_time"),
+    value_type: Some("bool"),
+    default_value: Some("false"),
+    reset_message: Some(DefMessage::ShowRemainingTime),
+    description: "When enabled, the time to the right of the seek slider will \
+show the remaining time instead of the total time."
 };
 
 impl SetHelp {
