@@ -33,7 +33,7 @@ uamp i pp
 This is the output of help:
 ```
 Welcome in uamp by BonnyAD9
-Version 0.3.0
+Version 0.4.0
 
 Usage:
   uamp
@@ -111,6 +111,9 @@ Instance actions:
   rewind  rw[=<Duration>]
     Seeks backward by the given amout in seconds. If the parameter is not
     present, seek by the default amount.
+
+  save
+    Triggers save (saves only if there is change)
 ```
 
 ## How it looks
