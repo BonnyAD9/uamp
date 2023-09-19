@@ -118,7 +118,11 @@ impl UampApp {
             .style(Container::Dark),
             wrap_box(
                 (0..songs.len())
-                    .map(|i| self.song_list_item(i, songs.clone(), numbered))
+                    .filter_map(|i| self.song_list_item(
+                        i,
+                        songs.clone(),
+                        numbered
+                    ))
                     .collect(),
                 state,
             )
@@ -134,7 +138,7 @@ impl UampApp {
         song: usize,
         songs: Arc<[SongId]>,
         numbered: bool,
-    ) -> Element<'static> {
+    ) -> Option<Element<'static>> {
         let text_style = if Some(songs[song]) == self.player.now_playing() {
             Text::Contrast
         } else {
@@ -142,6 +146,10 @@ impl UampApp {
         };
 
         let s = &self.library[songs[song]];
+
+        if s.is_deleted() {
+            return None;
+        }
 
         fn top_text<'a, S>(s: S, portion: u16, style: Text) -> Element<'a>
         where
@@ -197,13 +205,15 @@ impl UampApp {
             info.padding([0, 10, 0, 10]).into()
         };
 
-        border(
-            button(cursor_grad(item).style(CursorGrad::Long))
-                .padding(0)
-                .on_press(Msg::PlaySong(song, songs)),
+        Some(
+            border(
+                button(cursor_grad(item).style(CursorGrad::Long))
+                    .padding(0)
+                    .on_press(Msg::PlaySong(song, songs)),
+            )
+            .style(Border::SongItem)
+            .into(),
         )
-        .style(Border::SongItem)
-        .into()
     }
 }
 

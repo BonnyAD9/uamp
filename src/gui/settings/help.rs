@@ -336,8 +336,9 @@ pub const SHOW_REMAINING_TIME: SetHelp = SetHelp {
     value_type: Some("bool"),
     default_value: Some("false"),
     reset_message: Some(DefMessage::ShowRemainingTime),
-    description: "When enabled, the time to the right of the seek slider will \
-show the remaining time instead of the total time."
+    description:
+        "When enabled, the time to the right of the seek slider will \
+show the remaining time instead of the total time.",
 };
 
 impl SetHelp {

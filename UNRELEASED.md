@@ -14,3 +14,4 @@
 - Numbering in playlist starts from 1
 - Songs are now loaded with correct time
 - Some button text may not be fully shown
+- No more ghosts

@@ -265,6 +265,7 @@ impl UampApp {
 
         let mut player = Player::from_config(sender.clone(), &conf);
         player.load_config(&conf);
+        player.remove_deleted(&lib);
 
         let listener = if conf.enable_server() {
             match Self::start_server(&conf) {

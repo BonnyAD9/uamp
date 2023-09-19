@@ -286,6 +286,14 @@ impl Player {
             error!("Failed to seek: {e}");
         }
     }
+
+    pub fn remove_deleted(&mut self, lib: &Library) {
+        let cur = self.now_playing();
+        self.playlist_mut().remove_deleted(lib);
+        if let Some(cur) = cur {
+            self.current_set(self.playlist.iter().position(|i| i == &cur));
+        }
+    }
 }
 
 impl UampApp {

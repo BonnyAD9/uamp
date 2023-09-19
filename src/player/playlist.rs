@@ -4,9 +4,10 @@ use std::{
     sync::Arc,
 };
 
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-use crate::library::SongId;
+use crate::library::{Library, SongId};
 
 /// A playlist, lazily cloned
 pub enum Playlist {
@@ -40,6 +41,20 @@ impl Playlist {
             Playlist::Static(a) => a.clone(),
             // copy to arc when this is vector
             Playlist::Dynamic(v) => v[..].into(),
+        }
+    }
+
+    pub fn remove_deleted(&mut self, lib: &Library) {
+        match self {
+            Playlist::Static(a) => {
+                *self = Playlist::Dynamic(
+                    a.iter()
+                        .map(|s| *s)
+                        .filter(|s| !lib[*s].is_deleted())
+                        .collect_vec(),
+                )
+            }
+            Playlist::Dynamic(v) => v.retain(|s| !lib[*s].is_deleted()),
         }
     }
 }

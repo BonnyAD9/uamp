@@ -257,8 +257,15 @@ impl UampApp {
 
     fn bottom_menu(&self) -> Element {
         let song = self.player.now_playing().map(|s| &self.library[s]);
-        let title = song.map(|s| s.title()).unwrap_or("-");
-        let artist = song.map(|s| s.artist()).unwrap_or("-");
+        let (title, artist) = if let Some(s) = song {
+            if s.is_deleted() {
+                ("-", "-")
+            } else {
+                (s.title(), s.artist())
+            }
+        } else {
+            ("-", "-")
+        };
 
         container(grid![
             Relative(2.), Relative(1.), Fixed(210.), Relative(1.), Relative(2.);

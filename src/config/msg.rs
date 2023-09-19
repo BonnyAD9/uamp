@@ -35,7 +35,7 @@ pub enum Message {
     ShuffleCurrent(bool),
     ShowHelp(bool),
     PreviousTimeout(Option<Duration>),
-    ShowRemainingTime(bool)
+    ShowRemainingTime(bool),
 }
 
 #[derive(Clone, Debug, Copy)]
@@ -324,7 +324,9 @@ impl UampApp {
                     .previous_timeout_set(config::default_previous_timeout());
             }
             DefMessage::ShowRemainingTime => {
-                self.config.show_remaining_time_set(config::default_show_remaining_time());
+                self.config.show_remaining_time_set(
+                    config::default_show_remaining_time(),
+                );
             }
         }
 
