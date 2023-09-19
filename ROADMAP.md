@@ -1,6 +1,8 @@
 # Roadmap
 
 ## v0.4.0
+- Previous behaviour (rewind to start/previous)
+- Fix time
 
 ## v0.5.0
 - Pictures

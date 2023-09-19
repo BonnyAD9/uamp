@@ -185,7 +185,7 @@ impl UampApp {
 
         let item: Element = if numbered {
             row![
-                text(song.to_string())
+                text((song + 1).to_string())
                     .width(50)
                     .vertical_alignment(Vertical::Center)
                     .style(Text::Gray),

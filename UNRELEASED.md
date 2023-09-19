@@ -9,3 +9,4 @@
 ## Bugfixes
 - Clicking shuffle wouldn't instantly scroll to the current song
 - Scrollbar sometimes wouldn't release
+- Numbering in playlist starts from 1
