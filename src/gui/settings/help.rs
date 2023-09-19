@@ -5,8 +5,8 @@ use iced_core::{
 
 use crate::{
     col,
-    gui::wid::{column, container, line_text, text, Element},
-    row,
+    gui::{wid::{column, container, line_text, text, Element}, elements::the_button},
+    row, config::{DefMessage, ConfMessage}, core::msg::Msg,
 };
 
 #[derive(Debug)]
@@ -15,6 +15,7 @@ pub struct SetHelp {
     json_field_name: Option<&'static str>,
     value_type: Option<&'static str>,
     default_value: Option<&'static str>,
+    reset_message: Option<DefMessage>,
     description: &'static str,
 }
 
@@ -23,6 +24,7 @@ pub const SEARCH_FOR_NEW_SONGS: SetHelp = SetHelp {
     json_field_name: None,
     value_type: None,
     default_value: None,
+    reset_message: None,
     description:
         "This will go trough all the files in the folders specified in \
 'Library search paths'. It will examine only files with the \
@@ -39,6 +41,7 @@ pub const RECURSIVE_SEARCH_FOR_NEW_SONGS: SetHelp = SetHelp {
     json_field_name: Some("recursive_search"),
     value_type: Some("bool"),
     default_value: Some("true"),
+    reset_message: Some(DefMessage::RecursiveSearch),
     description: "When enabled, 'Search for new songs' will search \
 recursively. That means that instead of searching only in the immidiate \
 folder specified in 'Library search paths', it will also search in all \
@@ -52,6 +55,7 @@ pub const UPDATE_LIBRARY_ON_START: SetHelp = SetHelp {
     json_field_name: Some("update_library_on_start"),
     value_type: Some("bool"),
     default_value: Some("true"),
+    reset_message: Some(DefMessage::UpdateLibraryOnStart),
     description: "When enabled, uamp will automatically start search for new \
 songs when it starts. It is the same search as if you pressed the 'Search for \
 new songs' button.",
@@ -62,6 +66,7 @@ pub const LIBRARY_SEARCH_PATHS: SetHelp = SetHelp {
     json_field_name: Some("search_paths"),
     value_type: Some("Vec<Path>"),
     default_value: Some("Your music folder or CWD (Current Working Director)"),
+    reset_message: Some(DefMessage::SearchPaths),
     description: "This contains all the paths where uamp will search for new \
 songs. If the path doesn't exist, it will be just skipped. By removing a path \
 from here, no songs are removed from your library.",
@@ -72,6 +77,7 @@ pub const SONG_EXTENSIONS: SetHelp = SetHelp {
     json_field_name: Some("audio_extensions"),
     value_type: Some("Vec<String>"),
     default_value: Some("flac, mp3, m4a, mp4"),
+    reset_message: Some(DefMessage::AudioExtensions),
     description: "As a optimization when loading new songs to library, uamp \
 will check only files with one of these extensions. If you add a extension of \
 a file format that is not supported, uamp will try to load that file and \
@@ -84,6 +90,7 @@ pub const GAPLESS_PLAYBACK: SetHelp = SetHelp {
     json_field_name: Some("gapless"),
     value_type: Some("bool"),
     default_value: Some("false"),
+    reset_message: Some(DefMessage::Gapless),
     description: "Some tracks have silence at the beggining or at the end. \
 If the gapless playback is enabled, uamp will skip that silence.
 
@@ -96,6 +103,7 @@ pub const FADE_PLAY_PAUSE: SetHelp = SetHelp {
     json_field_name: Some("fade_play_pause"),
     value_type: Some("Duration"),
     default_value: Some("00:00.15"),
+    reset_message: Some(DefMessage::FadePlayPause),
     description: "When you pause song, it sounds as if the song volume was \
 suddently 0, and when you play it, the volume is immidietly back. This can \
 change that by gradually silencing the song before it is paused, and \
@@ -110,6 +118,7 @@ pub const VOLUME_JUMP: SetHelp = SetHelp {
     json_field_name: Some("volume_jump"),
     value_type: Some("float"),
     default_value: Some("2.5"),
+    reset_message: Some(DefMessage::VolumeJump),
     description: "When you use a shortcut or CLI for increasing/decreasing \
 the volume it changes the volume by some amount. This option specifies that \
 amount.
@@ -123,6 +132,7 @@ pub const SEEK_JUMP: SetHelp = SetHelp {
     json_field_name: Some("seek_jump"),
     value_type: Some("Duration"),
     default_value: Some("00:10"),
+    reset_message: Some(DefMessage::SeekJump),
     description: "This value specifies how much the song should be rewinded/\
 fast forwarded when you click on the rewind/fast forward button or use \
 shortcut or the CLI.",
@@ -133,6 +143,7 @@ pub const ENABLE_GLOBAL_HOTKEYS: SetHelp = SetHelp {
     json_field_name: Some("register_global_hotkeys"),
     value_type: Some("bool"),
     default_value: Some("false"),
+    reset_message: Some(DefMessage::RegisterGlobalHotkeys),
     description: "Uamp can register global hotkeys to do things such as play/\
 pause the plaback or change the volume. This option determines whether the \
 global hotkeys should be registered.
@@ -163,6 +174,7 @@ ctrl+alt+down: vd
 ctrl+alt+left: rw
 ctrl+alt+right: ff",
     ),
+    reset_message: Some(DefMessage::GlobalHotkeys),
     description:
         "Here you can add/remove global hotkeys and choose what they \
 do. Each hotkey consists of Keys and Actions.
@@ -185,6 +197,7 @@ pub const ENABLE_SERVER_FOR_CLI: SetHelp = SetHelp {
     json_field_name: Some("enable_server"),
     value_type: Some("bool"),
     default_value: Some("true"),
+    reset_message: Some(DefMessage::EnableServer),
     description: "Here you can disable the TCP server that uamp uses to \
 comunicate between instances (mostly in CLI).
 
@@ -196,6 +209,7 @@ pub const SERVER_PORT: SetHelp = SetHelp {
     json_field_name: Some("port"),
     value_type: Some("integer"),
     default_value: Some("8267 (33284 in debug)"),
+    reset_message: Some(DefMessage::Port),
     description: "Uamp creates TCP server so it can comunicate between \
 instances. This is mainly used by the CLI. Here you can choose the port on \
 which the server listens.",
@@ -206,6 +220,7 @@ pub const SERVER_ADDRESS: SetHelp = SetHelp {
     json_field_name: Some("server_address"),
     value_type: Some("address"),
     default_value: Some("127.0.0.1"),
+    reset_message: Some(DefMessage::ServerAddress),
     description:
         "This controls the address on which the TCP server that uamp \
 creates listens. The default value is equivalent to 'localhost'.",
@@ -216,6 +231,7 @@ pub const SAVE_BUTTON: SetHelp = SetHelp {
     json_field_name: None,
     value_type: None,
     default_value: None,
+    reset_message: None,
     description:
         "By default, uamp saves its changes (such as settings or the \
 currently playing song and playlist) periodicaly, and every time you close \
@@ -228,6 +244,7 @@ pub const SAVE_TIMEOUT: SetHelp = SetHelp {
     json_field_name: Some("save_timeout"),
     value_type: Some("Option<Duration>"),
     default_value: Some("01:00"),
+    reset_message: Some(DefMessage::SaveTimeout),
     description:
         "When you change settings, volume or start a new playlist or \
 modify the library, the changes are applied immidietly, but not saved. All \
@@ -245,6 +262,7 @@ pub const DELETE_LOGS_AFTER: SetHelp = SetHelp {
     json_field_name: Some("delete_logs_after"),
     value_type: Some("Duration"),
     default_value: Some("3d00:00"),
+    reset_message: Some(DefMessage::DeleteLogsAfter),
     description: "Uamp logs all internal errors that would otherwise be \
 ignored into a file so that it is easier to diagnoze any potential problems. \
 But there is no reason why would you need the history of all the logs that \
@@ -258,6 +276,7 @@ pub const TICK_LENGTH: SetHelp = SetHelp {
     json_field_name: Some("tick_length"),
     value_type: Some("Duration"),
     default_value: Some("00:01"),
+    reset_message: Some(DefMessage::TickLength),
     description: "Uamp has internal clock that updates things such as the \
 seek slider, or checks if it should save. With this setting you can change
 how often the internal clock ticks.
@@ -274,6 +293,7 @@ pub const SHUFFLE_NOW_PLAYING: SetHelp = SetHelp {
     json_field_name: Some("shuffle_current"),
     value_type: Some("bool"),
     default_value: Some("true"),
+    reset_message: Some(DefMessage::ShuffleCurrent),
     description: "When you click shuffle, the now playing is shuffled into \
 the playlist. If you disable this, the now playing song will be the first in \
 the playlist.",
@@ -284,7 +304,8 @@ pub const SHOW_HELP: SetHelp = SetHelp {
     json_field_name: Some("Show help"),
     value_type: Some("bool"),
     default_value: Some("true"),
-    description: "If you disable this, you won't see this help."
+    reset_message: Some(DefMessage::ShowHelp),
+    description: "If you disable this, you won't see this help.",
 };
 
 impl SetHelp {
@@ -324,9 +345,19 @@ impl SetHelp {
         }
 
         if let Some(dv) = self.default_value {
+            let mut def: Element = text("Default value:").height(Shrink).into();
+            if let Some(msg) = self.reset_message {
+                def = row![
+                    def,
+                    the_button("Reset to default")
+                        .on_press(Msg::Config(ConfMessage::Reset(msg)))
+                ]
+                .height(Shrink)
+                .into()
+            }
             items.push(
                 col![
-                    text("Default value:").height(Shrink),
+                    def,
                     container(text(dv).height(Shrink))
                         .height(Shrink)
                         .padding([0, 0, 0, 20]),

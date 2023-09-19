@@ -4,9 +4,11 @@ use log::error;
 
 use crate::{
     app::UampApp,
-    core::msg::ComMsg,
+    core::msg::{ComMsg, Msg},
     hotkeys::{Action, Hotkey},
 };
+
+use super::config;
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -31,6 +33,29 @@ pub enum Message {
     EnableServer(bool),
     ShuffleCurrent(bool),
     ShowHelp(bool),
+    Reset(DefMessage),
+}
+
+#[derive(Clone, Debug, Copy)]
+pub enum DefMessage {
+    SearchPaths,
+    AudioExtensions,
+    GlobalHotkeys,
+    ServerAddress,
+    RecursiveSearch,
+    UpdateLibraryOnStart,
+    RegisterGlobalHotkeys,
+    VolumeJump,
+    SaveTimeout,
+    FadePlayPause,
+    Gapless,
+    TickLength,
+    SeekJump,
+    Port,
+    DeleteLogsAfter,
+    EnableServer,
+    ShuffleCurrent,
+    ShowHelp,
 }
 
 impl UampApp {
@@ -194,6 +219,95 @@ impl UampApp {
             }
             Message::ShowHelp(b) => {
                 self.config.show_help_set(b);
+            }
+            Message::Reset(msg) => {
+                return self.reset_event(msg);
+            }
+        }
+
+        ComMsg::none()
+    }
+
+    fn reset_event(&mut self, msg: DefMessage) -> ComMsg {
+        match msg {
+            DefMessage::SearchPaths => {
+                *self.config.search_paths_mut() =
+                    config::default_search_paths();
+            }
+            DefMessage::AudioExtensions => {
+                *self.config.audio_extensions_mut() =
+                    config::default_audio_extensions();
+            }
+            DefMessage::GlobalHotkeys => {
+                *self.config.global_hotkeys_mut() =
+                    config::default_global_hotkeys();
+                self.hotkey_mgr.disable();
+                self.register_global_hotkeys();
+            }
+            DefMessage::ServerAddress => {
+                return ComMsg::Msg(Msg::Config(Message::ServerAddress(
+                    config::default_server_address(),
+                )))
+            }
+            DefMessage::RecursiveSearch => {
+                self.config
+                    .recursive_search_set(config::default_recursive_search());
+            }
+            DefMessage::UpdateLibraryOnStart => {
+                self.config.update_library_on_start_set(
+                    config::default_update_library_on_start(),
+                );
+            }
+            DefMessage::RegisterGlobalHotkeys => {
+                return ComMsg::Msg(Msg::Config(
+                    Message::RegisterGlobalHotkeys(
+                        config::default_register_global_hotkeys(),
+                    ),
+                ));
+            }
+            DefMessage::VolumeJump => {
+                self.config.volume_jump_set(config::default_volume_jump());
+            }
+            DefMessage::SaveTimeout => {
+                self.config.save_timeout_set(config::default_save_timeout());
+            }
+            DefMessage::FadePlayPause => {
+                return ComMsg::Msg(Msg::Config(Message::FadePlayPause(
+                    config::default_fade_play_pause().0,
+                )));
+            }
+            DefMessage::Gapless => {
+                return ComMsg::Msg(Msg::Config(Message::Gapless(
+                    config::default_gapless(),
+                )));
+            }
+            DefMessage::TickLength => {
+                return ComMsg::Msg(Msg::Config(Message::TickLength(
+                    config::default_tick_length().0,
+                )));
+            }
+            DefMessage::SeekJump => {
+                self.config.seek_jump_set(config::default_seek_jump());
+            }
+            DefMessage::Port => {
+                return ComMsg::Msg(Msg::Config(Message::Port(
+                    config::default_port(),
+                )));
+            }
+            DefMessage::DeleteLogsAfter => {
+                self.config.delete_logs_after_set(config::default_delete_logs_after());
+            }
+            DefMessage::EnableServer => {
+                return ComMsg::Msg(Msg::Config(Message::EnableServer(
+                    config::default_enable_server(),
+                )));
+            }
+            DefMessage::ShuffleCurrent => {
+                self.config
+                    .shuffle_current_set(config::default_shuffle_current());
+            }
+            DefMessage::ShowHelp => {
+                self.config.show_help_set(config::default_show_help());
             }
         }
 

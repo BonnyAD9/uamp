@@ -22,7 +22,7 @@ gen_struct! {
     pub Config {
         // Fields passed by reference
 
-        search_paths: Vec<PathBuf> { pub, pub } => () {
+        search_paths: Vec<PathBuf> { pub, pub } => pub(super) () {
             if let Some(dir) = dirs::audio_dir() {
                 vec![dir]
             } else {
@@ -30,19 +30,19 @@ gen_struct! {
             }
         },
 
-        library_path: Option<PathBuf> { pub, pub } => () {
+        library_path: Option<PathBuf> { pub, pub } => pub(super) () {
             Some(default_config_path().join("library.json"))
         },
 
-        player_path: Option<PathBuf> { pub, pub } => () {
+        player_path: Option<PathBuf> { pub, pub } => pub(super) () {
             Some(default_config_path().join("player.json"))
         },
 
-        gui_state_path: Option<PathBuf> { pub, pub } => () {
+        gui_state_path: Option<PathBuf> { pub, pub } => pub(super) () {
             Some(default_config_path().join("gui_state.json"))
         },
 
-        audio_extensions: Vec<String> { pub, pub } => () {
+        audio_extensions: Vec<String> { pub, pub } => pub(super) () {
             vec![
                 "flac".to_owned(),
                 "mp3".to_owned(),
@@ -51,7 +51,7 @@ gen_struct! {
             ]
         },
 
-        global_hotkeys: HashMap<String, String> { pub, pub } => () {
+        global_hotkeys: HashMap<String, String> { pub, pub } => pub(super) () {
             let mut hm = HashMap::new();
             hm.insert("ctrl+alt+home".to_owned(), "pp".to_owned());
             hm.insert("ctrl+alt+pg_down".to_owned(), "ns".to_owned());
@@ -63,41 +63,43 @@ gen_struct! {
             hm
         },
 
-        server_address: String { pub, pub } => () "127.0.0.1".to_owned(),
+        server_address: String { pub, pub } => pub(super) () {
+            "127.0.0.1".to_owned()
+        },
 
         ; // fields passed by value:
 
-        show_help: bool { pub, pub } => () true,
+        show_help: bool { pub, pub } => pub(super) () true,
 
-        shuffle_current: bool { pub, pub } => () true,
+        shuffle_current: bool { pub, pub } => pub(super) () true,
 
-        recursive_search: bool { pub, pub } => () true,
+        recursive_search: bool { pub, pub } => pub(super) () true,
 
-        update_library_on_start: bool { pub, pub } => () true,
+        update_library_on_start: bool { pub, pub } => pub(super) () true,
 
-        register_global_hotkeys: bool { pub, pub } => () false,
+        register_global_hotkeys: bool { pub, pub } => pub(super) () false,
 
-        volume_jump: f32 { pub, pub } => () 0.025,
+        volume_jump: f32 { pub, pub } => pub(super) () 0.025,
 
-        save_timeout: Option<Wrap<Duration>> { pub, pub } => () {
+        save_timeout: Option<Wrap<Duration>> { pub, pub } => pub(super) () {
             Some(Wrap(Duration::from_secs(60)))
         },
 
-        fade_play_pause: Wrap<Duration> { pub, pub } => () {
+        fade_play_pause: Wrap<Duration> { pub, pub } => pub(super) () {
             Wrap(Duration::from_millis(150))
         },
 
-        gapless: bool { pub, pub } => () false,
+        gapless: bool { pub, pub } => pub(super) () false,
 
-        tick_length: Wrap<Duration> { pub, pub } => () {
+        tick_length: Wrap<Duration> { pub, pub } => pub(super) () {
             Wrap(Duration::from_secs(1))
         },
 
-        seek_jump: Wrap<Duration> { pub, pub } => () {
+        seek_jump: Wrap<Duration> { pub, pub } => pub(super) () {
             Wrap(Duration::from_secs(10))
         },
 
-        port: u16 { pub, pub } => () {
+        port: u16 { pub, pub } => pub(super) () {
             #[cfg(not(debug_assertions))]
             {
                 8267
@@ -108,12 +110,12 @@ gen_struct! {
             }
         },
 
-        delete_logs_after: Wrap<Duration> { pub, pub } => () {
+        delete_logs_after: Wrap<Duration> { pub, pub } => pub(super) () {
             // 3 days
             Wrap(Duration::from_secs(60 * 60 * 24 * 3))
         },
 
-        enable_server: bool { pub, pub } => () true,
+        enable_server: bool { pub, pub } => pub(super) () true,
 
         ; // fields that aren't serialized
 

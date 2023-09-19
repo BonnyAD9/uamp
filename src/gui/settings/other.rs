@@ -6,6 +6,7 @@ use iced_core::{
 use crate::{
     app::UampApp,
     col,
+    config::ConfMessage,
     core::{
         extensions::{duration_to_string, str_to_duration},
         msg::{ControlMsg, Msg},
@@ -17,11 +18,11 @@ use crate::{
         widgets::icons,
         GuiMessage,
     },
-    wrap_box, config::ConfMessage,
+    wrap_box,
 };
 
 use super::{
-    elements::{add_input, EmptyBehaviour, toggle},
+    elements::{add_input, toggle, EmptyBehaviour},
     help, SetMessage,
 };
 
@@ -36,13 +37,11 @@ impl UampApp {
             .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
                 SetMessage::ShowHelp(&help::SAVE_BUTTON)
             ))),
-            mouse_int(
-                toggle(
-                    "Show help",
-                    self.config.show_help(),
-                    ConfMessage::ShowHelp
-                )
-            )
+            mouse_int(toggle(
+                "Show help",
+                self.config.show_help(),
+                ConfMessage::ShowHelp
+            ))
             .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
                 SetMessage::ShowHelp(&help::SHOW_HELP)
             ))),
@@ -61,7 +60,7 @@ impl UampApp {
                     .padding([0, 0, 0, 10])
                     .width(Shrink),
                     container(add_input(
-                        "03:00",
+                        "01:00",
                         &self.gui.set_state.save_timeout_state,
                         SetMessage::SaveTimeoutInput,
                         |s| str_to_duration(s).is_some(),
