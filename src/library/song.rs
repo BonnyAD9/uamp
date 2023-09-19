@@ -1,12 +1,14 @@
 use std::{
     path::{Path, PathBuf},
-    time::Duration,
+    time::Duration, fs::File, fmt::Debug,
 };
 
 use audiotags::Tag;
+use log::warn;
+use raplay::source::{Symph, Source};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::core::{extensions::duration_to_string, Result};
+use crate::core::{extensions::duration_to_string, Result, Error};
 
 /// Describes song
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,9 +39,9 @@ pub struct Song {
 
 impl Song {
     /// Creates song from the given path
-    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
+    pub fn from_path<P: AsRef<Path> + Debug>(path: P) -> Result<Self> {
         let tag = Tag::new().read_from_path(&path)?;
-        Ok(Song {
+        let mut s = Song {
             path: path.as_ref().to_path_buf(),
             title: tag.title().unwrap_or("-").to_owned(),
             artist: tag.artist().unwrap_or("-").to_owned(),
@@ -53,7 +55,18 @@ impl Song {
                 .unwrap_or(Duration::ZERO),
             genre: tag.genre().unwrap_or("-").to_owned(),
             deleted: false,
-        })
+        };
+
+        match (|| -> Result<Duration> {
+            let f = File::open(&path)?;
+            let s = Symph::try_new(f, &Default::default())?;
+            Ok(s.get_time().ok_or(Error::InvalidOperation("Not supported"))?.1)
+        })() {
+            Ok(d) => s.length = d,
+            Err(e) => warn!("Failed to get true duration of {:?}: {e}", path),
+        }
+
+        Ok(s)
     }
 
     /// Constructs invalid "ghost" song
