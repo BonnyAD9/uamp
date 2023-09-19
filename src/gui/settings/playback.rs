@@ -106,7 +106,7 @@ impl UampApp {
                         SetMessage::VolumeJumpInput,
                         |s| s
                             .parse::<f32>()
-                            .map(|v| (0.0..=1.).contains(&v))
+                            .map(|v| (0.0..=100.).contains(&v))
                             .unwrap_or(false),
                         SetMessage::VolumeJumpConfirm,
                         icons::CHECK,
