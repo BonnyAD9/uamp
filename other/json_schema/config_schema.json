@@ -128,7 +128,14 @@
             "type": ["string", "null"]
         },
         "shuffle_current": {
-            "description": "When false, if you shuffle the playlist, the current playling song will be first."
+            "description": "When false, if you shuffle the playlist, the current playling song will be first.",
+            "type": "boolean",
+            "default": true
+        },
+        "show_help": {
+            "description": "When true, you will see help in the settings when you hover over something.",
+            "type": "boolean",
+            "default": true
         }
     }
 }

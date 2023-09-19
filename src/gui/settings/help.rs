@@ -279,6 +279,14 @@ the playlist. If you disable this, the now playing song will be the first in \
 the playlist.",
 };
 
+pub const SHOW_HELP: SetHelp = SetHelp {
+    title: "Show help",
+    json_field_name: Some("Show help"),
+    value_type: Some("bool"),
+    default_value: Some("true"),
+    description: "If you disable this, you won't see this help."
+};
+
 impl SetHelp {
     pub fn get_element(&self) -> Element {
         let mut items: Vec<Element> = Vec::new();

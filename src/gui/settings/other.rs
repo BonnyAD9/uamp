@@ -17,11 +17,11 @@ use crate::{
         widgets::icons,
         GuiMessage,
     },
-    wrap_box,
+    wrap_box, config::ConfMessage,
 };
 
 use super::{
-    elements::{add_input, EmptyBehaviour},
+    elements::{add_input, EmptyBehaviour, toggle},
     help, SetMessage,
 };
 
@@ -35,6 +35,16 @@ impl UampApp {
             )
             .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
                 SetMessage::ShowHelp(&help::SAVE_BUTTON)
+            ))),
+            mouse_int(
+                toggle(
+                    "Show help",
+                    self.config.show_help(),
+                    ConfMessage::ShowHelp
+                )
+            )
+            .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
+                SetMessage::ShowHelp(&help::SHOW_HELP)
             ))),
             //============================================<< Save timeout input
             mouse_int(

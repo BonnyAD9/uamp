@@ -67,6 +67,8 @@ gen_struct! {
 
         ; // fields passed by value:
 
+        show_help: bool { pub, pub } => () true,
+
         shuffle_current: bool { pub, pub } => () true,
 
         recursive_search: bool { pub, pub } => () true,
@@ -233,6 +235,7 @@ impl Config {
             delete_logs_after: default_delete_logs_after(),
             enable_server: default_enable_server(),
             shuffle_current: default_shuffle_current(),
+            show_help: default_show_help(),
             change: Cell::new(true),
         }
     }

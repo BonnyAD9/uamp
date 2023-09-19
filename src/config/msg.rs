@@ -30,6 +30,7 @@ pub enum Message {
     DeleteLogsAfter(Duration),
     EnableServer(bool),
     ShuffleCurrent(bool),
+    ShowHelp(bool),
 }
 
 impl UampApp {
@@ -190,6 +191,9 @@ impl UampApp {
                 if self.config.shuffle_current_set(b) {
                     self.player.shuffle_current = b;
                 }
+            }
+            Message::ShowHelp(b) => {
+                self.config.show_help_set(b);
             }
         }
 

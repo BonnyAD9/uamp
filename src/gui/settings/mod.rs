@@ -35,23 +35,25 @@ impl UampApp {
             Category::Other => self.other(),
         };
 
-        if let Some(h) = self.gui.set_state.help {
-            content = row![
-                content,
-                container(
+        if self.config.show_help() {
+            if let Some(h) = self.gui.set_state.help {
+                content = row![
+                    content,
                     container(
-                        wrap_box![
-                            &self.gui.wb_states[WB_SETTINGS_HELP],
-                            h.get_element()
-                        ]
-                        .padding(20)
-                        .style(WrapBox::Bright)
+                        container(
+                            wrap_box![
+                                &self.gui.wb_states[WB_SETTINGS_HELP],
+                                h.get_element()
+                            ]
+                            .padding(20)
+                            .style(WrapBox::Bright)
+                        )
+                        .style(Container::Float)
                     )
-                    .style(Container::Float)
-                )
-                .padding(20)
-            ]
-            .into()
+                    .padding(20)
+                ]
+                .into()
+            }
         }
 
         col![
