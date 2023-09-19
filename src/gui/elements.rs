@@ -122,6 +122,7 @@ impl UampApp {
                     .collect(),
                 state,
             )
+            .padding([0, 0, 0, 20])
             .item_height(40)
         ]
         .into()
