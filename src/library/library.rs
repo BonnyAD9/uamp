@@ -33,6 +33,7 @@ gen_struct! {
     pub Library {
         // Fields passed by reference
         songs: Vec<Song> { pri , pri },
+        // albums: Vec<SongId> { pri, pri },
         ; // Fields passed by value
         ; // Other fields
         #[serde(skip)]

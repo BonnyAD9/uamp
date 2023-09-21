@@ -5,6 +5,7 @@
 - Pictures
 - Artists
 - Albums
+- Option to start playing on start
 
 ## v0.6.0
 - Search
