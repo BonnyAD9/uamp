@@ -88,11 +88,11 @@ where
 {
     /// creates empty [`WrapBox`]
     pub fn new(state: &'a Cell<State>) -> Self {
-        Self::with_childern(Vec::new(), state)
+        Self::with_children(Vec::new(), state)
     }
 
     /// creates a [`WrapBox`] with the given elements
-    pub fn with_childern(
+    pub fn with_children(
         childern: Vec<Element<'a, Message, Renderer>>,
         state: &'a Cell<State>,
     ) -> Self {

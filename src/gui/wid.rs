@@ -64,7 +64,7 @@ pub fn wrap_box<'a>(
     children: Vec<Element<'a>>,
     state: &'a WrapBoxState,
 ) -> WrapBox<'a> {
-    WrapBox::with_childern(children, state)
+    WrapBox::with_children(children, state)
 }
 
 /// creates wrap_box widhet with the list of children
