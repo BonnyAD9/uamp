@@ -209,6 +209,7 @@ impl Application for UampApp {
         if let Some(t) = self.hard_pause_at {
             if t <= now {
                 self.player.hard_pause();
+                self.hard_pause_at = None;
             }
         }
 
