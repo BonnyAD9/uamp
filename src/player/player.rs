@@ -344,6 +344,10 @@ impl Player {
             Ok(_) => self.state = Playback::play(play),
             Err(e) => error!("Failed to load song: {e}"),
         }
+
+        if !play {
+            self.hard_pause();
+        }
     }
 
     /// Saves the playback state to the given json file
