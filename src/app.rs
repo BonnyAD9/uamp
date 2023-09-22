@@ -58,6 +58,8 @@ pub struct UampApp {
     /// Messages that can be processed only if there are no running processes
     pub pending_close: bool,
 
+    pub hard_pause_at: Option<Instant>,
+
     /// When was last save
     pub last_save: Instant,
 
@@ -203,10 +205,17 @@ impl Application for UampApp {
             }
         }
 
+        let now = Instant::now();
+        if let Some(t) = self.hard_pause_at {
+            if t <= now {
+                self.player.hard_pause();
+            }
+        }
+
         if self
             .config
             .save_timeout()
-            .map(|t| Instant::now() - self.last_save >= t.0)
+            .map(|t| now - self.last_save >= t.0)
             .unwrap_or_default()
         {
             self.library.any_process();
@@ -301,6 +310,8 @@ impl UampApp {
 
             last_save: Instant::now(),
             last_prev: Instant::now(),
+
+            hard_pause_at: None,
         }
     }
 

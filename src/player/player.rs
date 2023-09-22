@@ -8,7 +8,7 @@ use std::{
 
 use log::{error, info, warn};
 use rand::{seq::SliceRandom, thread_rng};
-use raplay::Timestamp;
+use raplay::{Timestamp, CallbackInfo};
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::UnboundedSender;
 
@@ -282,9 +282,23 @@ impl Player {
     }
 
     /// Seeks to the given position
-    pub fn seek_to(&mut self, t: Duration) {
-        if let Err(e) = self.inner.seek_to(t) {
-            error!("Failed to seek: {e}");
+    pub fn seek_to(&mut self, t: Duration) -> Option<Timestamp> {
+        match self.inner.seek_to(t) {
+            Err(e) => {
+                error!("Failed to seek: {e}");
+                None
+            }
+            Ok(ts) => Some(ts)
+        }
+    }
+
+    pub fn seek_by(&mut self, t: Duration, forward: bool) -> Option<Timestamp> {
+        match self.inner.seek_by(t, forward) {
+            Err(e) => {
+                error!("Failed to seek by: {e}");
+                None
+            }
+            Ok(ts) => Some(ts)
         }
     }
 
@@ -295,6 +309,12 @@ impl Player {
             self.current_set(self.playlist.iter().position(|i| i == &cur));
         }
     }
+
+    pub fn hard_pause(&mut self) {
+        if let Err(e) = self.inner.hard_pause() {
+            warn!("Failed to hard pause: {e}");
+        }
+    }
 }
 
 impl UampApp {
@@ -303,7 +323,8 @@ impl UampApp {
         match msg {
             Message::SongEnd => {
                 self.player.play_next(&mut self.library, 1);
-            }
+            },
+            Message::HardPauseAt(i) => self.hard_pause_at = Some(i),
         }
         ComMsg::none()
     }
@@ -364,16 +385,22 @@ impl Player {
         res
     }
 
-    fn song_end_handler(sender: &Arc<UnboundedSender<Msg>>) {
-        if let Err(e) = sender.send(Msg::Player(Message::SongEnd)) {
-            error!("Failed to inform song end: {e}");
+    fn song_end_handler(msg: CallbackInfo, sender: &Arc<UnboundedSender<Msg>>) {
+        let message = match msg {
+            CallbackInfo::SourceEnded => Msg::Player(Message::SongEnd),
+            CallbackInfo::PauseEnds(i) => Msg::Player(Message::HardPauseAt(i)),
+            _ => todo!(),
+        };
+
+        if let Err(e) = sender.send(message) {
+            error!("Failed to sink callback message: {e}");
         }
     }
 
     fn init_inner(&mut self, sender: Arc<UnboundedSender<Msg>>) {
         if let Err(e) = self
             .inner
-            .on_song_end(move || Self::song_end_handler(&sender))
+            .on_callback(move |msg| Self::song_end_handler(msg, &sender))
         {
             error!("Failed to set the song end callback: {e}");
         }

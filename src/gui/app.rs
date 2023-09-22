@@ -357,6 +357,7 @@ impl UampApp {
                 }
                 (
                     duration_to_string(ts.current, true),
+
                     if self.config.show_remaining_time() {
                         format!(
                             "-{}",
@@ -365,6 +366,7 @@ impl UampApp {
                     } else {
                         duration_to_string(ts.total, true)
                     },
+                    
                     slider(
                         0.0..=ts.total.as_secs_f32(),
                         ts.current.as_secs_f32(),
@@ -375,7 +377,7 @@ impl UampApp {
                         },
                     )
                     .on_release(Msg::Gui(Message::SeekSliderEnd))
-                    .step(0.1)
+                    .step(0.01)
                     .width(Fill)
                     .height(10),
                 )

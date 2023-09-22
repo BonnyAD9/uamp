@@ -67,19 +67,14 @@ impl SinkWrapper {
     ///
     /// # Errors
     /// - only with synchronization, shouldn't happen
-    pub fn on_song_end<F: FnMut() + Send + 'static>(
+    pub fn on_callback<F: Fn(CallbackInfo) + Send + 'static>(
         &mut self,
-        mut f: F,
+        f: F,
     ) -> Result<()>
     where
         &'static F: std::marker::Send,
     {
-        self.sink.on_callback(Some(move |cb| match cb {
-            CallbackInfo::SourceEnded => {
-                f();
-            }
-            _ => {}
-        }))?;
+        self.sink.on_callback(Some(f))?;
         Ok(())
     }
 
@@ -93,9 +88,13 @@ impl SinkWrapper {
     }
 
     /// Seeks to the given position
-    pub fn seek_to(&mut self, pos: Duration) -> Result<()> {
-        self.sink.seek_to(pos)?;
-        Ok(())
+    pub fn seek_to(&mut self, pos: Duration) -> Result<Timestamp> {
+        Ok(self.sink.seek_to(pos)?)
+    }
+
+    /// Seeks by the given duration
+    pub fn seek_by(&mut self, time: Duration, forward: bool) -> Result<Timestamp> {
+        Ok(self.sink.seek_by(time, forward)?)
     }
 
     /// Sets the fade play/pause duration in seconds
@@ -115,5 +114,10 @@ impl SinkWrapper {
         Ok(self
             .sink
             .get_timestamp()?)
+    }
+
+    pub fn hard_pause(&mut self) -> Result<()> {
+        self.sink.hard_pause()?;
+        Ok(())
     }
 }

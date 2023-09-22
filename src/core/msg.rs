@@ -114,9 +114,13 @@ impl UampApp {
     pub fn control_event(&mut self, msg: ControlMsg) -> ComMsg {
         match msg {
             ControlMsg::PlayPause(p) => {
+                let pp = p.unwrap_or(!self.player.is_playing());
+                if pp {
+                    self.hard_pause_at = None;
+                }
                 self.player.play_pause(
                     &mut self.library,
-                    p.unwrap_or(!self.player.is_playing()),
+                    pp,
                 );
                 return ComMsg::tick();
             }
@@ -192,42 +196,17 @@ impl UampApp {
             }
             ControlMsg::SeekTo(d) => {
                 self.player.seek_to(d);
-                if let Some(ts) = self.player.timestamp() {
-                    if ts.total.checked_sub(d).unwrap_or_default()
-                        < Duration::from_millis(100)
-                    {
-                        return ComMsg::Msg(Msg::Control(
-                            ControlMsg::NextSong(1),
-                        ));
-                    }
-                }
                 return ComMsg::tick();
             }
             ControlMsg::FastForward(d) => {
-                if let Some(ts) = self.player.timestamp() {
-                    let pos =
-                        ts.current + d.unwrap_or(self.config.seek_jump().0);
-                    let pos = pos.min(ts.total);
-                    if ts.total.checked_sub(pos).unwrap_or_default()
-                        < Duration::from_millis(100)
-                    {
-                        return ComMsg::Msg(Msg::Control(
-                            ControlMsg::NextSong(1),
-                        ));
-                    }
-                    self.player.seek_to(pos);
-                    return ComMsg::tick();
-                }
+                let t = d.unwrap_or(self.config.seek_jump().0);
+                self.player.seek_by(t, true);
+                return ComMsg::tick();
             }
             ControlMsg::Rewind(d) => {
-                if let Some(ts) = self.player.timestamp() {
-                    let pos = ts
-                        .current
-                        .checked_sub(d.unwrap_or(self.config.seek_jump().0))
-                        .unwrap_or(Duration::ZERO);
-                    self.player.seek_to(pos);
-                    return ComMsg::tick();
-                }
+                let t = d.unwrap_or(self.config.seek_jump().0);
+                self.player.seek_by(t, false);
+                return ComMsg::tick();
             }
             ControlMsg::Save => self.save_all(),
         };
