@@ -8,6 +8,7 @@ use std::{
 
 use log::{error, info, warn};
 use rand::{seq::SliceRandom, thread_rng};
+use raplay::Timestamp;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::UnboundedSender;
 
@@ -24,7 +25,7 @@ use crate::{
 
 use super::{
     msg::Message, playback::Playback, playlist::Playlist,
-    sink_wrapper::SinkWrapper, TimeStamp,
+    sink_wrapper::SinkWrapper,
 };
 
 gen_struct! {
@@ -272,7 +273,7 @@ impl Player {
 
     /// Gets timestamp of the current playback, returns [`None`] if nothing
     /// is playing
-    pub fn timestamp(&self) -> Option<TimeStamp> {
+    pub fn timestamp(&self) -> Option<Timestamp> {
         if self.state.is_stopped() {
             None
         } else {

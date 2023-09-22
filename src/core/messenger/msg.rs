@@ -2,7 +2,9 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{core::msg::ControlMsg, library::Song, player::TimeStamp};
+use raplay::Timestamp;
+
+use crate::{core::msg::ControlMsg, library::Song};
 
 /// Messages passed between uamp instances
 #[derive(Debug, Serialize, Deserialize)]
@@ -72,7 +74,7 @@ pub struct Info {
     /// True if is currently playing
     pub is_playing: bool,
     /// The timestamp of the current playback
-    pub timestamp: Option<TimeStamp>,
+    pub timestamp: Option<Timestamp>,
 }
 
 /// Creates extracton method for the given message variant

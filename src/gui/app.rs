@@ -12,6 +12,7 @@ use iced_core::{
     Length::{Fill, Shrink},
 };
 use log::{error, info};
+use raplay::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -25,7 +26,6 @@ use crate::{
     },
     gen_struct, grid,
     gui::widgets::icons::SvgData,
-    player::TimeStamp,
     row, text,
 };
 
@@ -66,7 +66,7 @@ gen_struct! {
         pub (super) set_state: SetState,
 
         #[serde(skip)]
-        song_timestamp: Option<TimeStamp>,
+        song_timestamp: Option<Timestamp>,
         #[serde(skip)]
         seek_drag: Option<Duration>,
         ; // auto gen attribute

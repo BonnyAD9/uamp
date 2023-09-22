@@ -1,17 +1,14 @@
 use std::{fs::File, time::Duration};
 
 use raplay::{
-    sink::CallbackInfo,
     source::{symph::SymphOptions, Source, Symph},
-    Sink,
+    Sink, CallbackInfo, Timestamp,
 };
 
 use crate::{
     core::Result,
     library::{Library, SongId},
 };
-
-use super::TimeStamp;
 
 /// Wrapps the sink
 pub struct SinkWrapper {
@@ -45,7 +42,7 @@ impl SinkWrapper {
 
         const SMALL_TIME: f64 = 0.1;
 
-        if let Some((_, total)) = src.get_time() {
+        if let Some(Timestamp { total, .. }) = src.get_time() {
             if (lib[id].length().as_secs_f64() - total.as_secs_f64()).abs()
                 > SMALL_TIME
             {
@@ -114,10 +111,9 @@ impl SinkWrapper {
     }
 
     /// Gets the current timestamp of the playing source
-    pub fn get_timestamp(&self) -> Result<TimeStamp> {
+    pub fn get_timestamp(&self) -> Result<Timestamp> {
         Ok(self
             .sink
-            .get_timestamp()
-            .map(|(c, t)| TimeStamp::new(c, t))?)
+            .get_timestamp()?)
     }
 }
