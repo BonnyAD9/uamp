@@ -155,7 +155,7 @@ impl UampApp {
                     st.scroll_to = self.player.current();
                 }
             }
-            Message::Setings(msg) => return self.settings_event(msg),
+            Message::Settings(msg) => return self.settings_event(msg),
         }
         ComMsg::Command(Command::none())
     }
@@ -357,7 +357,6 @@ impl UampApp {
                 }
                 (
                     duration_to_string(ts.current, true),
-
                     if self.config.show_remaining_time() {
                         format!(
                             "-{}",
@@ -366,7 +365,6 @@ impl UampApp {
                     } else {
                         duration_to_string(ts.total, true)
                     },
-                    
                     slider(
                         0.0..=ts.total.as_secs_f32(),
                         ts.current.as_secs_f32(),

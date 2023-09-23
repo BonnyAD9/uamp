@@ -1,6 +1,7 @@
 use crate::{app::UampApp, col, core::msg::ComMsg, row, wrap_box};
 
 pub mod elements;
+mod generator;
 mod help;
 mod hotkeys;
 mod library;
@@ -9,8 +10,8 @@ mod playback;
 mod server;
 mod state;
 
+pub use generator::{SetMessage, SetState};
 use iced_core::{alignment::Vertical, font::Weight, Font, Length::Shrink};
-pub use state::{SetMessage, SetState};
 
 use self::state::Category;
 
@@ -94,7 +95,7 @@ impl UampApp {
     fn category_button(&self, s: &'static str, category: Category) -> Element {
         self.top_menu_item(
             s,
-            GuiMessage::Setings(SetMessage::SetCategory(category)),
+            GuiMessage::Settings(SetMessage::SetCategory(category)),
             self.gui.set_state.category == category,
         )
     }

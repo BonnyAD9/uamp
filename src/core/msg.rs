@@ -118,10 +118,7 @@ impl UampApp {
                 if pp {
                     self.hard_pause_at = None;
                 }
-                self.player.play_pause(
-                    &mut self.library,
-                    pp,
-                );
+                self.player.play_pause(&mut self.library, pp);
                 return ComMsg::tick();
             }
             ControlMsg::NextSong(n) => {

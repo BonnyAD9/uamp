@@ -8,7 +8,7 @@ use std::{
 
 use log::{error, info, warn};
 use rand::{seq::SliceRandom, thread_rng};
-use raplay::{Timestamp, CallbackInfo};
+use raplay::{CallbackInfo, Timestamp};
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::UnboundedSender;
 
@@ -288,17 +288,21 @@ impl Player {
                 error!("Failed to seek: {e}");
                 None
             }
-            Ok(ts) => Some(ts)
+            Ok(ts) => Some(ts),
         }
     }
 
-    pub fn seek_by(&mut self, t: Duration, forward: bool) -> Option<Timestamp> {
+    pub fn seek_by(
+        &mut self,
+        t: Duration,
+        forward: bool,
+    ) -> Option<Timestamp> {
         match self.inner.seek_by(t, forward) {
             Err(e) => {
                 error!("Failed to seek by: {e}");
                 None
             }
-            Ok(ts) => Some(ts)
+            Ok(ts) => Some(ts),
         }
     }
 
@@ -323,7 +327,7 @@ impl UampApp {
         match msg {
             Message::SongEnd => {
                 self.player.play_next(&mut self.library, 1);
-            },
+            }
             Message::HardPauseAt(i) => self.hard_pause_at = Some(i),
         }
         ComMsg::none()
@@ -389,10 +393,16 @@ impl Player {
         res
     }
 
-    fn song_end_handler(msg: CallbackInfo, sender: &Arc<UnboundedSender<Msg>>) {
+    fn song_end_handler(
+        msg: CallbackInfo,
+        sender: &Arc<UnboundedSender<Msg>>,
+    ) {
         let message = match msg {
             CallbackInfo::SourceEnded => Msg::Player(Message::SongEnd),
-            CallbackInfo::PauseEnds(i) => Msg::Player(Message::HardPauseAt(i)),
+            CallbackInfo::PauseEnds(i) => {
+                println!("hello");
+                Msg::Player(Message::HardPauseAt(i))
+            }
             _ => todo!(),
         };
 

@@ -21,7 +21,7 @@ use crate::{
     row,
 };
 
-use super::SetMessage;
+use super::generator::SetMessage;
 
 pub fn toggle<'a, M>(
     s: &'static str,
@@ -140,7 +140,7 @@ where
         } else {
             TextInput::Invalid
         })
-        .on_input(move |s| Msg::Gui(GuiMessage::Setings(change(s))));
+        .on_input(move |s| Msg::Gui(GuiMessage::Settings(change(s))));
 
     let act = match empty {
         EmptyBehaviour::Allow => valid || text.is_empty(),
@@ -148,8 +148,8 @@ where
     };
 
     if act {
-        but = but.on_click(Msg::Gui(GuiMessage::Setings(confirm.clone())));
-        input = input.on_submit(Msg::Gui(GuiMessage::Setings(confirm)))
+        but = but.on_click(Msg::Gui(GuiMessage::Settings(confirm.clone())));
+        input = input.on_submit(Msg::Gui(GuiMessage::Settings(confirm)))
     }
 
     cursor_grad(row![but, input,].padding([0, 0, 0, 4]))

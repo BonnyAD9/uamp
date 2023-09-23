@@ -2,7 +2,7 @@ use std::{fs::File, time::Duration};
 
 use raplay::{
     source::{symph::SymphOptions, Source, Symph},
-    Sink, CallbackInfo, Timestamp,
+    CallbackInfo, Sink, Timestamp,
 };
 
 use crate::{
@@ -93,7 +93,11 @@ impl SinkWrapper {
     }
 
     /// Seeks by the given duration
-    pub fn seek_by(&mut self, time: Duration, forward: bool) -> Result<Timestamp> {
+    pub fn seek_by(
+        &mut self,
+        time: Duration,
+        forward: bool,
+    ) -> Result<Timestamp> {
         Ok(self.sink.seek_by(time, forward)?)
     }
 
@@ -111,9 +115,7 @@ impl SinkWrapper {
 
     /// Gets the current timestamp of the playing source
     pub fn get_timestamp(&self) -> Result<Timestamp> {
-        Ok(self
-            .sink
-            .get_timestamp()?)
+        Ok(self.sink.get_timestamp()?)
     }
 
     pub fn hard_pause(&mut self) -> Result<()> {

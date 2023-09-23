@@ -1,4 +1,14 @@
-use std::mem::replace;
+#[derive(Default, Clone, Copy, Debug, PartialEq)]
+pub enum Category {
+    #[default]
+    Library,
+    Playback,
+    Hotkeys,
+    Server,
+    Other,
+}
+
+/*use std::mem::replace;
 
 use itertools::Itertools;
 use log::error;
@@ -31,16 +41,6 @@ pub struct SetState {
     pub(super) server_address_state: String,
     pub(super) fade_play_pause_state: String,
     pub(super) previous_timeout_state: String,
-}
-
-#[derive(Default, Clone, Copy, Debug, PartialEq)]
-pub enum Category {
-    #[default]
-    Library,
-    Playback,
-    Hotkeys,
-    Server,
-    Other,
 }
 
 #[derive(Clone, Debug)]
@@ -195,20 +195,6 @@ impl UampApp {
                     }
                 }
             }
-            SetMessage::HotkeyInput(s) => self.gui.set_state.hotkey_state = s,
-            SetMessage::HotkeyConfirm => {
-                let s = replace(
-                    &mut self.gui.set_state.hotkey_state,
-                    String::new(),
-                );
-                let s = s.split(':').map(|s| s.trim()).collect_vec();
-                return ComMsg::Msg(Msg::Config(
-                    ConfMessage::AddGlobalHotkey(
-                        s[0].to_string(),
-                        s[1].to_string(),
-                    ),
-                ));
-            }
             SetMessage::TickLengthInput(s) => {
                 self.gui.set_state.tick_length_state = s
             }
@@ -300,4 +286,4 @@ impl UampApp {
 
         ComMsg::none()
     }
-}
+}*/

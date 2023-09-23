@@ -16,9 +16,9 @@ iced = { version = "0.10.0", features = [ "svg" ] }
 iced_core = "0.10"
 itertools = "0.11.0"
 log = "0.4.19"
-place_macro = "0.1.3"
+place_macro = "0.2.0"
 rand = "0.8.5"
-raplay = "0.3.3"
+raplay = "0.3.4"
 # raplay = { path = "../raplay" }
 rmp-serde = "1.1.2"
 serde = "1.0.163"

@@ -18,7 +18,8 @@ use crate::{
 
 use super::{
     elements::{add_input, delete_list, toggle, EmptyBehaviour},
-    help, SetMessage,
+    generator::SetMessage,
+    help,
 };
 
 impl UampApp {
@@ -31,7 +32,7 @@ impl UampApp {
                 self.config.register_global_hotkeys(),
                 ConfMessage::RegisterGlobalHotkeys
             ),)
-            .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
+            .on_mouse_enter(Msg::Gui(GuiMessage::Settings(
                 SetMessage::ShowHelp(&help::ENABLE_GLOBAL_HOTKEYS)
             ))),
             //=====================================<< Global hotkeys list + add
@@ -66,7 +67,7 @@ impl UampApp {
                 .width(Shrink)
                 .height(Shrink)
             )
-            .on_mouse_enter(Msg::Gui(GuiMessage::Setings(
+            .on_mouse_enter(Msg::Gui(GuiMessage::Settings(
                 SetMessage::ShowHelp(&help::GLOBAL_HOTKEY)
             ))),
             space(Fill, 20),

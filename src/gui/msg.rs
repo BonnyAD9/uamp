@@ -13,7 +13,7 @@ pub enum Message {
     SeekSliderEnd,
     /// Ticks every set amount of time (used for example for the seek slider)
     Tick,
-    Setings(SetMessage),
+    Settings(SetMessage),
 }
 
 /// Window has changed its parameters
