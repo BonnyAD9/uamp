@@ -400,7 +400,7 @@ impl Player {
         let message = match msg {
             CallbackInfo::SourceEnded => Msg::Player(Message::SongEnd),
             CallbackInfo::PauseEnds(i) => Msg::Player(Message::HardPauseAt(i)),
-            _ => todo!(),
+            _ => todo!("Fix me at {}:{}::", file!(), line!()),
         };
 
         if let Err(e) = sender.send(message) {
