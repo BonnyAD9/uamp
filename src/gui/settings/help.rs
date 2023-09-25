@@ -349,7 +349,7 @@ pub const PLAY_ON_START: SetHelp = SetHelp {
     reset_message: Some(DefMessage::PlayOnStart),
     description:
         "If you enable this, uamp will start playing immidietly when it \
-starts."
+starts.",
 };
 
 impl SetHelp {

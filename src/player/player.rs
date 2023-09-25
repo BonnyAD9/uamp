@@ -20,7 +20,7 @@ use crate::{
         Result,
     },
     gen_struct,
-    library::{Library, SongId},
+    library::{Library, SongId, LibraryUpdate},
 };
 
 use super::{
@@ -331,6 +331,12 @@ impl UampApp {
             Message::HardPauseAt(i) => self.hard_pause_at = Some(i),
         }
         ComMsg::none()
+    }
+
+    pub fn player_lib_update(&mut self, up: LibraryUpdate) {
+        if up >= LibraryUpdate::RemoveData {
+            self.player.remove_deleted(&self.library);
+        }
     }
 }
 

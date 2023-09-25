@@ -26,11 +26,12 @@ use crate::{
     },
     gen_struct, grid,
     gui::widgets::icons::SvgData,
-    row, text,
+    row, text, library::LibraryUpdate,
 };
 
 use super::{
     ids::*,
+    library::LibState,
     msg::Message,
     settings::SetState,
     theme::{Container, SvgButton, Text},
@@ -64,6 +65,8 @@ gen_struct! {
         pub (super) wb_states: Vec<WrapBoxState>,
         #[serde(skip)]
         pub (super) set_state: SetState,
+        #[serde(skip)]
+        pub (super) lib_state: LibState,
 
         #[serde(skip)]
         song_timestamp: Option<Timestamp>,
@@ -98,6 +101,7 @@ impl GuiState {
             window_width: default_window_width(),
             window_height: default_window_height(),
             set_state: Default::default(),
+            lib_state: Default::default(),
             change: Cell::new(false),
         }
     }
@@ -173,6 +177,10 @@ impl UampApp {
         }
 
         ComMsg::none()
+    }
+
+    pub fn gui_lib_update(&mut self, up: LibraryUpdate) {
+        self.gui_library_lib_update(up);
     }
 
     /// Generates the gui

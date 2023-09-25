@@ -9,7 +9,7 @@ use std::{
     path::Path,
     sync::Arc,
     thread::{self, JoinHandle},
-    time::Instant,
+    time::Instant, mem,
 };
 
 use crate::{
@@ -25,7 +25,7 @@ use crate::{
 use super::{
     load::{LibraryLoad, LibraryLoadResult},
     msg::Message,
-    Filter, Song, SongId,
+    Filter, Song, SongId, LibraryUpdate,
 };
 
 gen_struct! {
@@ -43,6 +43,8 @@ gen_struct! {
         /// invalid song
         #[serde(skip, default = "default_ghost")]
         ghost: Song,
+        #[serde(skip)]
+        lib_update: LibraryUpdate,
         ; // attributes for the auto field
         #[serde(skip)]
     }
@@ -59,9 +61,20 @@ impl Library {
             songs: Vec::new(),
             load_process: None,
             save_process: None,
+            lib_update: LibraryUpdate::None,
             change: Cell::new(true),
             ghost: Song::invalid(),
         }
+    }
+
+    pub fn update(&mut self, up: LibraryUpdate) {
+        if up > self.lib_update {
+            self.lib_update = up;
+        }
+    }
+
+    pub fn pop_update(&mut self) -> LibraryUpdate {
+        mem::replace(&mut self.lib_update, LibraryUpdate::None)
     }
 
     /// Loads library according to config, returns empty library on fail
@@ -304,6 +317,7 @@ impl Library {
             let r = p.handle.join().map_err(|_| Error::ThreadPanicked)?;
             if let Some(s) = r.new_song_vec {
                 *self.songs_mut() = s;
+                self.update(LibraryUpdate::NewData);
             }
             Ok(())
         } else {
@@ -421,6 +435,7 @@ impl Clone for Library {
             songs: self.songs.clone(),
             load_process: None,
             save_process: None,
+            lib_update: LibraryUpdate::None,
             ghost: self.ghost.clone(),
             change: self.change.clone(),
         }

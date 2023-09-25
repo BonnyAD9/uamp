@@ -334,9 +334,8 @@ impl UampApp {
                 );
             }
             DefMessage::PlayOnStart => {
-                self.config.play_on_start_set(
-                    config::default_play_on_start(),
-                );
+                self.config
+                    .play_on_start_set(config::default_play_on_start());
             }
         }
 

@@ -223,6 +223,10 @@ impl Application for UampApp {
             self.save_all()
         }
 
+        let up = self.library.pop_update();
+        self.player_lib_update(up);
+        self.gui_lib_update(up);
+
         com
     }
 

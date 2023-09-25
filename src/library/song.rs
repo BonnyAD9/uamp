@@ -140,7 +140,7 @@ impl Song {
         self.deleted
     }
 
-    pub fn _year(&self) -> i32 {
+    pub fn year(&self) -> i32 {
         self.year
     }
 

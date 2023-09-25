@@ -7,7 +7,7 @@ use raplay::{
 
 use crate::{
     core::Result,
-    library::{Library, SongId},
+    library::{Library, SongId, LibraryUpdate},
 };
 
 /// Wrapps the sink
@@ -47,6 +47,7 @@ impl SinkWrapper {
                 > SMALL_TIME
             {
                 lib[id].set_length(total);
+                lib.update(LibraryUpdate::Metadata);
             }
         }
 
