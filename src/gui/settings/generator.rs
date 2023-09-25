@@ -368,6 +368,9 @@ generate_options! {
     toggle pub(super) show_remaining_time: "Show remaining time"
         ? SHOW_REMAINING_TIME => ShowRemainingTime,
 
+    toggle pub(super) play_on_start: "Play on start"
+        ? PLAY_ON_START => PlayOnStart,
+
     input pub(super) fade_play_pause: (self) {
         format!(
             "Fade play/pause: {}",

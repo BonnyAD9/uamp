@@ -16,6 +16,7 @@ impl UampApp {
             self.gui_gapless(),
             self.gui_shuffle_current(),
             self.gui_show_remaining_time(),
+            self.gui_play_on_start(),
             self.gui_fade_play_pause(),
             self.gui_volume_jump(),
             self.gui_seek_jump(),

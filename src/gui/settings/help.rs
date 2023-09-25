@@ -341,6 +341,17 @@ pub const SHOW_REMAINING_TIME: SetHelp = SetHelp {
 show the remaining time instead of the total time.",
 };
 
+pub const PLAY_ON_START: SetHelp = SetHelp {
+    title: "Play on start",
+    json_field_name: Some("play_on_start"),
+    value_type: Some("bool"),
+    default_value: Some("false"),
+    reset_message: Some(DefMessage::PlayOnStart),
+    description:
+        "If you enable this, uamp will start playing immidietly when it \
+starts."
+};
+
 impl SetHelp {
     pub fn get_element(&self) -> Element {
         let mut items: Vec<Element> = Vec::new();

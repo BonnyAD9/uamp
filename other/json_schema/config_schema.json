@@ -143,7 +143,14 @@
             "default": null
         },
         "show_remaining_time": {
-            "description": "When enabled, the time to the right of the seek slider will show the remaining time instead of total time."
+            "description": "When enabled, the time to the right of the seek slider will show the remaining time instead of total time.",
+            "type": "boolean",
+            "default": "false"
+        },
+        "play_on_start": {
+            "description": "When enabled, uamp will start playing when it starts.",
+            "type": "boolean",
+            "default": "false"
         }
     }
 }

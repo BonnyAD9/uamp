@@ -317,11 +317,17 @@ impl UampApp {
     }
 
     fn init(&mut self) -> ComMsg {
+        let mut res = ComMsg::none();
+
         if self.config.register_global_hotkeys() {
             self.register_global_hotkeys();
         }
 
-        ComMsg::none()
+        if self.config.play_on_start() {
+            res = ComMsg::Msg(Msg::Control(ControlMsg::PlayPause(Some(true))));
+        }
+
+        res
     }
 
     /// Starts the tcp server

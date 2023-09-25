@@ -36,6 +36,7 @@ pub enum Message {
     ShowHelp(bool),
     PreviousTimeout(Option<Duration>),
     ShowRemainingTime(bool),
+    PlayOnStart(bool),
 }
 
 #[derive(Clone, Debug, Copy)]
@@ -60,6 +61,7 @@ pub enum DefMessage {
     ShowHelp,
     PreviousTimeout,
     ShowRemainingTime,
+    PlayOnStart,
 }
 
 impl UampApp {
@@ -233,6 +235,9 @@ impl UampApp {
             Message::ShowRemainingTime(b) => {
                 self.config.show_remaining_time_set(b);
             }
+            Message::PlayOnStart(b) => {
+                self.config.play_on_start_set(b);
+            }
         }
 
         ComMsg::none()
@@ -326,6 +331,11 @@ impl UampApp {
             DefMessage::ShowRemainingTime => {
                 self.config.show_remaining_time_set(
                     config::default_show_remaining_time(),
+                );
+            }
+            DefMessage::PlayOnStart => {
+                self.config.play_on_start_set(
+                    config::default_play_on_start(),
                 );
             }
         }
