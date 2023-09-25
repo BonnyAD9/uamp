@@ -108,6 +108,8 @@ pub enum Button {
     /// Default button style
     #[default]
     Default,
+    GrayHover,
+    SelectedGrayHover,
 }
 
 impl button::StyleSheet for Theme {
@@ -124,6 +126,14 @@ impl button::StyleSheet for Theme {
         };
 
         match style {
+            Button::GrayHover => button::Appearance {
+                text_color: GRAY_FG,
+                ..default
+            },
+            Button::SelectedGrayHover => button::Appearance {
+                text_color: DARK_CONTRAST,
+                ..default
+            },
             _ => default,
         }
     }
@@ -134,6 +144,12 @@ impl button::StyleSheet for Theme {
             ..self.active(style)
         };
         match style {
+            Button::GrayHover | Button::SelectedGrayHover => {
+                button::Appearance {
+                    text_color: CONTRAST,
+                    ..base
+                }
+            }
             _ => base,
         }
     }
@@ -145,6 +161,12 @@ impl button::StyleSheet for Theme {
         };
 
         match style {
+            Button::GrayHover | Button::SelectedGrayHover => {
+                button::Appearance {
+                    text_color: BRIGHT_CONTRAST,
+                    ..base
+                }
+            }
             _ => base,
         }
     }

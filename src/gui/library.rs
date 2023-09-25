@@ -1,4 +1,4 @@
-use std::{sync::Arc, cell::Cell};
+use std::{cell::Cell, sync::Arc};
 
 use iced_core::{alignment::Vertical, font::Weight, Font, Length::Fill};
 use itertools::Itertools;
@@ -6,7 +6,8 @@ use itertools::Itertools;
 use crate::{
     app::UampApp,
     col,
-    library::{order::Order, Filter, SongId, LibraryUpdate},
+    core::msg::{ComMsg, Msg},
+    library::{order::Order, Filter, LibraryUpdate, SongId},
     row,
 };
 
@@ -14,6 +15,7 @@ use super::{
     ids::WB_SONGS,
     theme::{Container, Text},
     wid::{container, text, Element},
+    GuiMessage,
 };
 
 #[derive(Default)]
@@ -22,7 +24,25 @@ pub(super) struct LibState {
     view_songs: Cell<Option<Arc<[SongId]>>>,
 }
 
+#[derive(Clone, Debug)]
+pub enum GLibMessage {
+    Order(Order),
+}
+
 impl UampApp {
+    pub(super) fn gui_library_event(&mut self, msg: GLibMessage) -> ComMsg {
+        match msg {
+            GLibMessage::Order(ord) => {
+                if self.gui.lib_state.view_ordering != ord {
+                    self.gui.lib_state.view_ordering = ord;
+                    self.gui.lib_state.view_songs.set(None);
+                }
+            }
+        }
+
+        ComMsg::none()
+    }
+
     pub(super) fn gui_library_lib_update(&mut self, up: LibraryUpdate) {
         if up >= LibraryUpdate::NewData {
             self.gui.lib_state.view_songs.set(None);
@@ -54,10 +74,12 @@ impl UampApp {
             .padding([5, 20, 5, 20])
             .height(80)
             .style(Container::TopGrad),
-            container(self.song_list(
+            container(self.ordered_song_list(
                 songs,
                 &self.gui.wb_states[WB_SONGS],
-                false
+                false,
+                self.gui.lib_state.view_ordering,
+                |m| Msg::Gui(GuiMessage::Library(GLibMessage::Order(m)))
             ))
         ]
         .height(Fill)

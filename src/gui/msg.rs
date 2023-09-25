@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use super::{app::MainPage, settings::SetMessage};
+use super::{app::MainPage, library::GLibMessage, settings::SetMessage};
 
 /// A gui message
 #[derive(Clone, Debug)]
@@ -14,6 +14,7 @@ pub enum Message {
     /// Ticks every set amount of time (used for example for the seek slider)
     Tick,
     Settings(SetMessage),
+    Library(GLibMessage),
 }
 
 /// Window has changed its parameters

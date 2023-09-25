@@ -20,7 +20,7 @@ use crate::{
         Result,
     },
     gen_struct,
-    library::{Library, SongId, LibraryUpdate},
+    library::{Library, LibraryUpdate, SongId},
 };
 
 use super::{

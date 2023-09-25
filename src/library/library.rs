@@ -5,11 +5,12 @@ use tokio::sync::mpsc::UnboundedSender;
 use std::{
     cell::Cell,
     fs::{create_dir_all, read_dir, File},
+    mem,
     ops::{Index, IndexMut},
     path::Path,
     sync::Arc,
     thread::{self, JoinHandle},
-    time::Instant, mem,
+    time::Instant,
 };
 
 use crate::{
@@ -25,7 +26,7 @@ use crate::{
 use super::{
     load::{LibraryLoad, LibraryLoadResult},
     msg::Message,
-    Filter, Song, SongId, LibraryUpdate,
+    Filter, LibraryUpdate, Song, SongId,
 };
 
 gen_struct! {

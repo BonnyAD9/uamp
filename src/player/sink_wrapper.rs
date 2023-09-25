@@ -7,7 +7,7 @@ use raplay::{
 
 use crate::{
     core::Result,
-    library::{Library, SongId, LibraryUpdate},
+    library::{Library, LibraryUpdate, SongId},
 };
 
 /// Wrapps the sink

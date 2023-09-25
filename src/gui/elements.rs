@@ -12,13 +12,16 @@ use crate::{
     gui::{
         app::MainPage,
         msg::Message,
-        theme::{Border, Container, CursorGrad, Text},
+        theme::{Border, Button, Container, CursorGrad, Text},
         wid::{
             self, border, button, container, cursor_grad, line_text, row,
             text, wrap_box, Element, WrapBoxState,
         },
     },
-    library::SongId,
+    library::{
+        order::{Order, OrderField},
+        SongId,
+    },
     row,
 };
 
@@ -106,6 +109,145 @@ impl UampApp {
             make_title("ALBUM / YEAR", 15),
             make_title("T / D", 2),
             make_title("LENGTH / GENRE", 3),
+        ]);
+
+        col![
+            container(
+                border(container(row(items)).padding([0, 40, 0, 20]))
+                    .height(20)
+                    .style(Border::Bot)
+            )
+            .height(23)
+            .style(Container::Dark),
+            wrap_box(
+                (0..songs.len())
+                    .filter_map(|i| self.song_list_item(
+                        i,
+                        songs.clone(),
+                        numbered
+                    ))
+                    .collect(),
+                state,
+            )
+            .padding([0, 0, 0, 20])
+            .item_height(40)
+        ]
+        .into()
+    }
+
+    /// Creates a song list
+    pub(super) fn ordered_song_list<'a, F>(
+        &'a self,
+        songs: Arc<[SongId]>,
+        state: &'a WrapBoxState,
+        numbered: bool,
+        cur_order: Order,
+        on_order: F,
+    ) -> Element
+    where
+        F: Fn(Order) -> Msg,
+    {
+        let mut items: Vec<Element> = Vec::new();
+
+        if numbered {
+            items.push(
+                container(text("#").style(Text::Gray).size(14))
+                    .width(50)
+                    .padding([0, 0, 0, 10])
+                    .into(),
+            )
+        }
+
+        fn make_title<'a, F>(
+            ts: &'static str,
+            bs: &'static str,
+            to: Order,
+            bo: Order,
+            cur: Order,
+            msg: F,
+            portion: u16,
+        ) -> Element<'a>
+        where
+            F: Fn(Order) -> Msg,
+        {
+            let (t_style, to) = if to.field == cur.field {
+                (Button::SelectedGrayHover, to.set_rev(!cur.reverse))
+            } else {
+                (Button::GrayHover, to)
+            };
+
+            let (b_style, bo) = if bo.field == cur.field {
+                (Button::SelectedGrayHover, bo.set_rev(!cur.reverse))
+            } else {
+                (Button::GrayHover, bo)
+            };
+
+            row![
+                button(
+                    line_text(ts)
+                        .width(Shrink)
+                        .style(Text::NoForeground)
+                        .elipsis("...")
+                        .size(14)
+                )
+                .padding(0)
+                .width(Shrink)
+                .on_press(msg(to))
+                .style(t_style),
+                line_text(" / ").width(Shrink).style(Text::Gray).size(14),
+                button(
+                    line_text(bs)
+                        .width(Shrink)
+                        .style(Text::NoForeground)
+                        .elipsis("...")
+                        .size(14)
+                )
+                .padding(0)
+                .width(Shrink)
+                .on_press(msg(bo))
+                .style(b_style),
+            ]
+            .width(FillPortion(portion))
+            .into()
+        }
+
+        items.extend([
+            make_title(
+                "TITLE",
+                "ARTIST",
+                Order::new(OrderField::Title, false),
+                Order::new(OrderField::Artist, false),
+                cur_order,
+                &on_order,
+                18,
+            ),
+            make_title(
+                "ALBUM",
+                "YEAR",
+                Order::new(OrderField::Album, false),
+                Order::new(OrderField::Year, false),
+                cur_order,
+                &on_order,
+                15,
+            ),
+            make_title(
+                "T",
+                "D",
+                Order::new(OrderField::Track, false),
+                Order::new(OrderField::Disc, false),
+                cur_order,
+                &on_order,
+                2,
+            ),
+            make_title(
+                "LENGTH",
+                "GENRE",
+                Order::new(OrderField::Length, false),
+                Order::new(OrderField::Genre, false),
+                cur_order,
+                &on_order,
+                3,
+            ),
         ]);
 
         col![

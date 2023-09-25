@@ -26,7 +26,8 @@ use crate::{
     },
     gen_struct, grid,
     gui::widgets::icons::SvgData,
-    row, text, library::LibraryUpdate,
+    library::LibraryUpdate,
+    row, text,
 };
 
 use super::{
@@ -160,6 +161,7 @@ impl UampApp {
                 }
             }
             Message::Settings(msg) => return self.settings_event(msg),
+            Message::Library(msg) => return self.gui_library_event(msg),
         }
         ComMsg::Command(Command::none())
     }
