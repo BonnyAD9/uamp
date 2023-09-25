@@ -399,10 +399,7 @@ impl Player {
     ) {
         let message = match msg {
             CallbackInfo::SourceEnded => Msg::Player(Message::SongEnd),
-            CallbackInfo::PauseEnds(i) => {
-                println!("hello");
-                Msg::Player(Message::HardPauseAt(i))
-            }
+            CallbackInfo::PauseEnds(i) => Msg::Player(Message::HardPauseAt(i)),
             _ => todo!(),
         };
 
