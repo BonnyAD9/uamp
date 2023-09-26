@@ -26,6 +26,8 @@ pub enum Error {
     Hotkey(#[from] HotkeyError),
     /// The audio tag library returned error
     #[error(transparent)]
+    Image(#[from] image::ImageError),
+    #[error(transparent)]
     AudioTag(#[from] audiotags::Error),
     /// The raplay library returned error
     #[error(transparent)]

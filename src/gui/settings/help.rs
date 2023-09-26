@@ -361,7 +361,7 @@ pub const SIMPLE_SORTING: SetHelp = SetHelp {
     description:
         "By default songs when you sort songs by e.g. genre, they are also \
 sorted by other properties e.g. year. When you enable simple sorting, songs \
-songs will be sorted only by that field."
+songs will be sorted only by that field.",
 };
 
 impl SetHelp {

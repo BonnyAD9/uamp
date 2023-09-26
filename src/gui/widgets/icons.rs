@@ -96,9 +96,13 @@ pub const FAST_FORWARD: SvgData = SvgData::new(
 pub const REWIND: SvgData =
     SvgData::new(include_bytes!("../../../assets/svg/rewind.svg").as_slice());
 
-/// Icon signifying fast rewind, '<|<|'
+/// A circle
 pub const _CIRCLE: SvgData =
     SvgData::new(include_bytes!("../../../assets/svg/circle.svg").as_slice());
+
+/// Image placeholder
+pub const IMG_PLACEHOLDER: SvgData =
+    SvgData::new(include_bytes!("../../../assets/svg/img_placeholder.svg").as_slice());
 
 pub const _UAMP_LIGHT: SvgData = SvgData::new(
     include_bytes!("../../../assets/svg/icon_light.svg").as_slice(),

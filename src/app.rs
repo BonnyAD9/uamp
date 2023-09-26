@@ -268,6 +268,8 @@ impl UampApp {
     fn new(conf: Config, gui: GuiState) -> Self {
         let mut lib = Library::from_config(&conf);
 
+        lib.init();
+
         let (sender, reciever) = mpsc::unbounded_channel::<Msg>();
         let sender = Arc::new(sender);
 

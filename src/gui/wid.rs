@@ -56,6 +56,7 @@ pub type Switch<'a> = widgets::switch::Switch<'a, Msg, Renderer>;
 pub type TextInput<'a> = widget::TextInput<'a, Msg, Renderer>;
 pub type MouseInteraction<'a> =
     widgets::mouse_interaction::MouseInteraction<'a, Msg, Renderer>;
+pub type Image = widget::Image<iced_core::image::Handle>;
 
 pub type WrapBoxState = Cell<widgets::wrap_box::State>;
 
@@ -326,4 +327,8 @@ where
     E: Into<Element<'a>>,
 {
     MouseInteraction::new(child.into())
+}
+
+pub fn image(handle: impl Into<iced_core::image::Handle>) -> Image {
+    Image::new(handle)
 }

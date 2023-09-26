@@ -38,7 +38,7 @@ use super::{
     theme::{Container, SvgButton, Text},
     wid::{
         center_x, center_y, container, line_text, slider, space, svg,
-        svg_button, text, Command, Element, GridItem, WrapBoxState,
+        svg_button, text, Command, Element, GridItem, WrapBoxState, image,
     },
     widgets::{
         grid::SpanLen::{Fixed, Relative},
@@ -241,27 +241,39 @@ impl UampApp {
     }
 
     fn left_menu(&self) -> Element {
+        const WIDTH: f32 = 250.0;
+
+        let img: Element = self
+            .player
+            .now_playing()
+            .and_then(|s| self.library.get_image(s))
+            .map(|i| image(i).height(WIDTH).into())
+            .unwrap_or_else(|| svg(icons::IMG_PLACEHOLDER).height(WIDTH).into());
+
         container(
             col![
-                row![
-                    svg(icons::UAMP).height(60).width(60),
-                    text("Uamp").size(40).style(Text::Default).font(Font {
-                        weight: Weight::Semibold,
-                        ..Default::default()
-                    }),
+                col![
+                    row![
+                        svg(icons::UAMP).height(60).width(60),
+                        text("Uamp").size(40).style(Text::Default).font(Font {
+                            weight: Weight::Semibold,
+                            ..Default::default()
+                        }),
+                    ]
+                    .height(60),
+                    space(Fill, 13),
+                    self.left_menu_item("Library", MainPage::Library),
+                    self.left_menu_item("Playlist", MainPage::Playlist),
+                    space(Fill, Fill),
+                    self.left_menu_item("Settings", MainPage::Settings),
                 ]
-                .height(60),
-                space(Fill, 13),
-                self.left_menu_item("Library", MainPage::Library),
-                self.left_menu_item("Playlist", MainPage::Playlist),
-                space(Fill, Fill),
-                self.left_menu_item("Settings", MainPage::Settings),
+                .spacing(5)
+                .padding([20, 20, 15, 20]),
+                img
             ]
-            .spacing(5),
         )
         .style(Container::Gray)
-        .padding([20, 20, 20, 20])
-        .width(250)
+        .width(WIDTH)
         .into()
     }
 

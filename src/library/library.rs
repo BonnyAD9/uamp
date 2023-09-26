@@ -1,16 +1,19 @@
-use log::{error, info};
+use audiotags::Tag;
+use iced_core::image::Handle;
+use log::{error, info, warn};
 use serde_derive::{Deserialize, Serialize};
 use tokio::sync::mpsc::UnboundedSender;
 
 use std::{
     cell::Cell,
+    collections::HashMap,
     fs::{create_dir_all, read_dir, File},
     mem,
     ops::{Index, IndexMut},
     path::Path,
     sync::Arc,
     thread::{self, JoinHandle},
-    time::Instant,
+    time::Instant, borrow::Cow,
 };
 
 use crate::{
@@ -24,6 +27,7 @@ use crate::{
 };
 
 use super::{
+    cover_image::CoverImage,
     load::{LibraryLoad, LibraryLoadResult},
     msg::Message,
     Filter, LibraryUpdate, Song, SongId,
@@ -46,6 +50,8 @@ gen_struct! {
         ghost: Song,
         #[serde(skip)]
         lib_update: LibraryUpdate,
+        #[serde(skip)]
+        images: HashMap<(Cow<'static, str>, Cow<'static, str>), CoverImage>,
         ; // attributes for the auto field
         #[serde(skip)]
     }
@@ -65,6 +71,7 @@ impl Library {
             lib_update: LibraryUpdate::None,
             change: Cell::new(true),
             ghost: Song::invalid(),
+            images: Default::default(),
         }
     }
 
@@ -85,6 +92,38 @@ impl Library {
         } else {
             Self::default()
         }
+    }
+
+    pub fn init(&mut self) {
+        let mut images = HashMap::new();
+        for s in self.songs() {
+            if !images.contains_key(&(s.artist().into(), s.album().into())) {
+                let t = match Tag::new().read_from_path(s.path()) {
+                    Ok(t) => t,
+                    Err(e) => {
+                        warn!("Failed to read tag: {e}");
+                        continue;
+                    }
+                };
+
+                let i = if let Some(c) = t.album_cover() {
+                    CoverImage::from_data(c.data.iter().map(|c| *c).collect())
+                } else {
+                    continue;
+                };
+
+                let key = (s.artist().to_owned().into(), s.album().to_owned().into());
+
+                images.insert(key, i);
+            }
+        }
+
+        self.images = images;
+    }
+
+    pub fn get_image(&self, s: SongId) -> Option<Handle> {
+        let s = &self[s];
+        self.images.get(&(s.artist().into(), s.album().into())).map(|v| v.as_andle())
     }
 
     /// Filters songs in the library
@@ -439,6 +478,7 @@ impl Clone for Library {
             lib_update: LibraryUpdate::None,
             ghost: self.ghost.clone(),
             change: self.change.clone(),
+            images: self.images.clone(),
         }
     }
 }
