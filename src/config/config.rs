@@ -69,6 +69,8 @@ gen_struct! {
 
         ; // fields passed by value:
 
+        simple_sorting: bool { pub, pub } => pub(super) () false,
+
         play_on_start: bool { pub, pub } => pub(super) () false,
 
         show_help: bool { pub, pub } => pub(super) () true,
@@ -248,6 +250,7 @@ impl Config {
             previous_timeout: default_previous_timeout(),
             show_remaining_time: default_show_remaining_time(),
             play_on_start: default_play_on_start(),
+            simple_sorting: default_simple_sorting(),
             change: Cell::new(true),
         }
     }

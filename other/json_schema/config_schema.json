@@ -151,6 +151,11 @@
             "description": "When enabled, uamp will start playing when it starts.",
             "type": "boolean",
             "default": "false"
+        },
+        "simple_sorting": {
+            "description": "By default, when you sort songs in the library, they are also sorted by additional properties. Enable this to change that behaviour",
+            "type": "boolean",
+            "default": false
         }
     }
 }

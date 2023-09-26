@@ -348,8 +348,20 @@ pub const PLAY_ON_START: SetHelp = SetHelp {
     default_value: Some("false"),
     reset_message: Some(DefMessage::PlayOnStart),
     description:
-        "If you enable this, uamp will start playing immidietly when it \
+        "If you enable this, uamp will start playing immediately when it \
 starts.",
+};
+
+pub const SIMPLE_SORTING: SetHelp = SetHelp {
+    title: "Simple sorting",
+    json_field_name: Some("simple_sorting"),
+    value_type: Some("bool"),
+    default_value: Some("false"),
+    reset_message: Some(DefMessage::SimpleSorting),
+    description:
+        "By default songs when you sort songs by e.g. genre, they are also \
+sorted by other properties e.g. year. When you enable simple sorting, songs \
+songs will be sorted only by that field."
 };
 
 impl SetHelp {

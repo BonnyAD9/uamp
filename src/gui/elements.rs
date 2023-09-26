@@ -211,12 +211,14 @@ impl UampApp {
             .into()
         }
 
+        let simple_sort = self.config.simple_sorting();
+
         items.extend([
             make_title(
                 "TITLE",
                 "ARTIST",
-                Order::new(OrderField::Title, false),
-                Order::new(OrderField::Artist, false),
+                Order::new(OrderField::Title, simple_sort),
+                Order::new(OrderField::Artist, simple_sort),
                 cur_order,
                 &on_order,
                 18,
@@ -224,8 +226,8 @@ impl UampApp {
             make_title(
                 "ALBUM",
                 "YEAR",
-                Order::new(OrderField::Album, false),
-                Order::new(OrderField::Year, false),
+                Order::new(OrderField::Album, simple_sort),
+                Order::new(OrderField::Year, simple_sort),
                 cur_order,
                 &on_order,
                 15,
@@ -233,8 +235,8 @@ impl UampApp {
             make_title(
                 "T",
                 "D",
-                Order::new(OrderField::Track, false),
-                Order::new(OrderField::Disc, false),
+                Order::new(OrderField::Track, simple_sort),
+                Order::new(OrderField::Disc, simple_sort),
                 cur_order,
                 &on_order,
                 2,
@@ -242,8 +244,8 @@ impl UampApp {
             make_title(
                 "LENGTH",
                 "GENRE",
-                Order::new(OrderField::Length, false),
-                Order::new(OrderField::Genre, false),
+                Order::new(OrderField::Length, simple_sort),
+                Order::new(OrderField::Genre, simple_sort),
                 cur_order,
                 &on_order,
                 3,

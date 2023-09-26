@@ -37,6 +37,7 @@ pub enum Message {
     PreviousTimeout(Option<Duration>),
     ShowRemainingTime(bool),
     PlayOnStart(bool),
+    SimpleSorting(bool),
 }
 
 #[derive(Clone, Debug, Copy)]
@@ -62,6 +63,7 @@ pub enum DefMessage {
     PreviousTimeout,
     ShowRemainingTime,
     PlayOnStart,
+    SimpleSorting,
 }
 
 impl UampApp {
@@ -238,6 +240,9 @@ impl UampApp {
             Message::PlayOnStart(b) => {
                 self.config.play_on_start_set(b);
             }
+            Message::SimpleSorting(b) => {
+                self.config.simple_sorting_set(b);
+            }
         }
 
         ComMsg::none()
@@ -336,6 +341,10 @@ impl UampApp {
             DefMessage::PlayOnStart => {
                 self.config
                     .play_on_start_set(config::default_play_on_start());
+            }
+            DefMessage::SimpleSorting => {
+                self.config
+                    .simple_sorting_set(config::default_simple_sorting());
             }
         }
 

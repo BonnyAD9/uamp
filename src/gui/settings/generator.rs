@@ -340,6 +340,9 @@ generate_options! {
     toggle pub(super) update_library_on_start: "Update library on start"
         ? UPDATE_LIBRARY_ON_START => UpdateLibraryOnStart,
 
+    toggle pub(super) simple_sorting: "Simple sorting"
+        ? SIMPLE_SORTING => SimpleSorting,
+
     list pub(super) search_paths = |p| { p.to_string_lossy() }:
         { "Library search paths" } ("path")
         ? LIBRARY_SEARCH_PATHS => (
