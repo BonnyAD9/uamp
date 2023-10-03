@@ -268,15 +268,21 @@ impl UampApp {
     fn new(conf: Config, gui: GuiState) -> Self {
         let mut lib = Library::from_config(&conf);
 
-        lib.init();
-
         let (sender, reciever) = mpsc::unbounded_channel::<Msg>();
         let sender = Arc::new(sender);
+
+        if let Err(e) = sender.send(Msg::Init) {
+            error!("Failed to send init message: {e}")
+        }
 
         if conf.update_library_on_start() {
             if let Err(e) = lib.start_get_new_songs(&conf, sender.clone()) {
                 error!("Failed to start library load: {e}");
             }
+        }
+
+        if let Err(e) = lib.start_load_images(sender.clone(), &conf) {
+            error!("Failed to start loading images: {e}");
         }
 
         let mut player = Player::from_config(sender.clone(), &conf);
@@ -294,10 +300,6 @@ impl UampApp {
         } else {
             Cell::new(None)
         };
-
-        if let Err(e) = sender.send(Msg::Init) {
-            error!("Failed to send init message: {e}")
-        }
 
         UampApp {
             config: conf,

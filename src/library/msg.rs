@@ -3,4 +3,6 @@
 pub enum Message {
     LoadEnded,
     SaveEnded,
+    ImageLoadEnded,
+    ImageShrinkEnded,
 }

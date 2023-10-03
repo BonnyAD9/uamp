@@ -220,7 +220,7 @@ pub fn container<'a>(child: impl Into<Element<'a>>) -> Container<'a> {
 }
 
 /// Creates container that centers its child
-pub fn _center<'a>(child: impl Into<Element<'a>>) -> Row<'a> {
+pub fn center<'a>(child: impl Into<Element<'a>>) -> Row<'a> {
     center_x(center_y(child))
 }
 

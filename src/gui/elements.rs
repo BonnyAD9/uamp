@@ -1,8 +1,9 @@
 use std::{borrow::Cow, sync::Arc};
 
+use iced::widget::scrollable::Alignment;
 use iced_core::{
     alignment::{Horizontal, Vertical},
-    Length::{FillPortion, Shrink},
+    Length::{Fill, FillPortion, Shrink},
 };
 
 use crate::{
@@ -14,9 +15,10 @@ use crate::{
         msg::Message,
         theme::{Border, Button, Container, CursorGrad, Text},
         wid::{
-            self, border, button, container, cursor_grad, line_text, row,
-            text, wrap_box, Element, WrapBoxState,
+            self, border, button, center, container, cursor_grad, image,
+            line_text, row, space, svg, text, wrap_box, Element, WrapBoxState,
         },
+        widgets::icons,
     },
     library::{
         order::{Order, OrderField},
@@ -105,6 +107,7 @@ impl UampApp {
         }
 
         items.extend([
+            space(40, Fill).into(),
             make_title("TITLE / ARTIST", 18),
             make_title("ALBUM / YEAR", 15),
             make_title("T / D", 2),
@@ -214,6 +217,7 @@ impl UampApp {
         let simple_sort = self.config.simple_sorting();
 
         items.extend([
+            space(40, Fill).into(),
             make_title(
                 "TITLE",
                 "ARTIST",
@@ -335,18 +339,40 @@ impl UampApp {
             .height(FillPortion(2)),
         ];
 
+        let img: Element = self
+            .library
+            .get_small_image(songs[song])
+            .map(|i| image(i).width(30).height(30).into())
+            .unwrap_or_else(|| {
+                svg(icons::IMG_PLACEHOLDER).width(30).height(30).into()
+            });
+
         let item: Element = if numbered {
             row![
                 text((song + 1).to_string())
                     .width(50)
                     .vertical_alignment(Vertical::Center)
                     .style(Text::Gray),
+                container(img)
+                    .align_x(Horizontal::Center)
+                    .align_y(Vertical::Center)
+                    .width(40)
+                    .height(40),
                 info,
             ]
             .padding([0, 10, 0, 10])
             .into()
         } else {
-            info.padding([0, 10, 0, 10]).into()
+            row![
+                container(img)
+                    .align_x(Horizontal::Center)
+                    .align_y(Vertical::Center)
+                    .width(40)
+                    .height(40),
+                info
+            ]
+            .padding([0, 10, 0, 10])
+            .into()
         };
 
         Some(

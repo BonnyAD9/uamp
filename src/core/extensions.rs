@@ -1,4 +1,4 @@
-use std::{iter, str::FromStr, time::Duration};
+use std::{iter, path::PathBuf, str::FromStr, time::Duration};
 
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -234,4 +234,22 @@ impl<'de> Deserialize<'de> for Wrap<Duration> {
             .map(|d| Wrap(d))
             .ok_or(serde::de::Error::custom("Invalid duration format"))
     }
+}
+
+pub fn valid_filename<I>(s: I) -> PathBuf
+where
+    I: Iterator<Item = char>,
+{
+    PathBuf::from(
+        s.map(|c: char| {
+            if "<>:\"/\\|?*".contains(c) {
+                '-'
+            } else if c.is_ascii_control() {
+                '-'
+            } else {
+                c
+            }
+        })
+        .collect::<String>(),
+    )
 }

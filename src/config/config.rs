@@ -42,6 +42,10 @@ gen_struct! {
             Some(default_config_path().join("gui_state.json"))
         },
 
+        image_cache: Option<PathBuf> { pub, pub } => pub(super) () {
+            Some(default_config_path().join("img_cache"))
+        },
+
         audio_extensions: Vec<String> { pub, pub } => pub(super) () {
             vec![
                 "flac".to_owned(),
@@ -231,6 +235,7 @@ impl Config {
             library_path: default_library_path(),
             player_path: default_player_path(),
             gui_state_path: default_gui_state_path(),
+            image_cache: default_image_cache(),
             audio_extensions: default_audio_extensions(),
             update_library_on_start: default_update_library_on_start(),
             register_global_hotkeys: default_register_global_hotkeys(),
