@@ -1,7 +1,7 @@
 use std::{borrow::Cow, cell::Cell, ops::RangeInclusive};
 
 use iced::widget;
-use iced_core::Length::{self, Fill, FillPortion, Shrink};
+use iced_core::Length::{self, Fill};
 
 use crate::core::msg::Msg;
 
@@ -217,29 +217,6 @@ pub fn slider<'a, T: Copy + From<u8> + std::cmp::PartialOrd>(
 /// Creates container widget with the given child
 pub fn container<'a>(child: impl Into<Element<'a>>) -> Container<'a> {
     widget::container(child).width(Fill).height(Fill)
-}
-
-/// Creates container that centers its child
-pub fn center<'a>(child: impl Into<Element<'a>>) -> Row<'a> {
-    center_x(center_y(child))
-}
-
-/// Creates container that centers its child on the x axis
-pub fn center_x<'a>(child: impl Into<Element<'a>>) -> Row<'a> {
-    row![
-        space(FillPortion(1), Shrink),
-        child.into(),
-        space(FillPortion(1), Shrink)
-    ]
-}
-
-/// Creates container that centers its child on the y axis
-pub fn center_y<'a>(child: impl Into<Element<'a>>) -> Column<'a> {
-    col![
-        space(Shrink, FillPortion(1)),
-        child.into(),
-        space(Shrink, FillPortion(1)),
-    ]
 }
 
 pub fn border<'a, E>(child: E) -> Border<'a>

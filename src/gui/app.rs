@@ -37,8 +37,8 @@ use super::{
     settings::SetState,
     theme::{Container, SvgButton, Text},
     wid::{
-        center_x, center_y, container, image, line_text, slider, space, svg,
-        svg_button, text, Command, Element, GridItem, WrapBoxState,
+        container, image, line_text, slider, space, svg, svg_button, text,
+        Command, Element, GridItem, WrapBoxState,
     },
     widgets::{
         grid::SpanLen::{Fixed, Relative},
@@ -344,7 +344,7 @@ impl UampApp {
         }
 
         col![
-            center_x(
+            container(
                 row![
                     mk_button(icons::PREVIOUS, ControlMsg::PrevSong(None)),
                     mk_button(icons::REWIND, ControlMsg::Rewind(None)),
@@ -364,6 +364,7 @@ impl UampApp {
                 .width(Shrink)
                 .padding([10, 0, 0, 0])
             )
+            .align_x(Horizontal::Center)
             .height(40),
             space(Fill, 5),
             self.seek_slider()
@@ -445,7 +446,7 @@ impl UampApp {
         grid![
             Relative(1.), Fixed(40.), Fixed(30.), Fixed(160.);
             Fixed(40.), Relative(1.);
-            GridItem::new(center_y(self.mute_button()))
+            GridItem::new(container(self.mute_button()).align_y(Vertical::Center))
                     .column(1)
                     .row(1)
                     .padding([0, 10, 0, 0]),
@@ -458,12 +459,13 @@ impl UampApp {
             .column(2)
             .row(1),
             GridItem::new(
-                center_y(
+                container(
                     slider(0.0..=1., self.player.volume(), |v| {
                         Msg::Control(ControlMsg::SetVolume(v))
                     })
                     .step(0.001),
                 )
+                .align_y(Vertical::Center)
                 .width(150)
                 .padding([0, 5])
             )

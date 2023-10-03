@@ -1,6 +1,5 @@
 use std::{borrow::Cow, sync::Arc};
 
-use iced::widget::scrollable::Alignment;
 use iced_core::{
     alignment::{Horizontal, Vertical},
     Length::{Fill, FillPortion, Shrink},
@@ -15,8 +14,8 @@ use crate::{
         msg::Message,
         theme::{Border, Button, Container, CursorGrad, Text},
         wid::{
-            self, border, button, center, container, cursor_grad, image,
-            line_text, row, space, svg, text, wrap_box, Element, WrapBoxState,
+            self, border, button, container, cursor_grad, image, line_text,
+            row, space, svg, text, wrap_box, Element, WrapBoxState,
         },
         widgets::icons,
     },
