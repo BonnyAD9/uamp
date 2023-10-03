@@ -55,6 +55,8 @@ gen_struct! {
         image_load_process: Option<JoinHandle<Library>>,
         #[serde(skip)]
         image_shrink_process: Option<JoinHandle<ImageMap>>,
+        #[serde(skip)]
+        new_images: bool,
         /// invalid song
         #[serde(skip, default = "default_ghost")]
         ghost: Song,
@@ -80,6 +82,7 @@ impl Library {
             save_process: None,
             image_load_process: None,
             image_shrink_process: None,
+            new_images: false,
             lib_update: LibraryUpdate::None,
             change: Cell::new(true),
             ghost: Song::invalid(),
@@ -91,10 +94,6 @@ impl Library {
         if up > self.lib_update {
             self.lib_update = up;
         }
-    }
-
-    pub fn pop_update(&mut self) -> LibraryUpdate {
-        mem::replace(&mut self.lib_update, LibraryUpdate::None)
     }
 
     /// Loads library according to config, returns empty library on fail
@@ -411,6 +410,23 @@ impl UampApp {
         }
         ComMsg::none()
     }
+
+    pub fn library_lib_update(&mut self) -> LibraryUpdate {
+        let up = mem::replace(&mut self.library.lib_update, LibraryUpdate::None);
+
+        if up >= LibraryUpdate::NewData {
+            self.library.new_images = true;
+        }
+
+        if self.library.image_load_process.is_none() && self.library.new_images {
+            self.library.new_images = false;
+            if let Err(e) = self.library.start_load_images(self.sender.clone(), &self.config) {
+                error!("Failed to start load for new images: {e}");
+            }
+        }
+
+        up
+    }
 }
 
 //===========================================================================//
@@ -568,7 +584,7 @@ impl Library {
     }
 
     fn load_images(&mut self, conf: &Config) {
-        let mut images = HashMap::new();
+        let mut images = self.images.clone();
         let full_path = conf.image_cache().as_ref().map(|p| p.join("full"));
         let small_path = conf.image_cache().as_ref().map(|p| p.join("small"));
 
@@ -667,6 +683,7 @@ impl Clone for Library {
             image_load_process: None,
             image_shrink_process: None,
             lib_update: LibraryUpdate::None,
+            new_images: self.new_images,
             ghost: self.ghost.clone(),
             change: self.change.clone(),
             images: self.images.clone(),
