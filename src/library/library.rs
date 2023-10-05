@@ -412,15 +412,20 @@ impl UampApp {
     }
 
     pub fn library_lib_update(&mut self) -> LibraryUpdate {
-        let up = mem::replace(&mut self.library.lib_update, LibraryUpdate::None);
+        let up =
+            mem::replace(&mut self.library.lib_update, LibraryUpdate::None);
 
         if up >= LibraryUpdate::NewData {
             self.library.new_images = true;
         }
 
-        if self.library.image_load_process.is_none() && self.library.new_images {
+        if self.library.image_load_process.is_none() && self.library.new_images
+        {
             self.library.new_images = false;
-            if let Err(e) = self.library.start_load_images(self.sender.clone(), &self.config) {
+            if let Err(e) = self
+                .library
+                .start_load_images(self.sender.clone(), &self.config)
+            {
                 error!("Failed to start load for new images: {e}");
             }
         }

@@ -89,10 +89,15 @@ impl UampApp {
 
         if numbered {
             items.push(
-                container(text("#").horizontal_alignment(Horizontal::Right).style(Text::Gray).size(14))
-                    .width(50)
-                    .padding([0, 10, 0, 10])
-                    .into(),
+                container(
+                    text("#")
+                        .horizontal_alignment(Horizontal::Right)
+                        .style(Text::Gray)
+                        .size(14),
+                )
+                .width(50)
+                .padding([0, 10, 0, 10])
+                .into(),
             )
         }
 
@@ -153,10 +158,15 @@ impl UampApp {
 
         if numbered {
             items.push(
-                container(text("#").horizontal_alignment(Horizontal::Center).style(Text::Gray).size(14))
-                    .width(50)
-                    .padding([0, 10, 0, 10])
-                    .into(),
+                container(
+                    text("#")
+                        .horizontal_alignment(Horizontal::Center)
+                        .style(Text::Gray)
+                        .size(14),
+                )
+                .width(50)
+                .padding([0, 10, 0, 10])
+                .into(),
             )
         }
 
