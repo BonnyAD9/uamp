@@ -89,9 +89,9 @@ impl UampApp {
 
         if numbered {
             items.push(
-                container(text("#").style(Text::Gray).size(14))
+                container(text("#").horizontal_alignment(Horizontal::Right).style(Text::Gray).size(14))
                     .width(50)
-                    .padding([0, 0, 0, 10])
+                    .padding([0, 10, 0, 10])
                     .into(),
             )
         }
@@ -106,7 +106,7 @@ impl UampApp {
         }
 
         items.extend([
-            space(40, Fill).into(),
+            space(35, Fill).into(),
             make_title("TITLE / ARTIST", 18),
             make_title("ALBUM / YEAR", 15),
             make_title("T / D", 2),
@@ -153,9 +153,9 @@ impl UampApp {
 
         if numbered {
             items.push(
-                container(text("#").style(Text::Gray).size(14))
+                container(text("#").horizontal_alignment(Horizontal::Center).style(Text::Gray).size(14))
                     .width(50)
-                    .padding([0, 0, 0, 10])
+                    .padding([0, 10, 0, 10])
                     .into(),
             )
         }
@@ -216,7 +216,7 @@ impl UampApp {
         let simple_sort = self.config.simple_sorting();
 
         items.extend([
-            space(40, Fill).into(),
+            space(35, Fill).into(),
             make_title(
                 "TITLE",
                 "ARTIST",
@@ -341,22 +341,24 @@ impl UampApp {
         let img: Element = self
             .library
             .get_small_image(songs[song])
-            .map(|i| image(i).width(30).height(30).into())
+            .map(|i| image(i).width(Fill).height(Fill).into())
             .unwrap_or_else(|| {
-                svg(icons::IMG_PLACEHOLDER).width(30).height(30).into()
+                svg(icons::IMG_PLACEHOLDER).width(Fill).height(Fill).into()
             });
 
         let item: Element = if numbered {
             row![
-                text((song + 1).to_string())
+                line_text((song + 1).to_string())
                     .width(50)
                     .vertical_alignment(Vertical::Center)
+                    .horizontal_alignment(Horizontal::Center)
                     .style(Text::Gray),
                 container(img)
                     .align_x(Horizontal::Center)
                     .align_y(Vertical::Center)
-                    .width(40)
-                    .height(40),
+                    .width(35)
+                    .height(40)
+                    .padding([5, 5, 5, 0]),
                 info,
             ]
             .padding([0, 10, 0, 10])
@@ -366,8 +368,9 @@ impl UampApp {
                 container(img)
                     .align_x(Horizontal::Center)
                     .align_y(Vertical::Center)
-                    .width(40)
-                    .height(40),
+                    .width(35)
+                    .height(40)
+                    .padding([5, 5, 5, 0]),
                 info
             ]
             .padding([0, 10, 0, 10])
