@@ -1,6 +1,7 @@
 use std::ops::Add;
 
-use iced_core::{BorderRadius, Padding};
+use iced::Size;
+use iced_core::{border, Padding};
 
 /// Represents the four sides of border
 pub struct Sides<T> {
@@ -128,8 +129,8 @@ where
 
 impl<T> Copy for Sides<T> where T: Copy {}
 
-impl Into<BorderRadius> for Sides<f32> {
-    fn into(self) -> BorderRadius {
+impl Into<border::Radius> for Sides<f32> {
+    fn into(self) -> border::Radius {
         [self.top, self.right, self.bottom, self.left].into()
     }
 }
@@ -137,5 +138,11 @@ impl Into<BorderRadius> for Sides<f32> {
 impl Into<Padding> for Sides<f32> {
     fn into(self) -> Padding {
         [self.top, self.right, self.bottom, self.left].into()
+    }
+}
+
+impl Into<Size> for Sides<f32> {
+    fn into(self) -> Size {
+        Size { width: self.left + self.right, height: self.top + self.bottom }
     }
 }

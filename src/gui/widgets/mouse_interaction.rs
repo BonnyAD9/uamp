@@ -8,7 +8,7 @@ use iced_core::{
 
 use super::{limit_size, sides::Sides};
 
-pub struct MouseInteraction<'a, Message, Renderer>
+pub struct MouseInteraction<'a, Message, Theme, Renderer>
 where
     Renderer: iced_core::Renderer,
     Message: Clone,
@@ -16,18 +16,18 @@ where
     width: Length,
     height: Length,
     padding: Sides<f32>,
-    child: Element<'a, Message, Renderer>,
+    child: Element<'a, Message, Theme, Renderer>,
     mouse_over: Option<bool>,
     mouse_enter: Option<Message>,
 }
 
-impl<'a, Message, Renderer> MouseInteraction<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer> MouseInteraction<'a, Message, Theme, Renderer>
 where
     Renderer: iced_core::Renderer,
     Message: Clone,
 {
     /// Creates new border
-    pub fn new(child: Element<'a, Message, Renderer>) -> Self {
+    pub fn new(child: Element<'a, Message, Theme, Renderer>) -> Self {
         Self {
             width: Length::Shrink,
             height: Length::Shrink,
@@ -70,8 +70,8 @@ where
     }
 }
 
-impl<'a, Message, Renderer> Widget<Message, Renderer>
-    for MouseInteraction<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer> Widget<Message, Theme, Renderer>
+    for MouseInteraction<'a, Message, Theme, Renderer>
 where
     Renderer: iced_core::Renderer,
     Message: Clone,
@@ -84,35 +84,36 @@ where
         tree.diff_children(&[&self.child])
     }
 
-    fn width(&self) -> Length {
+    fn size(&self) -> iced::Size<Length> {
+        let child_size = self.child.as_widget().size();
+        let width =
         if self.width == Length::Shrink
-            && self.child.as_widget().width() == Length::Fill
+            && child_size.width == Length::Fill
         {
             Length::Fill
         } else {
             self.width
-        }
-    }
-
-    fn height(&self) -> Length {
+        };
+        let height =
         if self.height == Length::Shrink
-            && self.child.as_widget().height() == Length::Fill
+            && child_size.height == Length::Fill
         {
             Length::Fill
         } else {
             self.height
-        }
+        };
+        iced::Size { width, height }
     }
 
-    fn layout(&self, renderer: &Renderer, limits: &Limits) -> Node {
+    fn layout(&self, state: &mut Tree, renderer: &Renderer, limits: &Limits) -> Node {
         let lim = limits.width(self.width).height(self.height);
 
-        let child_limits = lim.pad(self.padding.into());
+        let child_limits = lim.shrink(self.padding);
 
         let child = self
             .child
             .as_widget()
-            .layout(renderer, &child_limits)
+            .layout(state, renderer, &child_limits)
             .translate(Vector::new(self.padding.left, self.padding.top));
 
         let child_size = child.size();
@@ -205,7 +206,7 @@ where
         &self,
         state: &Tree,
         renderer: &mut Renderer,
-        theme: &<Renderer as iced_core::Renderer>::Theme,
+        theme: &Theme,
         style: &Style,
         layout: Layout<'_>,
         cursor: Cursor,
@@ -227,23 +228,25 @@ where
         state: &'b mut Tree,
         layout: Layout<'_>,
         renderer: &Renderer,
-    ) -> Option<iced_core::overlay::Element<'b, Message, Renderer>> {
+        translation: Vector,
+    ) -> Option<iced_core::overlay::Element<'b, Message, Theme, Renderer>> {
         self.child.as_widget_mut().overlay(
             &mut state.children[0],
             layout.children().next().unwrap(),
             renderer,
+            translation,
         )
     }
 }
 
-impl<'a, Message, Renderer> From<MouseInteraction<'a, Message, Renderer>>
-    for Element<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer> From<MouseInteraction<'a, Message, Theme, Renderer>>
+    for Element<'a, Message, Theme, Renderer>
 where
     Renderer: iced_core::Renderer + 'a,
-    Message: Clone,
-    Message: 'a,
+    Message: Clone + 'a,
+    Theme: 'a,
 {
-    fn from(value: MouseInteraction<'a, Message, Renderer>) -> Self {
+    fn from(value: MouseInteraction<'a, Message, Theme, Renderer>) -> Self {
         Self::new(value)
     }
 }

@@ -149,7 +149,7 @@ impl UampApp {
                     self.pending_close = true;
                     return ComMsg::none();
                 }
-                return ComMsg::Command(window::close());
+                return ComMsg::Command(window::close(window::Id::MAIN));
             }
             ControlMsg::Shuffle => {
                 self.player.shuffle();

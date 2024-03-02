@@ -8,8 +8,7 @@ use app::UampApp;
 use config::{app_id, Config};
 use gui::app::GuiState;
 use iced::{
-    window::{self, PlatformSpecific, Position},
-    Application, Settings,
+    window::{self, settings::PlatformSpecific, Position}, Application, Point, Settings
 };
 use log::{error, info};
 
@@ -109,7 +108,7 @@ fn make_settings(conf: Config) -> Settings<(Config, GuiState)> {
     let pos = if x == i32::MAX || y == i32::MAX {
         Position::Default
     } else {
-        Position::Specific(x, y)
+        Position::Specific(Point::new(x as f32, y as f32))
     };
 
     Settings {
@@ -119,11 +118,11 @@ fn make_settings(conf: Config) -> Settings<(Config, GuiState)> {
                 application_id: app_id(),
             },
             position: pos,
-            size: (w, h),
+            size: iced::Size::new(w as f32, h as f32),
+            exit_on_close_request: false,
             ..Default::default()
         },
         id: Some(app_id()),
-        exit_on_close_request: false,
         flags: (conf, gui),
         ..Default::default()
     }

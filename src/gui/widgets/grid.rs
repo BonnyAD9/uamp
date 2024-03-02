@@ -13,7 +13,7 @@ use itertools::Itertools;
 use super::sides::Sides;
 
 /// Container that can separate its contents into grid and allows spanning
-pub struct Grid<'a, Message, Renderer>
+pub struct Grid<'a, Message, Theme, Renderer>
 where
     Renderer: iced_core::Renderer,
 {
@@ -23,17 +23,17 @@ where
     columns: Vec<SpanSum>,
     /// Guaranteed to have at least two items
     rows: Vec<SpanSum>,
-    items: Vec<GridItem<'a, Message, Renderer>>,
+    items: Vec<GridItem<'a, Message, Theme, Renderer>>,
 }
 
-impl<'a, Message, Renderer> Grid<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer> Grid<'a, Message, Theme, Renderer>
 where
     Renderer: iced_core::Renderer,
 {
     pub fn new<I1, I2>(
         column: I1,
         row: I2,
-        items: Vec<GridItem<'a, Message, Renderer>>,
+        items: Vec<GridItem<'a, Message, Theme, Renderer>>,
     ) -> Self
     where
         I1: Iterator<Item = SpanLen>,
@@ -92,8 +92,8 @@ where
     }
 }
 
-impl<'a, Message, Renderer> Widget<Message, Renderer>
-    for Grid<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer> Widget<Message, Theme, Renderer>
+    for Grid<'a, Message, Theme, Renderer>
 where
     Renderer: iced_core::Renderer,
 {
@@ -107,16 +107,12 @@ where
         }
     }
 
-    fn width(&self) -> Length {
-        self.width
+    fn size(&self) -> Size<Length> {
+        Size { width: self.width, height: self.height }
     }
 
-    fn height(&self) -> Length {
-        self.height
-    }
-
-    fn layout(&self, renderer: &Renderer, limits: &Limits) -> Node {
-        let size = limits.width(self.width).height(self.height).fill();
+    fn layout(&self, state: &mut Tree, renderer: &Renderer, limits: &Limits) -> Node {
+        let size = limits.width(self.width).height(self.height).max();
 
         let c_point = ((size.width - self.col_last().fixed)
             / self.col_last().relative)
@@ -127,7 +123,7 @@ where
 
         let mut children = Vec::new();
 
-        for i in &self.items {
+        for (i, state) in self.items.iter().zip(state.children.iter_mut()) {
             let w = (self.columns[i.columns.end]
                 - self.columns[i.columns.start])
                 .with_unit(c_point)
@@ -142,7 +138,7 @@ where
             let y = self.rows[i.rows.start].with_unit(c_point) + i.padding.top;
 
             let child_limits = Limits::new(Size::ZERO, Size::new(w, h));
-            let child = i.child.as_widget().layout(renderer, &child_limits);
+            let child = i.child.as_widget().layout(state, renderer, &child_limits);
 
             children.push(child.translate(Vector::new(x, y)));
         }
@@ -222,7 +218,7 @@ where
         &self,
         state: &iced_core::widget::Tree,
         renderer: &mut Renderer,
-        theme: &<Renderer as iced_core::Renderer>::Theme,
+        theme: &Theme,
         style: &iced_core::renderer::Style,
         layout: iced_core::Layout<'_>,
         cursor: iced_core::mouse::Cursor,
@@ -243,13 +239,14 @@ where
         state: &'b mut Tree,
         layout: iced_core::Layout<'_>,
         renderer: &Renderer,
-    ) -> Option<iced_core::overlay::Element<'b, Message, Renderer>> {
+        transpation: Vector,
+    ) -> Option<iced_core::overlay::Element<'b, Message, Theme, Renderer>> {
         let children = self
             .iter_mut()
             .zip(layout.children())
             .zip(state.children.iter_mut())
             .filter_map(|((child, layout), state)| {
-                child.as_widget_mut().overlay(state, layout, renderer)
+                child.as_widget_mut().overlay(state, layout, renderer, transpation)
             })
             .collect_vec();
 
@@ -258,34 +255,35 @@ where
     }
 }
 
-impl<'a, Message, Renderer> From<Grid<'a, Message, Renderer>>
-    for Element<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer> From<Grid<'a, Message, Theme, Renderer>>
+    for Element<'a, Message, Theme, Renderer>
 where
     Renderer: iced_core::Renderer + 'a,
+    Theme: 'a,
     Message: 'a,
 {
-    fn from(value: Grid<'a, Message, Renderer>) -> Self {
+    fn from(value: Grid<'a, Message, Theme, Renderer>) -> Self {
         Self::new(value)
     }
 }
 
-pub struct GridItem<'a, Message, Renderer>
+pub struct GridItem<'a, Message, Theme, Renderer>
 where
     Renderer: iced_core::Renderer,
 {
     columns: Range<usize>,
     rows: Range<usize>,
     padding: Sides<f32>,
-    child: Element<'a, Message, Renderer>,
+    child: Element<'a, Message, Theme, Renderer>,
 }
 
-impl<'a, Message, Renderer> GridItem<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer> GridItem<'a, Message, Theme, Renderer>
 where
     Renderer: iced_core::Renderer,
 {
     pub fn new<E>(item: E) -> Self
     where
-        E: Into<Element<'a, Message, Renderer>>,
+        E: Into<Element<'a, Message, Theme, Renderer>>,
     {
         Self {
             columns: 0..1,
@@ -320,10 +318,10 @@ where
     }
 }
 
-impl<'a, Message, Renderer, I> From<I> for GridItem<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer, I> From<I> for GridItem<'a, Message, Theme, Renderer>
 where
     Renderer: iced_core::Renderer,
-    I: Into<Element<'a, Message, Renderer>>,
+    I: Into<Element<'a, Message, Theme, Renderer>>,
 {
     fn from(value: I) -> Self {
         Self::new(value)
@@ -350,7 +348,7 @@ pub enum SpanLen {
     Relative(f32),
 }
 
-impl<'a, Message, Renderer> Grid<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer> Grid<'a, Message, Theme, Renderer>
 where
     Renderer: iced_core::Renderer,
 {
@@ -364,13 +362,13 @@ where
         *self.rows.last().unwrap()
     }
 
-    fn iter(&self) -> impl Iterator<Item = &Element<'a, Message, Renderer>> {
+    fn iter(&self) -> impl Iterator<Item = &Element<'a, Message, Theme, Renderer>> {
         self.items.iter().map(|i| &i.child)
     }
 
     fn iter_mut(
         &mut self,
-    ) -> impl Iterator<Item = &mut Element<'a, Message, Renderer>> {
+    ) -> impl Iterator<Item = &mut Element<'a, Message, Theme, Renderer>> {
         self.items.iter_mut().map(|i| &mut i.child)
     }
 }

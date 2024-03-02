@@ -13,49 +13,49 @@ use super::{
 // collection of less generic types
 
 /// Renderer used in uamp
-pub type Renderer = iced::Renderer<Theme>;
+pub type Renderer = iced::Renderer;
 /// Element used in uamp
-pub type Element<'a> = iced::Element<'a, Msg, Renderer>;
+pub type Element<'a> = iced::Element<'a, Msg, Theme, Renderer>;
 /// Command used in uamp
 pub type Command = iced::Command<Msg>;
 /// Subscription use in uamp
 pub type Subscription = iced::Subscription<Msg>;
 
 /// WrapBox widget as used in uamp
-pub type WrapBox<'a> = widgets::wrap_box::WrapBox<'a, Msg, Renderer>;
+pub type WrapBox<'a> = widgets::wrap_box::WrapBox<'a, Msg, Theme, Renderer>;
 /// Button widget as used in uamp
-pub type Button<'a> = widget::Button<'a, Msg, Renderer>;
+pub type Button<'a> = widget::Button<'a, Msg, Theme, Renderer>;
 /// Button widget as used in uamp
-pub type SvgButton = widgets::svg_button::SvgButton<Msg, Renderer>;
+pub type SvgButton = widgets::svg_button::SvgButton<Msg, Theme>;
 /// Text widget as used in uamp
-pub type Text<'a> = widget::Text<'a, Renderer>;
+pub type Text<'a> = widget::Text<'a, Theme, Renderer>;
 /// Text widget as used in uamp
-pub type LineText<'a> = widgets::line_text::LineText<'a, Renderer>;
+pub type LineText<'a> = widgets::line_text::LineText<'a, Theme, Renderer>;
 /// Column widget as used in uamp
-pub type Column<'a> = widget::Column<'a, Msg, Renderer>;
+pub type Column<'a> = widget::Column<'a, Msg, Theme, Renderer>;
 /// Row widget as used in uamp
-pub type Row<'a> = widget::Row<'a, Msg, Renderer>;
+pub type Row<'a> = widget::Row<'a, Msg, Theme, Renderer>;
 /// Svg widget as used in uamp
-pub type Svg = widget::Svg<Renderer>;
+pub type Svg = widget::Svg<Theme>;
 /// Space widget as used in uamp
 pub type Space = widget::Space;
 /// Slider widget as used in uamp
-pub type Slider<'a, T> = widget::Slider<'a, T, Msg, Renderer>;
+pub type Slider<'a, T> = widget::Slider<'a, T, Msg, Theme>;
 /// Container widget as used in uamp
-pub type Container<'a> = widget::Container<'a, Msg, Renderer>;
+pub type Container<'a> = widget::Container<'a, Msg, Theme, Renderer>;
 /// Border widget used by uamp
-pub type Border<'a> = widgets::border::Border<'a, Msg, Renderer>;
+pub type Border<'a> = widgets::border::Border<'a, Msg, Theme, Renderer>;
 /// Border widget used by uamp
-pub type CursorGrad<'a> = widgets::cursor_grad::CursorGrad<'a, Msg, Renderer>;
+pub type CursorGrad<'a> = widgets::cursor_grad::CursorGrad<'a, Msg, Theme, Renderer>;
 /// Grid
-pub type Grid<'a> = widgets::grid::Grid<'a, Msg, Renderer>;
+pub type Grid<'a> = widgets::grid::Grid<'a, Msg, Theme, Renderer>;
 /// Item in a grid
-pub type GridItem<'a> = widgets::grid::GridItem<'a, Msg, Renderer>;
+pub type GridItem<'a> = widgets::grid::GridItem<'a, Msg, Theme, Renderer>;
 /// Toggler
-pub type Switch<'a> = widgets::switch::Switch<'a, Msg, Renderer>;
-pub type TextInput<'a> = widget::TextInput<'a, Msg, Renderer>;
+pub type Switch<'a> = widgets::switch::Switch<'a, Msg, Theme, Renderer>;
+pub type TextInput<'a> = widget::TextInput<'a, Msg, Theme, Renderer>;
 pub type MouseInteraction<'a> =
-    widgets::mouse_interaction::MouseInteraction<'a, Msg, Renderer>;
+    widgets::mouse_interaction::MouseInteraction<'a, Msg, Theme, Renderer>;
 pub type Image = widget::Image<iced_core::image::Handle>;
 
 pub type WrapBoxState = Cell<widgets::wrap_box::State>;

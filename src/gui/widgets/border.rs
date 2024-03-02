@@ -6,27 +6,27 @@ use iced_core::{
     Background, Color, Element, Layout, Length, Rectangle, Vector, Widget,
 };
 
-use super::{limit_size, sides::Sides};
+use super::{limit_size, sides::Sides, NO_SHADOW};
 
-pub struct Border<'a, Message, Renderer>
+pub struct Border<'a, Message, Theme, Renderer>
 where
     Renderer: iced_core::Renderer,
-    Renderer::Theme: StyleSheet,
+    Theme: StyleSheet,
 {
     width: Length,
     height: Length,
     padding: Sides<f32>,
-    child: Element<'a, Message, Renderer>,
-    style: <Renderer::Theme as StyleSheet>::Style,
+    child: Element<'a, Message, Theme, Renderer>,
+    style: <Theme as StyleSheet>::Style,
 }
 
-impl<'a, Message, Renderer> Border<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer> Border<'a, Message, Theme, Renderer>
 where
     Renderer: iced_core::Renderer,
-    Renderer::Theme: StyleSheet,
+    Theme: StyleSheet,
 {
     /// Creates new border
-    pub fn new(child: Element<'a, Message, Renderer>) -> Self {
+    pub fn new(child: Element<'a, Message, Theme, Renderer>) -> Self {
         Self {
             width: Length::Fill,
             height: Length::Fill,
@@ -65,18 +65,18 @@ where
     /// Sets the height of the border
     pub fn style(
         mut self,
-        style: <Renderer::Theme as StyleSheet>::Style,
+        style: <Theme as StyleSheet>::Style,
     ) -> Self {
         self.style = style;
         self
     }
 }
 
-impl<'a, Message, Renderer> Widget<Message, Renderer>
-    for Border<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer> Widget<Message, Theme, Renderer>
+    for Border<'a, Message, Theme, Renderer>
 where
     Renderer: iced_core::Renderer,
-    Renderer::Theme: StyleSheet,
+    Theme: StyleSheet,
 {
     fn children(&self) -> Vec<Tree> {
         vec![Tree::new(&self.child)]
@@ -86,23 +86,19 @@ where
         tree.diff_children(&[&self.child])
     }
 
-    fn width(&self) -> Length {
-        self.width
+    fn size(&self) -> iced::Size<Length> {
+        iced::Size { width: self.width, height: self.height }
     }
 
-    fn height(&self) -> Length {
-        self.height
-    }
-
-    fn layout(&self, renderer: &Renderer, limits: &Limits) -> Node {
+    fn layout(&self, state: &mut Tree, renderer: &Renderer, limits: &Limits) -> Node {
         let lim = limits.width(self.width).height(self.height);
 
-        let child_limits = lim.pad(self.padding.into());
+        let child_limits = lim.shrink(self.padding);
 
         let child = self
             .child
             .as_widget()
-            .layout(renderer, &child_limits)
+            .layout(&mut state.children[0], renderer, &child_limits)
             .translate(Vector::new(self.padding.left, self.padding.top));
 
         let child_size = child.size();
@@ -183,7 +179,7 @@ where
         &self,
         state: &Tree,
         renderer: &mut Renderer,
-        theme: &<Renderer as iced_core::Renderer>::Theme,
+        theme: &Theme,
         style: &Style,
         layout: Layout<'_>,
         cursor: Cursor,
@@ -207,9 +203,12 @@ where
 
             let quad = Quad {
                 bounds,
-                border_radius: border_radius.left.into(),
-                border_width: 0.,
-                border_color: Color::TRANSPARENT,
+                border: iced::Border {
+                    color: Color::TRANSPARENT,
+                    width: 0.,
+                    radius: border_radius.left.into(),
+                },
+                shadow: NO_SHADOW,
             };
 
             renderer.fill_quad(quad, color.left);
@@ -226,9 +225,12 @@ where
 
             let quad = Quad {
                 bounds,
-                border_radius: border_radius.top.into(),
-                border_width: 0.,
-                border_color: Color::TRANSPARENT,
+                border: iced::Border {
+                    radius: border_radius.top.into(),
+                    width: 0.,
+                    color: Color::TRANSPARENT,
+                },
+                shadow: NO_SHADOW,
             };
 
             renderer.fill_quad(quad, color.top);
@@ -245,9 +247,12 @@ where
 
             let quad = Quad {
                 bounds,
-                border_radius: border_radius.left.into(),
-                border_width: 0.,
-                border_color: Color::TRANSPARENT,
+                border: iced::Border {
+                    radius: border_radius.left.into(),
+                    width: 0.,
+                    color: Color::TRANSPARENT,
+                },
+                shadow: NO_SHADOW,
             };
 
             renderer.fill_quad(quad, color.right);
@@ -266,9 +271,12 @@ where
 
             let quad = Quad {
                 bounds,
-                border_radius: border_radius.bottom.into(),
-                border_width: 0.,
-                border_color: Color::TRANSPARENT,
+                border: iced::Border {
+                    radius: border_radius.bottom.into(),
+                    width: 0.,
+                    color: Color::TRANSPARENT,
+                },
+                shadow: NO_SHADOW,
             };
 
             renderer.fill_quad(quad, color.bottom);
@@ -278,9 +286,12 @@ where
 
         let quad = Quad {
             bounds,
-            border_radius: radius.into(),
-            border_width: 0.,
-            border_color: Color::TRANSPARENT,
+            border: iced::Border {
+                radius: radius.into(),
+                width: 0.,
+                color: Color::TRANSPARENT,
+            },
+            shadow: NO_SHADOW,
         };
 
         let bg = theme.background(&self.style);
@@ -302,23 +313,25 @@ where
         state: &'b mut Tree,
         layout: Layout<'_>,
         renderer: &Renderer,
-    ) -> Option<iced_core::overlay::Element<'b, Message, Renderer>> {
+        translation: Vector,
+    ) -> Option<iced_core::overlay::Element<'b, Message, Theme, Renderer>> {
         self.child.as_widget_mut().overlay(
             &mut state.children[0],
             layout.children().next().unwrap(),
             renderer,
+            translation,
         )
     }
 }
 
-impl<'a, Message, Renderer> From<Border<'a, Message, Renderer>>
-    for Element<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer> From<Border<'a, Message, Theme, Renderer>>
+    for Element<'a, Message, Theme, Renderer>
 where
     Renderer: iced_core::Renderer + 'a,
-    Renderer::Theme: StyleSheet,
+    Theme: StyleSheet + 'a,
     Message: 'a,
 {
-    fn from(value: Border<'a, Message, Renderer>) -> Self {
+    fn from(value: Border<'a, Message, Theme, Renderer>) -> Self {
         Self::new(value)
     }
 }

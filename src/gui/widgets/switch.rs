@@ -10,33 +10,33 @@ use iced_core::{
     Color, Element, Event, Layout, Length, Rectangle, Size, Vector, Widget,
 };
 
-use super::{limit_size, sides::Sides};
+use super::{limit_size, sides::Sides, NO_SHADOW};
 
 const SWITCH_SIZE: f32 = 20.;
 
-pub struct Switch<'a, Message, Renderer>
+pub struct Switch<'a, Message, Theme, Renderer>
 where
     Renderer: text::Renderer,
-    Renderer::Theme: StyleSheet,
+    Theme: StyleSheet,
 {
-    child: Element<'a, Message, Renderer>,
+    child: Element<'a, Message, Theme, Renderer>,
     width: Length,
     height: Length,
     padding: Sides<f32>,
     is_active: bool,
     on_toggle: Option<Box<dyn Fn(bool) -> Option<Message>>>,
     alignment: Vertical,
-    style: <Renderer::Theme as StyleSheet>::Style,
+    style: <Theme as StyleSheet>::Style,
 }
 
-impl<'a, Message, Renderer> Switch<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer> Switch<'a, Message, Theme, Renderer>
 where
     Renderer: text::Renderer,
-    Renderer::Theme: StyleSheet,
+    Theme: StyleSheet,
 {
     pub fn new<E>(child: E, is_active: bool) -> Self
     where
-        E: Into<Element<'a, Message, Renderer>>,
+        E: Into<Element<'a, Message, Theme, Renderer>>,
     {
         Self {
             child: child.into(),
@@ -89,18 +89,18 @@ where
 
     pub fn style(
         mut self,
-        style: <Renderer::Theme as StyleSheet>::Style,
+        style: <Theme as StyleSheet>::Style,
     ) -> Self {
         self.style = style;
         self
     }
 }
 
-impl<'a, Message, Renderer> Widget<Message, Renderer>
-    for Switch<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer> Widget<Message, Theme, Renderer>
+    for Switch<'a, Message, Theme, Renderer>
 where
     Renderer: text::Renderer,
-    Renderer::Theme: StyleSheet,
+    Theme: StyleSheet,
 {
     fn children(&self) -> Vec<Tree> {
         vec![Tree::new(&self.child)]
@@ -110,33 +110,28 @@ where
         tree.diff_children(&[&self.child])
     }
 
-    fn width(&self) -> Length {
-        self.width
+    fn size(&self) -> Size<Length> {
+        Size { width: self.width, height: self.height }
     }
 
-    fn height(&self) -> Length {
-        self.height
-    }
-
-    fn layout(&self, renderer: &Renderer, limits: &Limits) -> Node {
+    fn layout(&self, state: &mut Tree, renderer: &Renderer, limits: &Limits) -> Node {
         let lim = limits
             .min_width(SWITCH_SIZE * 2.)
             .min_height(SWITCH_SIZE)
             .width(self.width)
             .height(self.height);
 
-        let child_limits = lim.pad(
+        let child_limits = lim.shrink(
             Sides {
                 left: self.padding.left + SWITCH_SIZE * 2.,
                 ..self.padding
-            }
-            .into(),
+            },
         );
 
         let child = self
             .child
             .as_widget()
-            .layout(renderer, &child_limits)
+            .layout(&mut state.children[0], renderer, &child_limits)
             .translate(Vector::new(
                 self.padding.left + SWITCH_SIZE * 2.,
                 self.padding.top,
@@ -236,7 +231,7 @@ where
         &self,
         state: &iced_core::widget::Tree,
         renderer: &mut Renderer,
-        theme: &<Renderer as iced_core::Renderer>::Theme,
+        theme: &Theme,
         style: &iced_core::renderer::Style,
         layout: iced_core::Layout<'_>,
         cursor: iced_core::mouse::Cursor,
@@ -295,16 +290,22 @@ where
 
         let rquad = Quad {
             bounds: rbounds,
-            border_radius: ap.rail_border_radius.into(),
-            border_width: ap.rail_border_thickness,
-            border_color: ap.rail_border_color,
+            border: iced::Border {
+                radius: ap.rail_border_radius.into(),
+                width: ap.rail_border_thickness,
+                color: ap.rail_border_color,
+            },
+            shadow: NO_SHADOW,
         };
 
         let tquad = Quad {
             bounds: tbounds,
-            border_radius: ap.thumb_border_radius.into(),
-            border_width: ap.thumb_border_thickness,
-            border_color: ap.thumb_border_color,
+            border: iced::Border {
+                radius: ap.thumb_border_radius.into(),
+                width: ap.thumb_border_thickness,
+                color: ap.thumb_border_color,
+            },
+            shadow: NO_SHADOW,
         };
 
         renderer.fill_quad(rquad, ap.rail_color);
@@ -334,23 +335,25 @@ where
         state: &'b mut Tree,
         layout: Layout<'_>,
         renderer: &Renderer,
-    ) -> Option<iced_core::overlay::Element<'b, Message, Renderer>> {
+        translation: Vector,
+    ) -> Option<iced_core::overlay::Element<'b, Message, Theme, Renderer>> {
         self.child.as_widget_mut().overlay(
             &mut state.children[0],
             layout.children().next().unwrap(),
             renderer,
+            translation,
         )
     }
 }
 
-impl<'a, Message, Renderer> From<Switch<'a, Message, Renderer>>
-    for Element<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer> From<Switch<'a, Message, Theme, Renderer>>
+    for Element<'a, Message, Theme, Renderer>
 where
     Renderer: text::Renderer + 'a,
-    Renderer::Theme: StyleSheet,
+    Theme: StyleSheet + 'a,
     Message: 'a,
 {
-    fn from(value: Switch<'a, Message, Renderer>) -> Self {
+    fn from(value: Switch<'a, Message, Theme, Renderer>) -> Self {
         Self::new(value)
     }
 }

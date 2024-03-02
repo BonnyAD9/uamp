@@ -12,7 +12,7 @@ use iced_core::{
 };
 
 use super::widgets::{
-    border, cursor_grad, line_text, sides::Sides, svg_button, switch, wrap_box,
+    border, cursor_grad, line_text, sides::Sides, svg_button, switch, wrap_box, NO_SHADOW,
 };
 
 /// Creates const color from hex
@@ -119,10 +119,13 @@ impl button::StyleSheet for Theme {
         let default = button::Appearance {
             shadow_offset: Vector::ZERO,
             background: None,
-            border_radius: RADIUS.into(),
-            border_width: 0.,
-            border_color: TRANSPARENT,
+            border: iced::Border {
+                radius: RADIUS.into(),
+                width: 0.,
+                color: TRANSPARENT,
+            },
             text_color: FOREGROUND,
+            shadow: NO_SHADOW,
         };
 
         match style {
@@ -185,9 +188,11 @@ impl checkbox::StyleSheet for Theme {
         checkbox::Appearance {
             background: BG_DARK_BG,
             icon_color: CONTRAST,
-            border_radius: RADIUS.into(),
-            border_width: 0.,
-            border_color: OUTLINE,
+            border: iced::Border {
+                radius: RADIUS.into(),
+                width: 0.,
+                color: OUTLINE,
+            },
             text_color: if is_checked { Some(CONTRAST) } else { None },
         }
     }
@@ -248,7 +253,10 @@ impl container::StyleSheet for Theme {
             },
             Container::Float => container::Appearance {
                 background: Some(BG_BRIGHT_BG),
-                border_radius: 6.0.into(),
+                border: iced::Border {
+                    radius: 6.0.into(),
+                    ..default.border
+                },
                 ..default
             },
             _ => default,
@@ -308,9 +316,11 @@ impl menu::StyleSheet for Theme {
         menu::Appearance {
             text_color: FOREGROUND,
             background: BG_GRAY_BG,
-            border_width: 0.,
-            border_radius: RADIUS.into(),
-            border_color: OUTLINE,
+            border: iced::Border {
+                width: 0.,
+                radius: RADIUS.into(),
+                color: OUTLINE,
+            },
             selected_text_color: CONTRAST,
             selected_background: SELECTED_BG,
         }
@@ -329,9 +339,11 @@ impl pick_list::StyleSheet for Theme {
             placeholder_color: GRAY_FG,
             handle_color: CONTRAST,
             background: BG_DARK_BG,
-            border_radius: RADIUS.into(),
-            border_width: 0.,
-            border_color: OUTLINE,
+            border: iced::Border {
+                radius: RADIUS.into(),
+                width: 0.,
+                color: OUTLINE,
+            },
         }
     }
 
@@ -385,9 +397,11 @@ impl toggler::StyleSheet for Theme {
     ) -> toggler::Appearance {
         toggler::Appearance {
             background: if is_active { DARK_CONTRAST } else { OUTLINE },
-            background_border: None,
+            background_border_width: 0.,
+            background_border_color: TRANSPARENT,
             foreground: FOREGROUND,
-            foreground_border: None,
+            foreground_border_width: 0.,
+            foreground_border_color: TRANSPARENT,
         }
     }
 
@@ -423,9 +437,11 @@ impl pane_grid::StyleSheet for Theme {
     fn hovered_region(&self, _style: &Self::Style) -> pane_grid::Appearance {
         pane_grid::Appearance {
             background: SELECTED_BG,
-            border_width: 0.,
-            border_color: OUTLINE,
-            border_radius: RADIUS.into(),
+            border: iced::Border {
+                width: 0.,
+                color: OUTLINE,
+                radius: RADIUS.into(),
+            }
         }
     }
 }
@@ -475,18 +491,35 @@ impl svg::StyleSheet for Theme {
 impl scrollable::StyleSheet for Theme {
     type Style = ();
 
-    fn active(&self, _style: &Self::Style) -> scrollable::Scrollbar {
-        scrollable::Scrollbar {
-            background: None,
-            border_radius: RADIUS.into(),
-            border_width: 0.,
-            border_color: OUTLINE,
-            scroller: scrollable::Scroller {
-                color: BG_GRAY,
-                border_radius: RADIUS.into(),
-                border_width: 0.,
-                border_color: OUTLINE,
+    fn active(&self, _style: &Self::Style) -> scrollable::Appearance {
+        scrollable::Appearance {
+            container: container::Appearance {
+                text_color: None,
+                background: None,
+                border: iced::Border {
+                    radius: RADIUS.into(),
+                    width: 0.,
+                    color: OUTLINE,
+                },
+                shadow: NO_SHADOW,
             },
+            scrollbar: scrollable::Scrollbar {
+                background: None,
+                border: iced::Border {
+                    radius: RADIUS.into(),
+                    width: 0.,
+                    color: OUTLINE,
+                },
+                scroller: scrollable::Scroller {
+                    color: BG_GRAY,
+                    border: iced::Border {
+                        radius: RADIUS.into(),
+                        width: 0.,
+                        color: OUTLINE,
+                    }
+                },
+            },
+            gap: None,
         }
     }
 
@@ -494,16 +527,19 @@ impl scrollable::StyleSheet for Theme {
         &self,
         style: &Self::Style,
         is_mouse_over_scrollbar: bool,
-    ) -> scrollable::Scrollbar {
+    ) -> scrollable::Appearance {
         let base = self.active(style);
-        scrollable::Scrollbar {
-            scroller: scrollable::Scroller {
-                color: if is_mouse_over_scrollbar {
-                    SELECTED
-                } else {
-                    BG_GRAY
+        scrollable::Appearance {
+            scrollbar: scrollable::Scrollbar {
+                scroller: scrollable::Scroller {
+                    color: if is_mouse_over_scrollbar {
+                        SELECTED
+                    } else {
+                        BG_GRAY
+                    },
+                    ..base.scrollbar.scroller
                 },
-                ..base.scroller
+                ..base.scrollbar
             },
             ..base
         }
@@ -564,9 +600,11 @@ impl text_input::StyleSheet for Theme {
     fn active(&self, style: &Self::Style) -> text_input::Appearance {
         let default = text_input::Appearance {
             background: TRANSPARENT_BG,
-            border_radius: RADIUS.into(),
-            border_width: 0.,
-            border_color: OUTLINE,
+            border: iced::Border {
+                radius: RADIUS.into(),
+                width: 0.,
+                color: OUTLINE,
+            },
             icon_color: BG_GRAY,
         };
 

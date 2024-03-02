@@ -8,12 +8,11 @@ use iced_core::{
     Background, Color, Element, Event, Layout, Length, Rectangle, Widget,
 };
 
-use super::sides::Sides;
+use super::{sides::Sides, NO_SHADOW};
 
-pub struct SvgButton<Message, Renderer>
+pub struct SvgButton<Message, Theme>
 where
-    Renderer: svg::Renderer,
-    Renderer::Theme: StyleSheet,
+    Theme: StyleSheet,
     Message: Clone,
 {
     width: Length,
@@ -21,13 +20,12 @@ where
     padding: Sides<f32>,
     svg: Handle,
     on_click: Option<Message>,
-    style: <Renderer::Theme as StyleSheet>::Style,
+    style: <Theme as StyleSheet>::Style,
 }
 
-impl<Message, Renderer> SvgButton<Message, Renderer>
+impl<Message, Theme> SvgButton<Message, Theme>
 where
-    Renderer: svg::Renderer,
-    Renderer::Theme: StyleSheet,
+    Theme: StyleSheet,
     Message: Clone,
 {
     /// Creates new border
@@ -71,7 +69,7 @@ where
     /// Sets the height of the border
     pub fn style(
         mut self,
-        style: <Renderer::Theme as StyleSheet>::Style,
+        style: <Theme as StyleSheet>::Style,
     ) -> Self {
         self.style = style;
         self
@@ -83,28 +81,24 @@ where
     }
 }
 
-impl<Message, Renderer> Widget<Message, Renderer>
-    for SvgButton<Message, Renderer>
+impl<Message, Theme, Renderer> Widget<Message, Theme, Renderer>
+    for SvgButton<Message, Theme>
 where
     Renderer: svg::Renderer,
-    Renderer::Theme: StyleSheet,
+    Theme: StyleSheet,
     Message: Clone,
 {
     fn state(&self) -> tree::State {
         tree::State::new(State::default())
     }
 
-    fn width(&self) -> Length {
-        self.width
+    fn size(&self) -> iced::Size<Length> {
+        iced::Size { width: self.width, height: self.height }
     }
 
-    fn height(&self) -> Length {
-        self.height
-    }
-
-    fn layout(&self, _renderer: &Renderer, limits: &Limits) -> Node {
+    fn layout(&self, state: &mut Tree, _renderer: &Renderer, limits: &Limits) -> Node {
         let lim = limits.width(self.width).height(self.height);
-        Node::new(lim.fill())
+        Node::new(lim.max())
     }
 
     fn on_event(
@@ -149,7 +143,7 @@ where
         &self,
         state: &Tree,
         renderer: &mut Renderer,
-        theme: &<Renderer as iced_core::Renderer>::Theme,
+        theme: &Theme,
         _style: &Style,
         layout: Layout<'_>,
         cursor: Cursor,
@@ -177,23 +171,26 @@ where
 
         let quad = Quad {
             bounds,
-            border_radius: ap.border_radius.into(),
-            border_width: ap.border_thickness,
-            border_color: ap.border_color,
+            border: iced::Border {
+                radius: ap.border_radius.into(),
+                width: ap.border_thickness,
+                color: ap.border_color,
+            },
+            shadow: NO_SHADOW,
         };
 
         renderer.fill_quad(quad, ap.background);
     }
 }
 
-impl<'a, Message, Renderer> From<SvgButton<Message, Renderer>>
-    for Element<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer> From<SvgButton<Message, Theme>>
+    for Element<'a, Message, Theme, Renderer>
 where
     Renderer: svg::Renderer + 'a,
-    Renderer::Theme: StyleSheet,
+    Theme: StyleSheet + 'a,
     Message: Clone + 'a,
 {
-    fn from(value: SvgButton<Message, Renderer>) -> Self {
+    fn from(value: SvgButton<Message, Theme>) -> Self {
         Self::new(value)
     }
 }

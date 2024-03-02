@@ -426,14 +426,14 @@ impl UampApp {
     }
 
     fn events_subscription(&self) -> Subscription {
-        iced::subscription::events_with(|e, _| match e {
-            Event::Window(window::Event::CloseRequested) => {
+        iced::event::listen_with(|e, _| match e {
+            Event::Window(_, window::Event::CloseRequested) => {
                 Some(Msg::Control(ControlMsg::Close))
             }
-            Event::Window(window::Event::Moved { x, y }) => {
+            Event::Window(_, window::Event::Moved { x, y }) => {
                 Some(Msg::WindowChange(WinMessage::Position(x, y)))
             }
-            Event::Window(window::Event::Resized { width, height }) => {
+            Event::Window(_, window::Event::Resized { width, height }) => {
                 Some(Msg::WindowChange(WinMessage::Size(width, height)))
             }
             _ => None,

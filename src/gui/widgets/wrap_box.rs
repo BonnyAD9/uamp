@@ -8,7 +8,7 @@ use iced_core::{
     renderer::{self, Quad},
     svg,
     widget::{self, tree, Tree},
-    Background, BorderRadius, Clipboard, Color, Element, Event, Layout,
+    Background, border, Clipboard, Color, Element, Event, Layout,
     Length, Padding, Pixels, Point, Rectangle, Shell, Size, Vector, Widget,
 };
 
@@ -18,7 +18,7 @@ use self::ItemDirection::{
     BottomToTop, LeftToRight, RightToLeft, TopToBottom,
 };
 
-use super::icons;
+use super::{icons, NO_SHADOW};
 
 pub const DEFAULT_SCROLL_SPEED: f32 = 60.;
 pub const DEFAULT_SCROLLBAR_WIDTH: f32 = 20.;
@@ -32,9 +32,10 @@ pub const DEFAULT_MIN_THUMB_SIZE: f32 = 20.;
 ///
 /// This is not finished and currently supports only TopToBottom vertical
 /// scrolling
-pub struct WrapBox<'a, Message, Renderer: svg::Renderer>
+pub struct WrapBox<'a, Message, Theme, Renderer>
 where
-    Renderer::Theme: StyleSheet,
+    Renderer: svg::Renderer,
+    Theme: StyleSheet,
 {
     /// amount of space between items on the x axis
     spacing_x: f32,
@@ -75,16 +76,16 @@ where
     /// when the secondary scrollbar should be shown
     secondary_scrollbar: Behaviour,
     /// the items
-    children: Vec<Element<'a, Message, Renderer>>,
+    children: Vec<Element<'a, Message, Theme, Renderer>>,
     /// the state of the scrollbar, set only when up to date
     state: &'a Cell<State>,
     /// style of the [`WrapBox`]
-    style: <Renderer::Theme as StyleSheet>::Style,
+    style: <Theme as StyleSheet>::Style,
 }
 
-impl<'a, Message, Renderer: svg::Renderer> WrapBox<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer: svg::Renderer> WrapBox<'a, Message, Theme, Renderer>
 where
-    Renderer::Theme: StyleSheet,
+    Theme: StyleSheet,
 {
     /// creates empty [`WrapBox`]
     pub fn new(state: &'a Cell<State>) -> Self {
@@ -93,7 +94,7 @@ where
 
     /// creates a [`WrapBox`] with the given elements
     pub fn with_children(
-        childern: Vec<Element<'a, Message, Renderer>>,
+        childern: Vec<Element<'a, Message, Theme, Renderer>>,
         state: &'a Cell<State>,
     ) -> Self {
         WrapBox {
@@ -305,7 +306,7 @@ where
 
     pub fn style(
         mut self,
-        style: <Renderer::Theme as StyleSheet>::Style,
+        style: <Theme as StyleSheet>::Style,
     ) -> Self {
         self.style = style;
         self
@@ -313,7 +314,7 @@ where
 
     pub fn from_layout_style(
         mut self,
-        style: &impl LayoutStyleSheet<<Renderer::Theme as StyleSheet>::Style>,
+        style: &impl LayoutStyleSheet<<Theme as StyleSheet>::Style>,
     ) -> Self {
         let style = style.layout(&self.style);
         style.spacing.0.set_if(&mut self.spacing_x);
@@ -340,7 +341,7 @@ where
     /// Adds element to the [`WrapBox`]
     pub fn push(
         mut self,
-        child: impl Into<Element<'a, Message, Renderer>>,
+        child: impl Into<Element<'a, Message, Theme, Renderer>>,
     ) -> Self {
         self.children.push(child.into());
         self
@@ -357,11 +358,12 @@ where
     }
 }*/
 
-impl<'a, Message: 'a, Renderer> Widget<Message, Renderer>
-    for WrapBox<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer> Widget<Message, Theme, Renderer>
+    for WrapBox<'a, Message, Theme, Renderer>
 where
     Renderer: svg::Renderer + 'a,
-    Renderer::Theme: StyleSheet,
+    Theme: StyleSheet,
+    Message: 'a,
 {
     fn tag(&self) -> tree::Tag {
         tree::Tag::of::<State>()
@@ -375,21 +377,17 @@ where
         tree.diff_children(&self.children);
     }
 
-    fn width(&self) -> iced_core::Length {
-        self.width
+    fn size(&self) -> Size<Length> {
+        Size { width: self.width, height: self.height }
     }
 
-    fn height(&self) -> iced_core::Length {
-        self.height
-    }
-
-    fn layout(&self, renderer: &Renderer, limits: &Limits) -> Node {
+    fn layout(&self, tree: &mut Tree, renderer: &Renderer, limits: &Limits) -> Node {
         let limits = limits
             .max_width(self.max_width)
             .max_height(self.max_height)
             .width(self.width)
             .height(self.height);
-        let size = limits.fill();
+        let size = limits.max();
         let view_size = self.pad_size(size);
 
         let mut state = self.state.get();
@@ -400,7 +398,7 @@ where
             }
         }
 
-        self.create_layout(renderer, size, &state)
+        self.create_layout(tree, renderer, size, &state)
     }
 
     fn operate(
@@ -701,7 +699,7 @@ where
         &self,
         tree: &Tree,
         renderer: &mut Renderer,
-        theme: &<Renderer as iced_core::Renderer>::Theme,
+        theme: &Theme,
         style: &renderer::Style,
         layout: Layout<'_>,
         cursor: iced::mouse::Cursor,
@@ -785,7 +783,8 @@ where
         tree: &'b mut Tree,
         layout: Layout<'_>,
         renderer: &Renderer,
-    ) -> Option<iced_core::overlay::Element<'b, Message, Renderer>> {
+        translation: Vector,
+    ) -> Option<iced_core::overlay::Element<'b, Message, Theme, Renderer>> {
         let state = self.state.get();
 
         let child = layout.children().next().unwrap();
@@ -798,7 +797,7 @@ where
             .zip(&mut tree.children[start..end])
             .zip(child.children())
             .filter_map(|(((child, _), state), layout)| {
-                child.as_widget_mut().overlay(state, layout, renderer)
+                child.as_widget_mut().overlay(state, layout, renderer, translation)
             })
             .collect::<Vec<_>>();
 
@@ -807,20 +806,24 @@ where
     }
 }
 
-impl<'a, Message: 'a, Renderer: svg::Renderer + 'a>
-    From<WrapBox<'a, Message, Renderer>> for Element<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer>
+    From<WrapBox<'a, Message, Theme, Renderer>> for Element<'a, Message, Theme, Renderer>
 where
-    Renderer::Theme: StyleSheet,
+    Renderer: svg::Renderer + 'a,
+    Theme: StyleSheet + 'a,
+    Message: 'a,
 {
-    fn from(value: WrapBox<'a, Message, Renderer>) -> Self {
+    fn from(value: WrapBox<'a, Message, Theme, Renderer>) -> Self {
         Self::new(value)
     }
 }
 
-impl<'a, Message: 'a, Renderer: svg::Renderer + 'a>
-    WrapBox<'a, Message, Renderer>
+impl<'a, Message, Theme, Renderer>
+    WrapBox<'a, Message, Theme, Renderer>
 where
-    Renderer::Theme: StyleSheet,
+    Renderer: svg::Renderer + 'a,
+    Theme: StyleSheet,
+    Message: 'a,
 {
     fn is_item_visible(&self, view_size: Size, i: usize) -> bool {
         let size =
@@ -844,11 +847,12 @@ where
     /// than contains the childern
     fn create_layout(
         &self,
+        tree: &mut Tree,
         renderer: &Renderer,
         size: Size,
         state: &State,
     ) -> Node {
-        let node = self.layout_wrap(renderer, size, state);
+        let node = self.layout_wrap(tree, renderer, size, state);
         Node::with_children(size, vec![node])
     }
 
@@ -874,7 +878,7 @@ where
         &'a self,
         view_size: Size,
         state: &State,
-    ) -> impl Iterator<Item = (&Element<'a, Message, Renderer>, usize)> {
+    ) -> impl Iterator<Item = (&Element<'a, Message, Theme, Renderer>, usize)> {
         let (start, end) = self.visible_range(view_size, state);
         self.children[start..end]
             .iter()
@@ -888,7 +892,7 @@ where
         &mut self,
         view_size: Size,
         state: &State,
-    ) -> impl Iterator<Item = (&mut Element<'a, Message, Renderer>, usize)>
+    ) -> impl Iterator<Item = (&mut Element<'a, Message, Theme, Renderer>, usize)>
     {
         let (start, end) = self.visible_range(view_size, state);
         self.children[start..end]
@@ -902,14 +906,15 @@ where
     /// than contains the childern
     fn layout_wrap(
         &self,
+        tree: &mut Tree,
         renderer: &Renderer,
         size: Size,
         state: &State,
     ) -> Node {
         if self.can_optimize() {
-            self.layout_wrap_optimized(renderer, size, state)
+            self.layout_wrap_optimized(tree, renderer, size, state)
         } else {
-            self.layout_wrap_general(renderer, size)
+            self.layout_wrap_general(tree, renderer, size)
         }
     }
 
@@ -918,6 +923,7 @@ where
     /// if `can_optimize()` returns true.
     fn layout_wrap_optimized(
         &self,
+        tree: &mut Tree,
         renderer: &Renderer,
         size: Size,
         state: &State,
@@ -930,9 +936,9 @@ where
         let children = self
             .visible(size, state)
             .enumerate()
-            .map(|(i, (c, _))| {
+            .map(|(i, (c, orig_idx))| {
                 c.as_widget()
-                    .layout(renderer, &item_lim)
+                    .layout(&mut tree.children[orig_idx], renderer, &item_lim)
                     .translate(Vector::new(0., item_space_y * i as f32))
             })
             .collect::<Vec<_>>();
@@ -950,7 +956,7 @@ where
     /// creates the [`WrapBox`] layout in a general way, immidiate node is
     /// the bounds of the viewport, it than contains the childern. It may be
     /// very slow, use `layout_wrap_optimized` when possible.
-    fn layout_wrap_general(&self, renderer: &Renderer, size: Size) -> Node {
+    fn layout_wrap_general(&self, tree: &mut Tree, renderer: &Renderer, size: Size) -> Node {
         let size = self.pad_size(size);
         let item_lim =
             Limits::new(Size::ZERO, Size::new(size.width, f32::MAX));
@@ -959,10 +965,11 @@ where
         let children = self
             .children
             .iter()
-            .map(|c| {
+            .zip(tree.children.iter_mut())
+            .map(|(c, tree)| {
                 let node = c
                     .as_widget()
-                    .layout(renderer, &item_lim)
+                    .layout(tree, renderer, &item_lim)
                     .translate(Vector::new(0., pos));
                 pos += node.size().height + self.spacing_y;
                 node
@@ -1129,7 +1136,7 @@ where
         state: &State,
         cursor: mouse::Cursor,
         renderer: &mut Renderer,
-        theme: &Renderer::Theme,
+        theme: &Theme,
         draw_scroll: bool,
     ) {
         // the childern.next will always be Some
@@ -1435,7 +1442,7 @@ pub struct SquareStyle {
     /// Thickness of the border around the area
     pub border_thickness: f32,
     /// Radious of the border corners
-    pub border_radius: BorderRadius,
+    pub border_radius: border::Radius,
 }
 
 impl SquareStyle {
@@ -1448,9 +1455,12 @@ impl SquareStyle {
         renderer.fill_quad(
             Quad {
                 bounds,
-                border_radius: self.border_radius,
-                border_width: self.border_thickness,
-                border_color: self.border,
+                border: iced::Border {
+                    radius: self.border_radius,
+                    width: self.border_thickness,
+                    color: self.border,
+                },
+                shadow: NO_SHADOW,
             },
             self.background,
         )

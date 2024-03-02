@@ -1,5 +1,7 @@
 use iced_core::{layout::Limits, Length, Size};
 
+use self::sides::Sides;
+
 ///! This module contains custom widgets for iced that are either
 ///! faster, more customizable, or with more features.
 ///!
@@ -30,3 +32,9 @@ fn limit_size(lim: &Limits, width: Length, height: Length) -> Size {
 
     Size::new(w, h)
 }
+
+pub const NO_SHADOW: iced::Shadow = iced::Shadow {
+    color: iced::Color::TRANSPARENT,
+    offset: iced::Vector::new(0., 0.),
+    blur_radius: 0.,
+};
