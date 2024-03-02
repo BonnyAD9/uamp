@@ -119,7 +119,14 @@ where
         _viewport: &Rectangle,
     ) -> Status {
         let bounds = layout.bounds();
-        let state = state.state.downcast_mut::<State>();
+
+        let mut def_state = State::default();
+
+        let state = if let iced_core::widget::tree::State::Some(s) = &mut state.state {
+            s.downcast_mut::<State>().unwrap()
+        } else {
+            &mut def_state
+        };
 
         if !cursor.is_over(bounds) {
             state.pressed = false;
@@ -156,7 +163,15 @@ where
         _viewport: &Rectangle,
     ) {
         let bounds = layout.bounds();
-        let state = state.state.downcast_ref::<State>();
+
+        let def_state = State::default();
+
+        let state = if let iced_core::widget::tree::State::Some(s) = &state.state {
+            s.downcast_ref::<State>().unwrap()
+        } else {
+            &def_state
+        };
+        //let state = state.state.downcast_ref::<State>();
 
         let ap = if state.pressed {
             theme.pressed(&self.style)

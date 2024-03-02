@@ -12,6 +12,8 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::core::{extensions::duration_to_string, Error, Result};
 
+use super::{AlbumId, Library};
+
 /// Describes song
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Song {
@@ -22,7 +24,7 @@ pub struct Song {
     /// The main artist in the song
     artist: String,
     /// The album of the song
-    album: String,
+    album: AlbumId,
     /// The track number in the album
     track: u32,
     /// The disc number in the album
@@ -41,13 +43,13 @@ pub struct Song {
 
 impl Song {
     /// Creates song from the given path
-    pub fn from_path<P: AsRef<Path> + Debug>(path: P) -> Result<Self> {
+    pub fn from_path<P: AsRef<Path> + Debug>(path: P, lib: &Library) -> Result<Self> {
         let tag = Tag::new().read_from_path(&path)?;
         let mut s = Song {
             path: path.as_ref().to_path_buf(),
             title: tag.title().unwrap_or("-").to_owned(),
             artist: tag.artist().unwrap_or("-").to_owned(),
-            album: tag.album_title().unwrap_or("-").to_owned(),
+            album: tag.album_title().unwrap_or("-").to_owned(),                         
             track: tag.track().0.unwrap_or_default() as u32,
             disc: tag.disc().0.unwrap_or_default() as u32,
             year: tag.year().unwrap_or(i32::MAX),
