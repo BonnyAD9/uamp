@@ -6,11 +6,6 @@ use std::{
 
 use app::UampApp;
 use config::{app_id, Config};
-use gui::app::GuiState;
-use iced::{
-    window::{self, PlatformSpecific, Position},
-    Application, Settings,
-};
 use log::{error, info};
 
 use crate::{
@@ -27,8 +22,6 @@ mod app;
 mod cli;
 mod config;
 mod core;
-mod gui;
-mod hotkeys;
 mod library;
 mod player;
 
@@ -75,58 +68,14 @@ fn start() -> Result<()> {
 
     // must run has more power - in case both run and exit are true, run wins
     if args.must_run || !args.should_exit {
-        if let Err(e) = UampApp::run(make_settings(conf)) {
+        // TODO
+        /*if let Err(e) = UampApp::run(make_settings(conf)) {
             error!("Uamp exited unexpectidly: {e}");
             Err(e)?;
-        }
+        }*/
     }
 
     Ok(())
-}
-
-/// Creates the settings for the uamp app
-fn make_settings(conf: Config) -> Settings<(Config, GuiState)> {
-    let icon = window::icon::from_rgba(
-        include_bytes!("../assets/raw_img/icon_64.data")
-            .to_owned()
-            .into(),
-        64,
-        64,
-    );
-
-    if let Err(e) = &icon {
-        error!("Failed to set the icon: {e}");
-    }
-
-    let gui = GuiState::from_default_json(&conf);
-    let mut w = gui.window_width();
-    let mut h = gui.window_height();
-    if w == u32::MAX || h == u32::MAX {
-        (w, h) = (1024, 768)
-    }
-    let x = gui.window_x();
-    let y = gui.window_y();
-    let pos = if x == i32::MAX || y == i32::MAX {
-        Position::Default
-    } else {
-        Position::Specific(x, y)
-    };
-
-    Settings {
-        window: window::Settings {
-            icon: icon.ok(),
-            platform_specific: PlatformSpecific {
-                application_id: app_id(),
-            },
-            position: pos,
-            size: (w, h),
-            ..Default::default()
-        },
-        id: Some(app_id()),
-        exit_on_close_request: false,
-        flags: (conf, gui),
-        ..Default::default()
-    }
 }
 
 /// Tries to start the logger with env

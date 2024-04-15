@@ -16,7 +16,7 @@ use crate::{
     app::UampApp,
     config::Config,
     core::{
-        msg::{ComMsg, Msg},
+        msg::Msg,
         Result,
     },
     gen_struct,
@@ -323,14 +323,14 @@ impl Player {
 
 impl UampApp {
     /// Handles player event messages
-    pub fn player_event(&mut self, msg: Message) -> ComMsg {
+    pub fn player_event(&mut self, msg: Message) -> Option<Msg> {
         match msg {
             Message::SongEnd => {
                 self.player.play_next(&mut self.library, 1);
             }
             Message::HardPauseAt(i) => self.hard_pause_at = Some(i),
         }
-        ComMsg::none()
+        None
     }
 
     pub fn player_lib_update(&mut self, up: LibraryUpdate) {

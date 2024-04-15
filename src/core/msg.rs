@@ -5,14 +5,12 @@ use std::{
     time::{Duration, Instant},
 };
 
-use iced::window;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     app::UampApp,
     config::ConfMessage,
-    gui::{wid::Command, GuiMessage, WinMessage},
     library::{LibraryMessage, SongId},
     player::PlayerMessage,
 };
@@ -27,17 +25,15 @@ pub enum Msg {
     PlaySong(usize, Arc<[SongId]>),
     /// Some simple messages
     Control(ControlMsg),
-    /// Gui messages handled by the gui
-    Gui(GuiMessage),
     /// Player messges handled by the player
     Player(PlayerMessage),
     /// Library messages handled by the library
     Library(LibraryMessage),
     /// Dellegate the message
     Delegate(Arc<dyn MessageDelegate>),
-    /// The window has changed its parameters
-    WindowChange(WinMessage),
     Config(ConfMessage),
+    // General update
+    Tick,
     Init,
     /// Do nothing
     None,
@@ -88,30 +84,9 @@ pub enum ControlMsg {
     Save,
 }
 
-/// Message returned after proccessing message, either starts a iced command,
-/// or produces another message
-pub enum ComMsg {
-    /// Message that produces iced command
-    Command(Command),
-    /// Message that produces another message
-    Msg(Msg),
-}
-
-impl ComMsg {
-    /// Returns message that doesn't do anything
-    pub fn none() -> Self {
-        Self::Command(Command::none())
-    }
-
-    /// Returns message that ticks the gui tick
-    pub fn tick() -> Self {
-        Self::Msg(Msg::Gui(GuiMessage::Tick))
-    }
-}
-
 impl UampApp {
     /// handles the control events
-    pub fn control_event(&mut self, msg: ControlMsg) -> ComMsg {
+    pub fn control_event(&mut self, msg: ControlMsg) -> Option<Msg> {
         match msg {
             ControlMsg::PlayPause(p) => {
                 let pp = p.unwrap_or(!self.player.is_playing());
@@ -119,18 +94,18 @@ impl UampApp {
                     self.hard_pause_at = None;
                 }
                 self.player.play_pause(&mut self.library, pp);
-                return ComMsg::tick();
+                return Some(Msg::Tick);
             }
             ControlMsg::NextSong(n) => {
                 self.player.play_next(&mut self.library, n);
-                return ComMsg::tick();
+                return Some(Msg::Tick);
             }
             ControlMsg::PrevSong(n) => {
                 if let Some(t) = self.config.previous_timeout() {
                     if n.is_none() {
                         let now = Instant::now();
                         if now - replace(&mut self.last_prev, now) >= t.0 {
-                            return ComMsg::Msg(Msg::Control(
+                            return Some(Msg::Control(
                                 ControlMsg::SeekTo(Duration::ZERO),
                             ));
                         }
@@ -141,19 +116,20 @@ impl UampApp {
                 if let Err(e) = self.config.delete_old_logs() {
                     error!("Failed to remove logs: {e}");
                 }
-                return ComMsg::tick();
+                return Some(Msg::Tick);
             }
             ControlMsg::Close => {
                 self.save_all();
                 if self.library.any_process() {
                     self.pending_close = true;
-                    return ComMsg::none();
+                    return None;
                 }
-                return ComMsg::Command(window::close());
+                // return ComMsg::Command(window::close());
+                return None;
             }
             ControlMsg::Shuffle => {
                 self.player.shuffle();
-                return ComMsg::tick();
+                return Some(Msg::Tick);
             }
             ControlMsg::SetVolume(v) => {
                 self.player.set_volume(v.clamp(0., 1.))
@@ -174,7 +150,7 @@ impl UampApp {
                     i,
                     self.player.is_playing(),
                 );
-                return ComMsg::tick();
+                return Some(Msg::Tick);
             }
             ControlMsg::Mute(b) => {
                 self.player.set_mute(b.unwrap_or(!self.player.mute()))
@@ -193,22 +169,22 @@ impl UampApp {
             }
             ControlMsg::SeekTo(d) => {
                 self.player.seek_to(d);
-                return ComMsg::tick();
+                return Some(Msg::Tick);
             }
             ControlMsg::FastForward(d) => {
                 let t = d.unwrap_or(self.config.seek_jump().0);
                 self.player.seek_by(t, true);
-                return ComMsg::tick();
+                return Some(Msg::Tick);
             }
             ControlMsg::Rewind(d) => {
                 let t = d.unwrap_or(self.config.seek_jump().0);
                 self.player.seek_by(t, false);
-                return ComMsg::tick();
+                return Some(Msg::Tick);
             }
             ControlMsg::Save => self.save_all(),
         };
 
-        ComMsg::none()
+        None
     }
 }
 
@@ -247,25 +223,25 @@ pub fn get_control_string(m: &ControlMsg) -> String {
 }
 
 pub trait MessageDelegate: Sync + Send + Debug {
-    fn update(&self, app: &mut UampApp) -> ComMsg;
+    fn update(&self, app: &mut UampApp) -> Option<Msg>;
 }
 
 pub struct FnDelegate<T>(T)
 where
-    T: Sync + Send + Fn(&mut UampApp) -> ComMsg;
+    T: Sync + Send + Fn(&mut UampApp) -> Option<Msg>;
 
 impl<T> MessageDelegate for FnDelegate<T>
 where
-    T: Sync + Send + Fn(&mut UampApp) -> ComMsg,
+    T: Sync + Send + Fn(&mut UampApp) -> Option<Msg>,
 {
-    fn update(&self, app: &mut UampApp) -> ComMsg {
+    fn update(&self, app: &mut UampApp) -> Option<Msg> {
         self.0(app)
     }
 }
 
 impl<T> Debug for FnDelegate<T>
 where
-    T: Sync + Send + Fn(&mut UampApp) -> ComMsg,
+    T: Sync + Send + Fn(&mut UampApp) -> Option<Msg>,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("FnDelegate").finish()
@@ -274,7 +250,7 @@ where
 
 impl<T> From<T> for FnDelegate<T>
 where
-    T: Sync + Send + Fn(&mut UampApp) -> ComMsg,
+    T: Sync + Send + Fn(&mut UampApp) -> Option<Msg>,
 {
     fn from(value: T) -> Self {
         Self(value)

@@ -4,7 +4,7 @@ use flexi_logger::FlexiLoggerError;
 use log::error;
 use thiserror::Error;
 
-use crate::{cli::CliError, hotkeys::HotkeyError};
+use crate::cli::CliError;
 
 /// Result with the unified error type of uamp
 pub type Result<T> = std::result::Result<T, Error>;
@@ -21,9 +21,6 @@ pub enum Error {
     /// Failed to parse arguments
     #[error(transparent)]
     ArgParse(#[from] CliError),
-    /// Failed to register some or all hotkeys
-    #[error(transparent)]
-    Hotkey(#[from] HotkeyError),
     /// The audio tag library returned error
     #[error(transparent)]
     Image(#[from] image::ImageError),
@@ -38,9 +35,6 @@ pub enum Error {
     /// The logger returned error (oops :|| )
     #[error(transparent)]
     Logger(#[from] FlexiLoggerError),
-    /// Iced library returned error
-    #[error(transparent)]
-    Iced(#[from] iced::Error),
     /// Some standard library io error
     #[error(transparent)]
     Io(#[from] std::io::Error),
@@ -86,7 +80,6 @@ impl_from!(
     serde_json::Error => Serde,
     rmp_serde::encode::Error => Serde,
     rmp_serde::decode::Error => Serde,
-    global_hotkey::Error => Hotkey,
 );
 
 /// Collections of errors while serializing

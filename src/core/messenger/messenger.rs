@@ -10,7 +10,7 @@ use crate::{
     app::UampApp,
     core::{
         err::Result,
-        msg::{ComMsg, FnDelegate, Msg},
+        msg::{FnDelegate, Msg},
     },
 };
 
@@ -91,7 +91,7 @@ impl UampApp {
                                 Ok(m) => m,
                                 Err(e) => {
                                     error!("Failed to create messenger: {e}");
-                                    return ComMsg::none();
+                                    return None;
                                 }
                             };
                             if let Err(e) = msg.send(Message::Info(Info {
@@ -109,7 +109,7 @@ impl UampApp {
                             })) {
                                 error!("Failed to send message: {e}");
                             };
-                            ComMsg::none()
+                            None
                         },
                     )),
                 )

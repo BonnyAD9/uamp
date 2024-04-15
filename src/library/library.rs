@@ -1,5 +1,4 @@
 use audiotags::Tag;
-use iced_core::image::{Data, Handle};
 use itertools::Itertools;
 use log::{error, info, warn};
 use serde_derive::{Deserialize, Serialize};
@@ -24,20 +23,17 @@ use crate::{
     config::Config,
     core::{
         extensions::valid_filename,
-        msg::{ComMsg, Msg},
+        msg::Msg,
         Error, Result,
     },
     gen_struct,
 };
 
 use super::{
-    cover_image::CoverImage,
     load::{LibraryLoad, LibraryLoadResult},
     msg::Message,
     Filter, LibraryUpdate, Song, SongId,
 };
-
-type ImageMap = HashMap<(Cow<'static, str>, Cow<'static, str>), CoverImage>;
 
 gen_struct! {
     #[derive(Serialize, Deserialize)]
@@ -52,18 +48,12 @@ gen_struct! {
         #[serde(skip)]
         save_process: Option<JoinHandle<Result<()>>>,
         #[serde(skip)]
-        image_load_process: Option<JoinHandle<Library>>,
-        #[serde(skip)]
-        image_shrink_process: Option<JoinHandle<ImageMap>>,
-        #[serde(skip)]
         new_images: bool,
         /// invalid song
         #[serde(skip, default = "default_ghost")]
         ghost: Song,
         #[serde(skip)]
         lib_update: LibraryUpdate,
-        #[serde(skip)]
-        images: ImageMap,
         ; // attributes for the auto field
         #[serde(skip)]
     }
@@ -80,13 +70,10 @@ impl Library {
             songs: Vec::new(),
             load_process: None,
             save_process: None,
-            image_load_process: None,
-            image_shrink_process: None,
             new_images: false,
             lib_update: LibraryUpdate::None,
             change: Cell::new(true),
             ghost: Song::invalid(),
-            images: Default::default(),
         }
     }
 
@@ -103,75 +90,6 @@ impl Library {
         } else {
             Self::default()
         }
-    }
-
-    pub fn start_load_images(
-        &mut self,
-        sender: Arc<UnboundedSender<Msg>>,
-        conf: &Config,
-    ) -> Result<()> {
-        if self.image_load_process.is_some() {
-            return Err(Error::InvalidOperation(
-                "cannot load images, load is already in process",
-            ));
-        }
-
-        let conf = conf.clone();
-        let mut lib = self.clone();
-
-        self.image_load_process = Some(thread::spawn(move || {
-            lib.load_images(&conf);
-            if let Err(e) = sender.send(Msg::Library(Message::ImageLoadEnded))
-            {
-                error!("Failed to send image load end message: {e}");
-            }
-            lib
-        }));
-
-        Ok(())
-    }
-
-    pub fn start_make_thumbnails(
-        &mut self,
-        sender: Arc<UnboundedSender<Msg>>,
-        conf: &Config,
-    ) -> Result<()> {
-        if self.image_shrink_process.is_some() {
-            return Err(Error::InvalidOperation(
-                "Cannot make thumbnails, the process is already in progress",
-            ));
-        }
-
-        let conf = conf.clone();
-        let mut imgs = self.images.clone();
-
-        self.image_shrink_process = Some(thread::spawn(move || {
-            if let Err(e) = Self::make_thumbnails(&mut imgs, &conf) {
-                error!("Failed to make thumbnails: {e}");
-            }
-            if let Err(e) =
-                sender.send(Msg::Library(Message::ImageShrinkEnded))
-            {
-                error!("Failed to send image shrink end message: {e}");
-            }
-            imgs
-        }));
-
-        Ok(())
-    }
-
-    pub fn get_image(&self, s: SongId) -> Option<Handle> {
-        let s = &self[s];
-        self.images
-            .get(&(s.artist().into(), s.album().into()))
-            .map(|v| v.as_andle())
-    }
-
-    pub fn get_small_image(&self, s: SongId) -> Option<Handle> {
-        let s = &self[s];
-        self.images
-            .get(&(s.artist().into(), s.album().into()))
-            .and_then(|v| v.as_small())
     }
 
     /// Filters songs in the library
@@ -312,22 +230,6 @@ impl Library {
             }
         }
 
-        if let Some(p) = &self.image_load_process {
-            if p.is_finished() {
-                if let Err(e) = self.finish_save_songs() {
-                    error!("Failed to save songs: {e}");
-                }
-            }
-        }
-
-        if let Some(p) = &self.image_shrink_process {
-            if p.is_finished() {
-                if let Err(e) = self.finish_save_songs() {
-                    error!("Failed to save songs: {e}");
-                }
-            }
-        }
-
         res
     }
 }
@@ -370,7 +272,7 @@ impl Default for Library {
 
 impl UampApp {
     /// handles library events
-    pub fn library_event(&mut self, msg: Message) -> ComMsg {
+    pub fn library_event(&mut self, msg: Message) -> Option<Msg> {
         match msg {
             Message::LoadEnded => {
                 if let Err(e) = self.library.finish_get_new_songs() {
@@ -390,25 +292,9 @@ impl UampApp {
                     error!("Failed to finsih saving songs: {e}")
                 }
             }
-            Message::ImageLoadEnded => {
-                if let Err(e) = self.library.finish_load_images() {
-                    error!("Failed to load images: {e}");
-                } else {
-                    if let Err(e) = self.library.start_make_thumbnails(
-                        self.sender.clone(),
-                        &self.config,
-                    ) {
-                        error!("Failed to start make thumbnails: {e}");
-                    }
-                }
-            }
-            Message::ImageShrinkEnded => {
-                if let Err(e) = self.library.finish_make_thumbnails() {
-                    error!("Failed to make thumbnails: {e}");
-                }
-            }
         }
-        ComMsg::none()
+
+        None
     }
 
     pub fn library_lib_update(&mut self) -> LibraryUpdate {
@@ -417,17 +303,6 @@ impl UampApp {
 
         if up >= LibraryUpdate::NewData {
             self.library.new_images = true;
-        }
-
-        if self.library.image_load_process.is_none() && self.library.new_images
-        {
-            self.library.new_images = false;
-            if let Err(e) = self
-                .library
-                .start_load_images(self.sender.clone(), &self.config)
-            {
-                error!("Failed to start load for new images: {e}");
-            }
         }
 
         up
@@ -481,23 +356,6 @@ impl Library {
         } else {
             Err(Error::InvalidOperation("No load was running"))
         }
-    }
-
-    fn finish_load_images(&mut self) -> Result<()> {
-        if let Some(p) = self.image_load_process.take() {
-            let lib = p.join().map_err(|_| Error::ThreadPanicked)?;
-            self.images = lib.images;
-        }
-
-        Ok(())
-    }
-
-    fn finish_make_thumbnails(&mut self) -> Result<()> {
-        if let Some(p) = self.image_shrink_process.take() {
-            self.images = p.join().map_err(|_| Error::ThreadPanicked)?;
-        }
-
-        Ok(())
     }
 
     /// Adds new songs to the given vector of songs
@@ -587,96 +445,6 @@ impl Library {
 
         new_songs
     }
-
-    fn load_images(&mut self, conf: &Config) {
-        let mut images = self.images.clone();
-        let full_path = conf.image_cache().as_ref().map(|p| p.join("full"));
-        let small_path = conf.image_cache().as_ref().map(|p| p.join("small"));
-
-        for s in self.songs() {
-            if !images.contains_key(&(s.artist().into(), s.album().into())) {
-                let t = match Tag::new().read_from_path(s.path()) {
-                    Ok(t) => t,
-                    Err(e) => {
-                        warn!("Failed to read tag: {e}");
-                        continue;
-                    }
-                };
-
-                let full = if let Some(mut f) =
-                    full_path.as_ref().and_then(|p| {
-                        File::open(p.join(valid_filename(
-                            format!("/{} - {}", s.artist(), s.album()).chars(),
-                        )))
-                        .ok()
-                    }) {
-                    let mut buf = Vec::new();
-                    if let Err(e) = f.read_to_end(&mut buf) {
-                        warn!("Failed to read image: {e}");
-                        continue;
-                    }
-                    Handle::from_memory(buf)
-                } else if let Some(c) = t.album_cover() {
-                    Handle::from_memory(
-                        c.data.iter().map(|c| *c).collect_vec(),
-                    )
-                } else {
-                    continue;
-                };
-
-                let small = if let Some(mut f) =
-                    small_path.as_ref().and_then(|p| {
-                        File::open(p.join(valid_filename(
-                            format!("/{} - {}", s.artist(), s.album()).chars(),
-                        )))
-                        .ok()
-                    }) {
-                    let mut buf = Vec::new();
-                    if let Err(e) = f.read_to_end(&mut buf) {
-                        warn!("Failed to read thumbnail image: {e}");
-                    }
-                    Some(Handle::from_memory(buf))
-                } else {
-                    None
-                };
-
-                let key = (
-                    s.artist().to_owned().into(),
-                    s.album().to_owned().into(),
-                );
-
-                images.insert(key, CoverImage::new(full, small));
-            }
-        }
-
-        self.images = images;
-    }
-
-    fn make_thumbnails(images: &mut ImageMap, conf: &Config) -> Result<()> {
-        let small_path = conf.image_cache().as_ref().map(|p| p.join("small"));
-        if let Some(path) = &small_path {
-            create_dir_all(path)?;
-        }
-
-        for ((artist, album), img) in images.iter_mut() {
-            if img.as_small().is_some() {
-                continue;
-            }
-
-            if let Some(img) = img.make_thumbnail() {
-                if let (Some(path), Data::Bytes(b)) = (&small_path, img.data())
-                {
-                    let data = b.as_ref();
-                    let mut f = File::create(path.join(valid_filename(
-                        format!("/{} - {}", artist, album).chars(),
-                    )))?;
-                    f.write_all(data)?;
-                }
-            }
-        }
-
-        Ok(())
-    }
 }
 
 impl Clone for Library {
@@ -685,13 +453,10 @@ impl Clone for Library {
             songs: self.songs.clone(),
             load_process: None,
             save_process: None,
-            image_load_process: None,
-            image_shrink_process: None,
             lib_update: LibraryUpdate::None,
             new_images: self.new_images,
             ghost: self.ghost.clone(),
             change: self.change.clone(),
-            images: self.images.clone(),
         }
     }
 }

@@ -1,4 +1,3 @@
-pub mod cover_image;
 pub mod msg;
 pub mod order;
 
