@@ -238,10 +238,10 @@ impl UampApp {
 
     pub fn create_reciever(&self) -> Result<Box<dyn TaskGen<Msg>>> {
         if let Some(r) = self.reciever.take() {
-            Ok(Box::new(Some(Task::new(r, |mut r| async {
+            Ok(Box::new(Task::new(r, |mut r| async {
                 let msg = r.recv().await.unwrap();
                 (r, msg)
-            }))))
+            })))
         } else {
             Err(Error::InvalidOperation("reciever is already created"))
         }

@@ -29,27 +29,27 @@ where
     }
 }
 
-impl<T, Msg, F, Fut> TaskGen<Msg> for Option<Task<T, Msg, F, Fut>>
+impl<T, Msg, F, Fut> TaskGen<Msg> for Task<T, Msg, F, Fut>
 where
     F: Fn(T) -> Fut + Send,
     Fut: Future<Output = (T, Msg)> + Send,
+    T: Send,
 {
-    fn task(&mut self) -> TaskFuture<Msg> {
-        let Some(Task { data, fun }) = self.take() else {
-            panic!("Task was already taken. This is a bug.");
-        };
-        let f = fun(data);
+    fn task(mut self: Box<Self>) -> TaskFuture<Msg> {
         Box::pin(async move {
-            let (data, m) = f.await;
-            let slf: Box<dyn TaskGen<Msg>> =
-                Box::new(Some(Task { data, fun }));
+            let (data, m) = (self.fun)(self.data).await;
+            *self = Task {
+                data,
+                fun: self.fun,
+            };
+            let slf: Box<dyn TaskGen<_>> = self;
             (slf, m)
         })
     }
 }
 
 pub trait TaskGen<Msg> {
-    fn task(&mut self) -> TaskFuture<Msg>;
+    fn task(self: Box<Self>) -> TaskFuture<Msg>;
 }
 
 pub struct Tasks<Msg> {
@@ -62,13 +62,13 @@ impl<Msg> Tasks<Msg> {
     }
 
     pub fn wait_one(&mut self) -> Msg {
-        let mut res = block_on(select_all(mem::take(&mut self.futures)));
+        let res = block_on(select_all(mem::take(&mut self.futures)));
         self.futures = res.2;
         self.futures.push(res.0 .0.task());
         res.0 .1
     }
 
-    pub fn add(&mut self, mut f: Box<dyn TaskGen<Msg>>) {
+    pub fn add(&mut self, f: Box<dyn TaskGen<Msg>>) {
         self.futures.push(f.task());
     }
 }

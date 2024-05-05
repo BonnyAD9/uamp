@@ -13,6 +13,7 @@ pub fn run_background_app(mut conf: Config) -> Result<()> {
     app.run_server()?;
     loop {
         let msg = tasks.wait_one();
+        println!("{msg:?}");
         match app.update(msg) {
             Command::None => {}
             Command::Exit => break Ok(()),
