@@ -26,7 +26,7 @@ pub fn help<'a>(
 
     // prepend the first argument back to a iterator
     let arg = [arg];
-    let args = arg.iter().map(|s| *s).chain(args);
+    let args = arg.iter().copied().chain(args);
 
     print_help_header();
 

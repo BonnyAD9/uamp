@@ -11,18 +11,22 @@ use serde::{Deserialize, Serialize};
 use crate::{
     app::UampApp,
     config::ConfMessage,
-    library::{LibraryMessage, SongId},
+    library::{Filter, LibraryMessage, SongId},
     player::PlayerMessage,
 };
 
-use super::{command::{ComMsg, Command}, extensions::duration_to_string, Error};
+use super::{
+    command::{ComMsg, Command},
+    extensions::duration_to_string,
+    Error,
+};
 
 /// Event messages in uamp
 #[allow(missing_debug_implementations)]
 #[derive(Clone, Debug)]
 pub enum Msg {
     /// Play song song at the given index in the playlist
-    PlaySong(usize, Arc<[SongId]>),
+    _PlaySong(usize, Arc<[SongId]>),
     /// Some simple messages
     Control(ControlMsg),
     /// Player messges handled by the player
@@ -35,8 +39,6 @@ pub enum Msg {
     // General update
     Tick,
     Init,
-    /// Do nothing
-    None,
 }
 
 impl Msg {
@@ -80,6 +82,8 @@ pub enum ControlMsg {
     FastForward(Option<Duration>),
     /// Seeks backward
     Rewind(Option<Duration>),
+    /// Sets the current playlist
+    SetPlaylist(Filter),
     /// Thriggers save
     Save,
 }
@@ -105,9 +109,9 @@ impl UampApp {
                     if n.is_none() {
                         let now = Instant::now();
                         if now - replace(&mut self.last_prev, now) >= t.0 {
-                            return ComMsg::Msg(Msg::Control(ControlMsg::SeekTo(
-                                Duration::ZERO,
-                            )));
+                            return ComMsg::Msg(Msg::Control(
+                                ControlMsg::SeekTo(Duration::ZERO),
+                            ));
                         }
                     }
                 }
@@ -181,6 +185,15 @@ impl UampApp {
                 self.player.seek_by(t, false);
                 return ComMsg::Msg(Msg::Tick);
             }
+            ControlMsg::SetPlaylist(filter) => {
+                let songs: Vec<_> = self.library.filter(filter).collect();
+                self.player.play_playlist(
+                    &mut self.library,
+                    songs,
+                    None,
+                    false,
+                );
+            }
             ControlMsg::Save => self.save_all(),
         };
 
@@ -189,14 +202,14 @@ impl UampApp {
 }
 
 /// The reverse of parsing control message (e.g. from cli)
-pub fn get_control_string(m: &ControlMsg) -> String {
+pub fn _get_control_string(m: &ControlMsg) -> String {
     match m {
         ControlMsg::PlayPause(None) => "pp".to_owned(),
         ControlMsg::PlayPause(Some(v)) => {
             if *v { "pp=play" } else { "pp=pause" }.to_owned()
         }
         ControlMsg::NextSong(v) => format!("ns={v}"),
-        ControlMsg::PrevSong(None) => format!("ps"),
+        ControlMsg::PrevSong(None) => "ps".into(),
         ControlMsg::PrevSong(Some(v)) => format!("ps={v}"),
         ControlMsg::SetVolume(v) => format!("v={v}"),
         ControlMsg::VolumeUp(None) => "vu".to_owned(),
@@ -218,6 +231,7 @@ pub fn get_control_string(m: &ControlMsg) -> String {
         ControlMsg::Rewind(Some(d)) => {
             format!("rw={}", duration_to_string(*d, false))
         }
+        ControlMsg::SetPlaylist(_) => "sp".to_owned(),
         ControlMsg::Save => "save".to_owned(),
     }
 }

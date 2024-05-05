@@ -31,12 +31,12 @@ impl Playlist {
     }
 
     /// Returns iterator over the items
-    pub fn iter<'a>(&'a self) -> Iter<'_, SongId> {
+    pub fn iter(&self) -> Iter<'_, SongId> {
         self[..].iter()
     }
 
     /// Gets/Creates arc from the playlist
-    pub fn as_arc(&self) -> Arc<[SongId]> {
+    pub fn _as_arc(&self) -> Arc<[SongId]> {
         match self {
             Playlist::Static(a) => a.clone(),
             // copy to arc when this is vector
@@ -49,7 +49,7 @@ impl Playlist {
             Playlist::Static(a) => {
                 *self = Playlist::Dynamic(
                     a.iter()
-                        .map(|s| *s)
+                        .copied()
                         .filter(|s| !lib[*s].is_deleted())
                         .collect_vec(),
                 )

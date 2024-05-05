@@ -4,26 +4,28 @@ use std::{
     time::Duration,
 };
 
-use app::UampApp;
-use config::{app_id, Config};
+use config::Config;
 use log::{error, info};
 
 use crate::{
-    background_app::run_background_app, cli::{Action, Args}, core::{
+    background_app::run_background_app,
+    cli::{Action, Args},
+    core::{
         extensions::duration_to_string,
         messenger::{self, msg::Info, Messenger},
         Result,
-    }, messenger::{msg, MsgMessage}
+    },
+    messenger::{msg, MsgMessage},
 };
 
 mod app;
+mod background_app;
 mod cli;
 mod config;
 mod core;
 mod library;
 mod player;
 mod tasks;
-mod background_app;
 
 fn main() {
     if let Err(e) = start() {
@@ -55,7 +57,7 @@ fn start() -> Result<()> {
                 match res {
                     Ok(MsgMessage::Success) => {}
                     Ok(MsgMessage::Info(i)) => {
-                        print_info(i);
+                        print_info(*i);
                     }
                     Err(e) => println!("{e}"),
                     Ok(r) => {

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::{core::msg::ControlMsg, parse_arg};
+use crate::{core::msg::ControlMsg, library::Filter, parse_arg};
 
 parse_arg! {ControlMsg as parse_control_message, auto_instance_help:
     ? "Play or pause, when without argument, toggle between the states
@@ -23,6 +23,9 @@ parse_arg! {ControlMsg as parse_control_message, auto_instance_help:
        (e.g. with argument '2' skips the previous song and plays the
        second previous song)."
     "previous-song" | "ps" [=usize] => PrevSong;
+
+    ? "Jump to the song at the given index in the playlist."
+    "playlist-jump" | "pj" [=usize] => PlaylistJump(0);
 
     ? "Set the volume to the given value. Value must be in range from 0 to 1"
     "volume" | "vol" | "v" =f32 => SetVolume: |v| (0.0..=1.).contains(v);
@@ -50,6 +53,9 @@ parse_arg! {ControlMsg as parse_control_message, auto_instance_help:
     ? "Seeks backward by the given amout in seconds. If the parameter is not
        present, seek by the default amount."
     "rewind" | "rw" [=Duration] => Rewind;
+
+    ? "Sets the playlist to all songs."
+    "set-playlist" | "sp" [=Filter] => SetPlaylist(Filter::All);
 
     ? "Triggers save (saves only if there is change)"
     "save" => Save;

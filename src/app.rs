@@ -1,18 +1,25 @@
 use std::{
-    cell::Cell, net::{TcpListener, TcpStream}, pin::{pin, Pin}, sync::Arc, thread, time::{Duration, Instant}
+    cell::Cell,
+    net::{TcpListener, TcpStream},
+    sync::Arc,
+    thread,
+    time::{Duration, Instant},
 };
 
-use futures::{future::BoxFuture, Future};
 use log::{error, warn};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
-    config::{app_id, Config},
+    config::Config,
     core::{
-        command::{ComMsg, Command}, extensions::duration_to_string, messenger::{self, Messenger, MsgMessage}, msg::{ControlMsg, Msg}, Error, Result
+        command::{ComMsg, Command},
+        messenger::{self, Messenger, MsgMessage},
+        msg::{ControlMsg, Msg},
+        Error, Result,
     },
     library::Library,
-    player::Player, tasks::{Task, TaskGen},
+    player::Player,
+    tasks::{Task, TaskGen},
 };
 
 /// The uamp app state
@@ -108,7 +115,7 @@ impl UampApp {
 
     pub fn update(&mut self, message: Msg) -> Command {
         let com = match message {
-            Msg::PlaySong(index, songs) => {
+            Msg::_PlaySong(index, songs) => {
                 self.player.play_playlist(
                     &mut self.library,
                     songs,
@@ -124,7 +131,6 @@ impl UampApp {
             Msg::Config(msg) => self.config_event(msg),
             Msg::Init => self.init(),
             Msg::Tick => ComMsg::none(),
-            Msg::None => ComMsg::none(),
         };
 
         // The recursion that follows is all tail call recursion that will be
@@ -135,11 +141,9 @@ impl UampApp {
             ComMsg::Msg(msg) => return self.update(msg),
         };
 
-        if self.pending_close {
-            if !self.library.any_process() {
-                self.pending_close = false;
-                return self.update(Msg::Control(ControlMsg::Close));
-            }
+        if self.pending_close && !self.library.any_process() {
+            self.pending_close = false;
+            return self.update(Msg::Control(ControlMsg::Close));
         }
 
         let now = Instant::now();
@@ -234,70 +238,67 @@ impl UampApp {
 
     pub fn create_reciever(&self) -> Result<Box<dyn TaskGen<Msg>>> {
         if let Some(r) = self.reciever.take() {
-            Ok(Box::new(Some(Task::new(r, |mut r| { async {
+            Ok(Box::new(Some(Task::new(r, |mut r| async {
                 let msg = r.recv().await.unwrap();
                 (r, msg)
-            }}))))
+            }))))
         } else {
             Err(Error::InvalidOperation("reciever is already created"))
         }
     }
 
-    pub fn create_server(&self) -> Result<Box<dyn TaskGen<Msg>>> {
-        if let Some(l) = self.listener.take() {
-            Ok(Box::new(Some(Task::new(l, |listener| {Box::pin(async {
-                loop {
-                    let stream = listener.accept().unwrap();
-                    let mut msgr = Messenger::try_new(&stream.0).unwrap();
+    pub fn run_server(&self) -> Result<()> {
+        if let Some(listener) = self.listener.take() {
+            let sender = self.sender.clone();
+            thread::spawn(move || loop {
+                let stream = listener.accept().unwrap();
+                let mut msgr = Messenger::try_new(&stream.0).unwrap();
 
-                    let rec = msgr.recieve();
+                let rec = msgr.recieve();
 
-                    let rec = match rec {
-                        Ok(MsgMessage::WaitExit(d)) => {
-                            thread::sleep(d);
-                            break (listener, Msg::None);
-                        }
-                        Ok(MsgMessage::Ping) => {
-                            if let Err(e) = msgr.send(MsgMessage::Success) {
-                                error!("Failed to respond to ping: {e}");
-                            }
-                            continue;
-                        }
-                        Ok(m) => m,
-                        Err(e) => {
-                            warn!("Failed to recieve message: {e}");
-                            if let Err(e) = msgr.send(messenger
-                                        ::msg
-                                        ::Message
-                                        ::Error(
-                                    messenger::msg::Error::new(
-                                    messenger
-                                        ::msg
-                                        ::ErrorType
-                                        ::DeserializeFailed,
-                                    e.to_string(),
-                                )
-                                )) {
-                                    warn!("Failed to send error message: {e}");
-                                }
-                            continue;
-                        }
-                    };
-
-                    let (response, msg) = Self::message_event(rec, &stream.0);
-                    if let Some(r) = response {
-                        if let Err(e) = msgr.send(r) {
-                            warn!("Failed to send response {e}");
-                        }
+                let rec = match rec {
+                    Ok(MsgMessage::WaitExit(d)) => {
+                        thread::sleep(d);
+                        return listener;
                     }
-
-                    if let Some(msg) = msg {
-                        break (listener, msg);
-                    } else {
+                    Ok(MsgMessage::Ping) => {
+                        if let Err(e) = msgr.send(MsgMessage::Success) {
+                            error!("Failed to respond to ping: {e}");
+                        }
                         continue;
                     }
+                    Ok(m) => m,
+                    Err(e) => {
+                        warn!("Failed to recieve message: {e}");
+                        if let Err(e) = msgr
+                            .send(messenger::msg::Message::Error(
+                            messenger::msg::Error::new(
+                                messenger::msg::ErrorType::DeserializeFailed,
+                                e.to_string(),
+                            ),
+                        )) {
+                            warn!("Failed to send error message: {e}");
+                        }
+                        continue;
+                    }
+                };
+
+                let (response, msg) = Self::message_event(rec, &stream.0);
+                if let Some(r) = response {
+                    if let Err(e) = msgr.send(r) {
+                        warn!("Failed to send response {e}");
+                    }
                 }
-            })}))))
+
+                if let Some(msg) = msg {
+                    if let Err(e) = sender.send(msg) {
+                        warn!("Failed to send message: {e}");
+                    }
+                } else {
+                    continue;
+                }
+            });
+            Ok(())
         } else {
             Err(Error::InvalidOperation("Tcp listener is not available"))
         }

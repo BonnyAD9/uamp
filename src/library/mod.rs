@@ -1,11 +1,13 @@
 pub mod msg;
 pub mod order;
 
-mod library;
+mod lib;
 mod load;
 mod song;
 
-pub use self::{library::*, msg::Message as LibraryMessage, song::*};
+use crate::core::extensions::{ParseError, Parses};
+
+pub use self::{lib::*, msg::Message as LibraryMessage, song::*};
 
 use serde::{Deserialize, Serialize};
 
@@ -14,8 +16,20 @@ use serde::{Deserialize, Serialize};
 pub struct SongId(usize);
 
 /// Filter for iterating library
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum Filter {
     All,
+}
+
+impl Parses<Filter> for str {
+    type Err = ParseError;
+
+    fn get_value(&self) -> Result<Filter, Self::Err> {
+        match self {
+            "all" => Ok(Filter::All),
+            _ => Err(ParseError::FailedToParse("Filter")),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, PartialOrd, Ord, Eq)]

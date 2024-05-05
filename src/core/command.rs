@@ -7,7 +7,7 @@ pub enum Command {
 #[derive(Clone, Debug)]
 pub enum ComMsg<Msg> {
     Command(Command),
-    Msg(Msg)
+    Msg(Msg),
 }
 
 impl<Msg> ComMsg<Msg> {

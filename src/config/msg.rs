@@ -2,11 +2,15 @@ use std::{net::TcpListener, path::PathBuf, time::Duration};
 
 use log::error;
 
-use crate::{app::UampApp, core::{command::ComMsg, msg::Msg}};
+use crate::{
+    app::UampApp,
+    core::{command::ComMsg, msg::Msg},
+};
 
-use super::config;
+use crate::config;
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)] // TODO
 pub enum Message {
     Reset(DefMessage),
     AddSearchPath(PathBuf),
@@ -34,6 +38,7 @@ pub enum Message {
 }
 
 #[derive(Clone, Debug, Copy)]
+#[allow(dead_code)] // TODO
 pub enum DefMessage {
     SearchPaths,
     AudioExtensions,

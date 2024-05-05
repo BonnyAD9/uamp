@@ -44,7 +44,7 @@ macro_rules! next {
         <str as $crate::core::extensions::Parses<$typ>>::get_value(
             $iter .next().ok_or(Error::UnexpectedEnd($id))?
         )
-            .map_err(|_| Error::ParseError { id: $id, typ: stringify!($typ)})?
+            .map_err(|_| Error::Parse { id: $id, typ: stringify!($typ)})?
     };
 
     ($typ:ident, $iter:ident, $val:expr, $id:expr) => {
@@ -104,7 +104,7 @@ macro_rules! starts {
 macro_rules! parse {
     ($t:ty, $s:expr, $id:expr) => {
         <str as $crate::core::extensions::Parses<$t>>::get_value($s)
-            .map_err(|_| $crate::cli::CliError::ParseError {
+            .map_err(|_| $crate::cli::CliError::Parse {
                 id: $id,
                 typ: stringify!($t)
             })?
@@ -262,7 +262,7 @@ macro_rules! parse_arg {
                             )+
                             None => None,
                             _ => {
-                                return Err($crate::cli::CliError::ParseError {
+                                return Err($crate::cli::CliError::Parse {
                                     id: Some(v.to_owned()),
                                     typ: __str__(__start__($(__start__($($osel " or ")+) " or ")+)),
                                 })
@@ -275,7 +275,7 @@ macro_rules! parse_arg {
 
                         $(
                             if !{ $val }(&v) {
-                                return Err($crate::cli::CliError::ParseError {
+                                return Err($crate::cli::CliError::Parse {
                                     id: Some(s.to_owned()),
                                     typ: __strfy__(value that satysfies $val),
                                 })

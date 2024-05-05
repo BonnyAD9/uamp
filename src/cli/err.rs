@@ -17,7 +17,7 @@ pub enum Error {
         "Failed to parse argument {}, the argument must be {typ}",
         if let Some(i) = .id { i.as_str() } else { "" }
     )]
-    ParseError {
+    Parse {
         /// Name of the argument that failed to parse
         id: Option<String>,
         /// What was expected

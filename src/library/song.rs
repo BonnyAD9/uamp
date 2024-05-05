@@ -53,19 +53,21 @@ impl Song {
             year: tag.year().unwrap_or(i32::MAX),
             length: tag
                 .duration()
-                .map(|s| Duration::from_secs_f64(s))
+                .map(Duration::from_secs_f64)
                 .unwrap_or(Duration::ZERO),
             genre: tag.genre().unwrap_or("-").to_owned(),
             deleted: false,
         };
 
-        match (|| -> Result<Duration> {
+        let res = || -> Result<Duration> {
             let f = File::open(&path)?;
             let s = Symph::try_new(f, &Default::default())?;
             Ok(s.get_time()
                 .ok_or(Error::InvalidOperation("Not supported"))?
                 .total)
-        })() {
+        };
+
+        match res() {
             Ok(d) => s.length = d,
             Err(e) => warn!("Failed to get true duration of {:?}: {e}", path),
         }
@@ -114,7 +116,7 @@ impl Song {
         self.track
     }
 
-    pub fn track_str(&self) -> String {
+    pub fn _track_str(&self) -> String {
         if self.track == u32::MAX {
             "-".to_owned()
         } else {
@@ -127,7 +129,7 @@ impl Song {
         self.disc
     }
 
-    pub fn disc_str(&self) -> String {
+    pub fn _disc_str(&self) -> String {
         if self.disc == u32::MAX {
             "-".to_owned()
         } else {
@@ -140,11 +142,11 @@ impl Song {
         self.deleted
     }
 
-    pub fn year(&self) -> i32 {
+    pub fn _year(&self) -> i32 {
         self.year
     }
 
-    pub fn year_str(&self) -> String {
+    pub fn _year_str(&self) -> String {
         if self.year == i32::MAX {
             "-".to_owned()
         } else {
@@ -156,7 +158,7 @@ impl Song {
         self.length
     }
 
-    pub fn length_str(&self) -> String {
+    pub fn _length_str(&self) -> String {
         if self.length == Duration::ZERO {
             "--:--".to_owned()
         } else {
@@ -168,7 +170,7 @@ impl Song {
         self.length = len;
     }
 
-    pub fn genre(&self) -> &str {
+    pub fn _genre(&self) -> &str {
         &self.genre
     }
 }

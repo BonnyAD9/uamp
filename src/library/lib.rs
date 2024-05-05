@@ -1,15 +1,10 @@
-use audiotags::Tag;
-use itertools::Itertools;
-use log::{error, info, warn};
+use log::{error, info};
 use serde_derive::{Deserialize, Serialize};
 use tokio::sync::mpsc::UnboundedSender;
 
 use std::{
-    borrow::Cow,
     cell::Cell,
-    collections::HashMap,
     fs::{create_dir_all, read_dir, File},
-    io::{Read, Write},
     mem,
     ops::{Index, IndexMut},
     path::Path,
@@ -21,7 +16,7 @@ use std::{
 use crate::{
     app::UampApp,
     config::Config,
-    core::{command::ComMsg, extensions::valid_filename, msg::Msg, Error, Result},
+    core::{command::ComMsg, msg::Msg, Error, Result},
     gen_struct,
 };
 
@@ -96,8 +91,7 @@ impl Library {
         match filter {
             Filter::All => Box::new(
                 (0..self.songs().len())
-                    .into_iter()
-                    .map(|n| SongId(n))
+                    .map(SongId)
                     .filter(|s| !self[*s].is_deleted()),
             ),
         }
@@ -126,7 +120,6 @@ impl Library {
             let me = self.clone();
 
             let handle = thread::spawn(move || -> Result<()> {
-                let path = path;
                 me.to_json(path)?;
                 if let Err(e) = sender.send(Msg::Library(Message::SaveEnded)) {
                     error!("Library save failed to send message: {e}");
@@ -178,7 +171,6 @@ impl Library {
         let mut songs = self.songs().clone();
 
         let handle = thread::spawn(move || {
-            let conf = conf;
             let songs = if Self::add_new_songs(&mut songs, &conf) {
                 Some(songs)
             } else {
@@ -248,14 +240,11 @@ impl Index<SongId> for Library {
 
 impl IndexMut<SongId> for Library {
     fn index_mut(&mut self, index: SongId) -> &mut Song {
-        if index.0 >= self.songs().len() {
+        if index.0 >= self.songs().len() || self.songs()[index.0].is_deleted()
+        {
             &mut self.ghost
         } else {
-            if self.songs()[index.0].is_deleted() {
-                &mut self.ghost
-            } else {
-                &mut self.songs_mut()[index.0]
-            }
+            &mut self.songs_mut()[index.0]
         }
     }
 }
@@ -415,14 +404,14 @@ impl Library {
 
                 let mut idx = None;
 
-                for i in 0..songs.len() {
-                    if songs[i].is_deleted() {
+                for (i, s) in songs.iter().enumerate() {
+                    if s.is_deleted() {
                         // prefer the later indexes, user is more likely to
                         // remove old song and songs at the end are more esily
                         // removed
                         idx = Some(i)
                     }
-                    if songs[i].path() == &path {
+                    if s.path() == &path {
                         continue 'dir_loop;
                     }
                 }

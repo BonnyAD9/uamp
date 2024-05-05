@@ -111,7 +111,7 @@ pub fn str_to_duration(s: &str) -> Option<Duration> {
             }
             n = &n[..9];
         }
-        let p = 10u64.pow(9u32.checked_sub(n.len() as u32).unwrap_or(0));
+        let p = 10u64.pow(9u32.saturating_sub(n.len() as u32));
         res += Duration::from_nanos(n.parse::<u64>().ok()? * p + of)
     }
 
@@ -231,20 +231,18 @@ impl<'de> Deserialize<'de> for Wrap<Duration> {
     {
         let s = String::deserialize(deserializer)?;
         str_to_duration(&s)
-            .map(|d| Wrap(d))
+            .map(Wrap)
             .ok_or(serde::de::Error::custom("Invalid duration format"))
     }
 }
 
-pub fn valid_filename<I>(s: I) -> PathBuf
+pub fn _valid_filename<I>(s: I) -> PathBuf
 where
     I: Iterator<Item = char>,
 {
     PathBuf::from(
         s.map(|c: char| {
-            if "<>:\"/\\|?*".contains(c) {
-                '-'
-            } else if c.is_ascii_control() {
+            if "<>:\"/\\|?*".contains(c) || c.is_ascii_control() {
                 '-'
             } else {
                 c

@@ -16,7 +16,7 @@ pub enum Message {
     /// Send simple action to be done
     Control(ControlMsg),
     /// todo
-    Info(Info),
+    Info(Box<Info>),
     /// Message indicating success
     Success,
     /// Wait for the given time and exit
@@ -100,7 +100,14 @@ impl Message {
     extract!(_error, Error, Error);
     extract!(_request, Request, Request);
     extract!(_control, ControlMsg, Control);
-    extract!(_info, Info, Info);
+
+    pub fn _info(self) -> Option<Info> {
+        if let Self::Info(e) = self {
+            Some(*e)
+        } else {
+            None
+        }
+    }
 
     /// Returns true if the message is error message
     pub fn _is_error(&self) -> bool {

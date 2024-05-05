@@ -43,7 +43,7 @@ pub struct Order {
 }
 
 impl Order {
-    pub fn new(field: OrderField, simple: bool) -> Self {
+    pub fn _new(field: OrderField, simple: bool) -> Self {
         Self {
             field,
             simple,
@@ -51,46 +51,46 @@ impl Order {
         }
     }
 
-    pub fn set_rev(mut self, rev: bool) -> Self {
+    pub fn _set_rev(mut self, rev: bool) -> Self {
         self.reverse = rev;
         self
     }
 
-    pub fn vec(&self, lib: &Library, vec: &mut Vec<SongId>) {
+    pub fn _vec(&self, lib: &Library, vec: &mut [SongId]) {
         match self.field {
             OrderField::None => {}
             OrderField::Title => {
-                Self::sort(vec, self.reverse, |s| lib[*s].title())
+                Self::_sort(vec, self.reverse, |s| lib[*s].title())
             }
             OrderField::Track => {
-                Self::sort(vec, self.reverse, |s| lib[*s].track())
+                Self::_sort(vec, self.reverse, |s| lib[*s].track())
             }
             OrderField::Disc => {
                 if self.simple {
-                    Self::sort(vec, self.reverse, |s| lib[*s].disc());
+                    Self::_sort(vec, self.reverse, |s| lib[*s].disc());
                 } else {
-                    Self::sort(vec, self.reverse, |s| {
+                    Self::_sort(vec, self.reverse, |s| {
                         (lib[*s].disc(), lib[*s].track())
                     })
                 }
             }
             OrderField::Album => {
                 if self.simple {
-                    Self::sort(vec, self.reverse, |s| lib[*s].album())
+                    Self::_sort(vec, self.reverse, |s| lib[*s].album())
                 } else {
-                    Self::sort(vec, self.reverse, |s| {
+                    Self::_sort(vec, self.reverse, |s| {
                         (lib[*s].album(), lib[*s].disc(), lib[*s].track())
                     })
                 }
             }
             OrderField::Artist => {
                 if self.simple {
-                    Self::sort(vec, self.reverse, |s| lib[*s].artist());
+                    Self::_sort(vec, self.reverse, |s| lib[*s].artist());
                 } else {
-                    Self::sort(vec, self.reverse, |s| {
+                    Self::_sort(vec, self.reverse, |s| {
                         (
                             lib[*s].artist(),
-                            lib[*s].year(),
+                            lib[*s]._year(),
                             lib[*s].album(),
                             lib[*s].disc(),
                             lib[*s].track(),
@@ -100,11 +100,11 @@ impl Order {
             }
             OrderField::Year => {
                 if self.simple {
-                    Self::sort(vec, self.reverse, |s| lib[*s].year())
+                    Self::_sort(vec, self.reverse, |s| lib[*s]._year())
                 } else {
-                    Self::sort(vec, self.reverse, |s| {
+                    Self::_sort(vec, self.reverse, |s| {
                         (
-                            lib[*s].year(),
+                            lib[*s]._year(),
                             lib[*s].album(),
                             lib[*s].disc(),
                             lib[*s].track(),
@@ -113,21 +113,21 @@ impl Order {
                 }
             }
             OrderField::Length => {
-                Self::sort(vec, self.reverse, |s| lib[*s].length())
+                Self::_sort(vec, self.reverse, |s| lib[*s].length())
             }
             OrderField::Genre => {
                 if self.simple {
-                    Self::sort(vec, self.reverse, |s| lib[*s].genre());
+                    Self::_sort(vec, self.reverse, |s| lib[*s]._genre());
                 } else {
-                    Self::sort(vec, self.reverse, |s| {
-                        (lib[*s].genre(), lib[*s].year())
+                    Self::_sort(vec, self.reverse, |s| {
+                        (lib[*s]._genre(), lib[*s]._year())
                     });
                 }
             }
         }
     }
 
-    fn sort<F, O>(vec: &mut Vec<SongId>, reverse: bool, f: F)
+    fn _sort<F, O>(vec: &mut [SongId], reverse: bool, f: F)
     where
         O: Ord,
         F: Fn(&SongId) -> O,
