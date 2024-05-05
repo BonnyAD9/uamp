@@ -21,11 +21,7 @@ use std::{
 use crate::{
     app::UampApp,
     config::Config,
-    core::{
-        extensions::valid_filename,
-        msg::Msg,
-        Error, Result,
-    },
+    core::{command::ComMsg, extensions::valid_filename, msg::Msg, Error, Result},
     gen_struct,
 };
 
@@ -272,7 +268,7 @@ impl Default for Library {
 
 impl UampApp {
     /// handles library events
-    pub fn library_event(&mut self, msg: Message) -> Option<Msg> {
+    pub fn library_event(&mut self, msg: Message) -> ComMsg<Msg> {
         match msg {
             Message::LoadEnded => {
                 if let Err(e) = self.library.finish_get_new_songs() {
@@ -294,7 +290,7 @@ impl UampApp {
             }
         }
 
-        None
+        ComMsg::none()
     }
 
     pub fn library_lib_update(&mut self) -> LibraryUpdate {

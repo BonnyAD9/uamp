@@ -15,10 +15,7 @@ use tokio::sync::mpsc::UnboundedSender;
 use crate::{
     app::UampApp,
     config::Config,
-    core::{
-        msg::Msg,
-        Result,
-    },
+    core::{command::ComMsg, msg::Msg, Result},
     gen_struct,
     library::{Library, LibraryUpdate, SongId},
 };
@@ -323,14 +320,14 @@ impl Player {
 
 impl UampApp {
     /// Handles player event messages
-    pub fn player_event(&mut self, msg: Message) -> Option<Msg> {
+    pub fn player_event(&mut self, msg: Message) -> ComMsg<Msg> {
         match msg {
             Message::SongEnd => {
                 self.player.play_next(&mut self.library, 1);
             }
             Message::HardPauseAt(i) => self.hard_pause_at = Some(i),
         }
-        None
+        ComMsg::none()
     }
 
     pub fn player_lib_update(&mut self, up: LibraryUpdate) {

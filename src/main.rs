@@ -9,13 +9,11 @@ use config::{app_id, Config};
 use log::{error, info};
 
 use crate::{
-    cli::{Action, Args},
-    core::{
+    background_app::run_background_app, cli::{Action, Args}, core::{
         extensions::duration_to_string,
         messenger::{self, msg::Info, Messenger},
         Result,
-    },
-    messenger::{msg, MsgMessage},
+    }, messenger::{msg, MsgMessage}
 };
 
 mod app;
@@ -24,6 +22,8 @@ mod config;
 mod core;
 mod library;
 mod player;
+mod tasks;
+mod background_app;
 
 fn main() {
     if let Err(e) = start() {
@@ -68,11 +68,7 @@ fn start() -> Result<()> {
 
     // must run has more power - in case both run and exit are true, run wins
     if args.must_run || !args.should_exit {
-        // TODO
-        /*if let Err(e) = UampApp::run(make_settings(conf)) {
-            error!("Uamp exited unexpectidly: {e}");
-            Err(e)?;
-        }*/
+        run_background_app(conf)?;
     }
 
     Ok(())

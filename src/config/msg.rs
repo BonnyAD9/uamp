@@ -2,10 +2,7 @@ use std::{net::TcpListener, path::PathBuf, time::Duration};
 
 use log::error;
 
-use crate::{
-    app::UampApp,
-    core::msg::Msg,
-};
+use crate::{app::UampApp, core::{command::ComMsg, msg::Msg}};
 
 use super::config;
 
@@ -61,7 +58,7 @@ pub enum DefMessage {
 }
 
 impl UampApp {
-    pub fn config_event(&mut self, msg: Message) -> Option<Msg> {
+    pub fn config_event(&mut self, msg: Message) -> ComMsg<Msg> {
         match msg {
             Message::Reset(msg) => {
                 return self.reset_event(msg);
@@ -180,10 +177,10 @@ impl UampApp {
             }
         }
 
-        None
+        ComMsg::none()
     }
 
-    fn reset_event(&mut self, msg: DefMessage) -> Option<Msg> {
+    fn reset_event(&mut self, msg: DefMessage) -> ComMsg<Msg> {
         match msg {
             DefMessage::SearchPaths => {
                 *self.config.search_paths_mut() =
@@ -194,7 +191,7 @@ impl UampApp {
                     config::default_audio_extensions();
             }
             DefMessage::ServerAddress => {
-                return Some(Msg::Config(Message::ServerAddress(
+                return ComMsg::Msg(Msg::Config(Message::ServerAddress(
                     config::default_server_address(),
                 )))
             }
@@ -214,17 +211,17 @@ impl UampApp {
                 self.config.save_timeout_set(config::default_save_timeout());
             }
             DefMessage::FadePlayPause => {
-                return Some(Msg::Config(Message::FadePlayPause(
+                return ComMsg::Msg(Msg::Config(Message::FadePlayPause(
                     config::default_fade_play_pause().0,
                 )));
             }
             DefMessage::Gapless => {
-                return Some(Msg::Config(Message::Gapless(
+                return ComMsg::Msg(Msg::Config(Message::Gapless(
                     config::default_gapless(),
                 )));
             }
             DefMessage::TickLength => {
-                return Some(Msg::Config(Message::TickLength(
+                return ComMsg::Msg(Msg::Config(Message::TickLength(
                     config::default_tick_length().0,
                 )));
             }
@@ -232,7 +229,7 @@ impl UampApp {
                 self.config.seek_jump_set(config::default_seek_jump());
             }
             DefMessage::Port => {
-                return Some(Msg::Config(Message::Port(
+                return ComMsg::Msg(Msg::Config(Message::Port(
                     config::default_port(),
                 )));
             }
@@ -240,7 +237,7 @@ impl UampApp {
                 self.config.delete_logs_after_set(config::default_delete_logs_after());
             }
             DefMessage::EnableServer => {
-                return Some(Msg::Config(Message::EnableServer(
+                return ComMsg::Msg(Msg::Config(Message::EnableServer(
                     config::default_enable_server(),
                 )));
             }
@@ -270,6 +267,6 @@ impl UampApp {
             }
         }
 
-        None
+        ComMsg::none()
     }
 }

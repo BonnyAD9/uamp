@@ -2,6 +2,7 @@
 pub mod extensions;
 pub mod messenger;
 pub mod msg;
+pub mod command;
 
 pub mod err;
 mod save_struct_macro;

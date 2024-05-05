@@ -1,24 +1,18 @@
 use std::{
-    cell::Cell,
-    net::{TcpListener, TcpStream},
-    sync::Arc,
-    thread,
-    time::{Duration, Instant},
+    cell::Cell, net::{TcpListener, TcpStream}, pin::{pin, Pin}, sync::Arc, thread, time::{Duration, Instant}
 };
 
+use futures::{future::BoxFuture, Future};
 use log::{error, warn};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
     config::{app_id, Config},
     core::{
-        extensions::duration_to_string,
-        messenger::{self, Messenger, MsgMessage},
-        msg::{ControlMsg, Msg},
-        Error, Result,
+        command::{ComMsg, Command}, extensions::duration_to_string, messenger::{self, Messenger, MsgMessage}, msg::{ControlMsg, Msg}, Error, Result
     },
     library::Library,
-    player::Player,
+    player::Player, tasks::{Task, TaskGen},
 };
 
 /// The uamp app state
@@ -112,7 +106,7 @@ impl UampApp {
         });
     }
 
-    pub fn update(&mut self, message: Msg) {
+    pub fn update(&mut self, message: Msg) -> Command {
         let com = match message {
             Msg::PlaySong(index, songs) => {
                 self.player.play_playlist(
@@ -121,7 +115,7 @@ impl UampApp {
                     Some(index),
                     true,
                 );
-                Some(Msg::Tick)
+                ComMsg::Msg(Msg::Tick)
             }
             Msg::Control(msg) => self.control_event(msg),
             Msg::Player(msg) => self.player_event(msg),
@@ -129,16 +123,17 @@ impl UampApp {
             Msg::Delegate(d) => d.update(self),
             Msg::Config(msg) => self.config_event(msg),
             Msg::Init => self.init(),
-            Msg::Tick => None,
-            Msg::None => None,
+            Msg::Tick => ComMsg::none(),
+            Msg::None => ComMsg::none(),
         };
 
         // The recursion that follows is all tail call recursion that will be
         // optimized so that there is no recursion
 
-        if let Some(msg) = com {
-            return self.update(msg);
-        }
+        let com = match com {
+            ComMsg::Command(com) => com,
+            ComMsg::Msg(msg) => return self.update(msg),
+        };
 
         if self.pending_close {
             if !self.library.any_process() {
@@ -167,6 +162,8 @@ impl UampApp {
 
         let up = self.library_lib_update();
         self.player_lib_update(up);
+
+        com
     }
 }
 
@@ -175,39 +172,29 @@ impl UampApp {
 //===========================================================================//
 
 impl UampApp {
-    fn new(conf: Config) -> Self {
+    pub fn new(conf: Config) -> Result<Self> {
         let mut lib = Library::from_config(&conf);
 
         let (sender, reciever) = mpsc::unbounded_channel::<Msg>();
         let sender = Arc::new(sender);
 
-        if let Err(e) = sender.send(Msg::Init) {
-            error!("Failed to send init message: {e}")
-        }
+        sender.send(Msg::Init)?;
 
         if conf.update_library_on_start() {
-            if let Err(e) = lib.start_get_new_songs(&conf, sender.clone()) {
-                error!("Failed to start library load: {e}");
-            }
+            lib.start_get_new_songs(&conf, sender.clone())?;
         }
 
         let mut player = Player::from_config(sender.clone(), &conf);
         player.load_config(&conf);
         player.remove_deleted(&lib);
 
-        let listener = if conf.enable_server() {
-            match Self::start_server(&conf) {
-                Ok(l) => Cell::new(Some(l)),
-                Err(e) => {
-                    error!("Failed to start the server: {e}");
-                    Cell::new(None)
-                }
-            }
+        let listener = if conf.enable_server() || conf.force_server {
+            Cell::new(Some(Self::start_server(&conf)?))
         } else {
             Cell::new(None)
         };
 
-        UampApp {
+        Ok(UampApp {
             config: conf,
             library: lib,
             player,
@@ -223,14 +210,14 @@ impl UampApp {
             last_prev: Instant::now(),
 
             hard_pause_at: None,
-        }
+        })
     }
 
-    fn init(&mut self) -> Option<Msg> {
-        let mut res = None;
+    fn init(&mut self) -> ComMsg<Msg> {
+        let mut res = ComMsg::none();
 
         if self.config.play_on_start() {
-            res = Some(Msg::Control(ControlMsg::PlayPause(Some(true))));
+            res = ComMsg::Msg(Msg::Control(ControlMsg::PlayPause(Some(true))));
         }
 
         res
@@ -245,27 +232,20 @@ impl UampApp {
         ))?)
     }
 
-    fn reciever_subscription(&self) -> Subscription {
-        let id = app_id() + " async msg";
+    pub fn create_reciever(&self) -> Result<Box<dyn TaskGen<Msg>>> {
         if let Some(r) = self.reciever.take() {
-            iced::subscription::unfold(id, r, |mut reciever| async {
-                let msg = reciever.recv().await.unwrap();
-                (msg, reciever)
-            })
+            Ok(Box::new(Some(Task::new(r, |mut r| { async {
+                let msg = r.recv().await.unwrap();
+                (r, msg)
+            }}))))
         } else {
-            self.fake_sub(id)
+            Err(Error::InvalidOperation("reciever is already created"))
         }
     }
 
-    fn server_subscription(&self) -> Subscription {
-        let id = format!(
-            "{} server ({}:{})",
-            app_id(),
-            self.config.server_address(),
-            self.config.port()
-        );
+    pub fn create_server(&self) -> Result<Box<dyn TaskGen<Msg>>> {
         if let Some(l) = self.listener.take() {
-            iced::subscription::unfold(id, l, |listener| async {
+            Ok(Box::new(Some(Task::new(l, |listener| {Box::pin(async {
                 loop {
                     let stream = listener.accept().unwrap();
                     let mut msgr = Messenger::try_new(&stream.0).unwrap();
@@ -275,7 +255,7 @@ impl UampApp {
                     let rec = match rec {
                         Ok(MsgMessage::WaitExit(d)) => {
                             thread::sleep(d);
-                            break (Msg::None, listener);
+                            break (listener, Msg::None);
                         }
                         Ok(MsgMessage::Ping) => {
                             if let Err(e) = msgr.send(MsgMessage::Success) {
@@ -312,18 +292,18 @@ impl UampApp {
                     }
 
                     if let Some(msg) = msg {
-                        break (msg, listener);
+                        break (listener, msg);
                     } else {
                         continue;
                     }
                 }
-            })
+            })}))))
         } else {
-            self.fake_sub(id)
+            Err(Error::InvalidOperation("Tcp listener is not available"))
         }
     }
 
-    fn clock_subscription(&self, tick: Duration) -> Subscription {
+    /*fn clock_subscription(&self, tick: Duration) -> Subscription {
         iced::subscription::unfold(
             format!("{} tick ({})", app_id(), duration_to_string(tick, false)),
             Instant::now(),
@@ -336,5 +316,5 @@ impl UampApp {
                 (Msg::Gui(GuiMessage::Tick), i + tick)
             },
         )
-    }
+    }*/
 }

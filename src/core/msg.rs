@@ -15,7 +15,7 @@ use crate::{
     player::PlayerMessage,
 };
 
-use super::{extensions::duration_to_string, Error};
+use super::{command::{ComMsg, Command}, extensions::duration_to_string, Error};
 
 /// Event messages in uamp
 #[allow(missing_debug_implementations)]
@@ -86,7 +86,7 @@ pub enum ControlMsg {
 
 impl UampApp {
     /// handles the control events
-    pub fn control_event(&mut self, msg: ControlMsg) -> Option<Msg> {
+    pub fn control_event(&mut self, msg: ControlMsg) -> ComMsg<Msg> {
         match msg {
             ControlMsg::PlayPause(p) => {
                 let pp = p.unwrap_or(!self.player.is_playing());
@@ -94,20 +94,20 @@ impl UampApp {
                     self.hard_pause_at = None;
                 }
                 self.player.play_pause(&mut self.library, pp);
-                return Some(Msg::Tick);
+                return ComMsg::Msg(Msg::Tick);
             }
             ControlMsg::NextSong(n) => {
                 self.player.play_next(&mut self.library, n);
-                return Some(Msg::Tick);
+                return ComMsg::Msg(Msg::Tick);
             }
             ControlMsg::PrevSong(n) => {
                 if let Some(t) = self.config.previous_timeout() {
                     if n.is_none() {
                         let now = Instant::now();
                         if now - replace(&mut self.last_prev, now) >= t.0 {
-                            return Some(Msg::Control(
-                                ControlMsg::SeekTo(Duration::ZERO),
-                            ));
+                            return ComMsg::Msg(Msg::Control(ControlMsg::SeekTo(
+                                Duration::ZERO,
+                            )));
                         }
                     }
                 }
@@ -116,20 +116,20 @@ impl UampApp {
                 if let Err(e) = self.config.delete_old_logs() {
                     error!("Failed to remove logs: {e}");
                 }
-                return Some(Msg::Tick);
+                return ComMsg::Msg(Msg::Tick);
             }
             ControlMsg::Close => {
                 self.save_all();
                 if self.library.any_process() {
                     self.pending_close = true;
-                    return None;
+                    return ComMsg::none();
                 }
                 // return ComMsg::Command(window::close());
-                return None;
+                return ComMsg::Command(Command::Exit);
             }
             ControlMsg::Shuffle => {
                 self.player.shuffle();
-                return Some(Msg::Tick);
+                return ComMsg::Msg(Msg::Tick);
             }
             ControlMsg::SetVolume(v) => {
                 self.player.set_volume(v.clamp(0., 1.))
@@ -150,7 +150,7 @@ impl UampApp {
                     i,
                     self.player.is_playing(),
                 );
-                return Some(Msg::Tick);
+                return ComMsg::Msg(Msg::Tick);
             }
             ControlMsg::Mute(b) => {
                 self.player.set_mute(b.unwrap_or(!self.player.mute()))
@@ -169,22 +169,22 @@ impl UampApp {
             }
             ControlMsg::SeekTo(d) => {
                 self.player.seek_to(d);
-                return Some(Msg::Tick);
+                return ComMsg::Msg(Msg::Tick);
             }
             ControlMsg::FastForward(d) => {
                 let t = d.unwrap_or(self.config.seek_jump().0);
                 self.player.seek_by(t, true);
-                return Some(Msg::Tick);
+                return ComMsg::Msg(Msg::Tick);
             }
             ControlMsg::Rewind(d) => {
                 let t = d.unwrap_or(self.config.seek_jump().0);
                 self.player.seek_by(t, false);
-                return Some(Msg::Tick);
+                return ComMsg::Msg(Msg::Tick);
             }
             ControlMsg::Save => self.save_all(),
         };
 
-        None
+        ComMsg::none()
     }
 }
 
@@ -223,25 +223,25 @@ pub fn get_control_string(m: &ControlMsg) -> String {
 }
 
 pub trait MessageDelegate: Sync + Send + Debug {
-    fn update(&self, app: &mut UampApp) -> Option<Msg>;
+    fn update(&self, app: &mut UampApp) -> ComMsg<Msg>;
 }
 
 pub struct FnDelegate<T>(T)
 where
-    T: Sync + Send + Fn(&mut UampApp) -> Option<Msg>;
+    T: Sync + Send + Fn(&mut UampApp) -> ComMsg<Msg>;
 
 impl<T> MessageDelegate for FnDelegate<T>
 where
-    T: Sync + Send + Fn(&mut UampApp) -> Option<Msg>,
+    T: Sync + Send + Fn(&mut UampApp) -> ComMsg<Msg>,
 {
-    fn update(&self, app: &mut UampApp) -> Option<Msg> {
+    fn update(&self, app: &mut UampApp) -> ComMsg<Msg> {
         self.0(app)
     }
 }
 
 impl<T> Debug for FnDelegate<T>
 where
-    T: Sync + Send + Fn(&mut UampApp) -> Option<Msg>,
+    T: Sync + Send + Fn(&mut UampApp) -> ComMsg<Msg>,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("FnDelegate").finish()
@@ -250,7 +250,7 @@ where
 
 impl<T> From<T> for FnDelegate<T>
 where
-    T: Sync + Send + Fn(&mut UampApp) -> Option<Msg>,
+    T: Sync + Send + Fn(&mut UampApp) -> ComMsg<Msg>,
 {
     fn from(value: T) -> Self {
         Self(value)

@@ -134,6 +134,8 @@ gen_struct! {
 
         #[serde(skip_serializing, default = "default_config_path_json")]
         pub config_path: Option<PathBuf>,
+        #[serde(skip_serializing)]
+        pub force_server: bool,
 
         ; // attributes for the auto field
         #[serde(skip)]
@@ -256,6 +258,7 @@ impl Config {
             show_remaining_time: default_show_remaining_time(),
             play_on_start: default_play_on_start(),
             simple_sorting: default_simple_sorting(),
+            force_server: false,
             change: Cell::new(true),
         }
     }

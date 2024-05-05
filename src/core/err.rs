@@ -6,6 +6,8 @@ use thiserror::Error;
 
 use crate::cli::CliError;
 
+use super::msg::Msg;
+
 /// Result with the unified error type of uamp
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -41,6 +43,8 @@ pub enum Error {
     /// Time dowsn't work :||
     #[error(transparent)]
     Time(#[from] SystemTimeError),
+    #[error(transparent)]
+    Send(#[from] tokio::sync::mpsc::error::SendError<Msg>),
     #[error("Failed to lock: {0}")]
     Poison(String),
     /// Any other error
