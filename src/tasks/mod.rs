@@ -36,7 +36,7 @@ where
 {
     fn task(&mut self) -> TaskFuture<Msg> {
         let Some(Task { data, fun }) = self.take() else {
-            panic!(); // TODO
+            panic!("Task was already taken. This is a bug.");
         };
         let f = fun(data);
         Box::pin(async move {
