@@ -21,7 +21,7 @@ pub fn run_background_app(mut conf: Config) -> Result<()> {
     app.run_server()?;
     loop {
         let msg = tasks.wait_one();
-        
+
         trace!("{msg:?}");
         #[cfg(debug_assertions)]
         println!("{msg:?}");

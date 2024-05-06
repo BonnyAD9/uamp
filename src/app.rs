@@ -1,5 +1,10 @@
 use std::{
-    cell::Cell, net::{TcpListener, TcpStream}, process, sync::Arc, thread, time::{Duration, Instant}
+    cell::Cell,
+    net::{TcpListener, TcpStream},
+    process,
+    sync::Arc,
+    thread,
+    time::{Duration, Instant},
 };
 
 use futures::StreamExt;
