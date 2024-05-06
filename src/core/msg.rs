@@ -39,6 +39,7 @@ pub enum Msg {
     // General update
     Tick,
     Init,
+    None,
 }
 
 impl Msg {

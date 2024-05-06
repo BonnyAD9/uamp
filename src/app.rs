@@ -1,12 +1,10 @@
 use std::{
-    cell::Cell,
-    net::{TcpListener, TcpStream},
-    sync::Arc,
-    thread,
-    time::{Duration, Instant},
+    cell::Cell, net::{TcpListener, TcpStream}, process, sync::Arc, thread, time::{Duration, Instant}
 };
 
+use futures::StreamExt;
 use log::{error, warn};
+use signal_hook_async_std::Signals;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
@@ -131,6 +129,7 @@ impl UampApp {
             Msg::Config(msg) => self.config_event(msg),
             Msg::Init => self.init(),
             Msg::Tick => ComMsg::none(),
+            Msg::None => ComMsg::none(),
         };
 
         // The recursion that follows is all tail call recursion that will be
@@ -236,7 +235,7 @@ impl UampApp {
         ))?)
     }
 
-    pub fn create_reciever(&self) -> Result<Box<dyn TaskGen<Msg>>> {
+    pub fn reciever_task(&self) -> Result<Box<dyn TaskGen<Msg>>> {
         if let Some(r) = self.reciever.take() {
             Ok(Box::new(Task::new(r, |mut r| async {
                 let msg = r.recv().await.unwrap();
@@ -245,6 +244,28 @@ impl UampApp {
         } else {
             Err(Error::InvalidOperation("reciever is already created"))
         }
+    }
+
+    pub fn signal_task(&self) -> Result<Box<dyn TaskGen<Msg>>> {
+        let sig = Signals::new(signal_hook::consts::TERM_SIGNALS)?;
+        Ok(Box::new(Task::new((sig, 0), |(mut sig, cnt)| async move {
+            let Some(s) = sig.next().await else {
+                return ((sig, cnt), Msg::None);
+            };
+
+            if signal_hook::consts::TERM_SIGNALS.contains(&s) {
+                // fourth close request will force the exit
+                if cnt + 1 == 4 {
+                    warn!("Received 4 close signals. Exiting now.");
+                    println!("Received 4 close signals. Exiting now.");
+                    process::exit(130);
+                }
+                ((sig, cnt + 1), Msg::Control(ControlMsg::Close))
+            } else {
+                warn!("Received unknown signal {s}");
+                ((sig, cnt), Msg::None)
+            }
+        })))
     }
 
     pub fn run_server(&self) -> Result<()> {
