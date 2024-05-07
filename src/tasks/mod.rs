@@ -6,12 +6,12 @@ use futures::{
     Future,
 };
 
-type TaskFuture<Msg> = BoxFuture<'static, (Box<dyn TaskGen<Msg>>, Msg)>;
+type TaskFuture<Msg> = BoxFuture<'static, (Option<Box<dyn TaskGen<Msg>>>, Msg)>;
 
 pub struct Task<T, Msg, F, Fut>
 where
     F: Fn(T) -> Fut + Send + 'static,
-    Fut: Future<Output = (T, Msg)> + Send + 'static,
+    Fut: Future<Output = (Option<T>, Msg)> + Send + 'static,
     Msg: 'static,
     T: 'static,
 {
@@ -22,7 +22,7 @@ where
 impl<T, Msg, F, Fut> Task<T, Msg, F, Fut>
 where
     F: Fn(T) -> Fut + Send,
-    Fut: Future<Output = (T, Msg)> + Send + 'static,
+    Fut: Future<Output = (Option<T>, Msg)> + Send + 'static,
 {
     pub fn new(data: T, fun: F) -> Self {
         Self { data, fun }
@@ -32,18 +32,22 @@ where
 impl<T, Msg, F, Fut> TaskGen<Msg> for Task<T, Msg, F, Fut>
 where
     F: Fn(T) -> Fut + Send,
-    Fut: Future<Output = (T, Msg)> + Send,
+    Fut: Future<Output = (Option<T>, Msg)> + Send,
     T: Send,
 {
     fn task(mut self: Box<Self>) -> TaskFuture<Msg> {
         Box::pin(async move {
             let (data, m) = (self.fun)(self.data).await;
-            *self = Task {
-                data,
-                fun: self.fun,
-            };
-            let slf: Box<dyn TaskGen<_>> = self;
-            (slf, m)
+            if let Some(data) = data {
+                *self = Task {
+                    data,
+                    fun: self.fun,
+                };
+                let slf: Box<dyn TaskGen<_>> = self;
+                (Some(slf), m)
+            } else {
+                (None, m)
+            }
         })
     }
 }
@@ -64,7 +68,9 @@ impl<Msg> Tasks<Msg> {
     pub fn wait_one(&mut self) -> Msg {
         let res = block_on(select_all(mem::take(&mut self.futures)));
         self.futures = res.2;
-        self.futures.push(res.0 .0.task());
+        if let Some(task) = res.0 .0 {
+            self.futures.push(task.task());
+        }
         res.0 .1
     }
 

@@ -244,7 +244,7 @@ impl UampApp {
         if let Some(r) = self.reciever.take() {
             Ok(Box::new(Task::new(r, |mut r| async {
                 let msg = r.recv().await.unwrap();
-                (r, msg)
+                (Some(r), msg)
             })))
         } else {
             Err(Error::InvalidOperation("reciever is already created"))
@@ -255,7 +255,7 @@ impl UampApp {
         let sig = Signals::new(signal_hook::consts::TERM_SIGNALS)?;
         Ok(Box::new(Task::new((sig, 0), |(mut sig, cnt)| async move {
             let Some(s) = sig.next().await else {
-                return ((sig, cnt), Msg::None);
+                return (Some((sig, cnt)), Msg::None);
             };
 
             if signal_hook::consts::TERM_SIGNALS.contains(&s) {
@@ -265,10 +265,10 @@ impl UampApp {
                     println!("Received 4 close signals. Exiting now.");
                     process::exit(130);
                 }
-                ((sig, cnt + 1), Msg::Control(ControlMsg::Close))
+                (Some((sig, cnt + 1)), Msg::Control(ControlMsg::Close))
             } else {
                 warn!("Received unknown signal {s}");
-                ((sig, cnt), Msg::None)
+                (Some((sig, cnt)), Msg::None)
             }
         })))
     }
