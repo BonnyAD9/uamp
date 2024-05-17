@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## v0.5.0
+- Remove gui and related features.
+- Add non gui mode for running in background.
+- Add options to add newly loaded songs to the current playlist.
+- Add option for playlist jump from console.
+- Add option to remove songs with non existing paths from library on library
+  load, this is enabled by default.
+
 ## v0.4.0
 - Add all options to settings including help
 - Fancy volume icon

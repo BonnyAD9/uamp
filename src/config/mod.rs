@@ -89,6 +89,8 @@ gen_struct! {
 
         update_library_on_start: bool { pub, pub } => pub(super) () true,
 
+        remove_missing_on_load: bool { pub, pub } => pub(super) () true,
+
         register_global_hotkeys: bool { pub, pub } => pub(super) () false,
 
         volume_jump: f32 { pub, pub } => pub(super) () 0.025,
@@ -138,7 +140,7 @@ gen_struct! {
 
         #[serde(skip_serializing, default = "default_config_path_json")]
         pub config_path: Option<PathBuf>,
-        #[serde(skip_serializing)]
+        #[serde(skip_serializing, default)]
         pub force_server: bool,
 
         ; // attributes for the auto field
@@ -244,6 +246,7 @@ impl Config {
             image_cache: default_image_cache(),
             audio_extensions: default_audio_extensions(),
             update_library_on_start: default_update_library_on_start(),
+            remove_missing_on_load: default_remove_missing_on_load(),
             register_global_hotkeys: default_register_global_hotkeys(),
             volume_jump: default_volume_jump(),
             save_timeout: default_save_timeout(),

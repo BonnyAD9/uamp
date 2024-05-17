@@ -142,6 +142,10 @@ impl Song {
         self.deleted
     }
 
+    pub fn delete(&mut self) {
+        self.deleted = true;
+    }
+
     pub fn _year(&self) -> i32 {
         self.year
     }

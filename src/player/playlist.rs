@@ -1,10 +1,12 @@
 use std::{
+    mem,
     ops::{Index, IndexMut},
     slice::{Iter, SliceIndex},
     sync::Arc,
 };
 
 use itertools::Itertools;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 use crate::library::{Library, SongId};
@@ -35,13 +37,20 @@ impl Playlist {
         self[..].iter()
     }
 
-    /// Gets/Creates arc from the playlist
-    pub fn _as_arc(&self) -> Arc<[SongId]> {
+    /// Gets/Creates arc from the playlist. This will create copy if playlist
+    /// is dynamic.
+    pub fn _to_arc(&self) -> Arc<[SongId]> {
         match self {
             Playlist::Static(a) => a.clone(),
             // copy to arc when this is vector
             Playlist::Dynamic(v) => v[..].into(),
         }
+    }
+
+    /// Gets/Creates arc from the playlist. This will not copy the playlist,
+    /// but it will transform it into a static playlist.
+    pub fn _as_arc(&mut self) -> Arc<[SongId]> {
+        self._make_static().clone()
     }
 
     pub fn remove_deleted(&mut self, lib: &Library) {
@@ -56,6 +65,40 @@ impl Playlist {
             }
             Playlist::Dynamic(v) => v.retain(|s| !lib[*s].is_deleted()),
         }
+    }
+
+    pub fn mix_in<I>(&mut self, after: usize, iter: I)
+    where
+        I: IntoIterator<Item = SongId>,
+    {
+        let mut it = iter.into_iter();
+        let i = it.next();
+        if i.is_none() {
+            return;
+        }
+
+        let v = self.make_dynamic();
+        let mut rng = rand::thread_rng();
+        for s in i.into_iter().chain(it) {
+            let idx = rng.gen_range(after + 1..=v.len());
+            let o = v[idx];
+            v[idx] = s;
+            v.push(o);
+        }
+    }
+
+    pub fn insert_at<I>(&mut self, idx: usize, iter: I)
+    where
+        I: IntoIterator<Item = SongId>,
+    {
+        let mut it = iter.into_iter();
+        let i = it.next();
+        if i.is_none() {
+            return;
+        }
+
+        let v = self.make_dynamic();
+        v.splice(idx..idx, i.into_iter().chain(it));
     }
 }
 
@@ -79,13 +122,7 @@ impl<T: SliceIndex<[SongId]>> Index<T> for Playlist {
 impl<T: SliceIndex<[SongId]>> IndexMut<T> for Playlist {
     #[inline]
     fn index_mut(&mut self, index: T) -> &mut Self::Output {
-        match self {
-            Self::Static(_) => {
-                self.make_dynamic();
-                self.index_mut(index)
-            }
-            Self::Dynamic(d) => d.index_mut(index),
-        }
+        self.make_dynamic().index_mut(index)
     }
 }
 
@@ -104,6 +141,26 @@ impl From<Vec<SongId>> for Playlist {
 impl From<Arc<[SongId]>> for Playlist {
     fn from(value: Arc<[SongId]>) -> Self {
         Self::Static(value)
+    }
+}
+
+impl Extend<SongId> for Playlist {
+    fn extend<T: IntoIterator<Item = SongId>>(&mut self, iter: T) {
+        let mut it = iter.into_iter();
+        let i = it.next();
+        if i.is_some() {
+            self.make_dynamic().extend(i.into_iter().chain(it))
+        }
+    }
+}
+
+impl<'a> Extend<&'a SongId> for Playlist {
+    fn extend<T: IntoIterator<Item = &'a SongId>>(&mut self, iter: T) {
+        let mut it = iter.into_iter();
+        let i = it.next();
+        if i.is_some() {
+            self.make_dynamic().extend(i.into_iter().chain(it))
+        }
     }
 }
 
@@ -154,9 +211,28 @@ impl<'de> Deserialize<'de> for Playlist {
 impl Playlist {
     /// Clones the playlist and creates owned vector
     #[inline]
-    fn make_dynamic(&mut self) {
-        if let Self::Static(s) = self {
-            *self = Self::Dynamic(s.as_ref().into())
+    fn make_dynamic(&mut self) -> &mut Vec<SongId> {
+        match self {
+            Self::Dynamic(d) => d,
+            Self::Static(s) => {
+                *self = Self::Dynamic(s.as_ref().into());
+                let Self::Dynamic(d) = self else { panic!() };
+                d
+            }
+        }
+    }
+
+    #[inline]
+    fn _make_static(&mut self) -> &Arc<[SongId]> {
+        match self {
+            Self::Dynamic(d) => {
+                *self = Self::Static(mem::take(d).into());
+                let Self::Static(s) = self else {
+                    panic!();
+                };
+                s
+            }
+            Self::Static(s) => s,
         }
     }
 }

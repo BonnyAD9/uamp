@@ -6,7 +6,8 @@ use futures::{
     Future,
 };
 
-type TaskFuture<Msg> = BoxFuture<'static, (Option<Box<dyn TaskGen<Msg>>>, Msg)>;
+type TaskFuture<Msg> =
+    BoxFuture<'static, (Option<Box<dyn TaskGen<Msg>>>, Msg)>;
 
 pub struct Task<T, Msg, F, Fut>
 where

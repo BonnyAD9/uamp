@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     app::UampApp,
     config::ConfMessage,
-    library::{Filter, LibraryMessage, SongId},
+    library::{Filter, LibraryMessage, LoadOpts, SongId},
     player::PlayerMessage,
 };
 
@@ -76,7 +76,7 @@ pub enum ControlMsg {
     /// Exit the app
     Close,
     /// Search for new songs
-    LoadNewSongs,
+    LoadNewSongs(LoadOpts),
     /// Seek to the given timesamp
     SeekTo(Duration),
     /// Seeks forward
@@ -160,11 +160,12 @@ impl UampApp {
             ControlMsg::Mute(b) => {
                 self.player.set_mute(b.unwrap_or(!self.player.mute()))
             }
-            ControlMsg::LoadNewSongs => {
-                match self
-                    .library
-                    .start_get_new_songs(&self.config, self.sender.clone())
-                {
+            ControlMsg::LoadNewSongs(opts) => {
+                match self.library.start_get_new_songs(
+                    &self.config,
+                    self.sender.clone(),
+                    opts,
+                ) {
                     Err(e) if matches!(e, Error::InvalidOperation(_)) => {
                         info!("Cannot load new songs: {e}")
                     }
@@ -222,7 +223,14 @@ pub fn _get_control_string(m: &ControlMsg) -> String {
         ControlMsg::Shuffle => "shuffle".to_owned(),
         ControlMsg::PlaylistJump(v) => format!("pj={v}"),
         ControlMsg::Close => "x".to_owned(),
-        ControlMsg::LoadNewSongs => "load-songs".to_owned(),
+        ControlMsg::LoadNewSongs(o) => {
+            let s = o.to_string();
+            if s.is_empty() {
+                "load-songs".to_owned()
+            } else {
+                format!("load-songs={s}")
+            }
+        }
         ControlMsg::SeekTo(d) => format!("st={}", d.as_secs_f32()),
         ControlMsg::FastForward(None) => "ff".to_owned(),
         ControlMsg::FastForward(Some(d)) => {

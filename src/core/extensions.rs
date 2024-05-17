@@ -4,6 +4,8 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+use crate::{library::LoadOpts, player::add_policy::AddPolicy};
+
 #[derive(Error, Debug)]
 pub enum ParseError {
     #[error("Failed to parse {0}")]
@@ -151,6 +153,50 @@ impl Parses<Duration> for str {
 
     fn get_value(&self) -> Result<Duration, Self::Err> {
         str_to_duration(self).ok_or(ParseError::FailedToParse("Duration"))
+    }
+}
+
+impl Parses<LoadOpts> for str {
+    type Err = ParseError;
+
+    fn get_value(&self) -> Result<LoadOpts, Self::Err> {
+        let mut res = LoadOpts::default();
+
+        fn set_rm(res: &mut LoadOpts, v: bool) -> Result<(), ParseError> {
+            if res.remove_missing.is_some() {
+                Err(ParseError::FailedToParse("LoadOpts"))
+            } else {
+                res.remove_missing = Some(v);
+                Ok(())
+            }
+        }
+
+        fn set_atp(
+            res: &mut LoadOpts,
+            v: AddPolicy,
+        ) -> Result<(), ParseError> {
+            if res.add_to_playlist.is_some() {
+                Err(ParseError::FailedToParse("LoadOpts"))
+            } else {
+                res.add_to_playlist = Some(v);
+                Ok(())
+            }
+        }
+
+        for c in self.chars() {
+            match c {
+                'r' => set_rm(&mut res, true)?,
+                'l' => set_rm(&mut res, false)?,
+                'e' => set_atp(&mut res, AddPolicy::End)?,
+                'n' => set_atp(&mut res, AddPolicy::Next)?,
+                'm' => set_atp(&mut res, AddPolicy::MixIn)?,
+                _ => {
+                    return Err(ParseError::FailedToParse("LoadOpts"));
+                }
+            }
+        }
+
+        Ok(res)
     }
 }
 

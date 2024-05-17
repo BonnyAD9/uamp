@@ -1,3 +1,4 @@
+pub mod add_policy;
 mod msg;
 mod playback;
 pub mod playlist;
@@ -5,8 +6,8 @@ mod sink_wrapper;
 
 pub use self::msg::Message as PlayerMessage;
 use self::{
-    msg::Message, playback::Playback, playlist::Playlist,
-    sink_wrapper::SinkWrapper,
+    add_policy::AddPolicy, msg::Message, playback::Playback,
+    playlist::Playlist, sink_wrapper::SinkWrapper,
 };
 
 use std::{
@@ -34,7 +35,7 @@ use crate::{
 gen_struct! {
     pub Player {
         // Reference
-        playlist: Playlist { pub, pri },
+        playlist: Playlist { pub, pub },
         ; // value
         current: Option<usize> { pub, pri },
         volume: f32 { pub, pri },
@@ -322,6 +323,18 @@ impl Player {
             warn!("Failed to hard pause: {e}");
         }
     }
+
+    pub fn add_songs<I>(&mut self, songs: I, policy: AddPolicy)
+    where
+        I: IntoIterator<Item = SongId>,
+    {
+        let cur = self.current().unwrap_or_default();
+        match policy {
+            AddPolicy::End => self.playlist_mut().extend(songs),
+            AddPolicy::Next => self.playlist_mut().insert_at(cur + 1, songs),
+            AddPolicy::MixIn => self.playlist_mut().mix_in(cur + 1, songs),
+        }
+    }
 }
 
 impl UampApp {
@@ -357,6 +370,8 @@ impl Player {
             Ok(_) => self.state = Playback::play(play),
             Err(e) => error!("Failed to load song: {e}"),
         }
+
+        // TODO: skip to next
 
         if !play {
             self.hard_pause();

@@ -1,6 +1,10 @@
 use std::time::Duration;
 
-use crate::{core::msg::ControlMsg, library::Filter, parse_arg};
+use crate::{
+    core::msg::ControlMsg,
+    library::{Filter, LoadOpts},
+    parse_arg,
+};
 
 parse_arg! {ControlMsg as parse_control_message, auto_instance_help:
     ? "Play or pause, when without argument, toggle between the states
@@ -34,8 +38,13 @@ parse_arg! {ControlMsg as parse_control_message, auto_instance_help:
        the states"
     "mute" [=bool] => Mute;
 
-    ? "Look for new songs."
-    "load-songs" => LoadNewSongs;
+    ? "Look for new songs. Load options are of the form `[r|l][e|n|m]`.
+       - `r` enables removing of songs with invalid path for the load.
+       - `l` disables removing of songs with invalid path for the load.
+       - `e` adds the new songs to the end of the queue.
+       - `n` adds the new songs after the current songs.
+       - `m` randomly mixes the new songs after the current songs."
+    "load-songs" [=LoadOpts] => LoadNewSongs(Default::default());
 
     ? "Shuffles the current playlist."
     "shuffle-playlist" | "shuffle" => Shuffle;

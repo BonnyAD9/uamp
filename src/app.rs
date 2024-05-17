@@ -189,7 +189,12 @@ impl UampApp {
         sender.send(Msg::Init)?;
 
         if conf.update_library_on_start() {
-            lib.start_get_new_songs(&conf, sender.clone())?;
+            println!("Update lib");
+            lib.start_get_new_songs(
+                &conf,
+                sender.clone(),
+                Default::default(),
+            )?;
         }
 
         let mut player = Player::from_config(sender.clone(), &conf);

@@ -7,7 +7,9 @@ mod song;
 
 use crate::core::extensions::{ParseError, Parses};
 
-pub use self::{lib::*, msg::Message as LibraryMessage, song::*};
+pub use self::{
+    lib::*, load::LoadOpts, msg::Message as LibraryMessage, song::*,
+};
 
 use serde::{Deserialize, Serialize};
 
