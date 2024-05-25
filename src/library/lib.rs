@@ -2,7 +2,11 @@ use log::{error, info};
 use serde_derive::{Deserialize, Serialize};
 
 use std::{
-    cell::Cell, collections::{BTreeSet, HashMap, HashSet}, fs::{create_dir_all, read_dir, File}, mem, ops::{Index, IndexMut}, path::Path
+    cell::Cell,
+    fs::{create_dir_all, File},
+    mem,
+    ops::{Index, IndexMut},
+    path::Path,
 };
 
 use crate::{
@@ -14,7 +18,9 @@ use crate::{
 };
 
 use super::{
-    add_new_songs::add_new_songs, load::{LibraryLoadResult, LoadOpts}, Filter, LibraryUpdate, Song, SongId
+    add_new_songs::add_new_songs,
+    load::{LibraryLoadResult, LoadOpts},
+    Filter, LibraryUpdate, Song, SongId,
 };
 
 gen_struct! {
