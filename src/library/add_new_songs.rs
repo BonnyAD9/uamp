@@ -128,9 +128,9 @@ impl<'a> State<'a> {
                 continue;
             }
 
-            let path = match s.path().canonicalize() {
+            match s.path().canonicalize() {
                 // song does exist
-                Ok(path) => path,
+                Ok(path) => self.id_map.insert(path, i),
                 // song doesn't exist
                 Err(_) => {
                     if self.remove_missing {
@@ -141,8 +141,6 @@ impl<'a> State<'a> {
                     continue;
                 }
             };
-
-            self.id_map.insert(path, i);
         }
     }
 
@@ -219,7 +217,6 @@ impl<'a> State<'a> {
     fn add_song(&mut self, p: PathBuf) -> Result<()> {
         let song = Song::from_path(p)?;
 
-        // Add the new song to the library.
         if let Some(i) = self.empty.pop() {
             self.songs[i] = song;
             self.sparse_new.push(SongId(i));
