@@ -217,7 +217,7 @@ impl<'a> State<'a> {
     }
 
     fn add_song(&mut self, p: PathBuf) -> Result<()> {
-        let song = Song::from_path(&p)?;
+        let song = Song::from_path(p)?;
 
         // Add the new song to the library.
         if let Some(i) = self.empty.pop() {
