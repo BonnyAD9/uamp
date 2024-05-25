@@ -1,4 +1,3 @@
-pub mod msg;
 pub mod order;
 
 mod lib;
@@ -8,7 +7,9 @@ mod song;
 use crate::core::extensions::{ParseError, Parses};
 
 pub use self::{
-    lib::*, load::LoadOpts, msg::Message as LibraryMessage, song::*,
+    lib::*,
+    load::{LibraryLoadResult, LoadOpts},
+    song::*,
 };
 
 use serde::{Deserialize, Serialize};

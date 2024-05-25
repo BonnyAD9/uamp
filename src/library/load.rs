@@ -1,4 +1,4 @@
-use std::{thread::JoinHandle, time::Instant};
+use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize};
 
@@ -6,19 +6,13 @@ use crate::player::add_policy::AddPolicy;
 
 use super::{Song, SongId};
 
-/// Contains metadata about library load on another thread
-pub struct LibraryLoad {
-    pub handle: JoinHandle<Option<LibraryLoadResult>>,
-    pub time_started: Instant,
-}
-
 /// Result of library load on another thread
 pub struct LibraryLoadResult {
-    pub removed: bool,
-    pub songs: Vec<Song>,
-    pub add_policy: Option<AddPolicy>,
-    pub first_new: usize,
-    pub sparse_new: Vec<SongId>,
+    pub(super) removed: bool,
+    pub(super) songs: Vec<Song>,
+    pub(super) add_policy: Option<AddPolicy>,
+    pub(super) first_new: usize,
+    pub(super) sparse_new: Vec<SongId>,
 }
 
 impl LibraryLoadResult {
@@ -58,5 +52,15 @@ impl ToString for LoadOpts {
             res.insert_str(0, "load_songs=");
             res
         }
+    }
+}
+
+impl Debug for LibraryLoadResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LibraryLoadResult")
+            .field("removed", &self.removed)
+            .field("add_policy", &self.add_policy)
+            .field("first_new", &self.first_new)
+            .finish()
     }
 }

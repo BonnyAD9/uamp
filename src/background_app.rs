@@ -1,34 +1,64 @@
+use futures::{channel::mpsc, StreamExt};
 use log::{error, trace};
 
 use crate::{
     app::UampApp,
     config::Config,
-    core::{command::Command, Result},
-    tasks::Tasks,
+    core::{
+        command::{AppCtrl, Command},
+        msg::Msg,
+        Result,
+    },
+    sync::{
+        msg_stream::{MsgGen, Streams},
+        tasks::UniqueTasks,
+    },
 };
 
 pub fn run_background_app(mut conf: Config) -> Result<()> {
     conf.force_server = true;
-    let mut app = UampApp::new(conf)?;
-    let mut tasks = Tasks::new();
-    tasks.add(app.reciever_task()?);
+    let mut cmd_queue = vec![];
+    let (sender, reciever) = mpsc::unbounded::<Msg>();
 
-    match app.signal_task() {
-        Ok(s) => tasks.add(s),
-        Err(e) => error!("Failed to create signal handler: {e}"),
-    }
+    let mut streams = Streams::new();
+    let mut tasks = UniqueTasks::new(sender.clone());
+    streams.add(Box::new(MsgGen::new(reciever, |mut r| async {
+        let msg = r.next().await.unwrap();
+        (Some(r), msg)
+    })));
 
-    app.run_server()?;
-    loop {
-        let msg = tasks.wait_one();
+    let mut app =
+        UampApp::new(conf, &mut AppCtrl::new(&mut cmd_queue, &tasks), sender)?;
+
+    'mainloop: loop {
+        for cmd in cmd_queue.drain(..) {
+            trace!("{cmd:?}");
+            #[cfg(debug_assertions)]
+            println!("{cmd:?}");
+            match cmd {
+                Command::Exit => break 'mainloop Ok(()),
+                Command::AddStream(stream) => streams.add(stream),
+                Command::AddTask(typ, task) => {
+                    if let Err(e) = tasks.add(typ, task) {
+                        error!("Failed to start task: {e}");
+                    }
+                }
+            }
+        }
+
+        let msg = streams.wait_one();
 
         trace!("{msg:?}");
         #[cfg(debug_assertions)]
         println!("{msg:?}");
 
-        match app.update(msg) {
-            Command::None => {}
-            Command::Exit => break Ok(()),
+        for res in tasks.check() {
+            trace!("{res:?}");
+            #[cfg(debug_assertions)]
+            println!("{res:?}");
+            app.task_end(&mut AppCtrl::new(&mut cmd_queue, &tasks), res);
         }
+
+        app.update(&mut AppCtrl::new(&mut cmd_queue, &tasks), msg);
     }
 }

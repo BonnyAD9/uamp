@@ -1,6 +1,5 @@
 use log::{error, info};
 use serde_derive::{Deserialize, Serialize};
-use tokio::sync::mpsc::UnboundedSender;
 
 use std::{
     cell::Cell,
@@ -8,21 +7,18 @@ use std::{
     mem,
     ops::{Index, IndexMut},
     path::Path,
-    sync::Arc,
-    thread::{self, JoinHandle},
-    time::Instant,
 };
 
 use crate::{
     app::UampApp,
     config::Config,
-    core::{command::ComMsg, msg::Msg, Error, Result},
+    core::{command::AppCtrl, Error, Result},
     gen_struct,
+    sync::tasks::{TaskMsg, TaskType},
 };
 
 use super::{
-    load::{LibraryLoad, LibraryLoadResult, LoadOpts},
-    msg::Message,
+    load::{LibraryLoadResult, LoadOpts},
     Filter, LibraryUpdate, Song, SongId,
 };
 
@@ -34,12 +30,6 @@ gen_struct! {
         // albums: Vec<SongId> { pri, pri },
         ; // Fields passed by value
         ; // Other fields
-        #[serde(skip)]
-        load_process: Option<LibraryLoad>,
-        #[serde(skip)]
-        save_process: Option<JoinHandle<Result<()>>>,
-        #[serde(skip)]
-        new_images: bool,
         /// invalid song
         #[serde(skip, default = "default_ghost")]
         ghost: Song,
@@ -59,9 +49,6 @@ impl Library {
     pub fn new() -> Self {
         Library {
             songs: Vec::new(),
-            load_process: None,
-            save_process: None,
-            new_images: false,
             lib_update: LibraryUpdate::None,
             change: Cell::new(true),
             ghost: Song::invalid(),
@@ -100,16 +87,13 @@ impl Library {
     pub fn start_to_default_json(
         &mut self,
         conf: &Config,
-        sender: Arc<UnboundedSender<Msg>>,
+        ctrl: &mut AppCtrl,
     ) -> Result<()> {
         if !self.change.get() {
             return Ok(());
         }
 
-        // End panicked processes
-        self.any_process();
-
-        if self.save_process.is_some() {
+        if ctrl.is_task_running(TaskType::LibrarySave) {
             return Err(Error::InvalidOperation(
                 "Library load is already in progress",
             ));
@@ -119,15 +103,9 @@ impl Library {
             let path = p.clone();
             let me = self.clone();
 
-            let handle = thread::spawn(move || -> Result<()> {
-                me.to_json(path)?;
-                if let Err(e) = sender.send(Msg::Library(Message::SaveEnded)) {
-                    error!("Library save failed to send message: {e}");
-                }
-                Ok(())
-            });
+            let task = move || TaskMsg::LibrarySave(me.to_json(path));
 
-            self.save_process = Some(handle);
+            ctrl.add_task(TaskType::LibraryLoad, task);
         }
 
         self.change.set(false);
@@ -156,13 +134,10 @@ impl Library {
     pub fn start_get_new_songs(
         &mut self,
         conf: &Config,
-        sender: Arc<UnboundedSender<Msg>>,
+        ctrl: &mut AppCtrl,
         opts: LoadOpts,
     ) -> Result<()> {
-        // End panicked processes
-        self.any_process();
-
-        if self.load_process.is_some() {
+        if ctrl.is_task_running(TaskType::LibraryLoad) {
             return Err(Error::InvalidOperation(
                 "Library load is already in progress",
             ));
@@ -173,7 +148,7 @@ impl Library {
         let remove_missing =
             opts.remove_missing.unwrap_or(conf.remove_missing_on_load());
 
-        let handle = thread::spawn(move || {
+        let task = move || {
             let mut res = LibraryLoadResult {
                 removed: false,
                 first_new: songs.len(),
@@ -188,51 +163,15 @@ impl Library {
 
             Self::add_new_songs(&mut res, &conf);
 
-            if let Err(e) = sender.send(Msg::Library(Message::LoadEnded)) {
-                error!("Library load failed to send message: {e}");
-            }
-
             if res.any_change() {
-                Some(res)
+                TaskMsg::LibraryLoad(Ok(Some(res)))
             } else {
-                None
+                TaskMsg::LibraryLoad(Ok(None))
             }
-        });
-
-        self.load_process = Some(LibraryLoad {
-            handle,
-            time_started: Instant::now(),
-        });
+        };
+        ctrl.add_task(TaskType::LibraryLoad, task);
 
         Ok(())
-    }
-
-    /// Checks if there are any running operations on another thread.
-    pub fn any_process(&mut self) -> bool {
-        let mut res = false;
-
-        if let Some(p) = &self.load_process {
-            if p.handle.is_finished() {
-                if let Err(e) = self.finish_get_new_songs() {
-                    // TODO: don't ignore Ok()
-                    error!("Failed to get new songs: {e}");
-                }
-            } else {
-                res = true;
-            }
-        }
-
-        if let Some(p) = &self.save_process {
-            if p.is_finished() {
-                if let Err(e) = self.finish_save_songs() {
-                    error!("Failed to save songs: {e}");
-                }
-            } else {
-                res = true;
-            }
-        }
-
-        res
     }
 }
 
@@ -270,57 +209,55 @@ impl Default for Library {
 }
 
 impl UampApp {
-    /// handles library events
-    pub fn library_event(&mut self, msg: Message) -> ComMsg<Msg> {
-        match msg {
-            Message::LoadEnded => {
-                match self.library.finish_get_new_songs() {
-                    Err(e) => {
-                        error!("Failed to finsih getting new songs: {e}")
-                    }
-                    Ok(Some(LibraryLoadResult {
-                        first_new,
-                        sparse_new,
-                        add_policy: Some(p),
-                        ..
-                    })) => {
-                        self.player.add_songs(
-                            (first_new..self.library.songs().len())
-                                .map(SongId)
-                                .chain(sparse_new),
-                            p,
-                        );
-                    }
-                    _ => {}
-                }
-                match self
-                    .library
-                    .start_to_default_json(&self.config, self.sender.clone())
-                {
-                    Err(Error::InvalidOperation(_)) => {}
-                    Err(e) => error!("Failed to start library save: {e}"),
-                    _ => {}
-                }
+    pub fn finish_library_load(
+        &mut self,
+        ctrl: &mut AppCtrl,
+        res: Result<Option<LibraryLoadResult>>,
+    ) {
+        let mut res = match res {
+            Ok(Some(res)) => res,
+            Ok(None) => return,
+            Err(e) => {
+                error!("Failed to load new songs: {e}");
+                return;
             }
-            Message::SaveEnded => {
-                if let Err(e) = self.library.finish_save_songs() {
-                    error!("Failed to finsih saving songs: {e}")
-                }
-            }
+        };
+
+        *self.library.songs_mut() = mem::take(&mut res.songs);
+        if res.removed {
+            self.library.update(LibraryUpdate::RemoveData);
+        } else {
+            self.library.update(LibraryUpdate::NewData);
         }
 
-        ComMsg::none()
+        if let Some(p) = res.add_policy {
+            self.player.add_songs(
+                (res.first_new..self.library.songs().len())
+                    .map(SongId)
+                    .chain(res.sparse_new),
+                p,
+            );
+        };
+
+        match self.library.start_to_default_json(&self.config, ctrl) {
+            Err(Error::InvalidOperation(_)) => {}
+            Err(e) => error!("Failed to start library save: {e}"),
+            _ => {}
+        }
+    }
+
+    pub fn finish_library_save_songs(&mut self, res: Result<()>) {
+        match res {
+            Ok(()) => {}
+            Err(e) => {
+                error!("Failed to save library: {e}");
+                self.library.change.set(true);
+            }
+        }
     }
 
     pub fn library_lib_update(&mut self) -> LibraryUpdate {
-        let up =
-            mem::replace(&mut self.library.lib_update, LibraryUpdate::None);
-
-        if up >= LibraryUpdate::NewData {
-            self.library.new_images = true;
-        }
-
-        up
+        mem::replace(&mut self.library.lib_update, LibraryUpdate::None)
     }
 }
 
@@ -342,41 +279,6 @@ impl Library {
 
         serde_json::to_writer(File::create(path)?, self)?;
         Ok(())
-    }
-
-    /// Finishes the loading of songs started by `start_get_new_songs`
-    fn finish_get_new_songs(&mut self) -> Result<Option<LibraryLoadResult>> {
-        if let Some(p) = self.load_process.take() {
-            let r = p.handle.join().map_err(|_| Error::ThreadPanicked)?;
-            if let Some(mut s) = r {
-                *self.songs_mut() = mem::take(&mut s.songs);
-                if s.removed {
-                    self.update(LibraryUpdate::RemoveData);
-                } else {
-                    self.update(LibraryUpdate::NewData);
-                }
-                Ok(Some(s))
-            } else {
-                Ok(None)
-            }
-        } else {
-            Err(Error::InvalidOperation("No load was running"))
-        }
-    }
-
-    /// Finishes the loading of songs started by `start_get_new_songs`
-    fn finish_save_songs(&mut self) -> Result<()> {
-        if let Some(p) = self.save_process.take() {
-            match p.join().map_err(|_| Error::ThreadPanicked).and_then(|e| e) {
-                Err(e) => {
-                    self.change.set(true);
-                    Err(e)
-                }
-                Ok(_) => Ok(()),
-            }
-        } else {
-            Err(Error::InvalidOperation("No load was running"))
-        }
     }
 
     fn remove_missing_songs(res: &mut LibraryLoadResult) {
@@ -505,10 +407,7 @@ impl Clone for Library {
     fn clone(&self) -> Self {
         Self {
             songs: self.songs.clone(),
-            load_process: None,
-            save_process: None,
             lib_update: LibraryUpdate::None,
-            new_images: self.new_images,
             ghost: self.ghost.clone(),
             change: self.change.clone(),
         }

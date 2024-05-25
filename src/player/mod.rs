@@ -14,20 +14,19 @@ use std::{
     cell::Cell,
     fs::{create_dir_all, File},
     path::Path,
-    sync::Arc,
     time::Duration,
 };
 
+use futures::channel::mpsc::UnboundedSender;
 use log::{error, info, warn};
 use rand::{seq::SliceRandom, thread_rng};
 use raplay::{CallbackInfo, Timestamp};
 use serde::{Deserialize, Serialize};
-use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{
     app::UampApp,
     config::Config,
-    core::{command::ComMsg, msg::Msg, Result},
+    core::{msg::Msg, Result},
     gen_struct,
     library::{Library, LibraryUpdate, SongId},
 };
@@ -199,10 +198,7 @@ impl Player {
 
     /// Loads the playback state from json based on the config, returns default
     /// [`Player`] on fail
-    pub fn from_config(
-        sender: Arc<UnboundedSender<Msg>>,
-        conf: &Config,
-    ) -> Self {
+    pub fn from_config(sender: UnboundedSender<Msg>, conf: &Config) -> Self {
         if let Some(p) = conf.player_path() {
             Self::from_json(sender, p)
         } else {
@@ -230,7 +226,7 @@ impl Player {
     /// Loads the playback state from the given json file, returns default
     /// [`Player`] on fail
     pub fn from_json(
-        sender: Arc<UnboundedSender<Msg>>,
+        sender: UnboundedSender<Msg>,
         path: impl AsRef<Path>,
     ) -> Self {
         let data = if let Ok(file) = File::open(path.as_ref()) {
@@ -339,14 +335,14 @@ impl Player {
 
 impl UampApp {
     /// Handles player event messages
-    pub fn player_event(&mut self, msg: Message) -> ComMsg<Msg> {
+    pub fn player_event(&mut self, msg: Message) -> Option<Msg> {
         match msg {
             Message::SongEnd => {
                 self.player.play_next(&mut self.library, 1);
             }
             Message::HardPauseAt(i) => self.hard_pause_at = Some(i),
         }
-        ComMsg::none()
+        None
     }
 
     pub fn player_lib_update(&mut self, up: LibraryUpdate) {
@@ -401,7 +397,7 @@ impl Player {
     }
 
     /// Creates new player from the sender
-    fn new(sender: Arc<UnboundedSender<Msg>>) -> Self {
+    fn new(sender: UnboundedSender<Msg>) -> Self {
         let mut res = Self {
             playlist: [][..].into(),
             current: None,
@@ -417,22 +413,19 @@ impl Player {
         res
     }
 
-    fn song_end_handler(
-        msg: CallbackInfo,
-        sender: &Arc<UnboundedSender<Msg>>,
-    ) {
+    fn song_end_handler(msg: CallbackInfo, sender: &UnboundedSender<Msg>) {
         let message = match msg {
             CallbackInfo::SourceEnded => Msg::Player(Message::SongEnd),
             CallbackInfo::PauseEnds(i) => Msg::Player(Message::HardPauseAt(i)),
             _ => todo!("Fix me at {}:{}::", file!(), line!()),
         };
 
-        if let Err(e) = sender.send(message) {
+        if let Err(e) = sender.unbounded_send(message) {
             error!("Failed to sink callback message: {e}");
         }
     }
 
-    fn init_inner(&mut self, sender: Arc<UnboundedSender<Msg>>) {
+    fn init_inner(&mut self, sender: UnboundedSender<Msg>) {
         if let Err(e) = self
             .inner
             .on_callback(move |msg| Self::song_end_handler(msg, &sender))

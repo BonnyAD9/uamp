@@ -6,10 +6,10 @@ use futures::{
     Future,
 };
 
-type TaskFuture<Msg> =
-    BoxFuture<'static, (Option<Box<dyn TaskGen<Msg>>>, Msg)>;
+type MsgStreamFuture<Msg> =
+    BoxFuture<'static, (Option<Box<dyn MsgStream<Msg>>>, Msg)>;
 
-pub struct Task<T, Msg, F, Fut>
+pub struct MsgGen<T, Msg, F, Fut>
 where
     F: Fn(T) -> Fut + Send + 'static,
     Fut: Future<Output = (Option<T>, Msg)> + Send + 'static,
@@ -20,7 +20,7 @@ where
     fun: F,
 }
 
-impl<T, Msg, F, Fut> Task<T, Msg, F, Fut>
+impl<T, Msg, F, Fut> MsgGen<T, Msg, F, Fut>
 where
     F: Fn(T) -> Fut + Send,
     Fut: Future<Output = (Option<T>, Msg)> + Send + 'static,
@@ -30,21 +30,21 @@ where
     }
 }
 
-impl<T, Msg, F, Fut> TaskGen<Msg> for Task<T, Msg, F, Fut>
+impl<T, Msg, F, Fut> MsgStream<Msg> for MsgGen<T, Msg, F, Fut>
 where
     F: Fn(T) -> Fut + Send,
     Fut: Future<Output = (Option<T>, Msg)> + Send,
     T: Send,
 {
-    fn task(mut self: Box<Self>) -> TaskFuture<Msg> {
+    fn next_future(mut self: Box<Self>) -> MsgStreamFuture<Msg> {
         Box::pin(async move {
             let (data, m) = (self.fun)(self.data).await;
             if let Some(data) = data {
-                *self = Task {
+                *self = MsgGen {
                     data,
                     fun: self.fun,
                 };
-                let slf: Box<dyn TaskGen<_>> = self;
+                let slf: Box<dyn MsgStream<_>> = self;
                 (Some(slf), m)
             } else {
                 (None, m)
@@ -53,15 +53,15 @@ where
     }
 }
 
-pub trait TaskGen<Msg> {
-    fn task(self: Box<Self>) -> TaskFuture<Msg>;
+pub trait MsgStream<Msg> {
+    fn next_future(self: Box<Self>) -> MsgStreamFuture<Msg>;
 }
 
-pub struct Tasks<Msg> {
-    futures: Vec<TaskFuture<Msg>>,
+pub struct Streams<Msg> {
+    futures: Vec<MsgStreamFuture<Msg>>,
 }
 
-impl<Msg> Tasks<Msg> {
+impl<Msg> Streams<Msg> {
     pub fn new() -> Self {
         Self { futures: vec![] }
     }
@@ -70,12 +70,12 @@ impl<Msg> Tasks<Msg> {
         let res = block_on(select_all(mem::take(&mut self.futures)));
         self.futures = res.2;
         if let Some(task) = res.0 .0 {
-            self.futures.push(task.task());
+            self.futures.push(task.next_future());
         }
         res.0 .1
     }
 
-    pub fn add(&mut self, f: Box<dyn TaskGen<Msg>>) {
-        self.futures.push(f.task());
+    pub fn add(&mut self, f: Box<dyn MsgStream<Msg>>) {
+        self.futures.push(f.next_future());
     }
 }

@@ -1,11 +1,7 @@
-use std::{net::TcpListener, path::PathBuf, time::Duration};
+use std::{path::PathBuf, time::Duration};
 
-use log::error;
-
-use crate::{
-    app::UampApp,
-    core::{command::ComMsg, msg::Msg},
-};
+use crate::core::command::AppCtrl;
+use crate::{app::UampApp, core::msg::Msg};
 
 use crate::config;
 
@@ -63,10 +59,14 @@ pub enum DefMessage {
 }
 
 impl UampApp {
-    pub fn config_event(&mut self, msg: Message) -> ComMsg<Msg> {
+    pub fn config_event(
+        &mut self,
+        ctrl: &mut AppCtrl,
+        msg: Message,
+    ) -> Option<Msg> {
         match msg {
             Message::Reset(msg) => {
-                return self.reset_event(msg);
+                return self.reset_event(ctrl, msg);
             }
             Message::AddSearchPath(p) => {
                 if !self.config.search_paths().contains(&p) {
@@ -84,8 +84,8 @@ impl UampApp {
             Message::RemoveAudioExtension(i) => {
                 self.config.audio_extensions_mut().remove(i);
             }
-            Message::ServerAddress(s) => {
-                if self.config.server_address() != &s {
+            Message::ServerAddress(_s) => {
+                /*if self.config.server_address() != &s {
                     let adr = format!("{}:{}", s, self.config.port());
                     match TcpListener::bind(&adr) {
                         Ok(l) => {
@@ -95,7 +95,8 @@ impl UampApp {
                         }
                         Err(e) => error!("Failed to create server: {e}"),
                     }
-                }
+                }*/
+                // TODO
             }
             Message::RecursiveSearch(b) => {
                 self.config.recursive_search_set(b);
@@ -123,8 +124,8 @@ impl UampApp {
             Message::SeekJump(d) => {
                 self.config.seek_jump_set(d.into());
             }
-            Message::Port(u) => {
-                if self.config.port() != u {
+            Message::Port(_u) => {
+                /*if self.config.port() != u {
                     let adr =
                         format!("{}:{}", self.config.server_address(), u);
                     match TcpListener::bind(&adr) {
@@ -135,13 +136,14 @@ impl UampApp {
                         }
                         Err(e) => error!("Failed to create server: {e}"),
                     }
-                }
+                }*/
+                // TODO
             }
             Message::DeleteLogsAfter(d) => {
                 self.config.delete_logs_after_set(d.into());
             }
-            Message::EnableServer(b) => {
-                if self.config.enable_server() != b {
+            Message::EnableServer(_b) => {
+                /*if self.config.enable_server() != b {
                     if b {
                         match TcpListener::bind(format!(
                             "{}:{}",
@@ -158,7 +160,8 @@ impl UampApp {
                         self.stop_server(None);
                         self.config.enable_server_set(b);
                     }
-                }
+                }*/
+                // TODO
             }
             Message::ShuffleCurrent(b) => {
                 if self.config.shuffle_current_set(b) {
@@ -182,10 +185,14 @@ impl UampApp {
             }
         }
 
-        ComMsg::none()
+        None
     }
 
-    fn reset_event(&mut self, msg: DefMessage) -> ComMsg<Msg> {
+    fn reset_event(
+        &mut self,
+        _ctrl: &mut AppCtrl,
+        msg: DefMessage,
+    ) -> Option<Msg> {
         match msg {
             DefMessage::SearchPaths => {
                 *self.config.search_paths_mut() =
@@ -196,7 +203,7 @@ impl UampApp {
                     config::default_audio_extensions();
             }
             DefMessage::ServerAddress => {
-                return ComMsg::Msg(Msg::Config(Message::ServerAddress(
+                return Some(Msg::Config(Message::ServerAddress(
                     config::default_server_address(),
                 )))
             }
@@ -216,17 +223,17 @@ impl UampApp {
                 self.config.save_timeout_set(config::default_save_timeout());
             }
             DefMessage::FadePlayPause => {
-                return ComMsg::Msg(Msg::Config(Message::FadePlayPause(
+                return Some(Msg::Config(Message::FadePlayPause(
                     config::default_fade_play_pause().0,
                 )));
             }
             DefMessage::Gapless => {
-                return ComMsg::Msg(Msg::Config(Message::Gapless(
+                return Some(Msg::Config(Message::Gapless(
                     config::default_gapless(),
                 )));
             }
             DefMessage::TickLength => {
-                return ComMsg::Msg(Msg::Config(Message::TickLength(
+                return Some(Msg::Config(Message::TickLength(
                     config::default_tick_length().0,
                 )));
             }
@@ -234,7 +241,7 @@ impl UampApp {
                 self.config.seek_jump_set(config::default_seek_jump());
             }
             DefMessage::Port => {
-                return ComMsg::Msg(Msg::Config(Message::Port(
+                return Some(Msg::Config(Message::Port(
                     config::default_port(),
                 )));
             }
@@ -242,7 +249,7 @@ impl UampApp {
                 self.config.delete_logs_after_set(config::default_delete_logs_after());
             }
             DefMessage::EnableServer => {
-                return ComMsg::Msg(Msg::Config(Message::EnableServer(
+                return Some(Msg::Config(Message::EnableServer(
                     config::default_enable_server(),
                 )));
             }
@@ -272,6 +279,6 @@ impl UampApp {
             }
         }
 
-        ComMsg::none()
+        None
     }
 }

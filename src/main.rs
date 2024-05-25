@@ -25,7 +25,7 @@ mod config;
 mod core;
 mod library;
 mod player;
-mod tasks;
+mod sync;
 
 fn main() {
     if let Err(e) = start() {

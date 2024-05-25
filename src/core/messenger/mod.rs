@@ -13,13 +13,14 @@ use std::{
 use crate::{
     app::UampApp,
     core::{
-        command::ComMsg,
         err::Result,
         msg::{FnDelegate, Msg},
     },
 };
 
 use crate::msg::{Error, ErrorType, Info, Message, Request};
+
+use super::command::AppCtrl;
 
 /// used to send messages across instances
 pub struct Messenger<'a> {
@@ -91,12 +92,12 @@ impl UampApp {
                 (
                     None,
                     Some(Msg::delegate::<_, FnDelegate<_>>(
-                        move |app: &mut UampApp| {
+                        move |app: &mut UampApp, _: &mut AppCtrl| {
                             let mut msg = match Messenger::try_new(&stream) {
                                 Ok(m) => m,
                                 Err(e) => {
                                     error!("Failed to create messenger: {e}");
-                                    return ComMsg::none();
+                                    return None;
                                 }
                             };
                             if let Err(e) =
@@ -116,7 +117,7 @@ impl UampApp {
                             {
                                 error!("Failed to send message: {e}");
                             };
-                            ComMsg::none()
+                            None
                         },
                     )),
                 )

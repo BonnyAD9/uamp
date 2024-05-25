@@ -1,28 +1,27 @@
 use std::{
-    cell::Cell,
     net::{TcpListener, TcpStream},
-    process,
-    sync::Arc,
-    thread,
+    process, thread,
     time::{Duration, Instant},
 };
 
-use futures::StreamExt;
+use futures::{channel::mpsc::UnboundedSender, StreamExt};
 use log::{error, warn};
 use signal_hook_async_std::Signals;
-use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
     config::Config,
     core::{
-        command::{ComMsg, Command},
+        command::AppCtrl,
         messenger::{self, Messenger, MsgMessage},
         msg::{ControlMsg, Msg},
         Error, Result,
     },
     library::Library,
     player::Player,
-    tasks::{Task, TaskGen},
+    sync::{
+        msg_stream::MsgGen,
+        tasks::{TaskMsg, TaskType},
+    },
 };
 
 /// The uamp app state
@@ -36,12 +35,7 @@ pub struct UampApp {
 
     /// Sender for async messages to be synchronized with the main message
     /// handler
-    pub sender: Arc<UnboundedSender<Msg>>,
-    /// Reciever of the async messages
-    pub reciever: Cell<Option<UnboundedReceiver<Msg>>>,
-
-    /// The server listener
-    pub listener: Cell<Option<TcpListener>>,
+    pub sender: UnboundedSender<Msg>,
 
     /// Messages that can be processed only if there are no running processes
     pub pending_close: bool,
@@ -60,11 +54,8 @@ pub struct UampApp {
 
 impl UampApp {
     /// Saves all the data that is saved by uamp
-    pub fn save_all(&mut self) {
-        match self
-            .library
-            .start_to_default_json(&self.config, self.sender.clone())
-        {
+    pub fn save_all(&mut self, ctrl: &mut AppCtrl) {
+        match self.library.start_to_default_json(&self.config, ctrl) {
             Err(Error::InvalidOperation(_)) => {}
             Err(e) => error!("Failed to start library save: {e}"),
             _ => {}
@@ -79,7 +70,7 @@ impl UampApp {
         self.last_save = Instant::now();
     }
 
-    pub fn stop_server(&self, wait: Option<String>) {
+    pub fn _stop_server(&self, wait: Option<String>) {
         let adr =
             format!("{}:{}", self.config.server_address(), self.config.port());
         thread::spawn(move || {
@@ -116,8 +107,23 @@ impl UampApp {
         });
     }
 
-    pub fn update(&mut self, message: Msg) -> Command {
-        let com = match message {
+    pub fn task_end(&mut self, ctrl: &mut AppCtrl, task_res: TaskMsg) {
+        match task_res {
+            TaskMsg::Server(Err(e)) => {
+                error!("Server unexpectedly ended: {e}");
+            }
+            TaskMsg::Server(Ok(_)) => {}
+            TaskMsg::LibraryLoad(res) => {
+                self.finish_library_load(ctrl, res);
+            }
+            TaskMsg::LibrarySave(res) => {
+                self.finish_library_save_songs(res);
+            }
+        }
+    }
+
+    pub fn update(&mut self, ctrl: &mut AppCtrl, message: Msg) {
+        let msg = match message {
             Msg::_PlaySong(index, songs) => {
                 self.player.play_playlist(
                     &mut self.library,
@@ -125,29 +131,23 @@ impl UampApp {
                     Some(index),
                     true,
                 );
-                ComMsg::Msg(Msg::Tick)
+                Some(Msg::Tick)
             }
-            Msg::Control(msg) => self.control_event(msg),
+            Msg::Control(msg) => self.control_event(ctrl, msg),
             Msg::Player(msg) => self.player_event(msg),
-            Msg::Library(msg) => self.library_event(msg),
-            Msg::Delegate(d) => d.update(self),
-            Msg::Config(msg) => self.config_event(msg),
-            Msg::Init => self.init(),
-            Msg::Tick => ComMsg::none(),
-            Msg::None => ComMsg::none(),
+            Msg::Delegate(d) => d.update(self, ctrl),
+            Msg::Config(msg) => self.config_event(ctrl, msg),
+            Msg::Tick => None,
+            Msg::None => None,
         };
 
-        // The recursion that follows is all tail call recursion that will be
-        // optimized so that there is no recursion
+        if let Some(msg) = msg {
+            return self.update(ctrl, msg);
+        }
 
-        let com = match com {
-            ComMsg::Command(com) => com,
-            ComMsg::Msg(msg) => return self.update(msg),
-        };
-
-        if self.pending_close && !self.library.any_process() {
+        if self.pending_close && !ctrl.any_task(|t| t != TaskType::Server) {
             self.pending_close = false;
-            return self.update(Msg::Control(ControlMsg::Close));
+            return self.update(ctrl, Msg::Control(ControlMsg::Close));
         }
 
         let now = Instant::now();
@@ -164,14 +164,11 @@ impl UampApp {
             .map(|t| now - self.last_save >= t.0)
             .unwrap_or_default()
         {
-            self.library.any_process();
-            self.save_all()
+            self.save_all(ctrl);
         }
 
         let up = self.library_lib_update();
         self.player_lib_update(up);
-
-        com
     }
 }
 
@@ -180,32 +177,35 @@ impl UampApp {
 //===========================================================================//
 
 impl UampApp {
-    pub fn new(conf: Config) -> Result<Self> {
+    pub fn new(
+        conf: Config,
+        ctrl: &mut AppCtrl,
+        sender: UnboundedSender<Msg>,
+    ) -> Result<Self> {
         let mut lib = Library::from_config(&conf);
-
-        let (sender, reciever) = mpsc::unbounded_channel::<Msg>();
-        let sender = Arc::new(sender);
-
-        sender.send(Msg::Init)?;
 
         if conf.update_library_on_start() {
             println!("Update lib");
-            lib.start_get_new_songs(
-                &conf,
-                sender.clone(),
-                Default::default(),
-            )?;
+            lib.start_get_new_songs(&conf, ctrl, Default::default())?;
         }
 
         let mut player = Player::from_config(sender.clone(), &conf);
         player.load_config(&conf);
         player.remove_deleted(&lib);
 
-        let listener = if conf.enable_server() || conf.force_server {
-            Cell::new(Some(Self::start_server(&conf)?))
-        } else {
-            Cell::new(None)
-        };
+        if conf.enable_server() || conf.force_server {
+            Self::start_server(&conf, ctrl, sender.clone())?;
+        }
+
+        Self::signal_task(ctrl)?;
+
+        if conf.play_on_start() {
+            if let Err(e) = sender.unbounded_send(Msg::Control(
+                ControlMsg::PlayPause(Some(true)),
+            )) {
+                error!("Failed to send message to play on startup: {e}");
+            }
+        }
 
         Ok(UampApp {
             config: conf,
@@ -213,9 +213,6 @@ impl UampApp {
             player,
 
             sender,
-            reciever: Cell::new(Some(reciever)),
-
-            listener,
 
             pending_close: false,
 
@@ -226,39 +223,33 @@ impl UampApp {
         })
     }
 
-    fn init(&mut self) -> ComMsg<Msg> {
-        let mut res = ComMsg::none();
-
-        if self.config.play_on_start() {
-            res = ComMsg::Msg(Msg::Control(ControlMsg::PlayPause(Some(true))));
+    /// Starts the tcp server
+    fn start_server(
+        conf: &Config,
+        ctrl: &mut AppCtrl,
+        sender: UnboundedSender<Msg>,
+    ) -> Result<()> {
+        if ctrl.is_task_running(TaskType::Server) {
+            return Err(Error::InvalidOperation("Server is already running"));
         }
 
-        res
-    }
-
-    /// Starts the tcp server
-    fn start_server(conf: &Config) -> Result<TcpListener> {
-        Ok(TcpListener::bind(format!(
+        let listener = TcpListener::bind(format!(
             "{}:{}",
             conf.server_address(),
             conf.port()
-        ))?)
+        ))?;
+
+        let task =
+            move || TaskMsg::Server(Ok(Self::server_task(listener, sender)));
+        ctrl.add_task(TaskType::Server, task);
+
+        Ok(())
     }
 
-    pub fn reciever_task(&self) -> Result<Box<dyn TaskGen<Msg>>> {
-        if let Some(r) = self.reciever.take() {
-            Ok(Box::new(Task::new(r, |mut r| async {
-                let msg = r.recv().await.unwrap();
-                (Some(r), msg)
-            })))
-        } else {
-            Err(Error::InvalidOperation("reciever is already created"))
-        }
-    }
-
-    pub fn signal_task(&self) -> Result<Box<dyn TaskGen<Msg>>> {
+    pub fn signal_task(ctrl: &mut AppCtrl) -> Result<()> {
         let sig = Signals::new(signal_hook::consts::TERM_SIGNALS)?;
-        Ok(Box::new(Task::new((sig, 0), |(mut sig, cnt)| async move {
+
+        let stream = MsgGen::new((sig, 0), |(mut sig, cnt)| async move {
             let Some(s) = sig.next().await else {
                 return (Some((sig, cnt)), Msg::None);
             };
@@ -275,64 +266,10 @@ impl UampApp {
                 warn!("Received unknown signal {s}");
                 (Some((sig, cnt)), Msg::None)
             }
-        })))
-    }
+        });
+        ctrl.add_stream(stream);
 
-    pub fn run_server(&self) -> Result<()> {
-        if let Some(listener) = self.listener.take() {
-            let sender = self.sender.clone();
-            thread::spawn(move || loop {
-                let stream = listener.accept().unwrap();
-                let mut msgr = Messenger::try_new(&stream.0).unwrap();
-
-                let rec = msgr.recieve();
-
-                let rec = match rec {
-                    Ok(MsgMessage::WaitExit(d)) => {
-                        thread::sleep(d);
-                        return listener;
-                    }
-                    Ok(MsgMessage::Ping) => {
-                        if let Err(e) = msgr.send(MsgMessage::Success) {
-                            error!("Failed to respond to ping: {e}");
-                        }
-                        continue;
-                    }
-                    Ok(m) => m,
-                    Err(e) => {
-                        warn!("Failed to recieve message: {e}");
-                        if let Err(e) = msgr
-                            .send(messenger::msg::Message::Error(
-                            messenger::msg::Error::new(
-                                messenger::msg::ErrorType::DeserializeFailed,
-                                e.to_string(),
-                            ),
-                        )) {
-                            warn!("Failed to send error message: {e}");
-                        }
-                        continue;
-                    }
-                };
-
-                let (response, msg) = Self::message_event(rec, &stream.0);
-                if let Some(r) = response {
-                    if let Err(e) = msgr.send(r) {
-                        warn!("Failed to send response {e}");
-                    }
-                }
-
-                if let Some(msg) = msg {
-                    if let Err(e) = sender.send(msg) {
-                        warn!("Failed to send message: {e}");
-                    }
-                } else {
-                    continue;
-                }
-            });
-            Ok(())
-        } else {
-            Err(Error::InvalidOperation("Tcp listener is not available"))
-        }
+        Ok(())
     }
 
     /*fn clock_subscription(&self, tick: Duration) -> Subscription {
@@ -349,4 +286,57 @@ impl UampApp {
             },
         )
     }*/
+
+    fn server_task(
+        listener: TcpListener,
+        sender: UnboundedSender<Msg>,
+    ) -> TcpListener {
+        loop {
+            let stream = listener.accept().unwrap();
+            let mut msgr = Messenger::try_new(&stream.0).unwrap();
+
+            let rec = msgr.recieve();
+
+            let rec = match rec {
+                Ok(MsgMessage::WaitExit(d)) => {
+                    thread::sleep(d);
+                    return listener;
+                }
+                Ok(MsgMessage::Ping) => {
+                    if let Err(e) = msgr.send(MsgMessage::Success) {
+                        error!("Failed to respond to ping: {e}");
+                    }
+                    continue;
+                }
+                Ok(m) => m,
+                Err(e) => {
+                    warn!("Failed to recieve message: {e}");
+                    if let Err(e) = msgr.send(messenger::msg::Message::Error(
+                        messenger::msg::Error::new(
+                            messenger::msg::ErrorType::DeserializeFailed,
+                            e.to_string(),
+                        ),
+                    )) {
+                        warn!("Failed to send error message: {e}");
+                    }
+                    continue;
+                }
+            };
+
+            let (response, msg) = Self::message_event(rec, &stream.0);
+            if let Some(r) = response {
+                if let Err(e) = msgr.send(r) {
+                    warn!("Failed to send response {e}");
+                }
+            }
+
+            if let Some(msg) = msg {
+                if let Err(e) = sender.unbounded_send(msg) {
+                    warn!("Failed to send message: {e}");
+                }
+            } else {
+                continue;
+            }
+        }
+    }
 }
