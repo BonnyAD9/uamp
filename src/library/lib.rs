@@ -2,11 +2,7 @@ use log::{error, info};
 use serde_derive::{Deserialize, Serialize};
 
 use std::{
-    cell::Cell,
-    fs::{create_dir_all, read_dir, File},
-    mem,
-    ops::{Index, IndexMut},
-    path::Path,
+    cell::Cell, collections::{BTreeSet, HashMap, HashSet}, fs::{create_dir_all, read_dir, File}, mem, ops::{Index, IndexMut}, path::Path
 };
 
 use crate::{
@@ -18,8 +14,7 @@ use crate::{
 };
 
 use super::{
-    load::{LibraryLoadResult, LoadOpts},
-    Filter, LibraryUpdate, Song, SongId,
+    add_new_songs::add_new_songs, load::{LibraryLoadResult, LoadOpts}, Filter, LibraryUpdate, Song, SongId
 };
 
 gen_struct! {
@@ -157,11 +152,7 @@ impl Library {
                 songs,
             };
 
-            if remove_missing {
-                Self::remove_missing_songs(&mut res);
-            }
-
-            Self::add_new_songs(&mut res, &conf);
+            add_new_songs(&mut res, &conf, remove_missing);
 
             if res.any_change() {
                 TaskMsg::LibraryLoad(Ok(Some(res)))
@@ -279,127 +270,6 @@ impl Library {
 
         serde_json::to_writer(File::create(path)?, self)?;
         Ok(())
-    }
-
-    fn remove_missing_songs(res: &mut LibraryLoadResult) {
-        let mut remove_any = false;
-        while res
-            .songs
-            .last()
-            .map(|s| {
-                if s.is_deleted() {
-                    true
-                } else if !s.path().exists() {
-                    remove_any = true;
-                    true
-                } else {
-                    false
-                }
-            })
-            .unwrap_or(false)
-        {
-            res.songs.pop();
-        }
-
-        for s in &mut res.songs {
-            if !s.is_deleted() && !s.path().exists() {
-                remove_any = true;
-                s.delete();
-            }
-        }
-
-        res.first_new = res.songs.len();
-        res.removed = remove_any;
-    }
-
-    /// Adds new songs to the given vector of songs
-    fn add_new_songs(res: &mut LibraryLoadResult, conf: &Config) -> bool {
-        let mut new_songs = false;
-        let mut paths = conf.search_paths().clone();
-        let mut i = 0;
-
-        while res.songs.last().map(|s| s.is_deleted()).unwrap_or(false) {
-            res.songs.pop();
-        }
-        res.first_new = res.songs.len();
-
-        while i < paths.len() {
-            let dir = &paths[i];
-            i += 1;
-
-            let dir = match read_dir(dir) {
-                Ok(dir) => dir,
-                Err(_) => continue,
-            };
-
-            'dir_loop: for f in dir {
-                let f = match f {
-                    Ok(f) => f,
-                    Err(e) => {
-                        error!("failed to get directory entry: {e}");
-                        continue;
-                    }
-                };
-
-                let ftype = match f.file_type() {
-                    Ok(ft) => ft,
-                    Err(e) => {
-                        error!(
-                            "failed to get directory entry type of {f:?}: {e}"
-                        );
-                        continue;
-                    }
-                };
-
-                if ftype.is_dir() {
-                    if conf.recursive_search() {
-                        paths.push(f.path())
-                    }
-                    continue;
-                }
-
-                let path = f.path();
-
-                if let Some(fe) = path.extension() {
-                    if !conf
-                        .audio_extensions()
-                        .iter()
-                        .any(|e| fe == e.as_str())
-                    {
-                        continue;
-                    }
-                } else {
-                    continue;
-                }
-
-                let mut idx = None;
-
-                for (i, s) in res.songs.iter().enumerate() {
-                    if s.is_deleted() {
-                        // prefer the later indexes, user is more likely to
-                        // remove old song and songs at the end are more esily
-                        // removed
-                        idx = Some(i)
-                    }
-                    if s.path() == &path {
-                        continue 'dir_loop;
-                    }
-                }
-
-                new_songs = true;
-
-                if let Ok(song) = Song::from_path(path) {
-                    if let Some(i) = idx {
-                        res.sparse_new.push(SongId(i));
-                        res.songs[i] = song;
-                    } else {
-                        res.songs.push(song);
-                    }
-                }
-            }
-        }
-
-        new_songs
     }
 }
 

@@ -3,6 +3,7 @@ pub mod order;
 mod lib;
 mod load;
 mod song;
+mod add_new_songs;
 
 use crate::core::extensions::{ParseError, Parses};
 
