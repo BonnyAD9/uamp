@@ -5,6 +5,8 @@ mod lib;
 mod load;
 mod song;
 
+use std::fmt::Display;
+
 pub use self::{
     lib::*,
     load::{LibraryLoadResult, LoadOpts},
@@ -25,6 +27,14 @@ pub struct SongId(usize);
 pub enum Filter {
     #[default]
     All,
+}
+
+impl Display for Filter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::All => f.write_str("all"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, PartialOrd, Ord, Eq)]

@@ -4,12 +4,12 @@ use std::{
 };
 
 use log::{info, warn};
-use pareg::{ArgError, ArgIterator, ByRef};
+use pareg::{ArgIterator, ByRef};
 
 use crate::{
     background_app::run_background_app,
     config::Config,
-    core::{Error, Result},
+    core::{msg::ControlMsg, Error, Result},
 };
 
 use super::help::help_run;
@@ -20,6 +20,8 @@ pub struct Run {
 
     pub port: Option<u16>,
     pub server_address: Option<String>,
+
+    pub init: Vec<ControlMsg>,
 }
 
 impl Run {
@@ -37,7 +39,7 @@ impl Run {
                 "-d" | "--detach" => self.detach = true,
                 "-p" | "--port" => self.port = args.next_arg()?,
                 "-a" | "--address" => self.server_address = args.next_arg()?,
-                _ => Err(ArgError::UnknownArgument(arg.into()))?,
+                _ => self.init.push(args.cur_arg()?),
             }
         }
         Ok(())
@@ -62,7 +64,7 @@ impl Run {
         }
 
         self.update_config(&mut conf);
-        run_background_app(conf)
+        run_background_app(conf, self.init)
     }
 
     pub fn run_detached(self) -> Result<()> {
@@ -83,6 +85,8 @@ impl Run {
         if let Some(a) = self.server_address {
             cmd.args(["-a", &a]);
         }
+
+        cmd.args(self.init.into_iter().map(|a| a.to_string()));
 
         let child = cmd.spawn()?;
         let id = child.id();

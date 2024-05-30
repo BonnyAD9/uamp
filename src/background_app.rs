@@ -6,7 +6,7 @@ use crate::{
     config::Config,
     core::{
         command::{AppCtrl, Command},
-        msg::Msg,
+        msg::{ControlMsg, Msg},
         Result,
     },
     sync::{
@@ -15,7 +15,10 @@ use crate::{
     },
 };
 
-pub fn run_background_app(mut conf: Config) -> Result<()> {
+pub fn run_background_app(
+    mut conf: Config,
+    init: Vec<ControlMsg>,
+) -> Result<()> {
     conf.force_server = true;
     let mut cmd_queue = vec![];
     let (sender, reciever) = mpsc::unbounded::<Msg>();
@@ -26,6 +29,12 @@ pub fn run_background_app(mut conf: Config) -> Result<()> {
         let msg = r.next().await.unwrap();
         (Some(r), msg)
     })));
+
+    for m in init {
+        if let Err(e) = sender.unbounded_send(Msg::Control(m)) {
+            error!("Failed to send init message `{m}`: {e}");
+        }
+    }
 
     let mut app =
         UampApp::new(conf, &mut AppCtrl::new(&mut cmd_queue, &tasks), sender)?;

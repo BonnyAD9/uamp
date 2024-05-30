@@ -1,5 +1,6 @@
 use core::fmt::Debug;
 use std::{
+    fmt::{Display, Write},
     mem::replace,
     str::FromStr,
     sync::Arc,
@@ -209,45 +210,52 @@ impl UampApp {
     }
 }
 
-/// The reverse of parsing control message (e.g. from cli)
-pub fn _get_control_string(m: &ControlMsg) -> String {
-    match m {
-        ControlMsg::PlayPause(None) => "pp".to_owned(),
-        ControlMsg::PlayPause(Some(v)) => {
-            if *v { "pp=play" } else { "pp=pause" }.to_owned()
-        }
-        ControlMsg::NextSong(v) => format!("ns={v}"),
-        ControlMsg::PrevSong(None) => "ps".into(),
-        ControlMsg::PrevSong(Some(v)) => format!("ps={v}"),
-        ControlMsg::SetVolume(v) => format!("v={v}"),
-        ControlMsg::VolumeUp(None) => "vu".to_owned(),
-        ControlMsg::VolumeUp(Some(v)) => format!("vu={v}"),
-        ControlMsg::VolumeDown(None) => "vd".to_owned(),
-        ControlMsg::VolumeDown(Some(v)) => format!("vd={v}"),
-        ControlMsg::Mute(None) => "mute".to_owned(),
-        ControlMsg::Mute(Some(v)) => format!("mute={v}"),
-        ControlMsg::Shuffle => "shuffle".to_owned(),
-        ControlMsg::PlaylistJump(v) => format!("pj={v}"),
-        ControlMsg::Close => "x".to_owned(),
-        ControlMsg::LoadNewSongs(o) => {
-            let s = o.to_string();
-            if s.is_empty() {
-                "load-songs".to_owned()
-            } else {
-                format!("load-songs={s}")
+impl Display for ControlMsg {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ControlMsg::PlayPause(None) => f.write_str("pp"),
+            ControlMsg::PlayPause(Some(v)) => {
+                if *v {
+                    f.write_str("pp=play")
+                } else {
+                    f.write_str("pp=pause")
+                }
             }
+            ControlMsg::NextSong(v) => write!(f, "ns={v}"),
+            ControlMsg::PrevSong(None) => f.write_str("ps"),
+            ControlMsg::PrevSong(Some(v)) => write!(f, "ps={v}"),
+            ControlMsg::SetVolume(v) => write!(f, "v={v}"),
+            ControlMsg::VolumeUp(None) => f.write_str("vu"),
+            ControlMsg::VolumeUp(Some(v)) => write!(f, "vu={v}"),
+            ControlMsg::VolumeDown(None) => f.write_str("vd"),
+            ControlMsg::VolumeDown(Some(v)) => write!(f, "vd={v}"),
+            ControlMsg::Mute(None) => f.write_str("mute"),
+            ControlMsg::Mute(Some(v)) => write!(f, "mute={v}"),
+            ControlMsg::Shuffle => f.write_str("shuffle"),
+            ControlMsg::PlaylistJump(v) => write!(f, "pj={v}"),
+            ControlMsg::Close => f.write_char('x'),
+            ControlMsg::LoadNewSongs(o) => {
+                let s = o.to_string();
+                if s.is_empty() {
+                    f.write_str("load-songs")
+                } else {
+                    write!(f, "load-songs={s}")
+                }
+            }
+            ControlMsg::SeekTo(d) => {
+                write!(f, "st={}", duration_to_string(*d, false))
+            }
+            ControlMsg::FastForward(None) => f.write_str("ff"),
+            ControlMsg::FastForward(Some(d)) => {
+                write!(f, "ff={}", duration_to_string(*d, false))
+            }
+            ControlMsg::Rewind(None) => f.write_str("rw"),
+            ControlMsg::Rewind(Some(d)) => {
+                write!(f, "rw={}", duration_to_string(*d, false))
+            }
+            ControlMsg::SetPlaylist(Filter::All) => f.write_str("sp"),
+            ControlMsg::Save => f.write_str("save"),
         }
-        ControlMsg::SeekTo(d) => format!("st={}", d.as_secs_f32()),
-        ControlMsg::FastForward(None) => "ff".to_owned(),
-        ControlMsg::FastForward(Some(d)) => {
-            format!("ff={}", duration_to_string(*d, false))
-        }
-        ControlMsg::Rewind(None) => "rw".to_owned(),
-        ControlMsg::Rewind(Some(d)) => {
-            format!("rw={}", duration_to_string(*d, false))
-        }
-        ControlMsg::SetPlaylist(_) => "sp".to_owned(),
-        ControlMsg::Save => "save".to_owned(),
     }
 }
 

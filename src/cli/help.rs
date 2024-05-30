@@ -21,15 +21,32 @@ pub fn help<'a>(
 
     print_help_header();
 
+    let mut show_cmsg = false;
+    let mut cmsg_shown = false;
+
     for arg in Some(arg).into_iter().chain(args) {
         match arg {
             "basic" => print_basic_help(),
-            "i" | "instance" => print_instance_help(),
-            "run" => print_run_help(),
+            "i" | "instance" => {
+                print_instance_help();
+                show_cmsg = true;
+            }
+            "run" => {
+                print_run_help();
+                show_cmsg = true;
+            }
             "all" | "elp" => print_help(),
+            "control-message" | "control-msg" | "cmsg" => {
+                print_control_messages_help();
+                cmsg_shown = true;
+            }
             "--" => break,
             a => println!("Invalid help option {a}"),
         }
+    }
+
+    if show_cmsg && !cmsg_shown {
+        print_control_messages_help();
     }
 
     Ok(())
@@ -39,6 +56,7 @@ fn print_help() {
     print_basic_help();
     print_instance_help();
     print_run_help();
+    print_control_messages_help();
 }
 
 pub fn help_all() {
@@ -49,11 +67,13 @@ pub fn help_all() {
 pub fn help_instance() {
     print_help_header();
     print_instance_help();
+    print_control_messages_help();
 }
 
 pub fn help_run() {
     print_help_header();
     print_run_help();
+    print_control_messages_help();
 }
 
 /// Prints the help header
@@ -117,6 +137,7 @@ fn print_basic_help() {
     - {'w}basic{'_}: print the basic help.
     - {'w}i instance{'_}: print help for {'b}instance{'_}.
     - {'w}run{'_}: print help for {'b}run{'_}.
+    - {'w}control-message control-msg cmsg{'_}: print help for control messages.
     - {'w}--{'_}: print nothing and stop printing help. (this can be used if you
       want to print only the title and version)
 "
@@ -127,9 +148,8 @@ fn print_basic_help() {
 fn print_instance_help() {
     printcln!(
         "{'g}Instance usage:
-  {'c}uamp {'b}i {'gr}[{'dy}flags{'gr}] [{'dr}parameters{'gr}] [--]{'_}
-    Sends the parameters as messages to a running instance of uamp using the
-    server.
+  {'c}uamp {'b}i {'gr}[{'dy}flags{'gr}] [{'dr}messages{'gr}] [--]{'_}
+    Sends the messages to a running instance of uamp using the server.
 
 {'g}Instance flags:
   {'y}-h  -?  --help{'_}
@@ -141,10 +161,46 @@ fn print_instance_help() {
   {'y}-a  --address {'w}<address>{'_}
     Sets address of the server of the instance.
 
-{'g}Instance parameters:
+{'g}Instance messages:{'_}
+  Any {'g}control message{'_} or:
+
   {'r}info nfo{'_}
     Shows the info about the playback of the currently runing instance.
+"
+    );
+}
 
+fn print_run_help() {
+    printcln!(
+        "{'g}Run usage:
+  {'c}uamp {'b}run {'gr}[{'dy}flags{'gr}] [{'dr}messages{'gr}] [--]{'_}
+    Runs new instance of uamp. The given messages are executed on the new
+    instance.
+
+{'g}Run flags:
+  {'y}-h  -?  --help{'_}
+    Prints the run help.
+
+  {'y}-d  --detach{'_}
+    Runs uamp in detached mode without console.
+
+  {'y}-p  --port {'w}<port>{'_}
+    Sets the port number of server for the new instance. This will disable
+    config saves for the new instance.
+
+  {'y}-a  --address {'w}<address>{'_}
+    Sets the server address of for the new instance. Thiss will disable config
+    saves for the new instance.
+
+{'g}Run messages:{'_}
+  Any {'g}control message{'_}.
+"
+    )
+}
+
+fn print_control_messages_help() {
+    printcln!(
+        "{'g}Control messages:
   {'r}play-pause  pp{'gr}[=(play|pause)]{'_}
     Play or pause. When without argument, toggle.
 
@@ -199,30 +255,6 @@ fn print_instance_help() {
 
   {'r}save{'_}
     Triggers save (but saves only if there is change).
-"
-    );
-}
-
-fn print_run_help() {
-    printcln!(
-        "{'g}Run usage:
-  {'c}uamp {'b}run {'gr}[{'dy}flags{'gr}] [--]{'_}
-    Runs new instance of uamp.
-
-{'g}Run flags:
-  {'y}-h  -?  --help{'_}
-    Prints the run help.
-
-  {'y}-d  --detach{'_}
-    Runs uamp in detached mode without console.
-
-  {'y}-p  --port {'w}<port>{'_}
-    Sets the port number of server for the new instance. This will disable
-    config saves for the new instance.
-
-  {'y}-a  --address {'w}<address>{'_}
-    Sets the server address of for the new instance. Thiss will disable config
-    saves for the new instance.
 "
     )
 }
