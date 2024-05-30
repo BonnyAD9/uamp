@@ -318,7 +318,7 @@ impl FromStr for ControlMsg {
                 Ok(ControlMsg::VolumeDown(key_mval_arg::<&str, _>(v, '=')?.1))
             }
             v if starts!(v, "next-song" | "ns") => Ok(ControlMsg::NextSong(
-                key_mval_arg::<&str, _>(v, '=')?.1.unwrap_or_default(),
+                key_mval_arg::<&str, _>(v, '=')?.1.unwrap_or(1),
             )),
             v if starts!(v, "previous-song" | "ps") => {
                 Ok(ControlMsg::PrevSong(key_mval_arg::<&str, _>(v, '=')?.1))

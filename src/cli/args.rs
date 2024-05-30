@@ -102,19 +102,23 @@ impl Args {
         I::Item: ByRef<&'a str>,
     {
         self.should_exit = true;
-        let a = args.next_arg::<&str>()?;
+        let mut msgs = vec![];
 
-        match a {
-            "info" => self
-                .actions
-                .push(Action::Message(MsgMessage::Request(Request::Info))),
-            "--" => {
-                return Err(Error::ArgParse(ArgError::NoMoreArguments(Some(
-                    "instance".into(),
-                ))))
+        while let Some(arg) = args.next() {
+            match arg {
+                "info" => msgs.push(MsgMessage::Request(Request::Info)),
+                "--" => break,
+                _ => msgs.push(MsgMessage::Control(args.cur_arg()?)),
             }
-            _ => self.actions.push(Action::control(args.cur_arg()?)),
         }
+
+        if msgs.is_empty() {
+            return Err(Error::ArgParse(ArgError::NoMoreArguments(Some(
+                "i".into(),
+            ))));
+        }
+
+        self.actions.push(Action::Message(msgs));
 
         Ok(())
     }

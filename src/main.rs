@@ -53,15 +53,17 @@ fn start() -> Result<()> {
     for a in args.actions {
         match a {
             Action::Message(m) => {
-                let res = send_message(&conf, m);
-                match res {
-                    Ok(MsgMessage::Success) => {}
-                    Ok(MsgMessage::Info(i)) => {
-                        print_info(*i);
-                    }
-                    Err(e) => println!("{e}"),
-                    Ok(r) => {
-                        println!("Unexpected response: {r:?}");
+                for m in m {
+                    let res = send_message(&conf, m);
+                    match res {
+                        Ok(MsgMessage::Success) => {}
+                        Ok(MsgMessage::Info(i)) => {
+                            print_info(*i);
+                        }
+                        Err(e) => println!("{e}"),
+                        Ok(r) => {
+                            println!("Unexpected response: {r:?}");
+                        }
                     }
                 }
             }
