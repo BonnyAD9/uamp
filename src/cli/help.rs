@@ -71,7 +71,8 @@ fn print_basic_help() {
   {'c}uamp{'_}
     Starts the background player.
 
-  {'c}uamp [{'dy}flags{'gr}] [{'db}action{'gr}] [-- [{'db}action{'gr}] ...]{'_}
+  {'c}uamp {'gr}[{'dy}flags{'gr}] [{'db}action{'gr}] [-- [{'db}action{'gr}] \
+  ...]{'_}
     Does the given actions.
 
 {'g}Flags:{'_}
