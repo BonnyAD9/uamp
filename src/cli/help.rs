@@ -91,6 +91,9 @@ fn print_basic_help() {
     Sets the server address for the comunication. If used when starting gui, it
     will disable config saves.
 
+  {'y}--version{'_}
+    Print the version.
+
   {'y}-I{'gr}[arg]{'_}
     Equivalent to `{'b}i {'gr}[arg] {'w}--{'_}`.
 
