@@ -1,10 +1,11 @@
 use std::{iter, path::PathBuf, str::FromStr, time::Duration};
 
 use itertools::Itertools;
+use pareg::{ArgError, FromArgStr};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::{library::LoadOpts, player::add_policy::AddPolicy};
+use super::Error;
 
 #[derive(Error, Debug)]
 pub enum ParseError {
@@ -120,87 +121,6 @@ pub fn str_to_duration(s: &str) -> Option<Duration> {
     Some(res)
 }
 
-pub trait Parses<T> {
-    type Err;
-    /// Parses this to the type T
-    fn get_value(&self) -> Result<T, Self::Err>;
-}
-
-/// Implements the trait [`Parses`] for the given types. The types must
-/// implement [`FromStr`]
-macro_rules! impl_parses {
-    ($($t:ty),+ $(,)?) => {
-        $(
-            impl Parses<$t> for str {
-                type Err = <$t as FromStr>::Err;
-
-                fn get_value(&self) -> Result<$t, Self::Err> {
-                    self.parse()
-                }
-            }
-        )+
-    };
-}
-
-// Works only for types that implement FromStr
-impl_parses!(
-    u8, i8, u16, i16, u32, i32, u64, i64, u128, i128, usize, isize, f32, f64,
-    bool
-);
-
-impl Parses<Duration> for str {
-    type Err = ParseError;
-
-    fn get_value(&self) -> Result<Duration, Self::Err> {
-        str_to_duration(self).ok_or(ParseError::FailedToParse("Duration"))
-    }
-}
-
-impl Parses<LoadOpts> for str {
-    type Err = ParseError;
-
-    fn get_value(&self) -> Result<LoadOpts, Self::Err> {
-        let mut res = LoadOpts::default();
-
-        fn set_rm(res: &mut LoadOpts, v: bool) -> Result<(), ParseError> {
-            if res.remove_missing.is_some() {
-                Err(ParseError::FailedToParse("LoadOpts"))
-            } else {
-                res.remove_missing = Some(v);
-                Ok(())
-            }
-        }
-
-        fn set_atp(
-            res: &mut LoadOpts,
-            v: AddPolicy,
-        ) -> Result<(), ParseError> {
-            if res.add_to_playlist.is_some() {
-                Err(ParseError::FailedToParse("LoadOpts"))
-            } else {
-                res.add_to_playlist = Some(v);
-                Ok(())
-            }
-        }
-
-        for c in self.chars() {
-            match c {
-                'r' => set_rm(&mut res, true)?,
-                'l' => set_rm(&mut res, false)?,
-                'e' => set_atp(&mut res, AddPolicy::End)?,
-                'n' => set_atp(&mut res, AddPolicy::Next)?,
-                'm' => set_atp(&mut res, AddPolicy::MixIn)?,
-                _ => {
-                    return Err(ParseError::FailedToParse("LoadOpts"));
-                }
-            }
-        }
-
-        Ok(res)
-    }
-}
-
-/// Wraps the type, used for custom trait implementations
 pub struct Wrap<T>(pub T);
 
 impl<T> Clone for Wrap<T>
@@ -281,6 +201,22 @@ impl<'de> Deserialize<'de> for Wrap<Duration> {
             .ok_or(serde::de::Error::custom("Invalid duration format"))
     }
 }
+
+impl FromStr for Wrap<Duration> {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        str_to_duration(s).map(|a| a.into()).ok_or_else(|| {
+            Error::ArgParse(ArgError::FailedToParse {
+                typ: "Duration",
+                value: s.to_owned().into(),
+                msg: None,
+            })
+        })
+    }
+}
+
+impl FromArgStr for Wrap<Duration> {}
 
 pub fn _valid_filename<I>(s: I) -> PathBuf
 where

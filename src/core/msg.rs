@@ -1,11 +1,13 @@
 use core::fmt::Debug;
 use std::{
     mem::replace,
+    str::FromStr,
     sync::Arc,
     time::{Duration, Instant},
 };
 
 use log::{error, info};
+use pareg::{key_mval_arg, key_val_arg, proc::FromArg, ArgError, FromArgStr};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -16,7 +18,11 @@ use crate::{
     sync::tasks::TaskType,
 };
 
-use super::{command::AppCtrl, extensions::duration_to_string, Error};
+use super::{
+    command::AppCtrl,
+    extensions::{duration_to_string, Wrap},
+    Error,
+};
 
 /// Event messages in uamp
 #[allow(missing_debug_implementations)]
@@ -277,5 +283,104 @@ where
 {
     fn from(value: T) -> Self {
         Self(value)
+    }
+}
+
+/// creates expression that checks whether a variable starts with any of the
+/// strings
+///
+/// # Example
+/// ```
+/// let val = "arg2=hi";
+/// if starts!(val, "arg1" | "arg2") {
+///     // now we know that `val` starts either with `"arg1"` or `"arg2"`
+/// }
+/// ```
+#[macro_export]
+macro_rules! starts {
+    ($i:ident, $($s:literal)|+) => {{
+        matches!($i, $($s)|+) || $($i.starts_with(concat!($s, "=")))||+
+    }};
+}
+
+impl FromStr for ControlMsg {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            v if starts!(v, "play-pause" | "pp") => Ok(ControlMsg::PlayPause(
+                key_mval_arg::<&str, PlayPause>(v, '=')?.1.map(|i| i.into()),
+            )),
+            v if starts!(v, "volume-up" | "vol-up" | "vu") => {
+                Ok(ControlMsg::VolumeUp(key_mval_arg::<&str, _>(v, '=')?.1))
+            }
+            v if starts!(v, "volume-down" | "vol-down" | "vd") => {
+                Ok(ControlMsg::VolumeDown(key_mval_arg::<&str, _>(v, '=')?.1))
+            }
+            v if starts!(v, "next-song" | "ns") => Ok(ControlMsg::NextSong(
+                key_mval_arg::<&str, _>(v, '=')?.1.unwrap_or_default(),
+            )),
+            v if starts!(v, "previous-song" | "ps") => {
+                Ok(ControlMsg::PrevSong(key_mval_arg::<&str, _>(v, '=')?.1))
+            }
+            v if starts!(v, "playlist-jump" | "pj") => {
+                Ok(ControlMsg::PlaylistJump(
+                    key_mval_arg::<&str, _>(v, '=')?.1.unwrap_or_default(),
+                ))
+            }
+            v if starts!(v, "volume" | "vol" | "v") => {
+                let v = key_val_arg::<&str, f32>(v, '=')?.1;
+                if (0.0..=1.).contains(&v) {
+                    return Err(Error::InvalidValue(
+                        "volume must be in range from 0 to 1",
+                    ));
+                }
+                Ok(ControlMsg::SetVolume(v))
+            }
+            v if starts!(v, "mute") => {
+                Ok(ControlMsg::Mute(key_mval_arg::<&str, _>(v, '=')?.1))
+            }
+            v if starts!(v, "load-songs") => Ok(ControlMsg::LoadNewSongs(
+                key_mval_arg::<&str, _>(v, '=')?.1.unwrap_or_default(),
+            )),
+            "shuffle-playlist" | "shuffle" => Ok(ControlMsg::Shuffle),
+            "exit" | "close" | "x" => Ok(ControlMsg::Close),
+            v if starts!(v, "seek-to" | "seek") => Ok(ControlMsg::SeekTo(
+                key_val_arg::<&str, Wrap<Duration>>(v, '=')?.1 .0,
+            )),
+            v if starts!(v, "fast-forward" | "ff") => {
+                Ok(ControlMsg::FastForward(
+                    key_mval_arg::<&str, Wrap<Duration>>(v, '=')?
+                        .1
+                        .map(|a| a.0),
+                ))
+            }
+            v if starts!(v, "rewind" | "rw") => Ok(ControlMsg::Rewind(
+                key_mval_arg::<&str, Wrap<Duration>>(v, '=')?.1.map(|a| a.0),
+            )),
+            v if starts!(v, "set-playlist" | "sp") => {
+                Ok(ControlMsg::SetPlaylist(
+                    key_mval_arg::<&str, _>(v, '=')?.1.unwrap_or_default(),
+                ))
+            }
+            "save" => Ok(ControlMsg::Save),
+            v => Err(Error::ArgParse(ArgError::UnknownArgument(
+                v.to_owned().into(),
+            ))),
+        }
+    }
+}
+
+impl FromArgStr for ControlMsg {}
+
+#[derive(FromArg)]
+enum PlayPause {
+    Play,
+    Pause,
+}
+
+impl From<PlayPause> for bool {
+    fn from(value: PlayPause) -> Self {
+        matches!(value, PlayPause::Play)
     }
 }

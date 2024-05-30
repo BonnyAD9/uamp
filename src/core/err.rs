@@ -4,14 +4,14 @@ use flexi_logger::FlexiLoggerError;
 use log::error;
 use thiserror::Error;
 
-use crate::cli::CliError;
-
 /// Result with the unified error type of uamp
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Unified error type of uamp
 #[derive(Error, Debug)]
 pub enum Error {
+    #[error("{0}")]
+    InvalidValue(&'static str),
     /// The requested operatoin was invalid at the time
     #[error("Operation is invalid: {0}")]
     InvalidOperation(&'static str),
@@ -20,7 +20,7 @@ pub enum Error {
     ThreadPanicked,
     /// Failed to parse arguments
     #[error(transparent)]
-    ArgParse(#[from] CliError),
+    ArgParse(pareg::ArgError<'static>),
     /// The audio tag library returned error
     #[error(transparent)]
     Image(#[from] image::ImageError),
@@ -94,4 +94,10 @@ pub enum SerdeError {
     /// Rmp error while decoding
     #[error(transparent)]
     RmpDecode(#[from] rmp_serde::decode::Error),
+}
+
+impl<'a> From<pareg::ArgError<'a>> for Error {
+    fn from(value: pareg::ArgError<'a>) -> Self {
+        Self::ArgParse(value.into_owned())
+    }
 }

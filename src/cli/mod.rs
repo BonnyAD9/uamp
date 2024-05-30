@@ -1,15 +1,8 @@
 mod action;
 mod args;
-mod err;
 mod help;
-mod macros;
-mod parsers;
 
-pub use self::{
-    action::*,
-    args::*,
-    err::{Error as CliError, Result as CliResult},
-};
+pub use self::{action::*, args::*};
 /*pub use args::*;
 
 ///! Contains tools for the cli, mostly parsing

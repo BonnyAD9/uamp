@@ -1,8 +1,9 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, str::FromStr};
 
+use pareg::FromArgStr;
 use serde::{Deserialize, Serialize};
 
-use crate::player::add_policy::AddPolicy;
+use crate::{core::extensions::ParseError, player::add_policy::AddPolicy};
 
 use super::{Song, SongId};
 
@@ -54,6 +55,52 @@ impl ToString for LoadOpts {
         }
     }
 }
+
+impl FromStr for LoadOpts {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut res = LoadOpts::default();
+
+        fn set_rm(res: &mut LoadOpts, v: bool) -> Result<(), ParseError> {
+            if res.remove_missing.is_some() {
+                Err(ParseError::FailedToParse("LoadOpts"))
+            } else {
+                res.remove_missing = Some(v);
+                Ok(())
+            }
+        }
+
+        fn set_atp(
+            res: &mut LoadOpts,
+            v: AddPolicy,
+        ) -> Result<(), ParseError> {
+            if res.add_to_playlist.is_some() {
+                Err(ParseError::FailedToParse("LoadOpts"))
+            } else {
+                res.add_to_playlist = Some(v);
+                Ok(())
+            }
+        }
+
+        for c in s.chars() {
+            match c {
+                'r' => set_rm(&mut res, true)?,
+                'l' => set_rm(&mut res, false)?,
+                'e' => set_atp(&mut res, AddPolicy::End)?,
+                'n' => set_atp(&mut res, AddPolicy::Next)?,
+                'm' => set_atp(&mut res, AddPolicy::MixIn)?,
+                _ => {
+                    return Err(ParseError::FailedToParse("LoadOpts"));
+                }
+            }
+        }
+
+        Ok(res)
+    }
+}
+
+impl FromArgStr for LoadOpts {}
 
 impl Debug for LibraryLoadResult {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

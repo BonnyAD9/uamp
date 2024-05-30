@@ -46,7 +46,7 @@ fn start() -> Result<()> {
     env::set_var("WINIT_UNIX_BACKEND", "x11");
 
     let args: Vec<_> = args().collect();
-    let args = Args::parse(args.iter().map(|a| a.as_ref()))?;
+    let args = Args::parse(args.iter().into())?;
 
     let conf = args.make_config();
 

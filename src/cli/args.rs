@@ -1,15 +1,14 @@
+use pareg::{ArgError, ArgIterator, ByRef};
+
 use crate::{
     config::Config,
-    core::messenger::{msg::Request, MsgMessage},
-    next,
+    core::{
+        err::{Error, Result},
+        messenger::{msg::Request, MsgMessage},
+    },
 };
 
-use super::{
-    err::{Error, Result},
-    help::help,
-    parsers::parse_control_message,
-    Action,
-};
+use super::{help::help, Action};
 
 /// Contains the CLI arguments values
 #[derive(Default)]
@@ -31,11 +30,14 @@ pub struct Args {
 //===========================================================================//
 
 impl Args {
-    /// Parses the CLI arguments and returns the parsed arguments
-    pub fn parse<'a>(args: impl Iterator<Item = &'a str>) -> Result<Self> {
+    pub fn parse<'a, I>(mut args: ArgIterator<'a, I>) -> Result<Self>
+    where
+        I: Iterator,
+        I::Item: ByRef<&'a str>,
+    {
         let mut res = Args::default();
 
-        let mut args = args.skip(1);
+        args.next();
 
         res.top_level(&mut args)?;
 
@@ -65,46 +67,53 @@ impl Args {
 //===========================================================================//
 
 impl Args {
-    /// Parses the instance action arguments
-    fn instance<'a>(
+    pub fn top_level<'a, I>(
         &mut self,
-        args: &mut impl Iterator<Item = &'a str>,
-    ) -> Result<()> {
-        self.should_exit = true;
-        let a = next!(args);
-
-        match a {
-            "info" => self
-                .actions
-                .push(Action::Message(MsgMessage::Request(Request::Info))),
-            "--" => {
-                return Err(Error::UnexpectedEnd(Some("instance".to_owned())))
-            }
-            _ => {
-                let msg = parse_control_message(a)?;
-                self.actions.push(Action::control(msg));
+        args: &mut ArgIterator<'a, I>,
+    ) -> Result<()>
+    where
+        I: Iterator,
+        I::Item: ByRef<&'a str>,
+    {
+        while let Some(a) = args.next() {
+            match a {
+                "i" | "instance" => self.instance(args)?,
+                "h" | "help" | "-h" | "--help" | "-?" => help(args, self)?,
+                "-p" | "--port" => {
+                    self.port = args.next_arg()?;
+                }
+                "-a" | "--address" => {
+                    self.server_address = args.next_arg()?;
+                }
+                a => Err(ArgError::UnknownArgument(a.into()))?,
             }
         }
 
         Ok(())
     }
 
-    fn top_level<'a>(
+    /// Parses the instance action arguments
+    pub fn instance<'a, I>(
         &mut self,
-        args: &mut impl Iterator<Item = &'a str>,
-    ) -> Result<()> {
-        while let Some(a) = args.next() {
-            match a {
-                "i" | "instance" => self.instance(args)?,
-                "h" | "help" | "-h" | "--help" | "-?" => help(args, self)?,
-                "-p" | "--port" => {
-                    self.port = Some(next!(u16, args, Some(a.to_owned())))
-                }
-                "-a" | "--address" => {
-                    self.server_address = Some(next!(args).to_owned())
-                }
-                a => return Err(Error::UnknownArgument(Some(a.to_owned()))),
+        args: &mut ArgIterator<'a, I>,
+    ) -> Result<()>
+    where
+        I: Iterator,
+        I::Item: ByRef<&'a str>,
+    {
+        self.should_exit = true;
+        let a = args.next_arg::<&str>()?;
+
+        match a {
+            "info" => self
+                .actions
+                .push(Action::Message(MsgMessage::Request(Request::Info))),
+            "--" => {
+                return Err(Error::ArgParse(ArgError::NoMoreArguments(Some(
+                    "instance".into(),
+                ))))
             }
+            _ => self.actions.push(Action::control(args.cur_arg()?)),
         }
 
         Ok(())

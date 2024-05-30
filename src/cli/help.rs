@@ -1,8 +1,8 @@
 use termal::{gradient, printcln};
 
-use super::err::Result;
+use crate::core::Result;
 
-use super::{parsers::auto_instance_help, Args};
+use super::Args;
 
 /// Parses help arguments
 pub fn help<'a>(
@@ -64,29 +64,29 @@ Version {}
 fn print_basic_help() {
     printcln!(
         "{'g}Usage:{'_}
-  {'w bold}uamp{'_}
-    starts the gui of the player
+  {'c}uamp{'_}
+    Starts the background player.
 
-  {'w bold}uamp{'_} {'gr}[action] [--] [action] ... [flags]{'_}
-    does the given action
+  {'c}uamp{'_} {'gr}[action] [--] [action] ... [flags]{'_}
+    Does the given action.
 
 {'g}Flags:{'_}
-  {'y}-p  --port {'bold w}<port>{'_}
+  {'y}-p  --port {'w}<port>{'_}
     Sets the port for the server comunication. If used when starting gui, it
     will disable config saves.
 
-  {'y}-a  --address {'bold w}<address>{'_}
+  {'y}-a  --address {'w}<address>{'_}
     Sets the server address for the comunication. If used when starting gui, it
     will disable config saves.
 
 {'g}Actions:{'_}
-  {'y}i  instance {'bold w}<instance-action>{'_} {'gr}[--]{'_}
-    operates on a running instance of uamp
+  {'b}i  instance {'w}<instance-action>{'_} {'gr}[--]{'_}
+    Operates on a running instance of uamp.
 
-  {'y}h  help  -h  -?  --help{'_}
-    shows help, with no argument whole help, with arguments only help specific
+  {'b}h  help  -h  -?  --help{'_}
+    Shows help, with no argument whole help, with arguments only help specific
     to the given option.
-    Available options are: {'bold w}basic{'_}, {'bold w}i instance{'_}
+    Available options are: {'w}basic{'_}, {'w}i instance{'_}
 "
     )
 }
@@ -95,9 +95,63 @@ fn print_basic_help() {
 fn print_instance_help() {
     printcln!(
         "{'g}Instance actions:
-  {'y}info{'_}
+  {'r}info{'_}
     Shows the info about the playback of the currently runing instance.
+
+  {'r}play-pause  pp{'gr}[=(play|pause)]{'_}
+    Play or pause. When without argument, toggle.
+
+  {'r}volume-up  vol-up  vu{'gr}[=<amount>]{'_}
+    Increase the volume by the given amount. When without argument, increase by
+    the default amount.
+
+  {'r}volume-down  vol-down  vd{'gr}[=<amount>]{'_}
+    Decrease the volume by the given amount. When without argument, decrease by
+    the default amount.
+
+  {'r}next-song  ns{'gr}[=<N>]{'_}
+    Jump to the Nth next song. By default N is 1 (jump to next song).
+
+  {'r}previous-song  ps{'gr}[=<N>]{'_}
+    Jump to the Nth previous song. By default N is 1 (jump to previous song).
+
+  {'r}playlist-jump  pj{'gr}[=<N>]{'_}
+    Jump to the Nth song in the playlist. By default N is 0 (first song).
+
+  {'r}volume  vol  v{'w}=<volume>{'_}
+    Sets the volume to the given value. Value must be in range from 0 to 1.
+
+  {'r}mute{'gr}[=(true|false)]{'_}
+    Mute/Unmute. When without argument, toggle.
+
+  {'r}load-songs{'gr}[=<opts>]{'_}
+    Look for new songs. This can be modifed with the load options of the form
+    `{'i}[r|l][e|n|m]{'_}`:
+    - `{'i}r{'_}` also remove songs with invalid path.
+    - `{'i}l{'_}` don't remove songs with invalid path.
+    - `{'i}e{'_}` add new songs to the end of the queue.
+    - `{'i}n{'_}` add new songs after the current song.
+    - `{'i}m{'_}` randomly mix the songs in after the current song.
+
+  {'r}shuffle-playlist  shuffle{'_}
+    Shuffle the current playlist.
+
+  {'r}exit  close  x{'_}
+    Gracefully close the instance.
+
+  {'r}seek-to  seek{'w}=<timestamp>{'_}
+    Seeks to the given timestamp.
+
+  {'r}fast-forward  ff{'gr}[=<duration>]{'_}
+    Seek forward by the given duration. Without argument seeks by the default
+    duration.
+
+  {'r}rewind  rw{'gr}[=<duration>]{'_}
+    Seek back by the given duration. Without artument seeks by the default
+    duration.
+
+  {'r}save{'_}
+    Triggers save (but saves only if there is change).
 "
     );
-    auto_instance_help();
 }
