@@ -1,7 +1,8 @@
-use std::{mem, net::TcpStream, time::Duration};
+use std::{borrow::Cow, mem, net::TcpStream, time::Duration};
 
 use log::error;
 use pareg::{ArgIterator, ByRef};
+use termal::printcln;
 
 use crate::{
     config::Config,
@@ -99,38 +100,69 @@ impl Instance {
 
     /// Prints the info about instance playback
     fn print_info(info: Info) {
-        println!("Version: {}", info.version);
-        if let Some(s) = info.now_playing {
-            println!(
-                "Now playing:
-  title: '{}'
-  artist: '{}'
-  album: '{}'
-  track: '{}'
-  disc: '{}'
-  path: '{}'",
-                s.title(),
-                s.artist(),
-                s.album(),
-                s.track(),
-                s.disc(),
-                s.path().to_str().unwrap_or("?")
-            )
+        let mut title: Cow<str> = "--".into();
+        let mut artist: Cow<str> = "--".into();
+        let mut album: Cow<str> = "--".into();
+        let state = if info.is_playing { "||" } else { "|>" };
+        let mut cur: Cow<str> = "--:--".into();
+        let mut pos: Cow<str> = "?".into();
+        let mut total: Cow<str> = "--:--".into();
+        let plen = info.playlist_len.to_string();
+        let mut disc: Cow<str> = "0".into();
+        let mut track: Cow<str> = "0".into();
+        let version = format!("v{}", info.version);
+        let mut before: Cow<str> = "".into();
+        let mut is = "";
+        let mut after: Cow<str> = format!("{:->70}", '-').into();
+
+        if let Some(s) = &info.now_playing {
+            title = s.title().into();
+            artist = s.artist().into();
+            album = s.album().into();
+            disc = s.disc_str().into();
+            track = s.track_str().into();
         }
-        if let Some(pos) = info.playlist_pos {
-            println!("Playlist: {}/{}", pos, info.playlist_len);
-        } else {
-            println!("Playlist: ?/{}", info.playlist_len);
+
+        if let Some(p) = info.playlist_pos {
+            pos = p.to_string().into();
         }
-        println!("Is playing: {}", info.is_playing);
-        if let Some(ts) = info.timestamp {
-            println!(
-                "Timestamp: {}/{}",
-                duration_to_string(ts.current, false),
-                duration_to_string(ts.total, false),
-            )
-        } else {
-            println!("Timestamp: ?/?")
+
+        if let Some(t) = info.timestamp {
+            cur = duration_to_string(t.current, true).into();
+            total = duration_to_string(t.total, true).into();
+            let n = (t.current.as_secs_f32() / t.total.as_secs_f32() * 70.)
+                as usize;
+            before = format!("{:=>n$}", '=').into();
+            is = "#";
+            let m = 69 - n;
+            after = format!("{:->m$}", '-').into();
+            match n {
+                0 => before = "".into(),
+                70 => {
+                    after = "".into();
+                    is = "";
+                }
+                69 => after = "".into(),
+                _ => {}
+            }
         }
+
+        let blen = (80 - artist.len() - album.len() - 9) / 2;
+        let playlist = format!("{pos}/{plen}");
+        let dt = format!("<{disc}-{track}>");
+
+        printcln!(
+            "
+{'bold y}{title: ^80}{'_}
+{: >blen$}{'gr}by {'dc}{artist} {'gr}from {'dm}{album}{'_}
+
+     {'w}{cur: <27}{'_ bold}<||    {'y}{state}    {'_fg}||>{'_ w}{total: >27}{'_}
+    {'bold}[{'_ y}{before}{'w bold}{is}{'_ gr}{after}{'_ bold}]{'_}
+
+{'gr}{playlist: ^80}
+{dt: ^80}
+uamp{version: >76}{'_}",
+            ' '
+        );
     }
 }

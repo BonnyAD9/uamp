@@ -935,9 +935,9 @@ checksum = "ef53942eb7bf7ff43a617b3e2c1c4a5ecf5944a7c1bc12d7ee39bbb15e5c1519"
 
 [[package]]
 name = "litrs"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f17c3668f3cc1132437cdadc93dab05e52d592f06948d3f64828430c36e4a70"
+checksum = "b4ce301924b7887e9d637144fdade93f9dfff9b60981d4ac161db09720d39aa5"
 dependencies = [
  "proc-macro2",
 ]
@@ -1354,6 +1354,36 @@ checksum = "0096676b2f8f1c9c9e471eb07bf9af9f0592f4bf684f76a1de586eafde3cdf7c"
 dependencies = [
  "convert_case",
  "litrs",
+]
+
+[[package]]
+name = "place_macro"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ded910602eebb5e39317d37dbfa6f2f470b5759d0e06b456e940207c861f17aa"
+dependencies = [
+ "place_macro_proc",
+]
+
+[[package]]
+name = "place_macro_core"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "15a4aeb20828217e746ffbeba3120133961b4fc699995589443a386a78918e9d"
+dependencies = [
+ "convert_case",
+ "litrs",
+ "proc-macro2",
+]
+
+[[package]]
+name = "place_macro_proc"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "278f0d63044c8f6a1e19d3c20b8ef2de4b5a0a845f5e42ab20d5a8bcb98755ab"
+dependencies = [
+ "place_macro_core",
+ "proc-macro2",
 ]
 
 [[package]]
@@ -1919,28 +1949,33 @@ dependencies = [
 
 [[package]]
 name = "termal"
-version = "0.1.0"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d68f5a57554758d26e39d8dacd89542a7b0827c0380977988b9fa6b6966c13f"
+checksum = "3b3ad5d007b5d3d029ee63c7df4ea7b81597b51c25b9be00771c15f850493928"
 dependencies = [
- "termal_codes",
- "termal_macros",
+ "termal_core",
+ "termal_proc",
 ]
 
 [[package]]
-name = "termal_codes"
-version = "0.1.0"
+name = "termal_core"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5a4d434c8597c081593cbbf9c2318d5dbad7acbdf46b0875a1ed7ab00defd3b"
-
-[[package]]
-name = "termal_macros"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8118c712cd2e325a8281eed6bbd8275742b05dfbee6e69de85ae1041890130b1"
+checksum = "037dc9210f75b71f5b3583780e5534af720c9565b6de5e4c1e7f6fe68ed7bdce"
 dependencies = [
  "litrs",
- "termal_codes",
+ "place_macro 1.0.0",
+ "proc-macro2",
+ "thiserror",
+]
+
+[[package]]
+name = "termal_proc"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9fcfe92759d5b27bffd727400d03a0f70f83eebd6bf589f175894a5d638c99a0"
+dependencies = [
+ "termal_core",
 ]
 
 [[package]]
@@ -2006,7 +2041,7 @@ dependencies = [
  "itertools",
  "log",
  "pareg",
- "place_macro",
+ "place_macro 0.2.0",
  "rand",
  "raplay",
  "rmp-serde",

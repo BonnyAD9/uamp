@@ -112,11 +112,11 @@ impl Song {
     }
 
     /// Gets the track number of the song in the album
-    pub fn track(&self) -> u32 {
+    pub fn _track(&self) -> u32 {
         self.track
     }
 
-    pub fn _track_str(&self) -> String {
+    pub fn track_str(&self) -> String {
         if self.track == u32::MAX {
             "-".to_owned()
         } else {
@@ -125,11 +125,11 @@ impl Song {
     }
 
     /// Gets the disc number of the song in the album
-    pub fn disc(&self) -> u32 {
+    pub fn _disc(&self) -> u32 {
         self.disc
     }
 
-    pub fn _disc_str(&self) -> String {
+    pub fn disc_str(&self) -> String {
         if self.disc == u32::MAX {
             "-".to_owned()
         } else {

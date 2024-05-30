@@ -338,7 +338,7 @@ impl FromStr for ControlMsg {
             }
             v if starts!(v, "volume" | "vol" | "v") => {
                 let v = key_val_arg::<&str, f32>(v, '=')?.1;
-                if (0.0..=1.).contains(&v) {
+                if !(0.0..=1.).contains(&v) {
                     return Err(Error::InvalidValue(
                         "volume must be in range from 0 to 1",
                     ));
