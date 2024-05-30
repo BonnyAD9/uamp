@@ -10,6 +10,7 @@
 - Speed up searching for new songs.
 - Support multiple arguments at once after instance.
 - Add option to start the app in detached mode.
+- Add option to send messages to multiple instances at once.
 
 ## v0.4.0
 - Add all options to settings including help

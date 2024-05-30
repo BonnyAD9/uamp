@@ -113,6 +113,12 @@ fn print_instance_help() {
   {'y}-h  -?  --help{'_}
     Prints the instance help.
 
+  {'y}-p  --port {'w}<port>{'_}
+    Sets the port on which is server of the instance.
+
+  {'y}-a  --address {'w}<address>{'_}
+    Sets address of the server of the instance.
+
 {'g}Instance parameters:
   {'r}info{'_}
     Shows the info about the playback of the currently runing instance.

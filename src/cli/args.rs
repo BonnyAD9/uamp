@@ -1,16 +1,10 @@
 use pareg::{ArgError, ArgIterator, ByRef};
 
-use crate::{
-    config::Config,
-    core::{
-        err::Result,
-        messenger::{msg::Request, MsgMessage},
-    },
-};
+use crate::{config::Config, core::err::Result};
 
 use super::{
-    help::{help, help_instance, print_help},
-    Action, RunInfo,
+    help::{help, print_help},
+    Action, Instance, Run,
 };
 
 /// Contains the CLI arguments values
@@ -25,7 +19,7 @@ pub struct Args {
     /// The gui should not run, unless `must_run` is set to `true`
     pub should_exit: bool,
     /// The gui should run in all cases if this is `true`
-    pub run: Option<RunInfo>,
+    pub run: Option<Run>,
 }
 
 //===========================================================================//
@@ -105,19 +99,12 @@ impl Args {
         I::Item: ByRef<&'a str>,
     {
         self.should_exit = true;
-        let mut msgs = vec![];
 
-        while let Some(arg) = args.next() {
-            match arg {
-                "info" => msgs.push(MsgMessage::Request(Request::Info)),
-                "-h" | "--help" => help_instance(),
-                "--" => break,
-                _ => msgs.push(MsgMessage::Control(args.cur_arg()?)),
-            }
-        }
+        let mut instance = Instance::default();
+        instance.parse(args)?;
 
-        if !msgs.is_empty() {
-            self.actions.push(Action::Message(msgs));
+        if !instance.messages.is_empty() {
+            self.actions.push(Action::Instance(instance));
         }
 
         Ok(())
@@ -128,7 +115,7 @@ impl Args {
         I: Iterator,
         I::Item: ByRef<&'a str>,
     {
-        let mut info = RunInfo::default();
+        let mut info = Run::default();
         info.parse(args)?;
 
         if info.detach {
