@@ -185,7 +185,6 @@ impl UampApp {
         let mut lib = Library::from_config(&conf);
 
         if conf.update_library_on_start() {
-            println!("Update lib");
             lib.start_get_new_songs(&conf, ctrl, Default::default())?;
         }
 
