@@ -36,7 +36,7 @@ impl Instance {
     {
         while let Some(arg) = args.next() {
             match arg {
-                "info" => {
+                "info" | "nfo" => {
                     self.messages.push(msg::Message::Request(Request::Info))
                 }
                 "-h" | "-?" | "--help" => help_instance(),

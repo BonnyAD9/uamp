@@ -14,7 +14,7 @@ pub fn help<'a>(
     let arg = match args.next() {
         Some(a) => a,
         None => {
-            print_help();
+            help_all();
             return Ok(());
         }
     };
@@ -26,6 +26,7 @@ pub fn help<'a>(
             "basic" => print_basic_help(),
             "i" | "instance" => print_instance_help(),
             "run" => print_run_help(),
+            "all" | "elp" => print_help(),
             "--" => break,
             a => println!("Invalid help option {a}"),
         }
@@ -34,12 +35,15 @@ pub fn help<'a>(
     Ok(())
 }
 
-/// Prints all of help
-pub fn print_help() {
-    print_help_header();
+fn print_help() {
     print_basic_help();
     print_instance_help();
     print_run_help();
+}
+
+pub fn help_all() {
+    print_help_header();
+    print_help();
 }
 
 pub fn help_instance() {
@@ -53,7 +57,7 @@ pub fn help_run() {
 }
 
 /// Prints the help header
-fn print_help_header() {
+pub fn print_help_header() {
     let v: Option<&str> = option_env!("CARGO_PKG_VERSION");
     printcln!(
         "Welcome in {'i g}uamp{'_} by {}{'_}
@@ -87,6 +91,15 @@ fn print_basic_help() {
     Sets the server address for the comunication. If used when starting gui, it
     will disable config saves.
 
+  {'y}-I{'gr}[arg]{'_}
+    Equivalent to `{'b}i {'gr}[arg] {'w}--{'_}`.
+
+  {'y}-R{'gr}[arg]{'_}
+    Equivalent to `{'b}run {'gr}[arg] {'w}--{'_}`.
+
+  {'y}-H{'gr}[arg]{'_}
+    Equivalent to `{'b}h {'gr}[arg] {'w}--{'_}`.
+
 {'g}Actions:{'_}
   {'b}i  instance {'gr}[instance arguments] [--]{'_}
     Operates on a running instance of uamp.
@@ -94,10 +107,15 @@ fn print_basic_help() {
   {'b}run {'gr}[run arguments] [--]{'_}
     Runs new instance of uamp.
 
-  {'b}h  help {'gr}[help aguments] [--]{'_}
+  {'b}h  help {'gr}[help aguments]{'_}
     Shows help. With no arguments whole help, with arguments only help specific
-    to the given arguments.
-    Available arguments are: {'w}basic{'_}, {'w}i instance{'_} and {'w}run{'_}
+    to the given arguments. Possible arguments are:
+    - {'w}all elp{'_}: print whole help.
+    - {'w}basic{'_}: print the basic help.
+    - {'w}i instance{'_}: print help for {'b}instance{'_}.
+    - {'w}run{'_}: print help for {'b}run{'_}.
+    - {'w}--{'_}: print nothing and stop printing help. (this can be used if you
+      want to print only the title and version)
 "
     )
 }
@@ -121,7 +139,7 @@ fn print_instance_help() {
     Sets address of the server of the instance.
 
 {'g}Instance parameters:
-  {'r}info{'_}
+  {'r}info nfo{'_}
     Shows the info about the playback of the currently runing instance.
 
   {'r}play-pause  pp{'gr}[=(play|pause)]{'_}

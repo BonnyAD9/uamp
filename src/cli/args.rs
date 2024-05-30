@@ -1,9 +1,9 @@
 use pareg::{ArgError, ArgIterator, ByRef};
 
-use crate::{config::Config, core::err::Result};
+use crate::{cli::help::print_help_header, config::Config, core::err::Result};
 
 use super::{
-    help::{help, print_help},
+    help::{help, help_all},
     Action, Instance, Run,
 };
 
@@ -69,6 +69,14 @@ impl Args {
         I: Iterator,
         I::Item: ByRef<&'a str>,
     {
+        fn opt_iter(arg: &str) -> impl Iterator<Item = &str> {
+            if arg.is_empty() {
+                None.into_iter()
+            } else {
+                Some(arg).into_iter()
+            }
+        }
+
         while let Some(a) = args.next() {
             match a {
                 "i" | "instance" => self.instance(args)?,
@@ -76,7 +84,11 @@ impl Args {
                 "run" => self.run(args)?,
                 "-h" | "--help" | "-?" => {
                     self.should_exit = true;
-                    print_help();
+                    help_all();
+                }
+                "--version" => {
+                    self.should_exit = true;
+                    print_help_header();
                 }
                 "-p" | "--port" => {
                     self.port = args.next_arg()?;
@@ -85,7 +97,24 @@ impl Args {
                     self.server_address = args.next_arg()?;
                 }
                 "--" => {}
-                a => Err(ArgError::UnknownArgument(a.into()))?,
+                a => {
+                    if let Some(i) = a.strip_prefix("-I") {
+                        self.instance(&mut opt_iter(i).into())?;
+                        continue;
+                    }
+
+                    if let Some(i) = a.strip_prefix("-R") {
+                        self.run(&mut opt_iter(i).into())?;
+                        continue;
+                    }
+
+                    if let Some(i) = a.strip_prefix("-H") {
+                        help(&mut opt_iter(i), self)?;
+                        continue;
+                    }
+
+                    Err(ArgError::UnknownArgument(a.into()))?
+                }
             }
         }
 
