@@ -19,21 +19,14 @@ pub fn help<'a>(
         }
     };
 
-    if arg == "--" {
-        print_help();
-        return Ok(());
-    }
-
-    // prepend the first argument back to a iterator
-    let arg = [arg];
-    let args = arg.iter().copied().chain(args);
-
     print_help_header();
 
-    for arg in args {
+    for arg in Some(arg).into_iter().chain(args) {
         match arg {
             "basic" => print_basic_help(),
             "i" | "instance" => print_instance_help(),
+            "run" => print_run_help(),
+            "--" => break,
             a => println!("Invalid help option {a}"),
         }
     }
@@ -42,10 +35,21 @@ pub fn help<'a>(
 }
 
 /// Prints all of help
-fn print_help() {
+pub fn print_help() {
     print_help_header();
     print_basic_help();
     print_instance_help();
+    print_run_help();
+}
+
+pub fn help_instance() {
+    print_help_header();
+    print_instance_help();
+}
+
+pub fn help_run() {
+    print_help_header();
+    print_run_help();
 }
 
 /// Prints the help header
@@ -67,10 +71,13 @@ fn print_basic_help() {
   {'c}uamp{'_}
     Starts the background player.
 
-  {'c}uamp{'_} {'gr}[action] [--] [action] ... [flags]{'_}
-    Does the given action.
+  {'c}uamp [{'dy}flags{'gr}] [{'db}action{'gr}] [-- [{'db}action{'gr}] ...]{'_}
+    Does the given actions.
 
 {'g}Flags:{'_}
+  {'y}-h  -?  --help{'_}
+    Prints all of the help.
+
   {'y}-p  --port {'w}<port>{'_}
     Sets the port for the server comunication. If used when starting gui, it
     will disable config saves.
@@ -80,13 +87,16 @@ fn print_basic_help() {
     will disable config saves.
 
 {'g}Actions:{'_}
-  {'b}i  instance {'w}<instance-action>{'_} {'gr}[--]{'_}
+  {'b}i  instance {'gr}[instance arguments] [--]{'_}
     Operates on a running instance of uamp.
 
-  {'b}h  help  -h  -?  --help{'_}
-    Shows help, with no argument whole help, with arguments only help specific
-    to the given option.
-    Available options are: {'w}basic{'_}, {'w}i instance{'_}
+  {'b}run {'gr}[run arguments] [--]{'_}
+    Runs new instance of uamp.
+
+  {'b}h  help {'gr}[help aguments] [--]{'_}
+    Shows help. With no arguments whole help, with arguments only help specific
+    to the given arguments.
+    Available arguments are: {'w}basic{'_}, {'w}i instance{'_} and {'w}run{'_}
 "
     )
 }
@@ -94,7 +104,16 @@ fn print_basic_help() {
 /// Prints the instance help
 fn print_instance_help() {
     printcln!(
-        "{'g}Instance actions:
+        "{'g}Instance usage:
+  {'c}uamp {'b}i {'gr}[{'dy}flags{'gr}] [{'dr}parameters{'gr}] [--]{'_}
+    Sends the parameters as messages to a running instance of uamp using the
+    server.
+
+{'g}Instance flags:
+  {'y}-h  -?  --help{'_}
+    Prints the instance help.
+
+{'g}Instance parameters:
   {'r}info{'_}
     Shows the info about the playback of the currently runing instance.
 
@@ -154,4 +173,28 @@ fn print_instance_help() {
     Triggers save (but saves only if there is change).
 "
     );
+}
+
+fn print_run_help() {
+    printcln!(
+        "{'g}Run usage:
+  {'c}uamp {'b}run {'gr}[{'dy}flags{'gr}] [--]{'_}
+    Runs new instance of uamp.
+
+{'g}Run flags:
+  {'y}-h  -?  --help{'_}
+    Prints the run help.
+
+  {'y}-d  --detach{'_}
+    Runs uamp in detached mode without console.
+
+  {'y}-p  --port {'w}<port>{'_}
+    Sets the port number of server for the new instance. This will disable
+    config saves for the new instance.
+
+  {'y}-a  --address {'w}<address>{'_}
+    Sets the server address of for the new instance. Thiss will disable config
+    saves for the new instance.
+"
+    )
 }

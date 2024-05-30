@@ -3,12 +3,15 @@ use pareg::{ArgError, ArgIterator, ByRef};
 use crate::{
     config::Config,
     core::{
-        err::{Error, Result},
+        err::Result,
         messenger::{msg::Request, MsgMessage},
     },
 };
 
-use super::{help::help, Action};
+use super::{
+    help::{help, help_instance, print_help},
+    Action, RunInfo,
+};
 
 /// Contains the CLI arguments values
 #[derive(Default)]
@@ -22,7 +25,7 @@ pub struct Args {
     /// The gui should not run, unless `must_run` is set to `true`
     pub should_exit: bool,
     /// The gui should run in all cases if this is `true`
-    pub must_run: bool,
+    pub run: Option<RunInfo>,
 }
 
 //===========================================================================//
@@ -67,10 +70,7 @@ impl Args {
 //===========================================================================//
 
 impl Args {
-    pub fn top_level<'a, I>(
-        &mut self,
-        args: &mut ArgIterator<'a, I>,
-    ) -> Result<()>
+    fn top_level<'a, I>(&mut self, args: &mut ArgIterator<'a, I>) -> Result<()>
     where
         I: Iterator,
         I::Item: ByRef<&'a str>,
@@ -78,13 +78,19 @@ impl Args {
         while let Some(a) = args.next() {
             match a {
                 "i" | "instance" => self.instance(args)?,
-                "h" | "help" | "-h" | "--help" | "-?" => help(args, self)?,
+                "h" | "help" => help(args, self)?,
+                "run" => self.run(args)?,
+                "-h" | "--help" | "-?" => {
+                    self.should_exit = true;
+                    print_help();
+                }
                 "-p" | "--port" => {
                     self.port = args.next_arg()?;
                 }
                 "-a" | "--address" => {
                     self.server_address = args.next_arg()?;
                 }
+                "--" => {}
                 a => Err(ArgError::UnknownArgument(a.into()))?,
             }
         }
@@ -93,10 +99,7 @@ impl Args {
     }
 
     /// Parses the instance action arguments
-    pub fn instance<'a, I>(
-        &mut self,
-        args: &mut ArgIterator<'a, I>,
-    ) -> Result<()>
+    fn instance<'a, I>(&mut self, args: &mut ArgIterator<'a, I>) -> Result<()>
     where
         I: Iterator,
         I::Item: ByRef<&'a str>,
@@ -107,18 +110,33 @@ impl Args {
         while let Some(arg) = args.next() {
             match arg {
                 "info" => msgs.push(MsgMessage::Request(Request::Info)),
+                "-h" | "--help" => help_instance(),
                 "--" => break,
                 _ => msgs.push(MsgMessage::Control(args.cur_arg()?)),
             }
         }
 
-        if msgs.is_empty() {
-            return Err(Error::ArgParse(ArgError::NoMoreArguments(Some(
-                "i".into(),
-            ))));
+        if !msgs.is_empty() {
+            self.actions.push(Action::Message(msgs));
         }
 
-        self.actions.push(Action::Message(msgs));
+        Ok(())
+    }
+
+    fn run<'a, I>(&mut self, args: &mut ArgIterator<'a, I>) -> Result<()>
+    where
+        I: Iterator,
+        I::Item: ByRef<&'a str>,
+    {
+        let mut info = RunInfo::default();
+        info.parse(args)?;
+
+        if info.detach {
+            self.should_exit = true;
+            self.actions.push(Action::RunDetached(info));
+        } else {
+            self.run = Some(info)
+        }
 
         Ok(())
     }

@@ -10,6 +10,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// Unified error type of uamp
 #[derive(Error, Debug)]
 pub enum Error {
+    #[error("Cannot get my own name.")]
+    NoProgramName,
     #[error("{0}")]
     InvalidValue(&'static str),
     /// The requested operatoin was invalid at the time

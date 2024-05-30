@@ -1,11 +1,14 @@
+use core::Error;
 use std::{
     env::{self, args},
     net::TcpStream,
+    process::{Command, Stdio},
     time::Duration,
 };
 
+use cli::RunInfo;
 use config::Config;
-use log::{error, info};
+use log::{error, info, warn};
 
 use crate::{
     background_app::run_background_app,
@@ -41,10 +44,6 @@ fn start() -> Result<()> {
 
     info!("started");
 
-    // on wayland, the app freezes when not drawn, this is temprary workaround
-    // until it is fixed
-    env::set_var("WINIT_UNIX_BACKEND", "x11");
-
     let args: Vec<_> = args().collect();
     let args = Args::parse(args.iter().into())?;
 
@@ -67,12 +66,21 @@ fn start() -> Result<()> {
                     }
                 }
             }
+            Action::RunDetached(mut i) => {
+                i.port = i.port.or(args.port);
+                i.server_address = i
+                    .server_address
+                    .take()
+                    .or_else(|| args.server_address.to_owned());
+                run_detached(i)?;
+            }
         }
     }
 
-    // must run has more power - in case both run and exit are true, run wins
-    if args.must_run || !args.should_exit {
-        run_background_app(conf)?;
+    if let Some(info) = args.run {
+        run_app(info, conf)?;
+    } else if !args.should_exit {
+        run_app(RunInfo::default(), conf)?;
     }
 
     Ok(())
@@ -150,4 +158,40 @@ fn print_info(info: Info) {
     } else {
         println!("Timestamp: ?/?")
     }
+}
+
+fn run_app(info: RunInfo, mut conf: Config) -> Result<()> {
+    if info.detach {
+        warn!("Detach is set to detached when not running as detached.");
+    }
+
+    info.update_config(&mut conf);
+    run_background_app(conf)
+}
+
+fn run_detached(info: RunInfo) -> Result<()> {
+    if !info.detach {
+        warn!("Detached is not set to detached when running as detached");
+    }
+
+    let cmd = env::args_os().next().ok_or(Error::NoProgramName)?;
+    let mut cmd = Command::new(cmd);
+    cmd.stdin(Stdio::null());
+    cmd.stdout(Stdio::null());
+
+    cmd.arg("run");
+
+    if let Some(p) = info.port {
+        cmd.args(["-p", &p.to_string()]);
+    }
+    if let Some(a) = info.server_address {
+        cmd.args(["-a", &a]);
+    }
+
+    let child = cmd.spawn()?;
+    let id = child.id();
+    println!("Spawned detached process with id {id}");
+    info!("Spawned detached process with id {id}");
+
+    Ok(())
 }

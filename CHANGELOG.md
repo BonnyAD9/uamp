@@ -9,6 +9,7 @@
   load, this is enabled by default.
 - Speed up searching for new songs.
 - Support multiple arguments at once after instance.
+- Add option to start the app in detached mode.
 
 ## v0.4.0
 - Add all options to settings including help

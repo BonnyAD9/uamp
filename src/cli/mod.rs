@@ -1,8 +1,9 @@
 mod action;
 mod args;
 mod help;
+mod run_info;
 
-pub use self::{action::*, args::*};
+pub use self::{action::*, args::*, run_info::*};
 /*pub use args::*;
 
 ///! Contains tools for the cli, mostly parsing
