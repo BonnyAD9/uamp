@@ -63,6 +63,12 @@
             "type": "number",
             "default": 0.025
         },
+        "save_playback_pos": {
+            "description": "When playback position is saved, it can be loaded the next time uamp starts. This means that your song will continue playing at the same place that it was when you closed uamp.",
+            "type": "string",
+            "default": "Never",
+            "pattern": "Never|OnSave|Always"
+        },
         "save_timeout": {
             "description": "When not null, saves all the data every number of seconds specified here",
             "type": ["null", "string"],

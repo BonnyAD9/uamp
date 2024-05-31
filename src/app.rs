@@ -54,13 +54,13 @@ pub struct UampApp {
 
 impl UampApp {
     /// Saves all the data that is saved by uamp
-    pub fn save_all(&mut self, ctrl: &mut AppCtrl) {
+    pub fn save_all(&mut self, closing: bool, ctrl: &mut AppCtrl) {
         match self.library.start_to_default_json(&self.config, ctrl) {
             Err(Error::InvalidOperation(_)) => {}
             Err(e) => error!("Failed to start library save: {e}"),
             _ => {}
         }
-        if let Err(e) = self.player.to_default_json(&self.config) {
+        if let Err(e) = self.player.to_default_json(closing, &self.config) {
             error!("Failed to save play state: {e}");
         }
         if let Err(e) = self.config.to_default_json() {
@@ -164,7 +164,7 @@ impl UampApp {
             .map(|t| now - self.last_save >= t.0)
             .unwrap_or_default()
         {
-            self.save_all(ctrl);
+            self.save_all(false, ctrl);
         }
 
         let up = self.library_lib_update();
@@ -188,7 +188,7 @@ impl UampApp {
             lib.start_get_new_songs(&conf, ctrl, Default::default())?;
         }
 
-        let mut player = Player::from_config(sender.clone(), &conf);
+        let mut player = Player::from_config(&mut lib, sender.clone(), &conf);
         player.load_config(&conf);
         player.remove_deleted(&lib);
 

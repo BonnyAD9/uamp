@@ -11,8 +11,9 @@
 - Support multiple arguments at once after instance.
 - Add option to start the app in detached mode (`run -d`).
 - Add option to send messages to multiple instances at once.
-- Add alternative ways to use actions (`-I`, `-R`, ...)
-- Add option to print version (`--version`)
+- Add alternative ways to use actions (`-I`, `-R`, ...).
+- Add option to print version (`--version`).
+- Add option to save position within song (`save_playback_pos`).
 
 ## v0.4.0
 - Add all options to settings including help

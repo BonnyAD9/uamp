@@ -130,7 +130,7 @@ impl UampApp {
                 return Some(Msg::Tick);
             }
             ControlMsg::Close => {
-                self.save_all(ctrl);
+                self.save_all(true, ctrl);
                 if ctrl.any_task(|t| t != TaskType::Server) {
                     self.pending_close = true;
                     return None;
@@ -203,7 +203,7 @@ impl UampApp {
                     false,
                 );
             }
-            ControlMsg::Save => self.save_all(ctrl),
+            ControlMsg::Save => self.save_all(false, ctrl),
         };
 
         None

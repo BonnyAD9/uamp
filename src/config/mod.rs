@@ -17,6 +17,14 @@ use crate::{
     gen_struct,
 };
 
+#[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum SongPosSave {
+    #[default]
+    Never,
+    OnClose,
+    Always,
+}
+
 gen_struct! {
     #[derive(Clone, Serialize, Deserialize)]
     #[serde(
@@ -94,6 +102,10 @@ gen_struct! {
         register_global_hotkeys: bool { pub, pub } => pub(super) () false,
 
         volume_jump: f32 { pub, pub } => pub(super) () 0.025,
+
+        save_playback_pos: SongPosSave { pub, pub } => pub(super) () {
+            SongPosSave::Never
+        },
 
         save_timeout: Option<Wrap<Duration>> { pub, pub } => pub(super) () {
             Some(Wrap(Duration::from_secs(60)))
@@ -249,6 +261,7 @@ impl Config {
             remove_missing_on_load: default_remove_missing_on_load(),
             register_global_hotkeys: default_register_global_hotkeys(),
             volume_jump: default_volume_jump(),
+            save_playback_pos: default_save_playback_pos(),
             save_timeout: default_save_timeout(),
             fade_play_pause: default_fade_play_pause(),
             global_hotkeys: default_global_hotkeys(),
@@ -317,6 +330,17 @@ pub fn default_config_path() -> PathBuf {
         }
     } else {
         PathBuf::from(".")
+    }
+}
+
+impl SongPosSave {
+    #[inline]
+    pub fn save(&self, closing: bool) -> bool {
+        match self {
+            Self::Always => true,
+            Self::OnClose => closing,
+            Self::Never => false,
+        }
     }
 }
 
