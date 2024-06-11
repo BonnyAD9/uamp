@@ -1,3 +1,4 @@
+pub mod alc_vec;
 pub mod command;
 /// Adds some features to existing data types
 pub mod extensions;

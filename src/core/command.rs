@@ -57,7 +57,14 @@ impl<'a> AppCtrl<'a> {
     where
         P: Fn(TaskType) -> bool,
     {
-        self.tasks.any(f)
+        self.tasks.any(&f)
+            || self.commands.iter().any(|t| {
+                if let Command::AddTask(t, _) = t {
+                    f(*t)
+                } else {
+                    false
+                }
+            })
     }
 }
 

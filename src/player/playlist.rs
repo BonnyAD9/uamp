@@ -2,7 +2,7 @@ use std::{
     mem,
     ops::{Index, IndexMut},
     slice::{Iter, SliceIndex},
-    sync::Arc,
+    sync::{Arc, Weak},
 };
 
 use itertools::Itertools;
@@ -14,7 +14,7 @@ use crate::library::{Library, SongId};
 /// A playlist, lazily cloned
 pub enum Playlist {
     /// There is static immutable reference to the playlist
-    Static(Arc<[SongId]>),
+    Static(Arc<Vec<SongId>>),
     /// There is owned vector with the playlist
     Dynamic(Vec<SongId>),
 }
@@ -39,18 +39,8 @@ impl Playlist {
 
     /// Gets/Creates arc from the playlist. This will create copy if playlist
     /// is dynamic.
-    pub fn _to_arc(&self) -> Arc<[SongId]> {
-        match self {
-            Playlist::Static(a) => a.clone(),
-            // copy to arc when this is vector
-            Playlist::Dynamic(v) => v[..].into(),
-        }
-    }
-
-    /// Gets/Creates arc from the playlist. This will not copy the playlist,
-    /// but it will transform it into a static playlist.
-    pub fn _as_arc(&mut self) -> Arc<[SongId]> {
-        self._make_static().clone()
+    pub fn get_arc(&mut self) -> Arc<Vec<SongId>> {
+        self.make_static().clone()
     }
 
     pub fn remove_deleted(&mut self, lib: &Library) {
@@ -138,8 +128,8 @@ impl From<Vec<SongId>> for Playlist {
     }
 }
 
-impl From<Arc<[SongId]>> for Playlist {
-    fn from(value: Arc<[SongId]>) -> Self {
+impl From<Arc<Vec<SongId>>> for Playlist {
+    fn from(value: Arc<Vec<SongId>>) -> Self {
         Self::Static(value)
     }
 }
@@ -214,22 +204,30 @@ impl Playlist {
     fn make_dynamic(&mut self) -> &mut Vec<SongId> {
         match self {
             Self::Dynamic(d) => d,
-            Self::Static(s) => {
-                *self = Self::Dynamic(s.as_ref().into());
-                let Self::Dynamic(d) = self else { panic!() };
-                d
+            Self::Static(_) => {
+                let Self::Static(v) = mem::take(self) else { panic!(); };
+                match Arc::try_unwrap(v) {
+                    Ok(v) => {
+                        *self = Self::Dynamic(v);
+                        let Self::Dynamic(d) = self else { panic!(); };
+                        d
+                    },
+                    Err(a) => {
+                        *self = Self::Dynamic(a.as_ref().clone());
+                        let Self::Dynamic(d) = self else { panic!(); };
+                        d
+                    }
+                }
             }
         }
     }
 
     #[inline]
-    fn _make_static(&mut self) -> &Arc<[SongId]> {
+    fn make_static(&mut self) -> &Arc<Vec<SongId>> {
         match self {
             Self::Dynamic(d) => {
-                *self = Self::Static(mem::take(d).into());
-                let Self::Static(s) = self else {
-                    panic!();
-                };
+                *self = Self::Static(Arc::new(mem::take(d)));
+                let Self::Static(s) = self else { panic!(); };
                 s
             }
             Self::Static(s) => s,

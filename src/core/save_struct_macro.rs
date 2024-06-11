@@ -98,11 +98,13 @@ macro_rules! gen_struct {
 
         impl $t {
             $(
+                #[allow(dead_code)]
                 $gfv fn $fi(&self) -> &$ft {
                     &self.$fi
                 }
 
                 place_macro::place! {
+                    #[allow(dead_code)]
                     $sfv fn __ident__($fi _mut)(&mut self) -> &mut $ft {
                         self.change.set(true);
                         &mut self.$fi
@@ -111,11 +113,13 @@ macro_rules! gen_struct {
 
             )*
             $(
+                #[allow(dead_code)]
                 $dgfv fn $dfi(&self) -> $dft {
                     self.$dfi
                 }
 
                 place_macro::place! {
+                    #[allow(dead_code)]
                     $dsfv fn __ident__($dfi _set)(&mut self, v: $dft) -> bool {
                         if self.$dfi != v {
                             self.change.set(true);

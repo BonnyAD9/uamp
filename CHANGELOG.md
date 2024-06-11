@@ -14,6 +14,9 @@
 - Add alternative ways to use actions (`-I`, `-R`, ...).
 - Add option to print version (`--version`).
 - Add option to save position within song (`save_playback_pos`).
+- Add secondary playlist.
+- Support temorary songs that can exist only in playlist.
+- Add option to directly play file.
 
 ## v0.4.0
 - Add all options to settings including help

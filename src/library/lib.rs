@@ -3,6 +3,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use std::{
     cell::Cell,
+    collections::HashSet,
     fs::{create_dir_all, File},
     mem,
     ops::{Index, IndexMut},
@@ -12,8 +13,9 @@ use std::{
 use crate::{
     app::UampApp,
     config::Config,
-    core::{command::AppCtrl, Error, Result},
+    core::{alc_vec::AlcVec, command::AppCtrl, Error, Result},
     gen_struct,
+    player::Player,
     sync::tasks::{TaskMsg, TaskType},
 };
 
@@ -27,7 +29,9 @@ gen_struct! {
     #[derive(Serialize, Deserialize)]
     pub Library {
         // Fields passed by reference
-        songs: Vec<Song> { pri , pri },
+        songs: AlcVec<Song> { pri , pri },
+        #[serde(default)]
+        tmp_songs: AlcVec<Song> { pri, pri },
         // albums: Vec<SongId> { pri, pri },
         ; // Fields passed by value
         ; // Other fields
@@ -46,10 +50,15 @@ gen_struct! {
 //===========================================================================//
 
 impl Library {
+    pub fn clone_songs(&mut self) -> AlcVec<Song> {
+        self.songs.clone()
+    }
+
     /// Creates empty library
     pub fn new() -> Self {
         Library {
-            songs: Vec::new(),
+            songs: AlcVec::new(),
+            tmp_songs: AlcVec::new(),
             lib_update: LibraryUpdate::None,
             change: Cell::new(true),
             ghost: Song::invalid(),
@@ -89,6 +98,7 @@ impl Library {
         &mut self,
         conf: &Config,
         ctrl: &mut AppCtrl,
+        player: &mut Player,
     ) -> Result<()> {
         if !self.change.get() {
             return Ok(());
@@ -102,9 +112,26 @@ impl Library {
 
         if let Some(p) = conf.library_path() {
             let path = p.clone();
-            let me = self.clone();
+            let mut me = self.clone();
+            let used = player.get_ids();
 
-            let task = move || TaskMsg::LibrarySave(me.to_json(path));
+            let task = move || {
+                TaskMsg::LibrarySave(
+                    me.write_json(
+                        path,
+                        used.0
+                            .iter()
+                            .chain(
+                                used.1
+                                    .as_ref()
+                                    .map(|a| a.iter())
+                                    .into_iter()
+                                    .flatten(),
+                            )
+                            .copied(),
+                    ),
+                )
+            };
 
             ctrl.add_task(TaskType::LibraryLoad, task);
         }
@@ -145,7 +172,7 @@ impl Library {
         }
 
         let conf = conf.clone();
-        let songs = self.songs().clone();
+        let songs = self.clone_songs();
         let remove_missing =
             opts.remove_missing.unwrap_or(conf.remove_missing_on_load());
 
@@ -155,7 +182,7 @@ impl Library {
                 first_new: songs.len(),
                 add_policy: opts.add_to_playlist,
                 sparse_new: vec![],
-                songs,
+                songs: songs.into(),
             };
 
             add_new_songs(&mut res, &conf, remove_missing);
@@ -170,32 +197,84 @@ impl Library {
 
         Ok(())
     }
+
+    pub fn clone(&mut self) -> Self {
+        Self {
+            songs: self.clone_songs(),
+            tmp_songs: self.tmp_songs.clone(),
+            lib_update: LibraryUpdate::None,
+            ghost: self.ghost.clone(),
+            change: self.change.clone(),
+        }
+    }
+
+    pub fn add_tmp_song(&mut self, song: Song) -> SongId {
+        for (i, s) in self.tmp_songs_mut().iter_mut().enumerate() {
+            if s.is_deleted() {
+                *s = song;
+                return SongId::tmp(i);
+            }
+        }
+
+        self.tmp_songs_mut().vec_mut().push(song);
+        SongId::tmp(self.tmp_songs.len() - 1)
+    }
+
+    pub fn add_tmp_path<P>(&mut self, path: P) -> Result<SongId>
+    where
+        P: AsRef<Path>,
+    {
+        Ok(self.add_tmp_song(Song::from_path(path)?))
+    }
 }
 
 impl Index<SongId> for Library {
     type Output = Song;
     fn index(&self, index: SongId) -> &Self::Output {
         if index.0 >= self.songs().len() {
-            &self.ghost
-        } else {
-            let r = &self.songs()[index.0];
-            if r.is_deleted() {
+            let idx = index.as_tmp();
+            if idx >= self.tmp_songs().len() || self.songs()[idx].is_deleted()
+            {
                 &self.ghost
             } else {
-                r
+                &self.tmp_songs()[idx]
             }
+        } else if self.songs()[index.0].is_deleted() {
+            &self.ghost
+        } else {
+            &self.songs()[index.0]
         }
     }
 }
 
 impl IndexMut<SongId> for Library {
     fn index_mut(&mut self, index: SongId) -> &mut Song {
-        if index.0 >= self.songs().len() || self.songs()[index.0].is_deleted()
-        {
+        if index.0 >= self.songs().len() {
+            let idx = index.as_tmp();
+            if idx >= self.tmp_songs().len() || self.songs()[idx].is_deleted()
+            {
+                &mut self.ghost
+            } else {
+                &mut self.tmp_songs_mut()[idx]
+            }
+        } else if self.songs()[index.0].is_deleted() {
             &mut self.ghost
         } else {
             &mut self.songs_mut()[index.0]
         }
+    }
+}
+
+impl Index<&SongId> for Library {
+    type Output = Song;
+    fn index(&self, index: &SongId) -> &Self::Output {
+        &self[*index]
+    }
+}
+
+impl IndexMut<&SongId> for Library {
+    fn index_mut(&mut self, index: &SongId) -> &mut Song {
+        &mut self[*index]
     }
 }
 
@@ -220,7 +299,7 @@ impl UampApp {
             }
         };
 
-        *self.library.songs_mut() = mem::take(&mut res.songs);
+        *self.library.songs_mut() = mem::take(&mut res.songs).into();
         if res.removed {
             self.library.update(LibraryUpdate::RemoveData);
         } else {
@@ -236,16 +315,20 @@ impl UampApp {
             );
         };
 
-        match self.library.start_to_default_json(&self.config, ctrl) {
+        match self.library.start_to_default_json(
+            &self.config,
+            ctrl,
+            &mut self.player,
+        ) {
             Err(Error::InvalidOperation(_)) => {}
             Err(e) => error!("Failed to start library save: {e}"),
             _ => {}
         }
     }
 
-    pub fn finish_library_save_songs(&mut self, res: Result<()>) {
+    pub fn finish_library_save_songs(&mut self, res: Result<Vec<SongId>>) {
         match res {
-            Ok(()) => {}
+            Ok(free) => self.library.remove_free_tmp_songs(&free),
             Err(e) => {
                 error!("Failed to save library: {e}");
                 self.library.change.set(true);
@@ -269,24 +352,46 @@ impl Library {
     /// - Fails to create the parent directory
     /// - Fails to write file
     /// - Fails to serialize
-    fn to_json(&self, path: impl AsRef<Path>) -> Result<()> {
+    fn write_json<P, I>(&mut self, path: P, used: I) -> Result<Vec<SongId>>
+    where
+        P: AsRef<Path>,
+        I: IntoIterator<Item = SongId>,
+    {
         if let Some(par) = path.as_ref().parent() {
             create_dir_all(par)?;
         }
 
-        serde_json::to_writer(File::create(path)?, self)?;
-        Ok(())
-    }
-}
+        let free = self.get_free_tmp_songs(used);
+        self.remove_free_tmp_songs(&free);
 
-impl Clone for Library {
-    fn clone(&self) -> Self {
-        Self {
-            songs: self.songs.clone(),
-            lib_update: LibraryUpdate::None,
-            ghost: self.ghost.clone(),
-            change: self.change.clone(),
+        serde_json::to_writer(File::create(path)?, self)?;
+        Ok(free)
+    }
+
+    fn get_free_tmp_songs<I>(&self, used: I) -> Vec<SongId>
+    where
+        I: IntoIterator<Item = SongId>,
+    {
+        let used: HashSet<_> =
+            used.into_iter().filter(|s| self.is_tmp(*s)).collect();
+        (0..self.tmp_songs.len())
+            .map(SongId::tmp)
+            .filter(|s| !used.contains(s))
+            .collect()
+    }
+
+    fn remove_free_tmp_songs(&mut self, free: &[SongId]) {
+        let songs = self.tmp_songs.vec_mut();
+        for s in free {
+            songs[usize::MAX - s.0].delete();
         }
+        while songs.last().map_or(false, Song::is_deleted) {
+            songs.pop();
+        }
+    }
+
+    fn is_tmp(&self, id: SongId) -> bool {
+        id.0 >= self.songs.len() && usize::MAX - id.0 <= self.tmp_songs.len()
     }
 }
 

@@ -4,13 +4,18 @@ use serde::{Deserialize, Serialize};
 
 use raplay::Timestamp;
 
-use crate::{core::msg::ControlMsg, library::Song};
+use crate::{
+    core::msg::{ControlMsg, PlayMsg},
+    library::Song,
+};
 
 /// Messages passed between uamp instances
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Message {
     /// An error occured
     Error(Error),
+    /// Play something
+    Play(PlayMsg),
     /// todo
     Request(Request),
     /// Send simple action to be done

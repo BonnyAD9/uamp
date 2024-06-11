@@ -17,8 +17,30 @@ use pareg::proc::FromArg;
 use serde::{Deserialize, Serialize};
 
 /// Id of song in a [`Library`]
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+)]
 pub struct SongId(usize);
+
+impl SongId {
+    #[inline]
+    fn tmp(idx: usize) -> SongId {
+        SongId(usize::MAX - idx)
+    }
+
+    fn as_tmp(&self) -> usize {
+        usize::MAX - self.0
+    }
+}
 
 /// Filter for iterating library
 #[derive(

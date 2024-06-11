@@ -41,11 +41,26 @@ pub struct Song {
 
 impl Song {
     /// Creates song from the given path
-    pub fn from_path<P: AsRef<Path> + Debug>(path: P) -> Result<Self> {
-        let tag = Tag::new().read_from_path(&path)?;
+    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let tag = match Tag::new().read_from_path(&path) {
+            Ok(tag) => tag,
+            Err(audiotags::Error::UnsupportedFormat(_)) => {
+                Box::new(audiotags::FlacTag::new())
+            }
+            Err(e) => Err(e)?,
+        };
+
         let mut s = Song {
             path: path.as_ref().to_path_buf(),
-            title: tag.title().unwrap_or("-").to_owned(),
+            title: tag.title().map_or_else(
+                || {
+                    path.as_ref().file_name().map_or_else(
+                        || "--".to_owned(),
+                        |a| a.to_string_lossy().into_owned(),
+                    )
+                },
+                |t| t.to_owned(),
+            ),
             artist: tag.artist().unwrap_or("-").to_owned(),
             album: tag.album_title().unwrap_or("-").to_owned(),
             track: tag.track().0.unwrap_or_default() as u32,
@@ -69,7 +84,10 @@ impl Song {
 
         match res() {
             Ok(d) => s.length = d,
-            Err(e) => warn!("Failed to get true duration of {:?}: {e}", path),
+            Err(e) => warn!(
+                "Failed to get true duration of {:?}: {e}",
+                path.as_ref()
+            ),
         }
 
         Ok(s)

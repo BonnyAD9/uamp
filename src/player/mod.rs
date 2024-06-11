@@ -1,18 +1,18 @@
 pub mod add_policy;
 mod msg;
 mod playback;
-pub mod playlist;
 mod sink_wrapper;
 
 pub use self::msg::Message as PlayerMessage;
 use self::{
     add_policy::AddPolicy, msg::Message, playback::Playback,
-    playlist::Playlist, sink_wrapper::SinkWrapper,
+    sink_wrapper::SinkWrapper,
 };
 
 use std::{
     cell::Cell,
     fs::{create_dir_all, File},
+    mem,
     path::Path,
     time::Duration,
 };
@@ -26,7 +26,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     app::UampApp,
     config::Config,
-    core::{msg::Msg, Result},
+    core::{alc_vec::AlcVec, msg::Msg, Result},
     gen_struct,
     library::{Library, LibraryUpdate, SongId},
 };
@@ -34,16 +34,24 @@ use crate::{
 gen_struct! {
     pub Player {
         // Reference
-        playlist: Playlist { pub, pub },
+        playlist: AlcVec<SongId> { pub, pub },
         ; // value
         current: Option<usize> { pub, pri },
         volume: f32 { pub, pri },
         mute: bool { pub, pri },
         ; // other
+        intercept: Option<PlaylistInfo>,
         pub shuffle_current: bool,
         state: Playback,
         inner: SinkWrapper,
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PlaylistInfo {
+    playlist: AlcVec<SongId>,
+    current: Option<usize>,
+    position: Option<Duration>,
 }
 
 //===========================================================================//
@@ -79,10 +87,16 @@ impl Player {
         lib: &mut Library,
         index: Option<usize>,
         play: bool,
-    ) {
+    ) -> bool {
         match index {
-            Some(i) if i < self.playlist().len() => self.load(lib, i, play),
-            _ => self.stop(),
+            Some(i) if i < self.playlist().len() => {
+                self.load(lib, i, play);
+                true
+            }
+            _ => {
+                self.stop();
+                false
+            }
         }
     }
 
@@ -121,7 +135,7 @@ impl Player {
     pub fn play_playlist(
         &mut self,
         lib: &mut Library,
-        songs: impl Into<Playlist>,
+        songs: impl Into<AlcVec<SongId>>,
         index: Option<usize>,
         play: bool,
     ) {
@@ -159,7 +173,7 @@ impl Player {
 
     /// Jumps to the given index in the playlist if set.
     pub fn jump_to(&mut self, lib: &mut Library, index: Option<usize>) {
-        self.try_load(lib, index, self.is_playing())
+        self.try_load(lib, index, self.is_playing());
     }
 
     /// Jumps to the given index in the playlist.
@@ -191,6 +205,48 @@ impl Player {
                 if let Some(c) = self.current {
                     self.playlist_mut()[..].swap(c, 0);
                     self.current = Some(0);
+                }
+            }
+        }
+    }
+
+    pub fn intercept(
+        &mut self,
+        lib: &mut Library,
+        songs: impl Into<AlcVec<SongId>>,
+        index: Option<usize>,
+        play: bool,
+    ) {
+        if self.intercept.is_some() {
+            self.play_playlist(lib, songs, index, play);
+            return;
+        }
+
+        let Some(index) = index else {
+            return;
+        };
+        let songs = songs.into();
+        if index >= songs.len() {
+            return;
+        }
+
+        self.intercept = Some(PlaylistInfo {
+            playlist: mem::replace(self.playlist_mut(), songs),
+            current: self.current,
+            position: self.timestamp().map(|t| t.current),
+        });
+        self.load(lib, index, play);
+    }
+
+    pub fn pop_intercept(&mut self, lib: &mut Library) {
+        if let Some(ic) = self.intercept.take() {
+            *self.playlist_mut() = ic.playlist;
+            self.current_set(ic.current);
+            if ic.current.is_some() {
+                let play = self.is_playing();
+                self.play_pause(lib, play);
+                if let Some(p) = ic.position {
+                    self.seek_to(p);
                 }
             }
         }
@@ -252,6 +308,7 @@ impl Player {
             inner: SinkWrapper::new(),
             state: Playback::Stopped,
             playlist: data.playlist,
+            intercept: data.intercept,
             current: data.current,
             volume: data.volume,
             mute: data.mute,
@@ -318,7 +375,9 @@ impl Player {
 
     pub fn remove_deleted(&mut self, lib: &Library) {
         let cur = self.now_playing();
-        self.playlist_mut().remove_deleted(lib);
+        self.playlist_mut()
+            .vec_mut()
+            .retain(|s| !lib[s].is_deleted());
         if let Some(cur) = cur {
             self.current_set(self.playlist.iter().position(|i| i == &cur));
         }
@@ -334,12 +393,19 @@ impl Player {
     where
         I: IntoIterator<Item = SongId>,
     {
-        let cur = self.current().unwrap_or_default();
+        let i = self.current().unwrap_or_default() + 1;
         match policy {
             AddPolicy::End => self.playlist_mut().extend(songs),
-            AddPolicy::Next => self.playlist_mut().insert_at(cur + 1, songs),
-            AddPolicy::MixIn => self.playlist_mut().mix_in(cur + 1, songs),
+            AddPolicy::Next => self.playlist_mut().splice(i..i, songs),
+            AddPolicy::MixIn => self.playlist_mut().mix_after(i, songs),
         }
+    }
+
+    pub fn get_ids(&mut self) -> (AlcVec<SongId>, Option<AlcVec<SongId>>) {
+        (
+            self.playlist.clone(),
+            self.intercept.as_mut().map(|a| a.playlist.clone()),
+        )
     }
 }
 
@@ -407,6 +473,7 @@ impl Player {
                 volume: self.volume(),
                 mute: self.mute(),
                 position,
+                intercept: self.intercept.as_ref(),
             },
         )?;
         Ok(())
@@ -415,7 +482,8 @@ impl Player {
     /// Creates new player from the sender
     fn new(sender: UnboundedSender<Msg>) -> Self {
         let mut res = Self {
-            playlist: [][..].into(),
+            playlist: AlcVec::new(),
+            intercept: None,
             current: None,
             volume: default_volume(),
             mute: false,
@@ -479,9 +547,11 @@ struct PlayerDataLoad {
     current: Option<usize>,
     /// The current playlist
     #[serde(default)]
-    playlist: Playlist,
+    playlist: AlcVec<SongId>,
     #[serde(default)]
     position: Option<Duration>,
+    #[serde(default)]
+    intercept: Option<PlaylistInfo>,
 }
 
 impl Default for PlayerDataLoad {
@@ -490,8 +560,9 @@ impl Default for PlayerDataLoad {
             mute: false,
             volume: default_volume(),
             current: None,
-            playlist: [].as_slice().into(),
+            playlist: AlcVec::new(),
             position: None,
+            intercept: None,
         }
     }
 }
@@ -506,8 +577,9 @@ struct PlayerDataSave<'a> {
     /// The current song or [`None`]
     current: Option<usize>,
     /// The current playlist
-    playlist: &'a Playlist,
+    playlist: &'a AlcVec<SongId>,
     position: Option<Duration>,
+    intercept: Option<&'a PlaylistInfo>,
 }
 
 /// returns the default volume

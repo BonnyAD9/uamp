@@ -55,7 +55,11 @@ pub struct UampApp {
 impl UampApp {
     /// Saves all the data that is saved by uamp
     pub fn save_all(&mut self, closing: bool, ctrl: &mut AppCtrl) {
-        match self.library.start_to_default_json(&self.config, ctrl) {
+        match self.library.start_to_default_json(
+            &self.config,
+            ctrl,
+            &mut self.player,
+        ) {
             Err(Error::InvalidOperation(_)) => {}
             Err(e) => error!("Failed to start library save: {e}"),
             _ => {}
@@ -124,15 +128,7 @@ impl UampApp {
 
     pub fn update(&mut self, ctrl: &mut AppCtrl, message: Msg) {
         let msg = match message {
-            Msg::_PlaySong(index, songs) => {
-                self.player.play_playlist(
-                    &mut self.library,
-                    songs,
-                    Some(index),
-                    true,
-                );
-                Some(Msg::Tick)
-            }
+            Msg::PlaySong(msg) => self.play_event(msg),
             Msg::Control(msg) => self.control_event(ctrl, msg),
             Msg::Player(msg) => self.player_event(msg),
             Msg::Delegate(d) => d.update(self, ctrl),

@@ -1,4 +1,4 @@
-use std::{borrow::Cow, mem, net::TcpStream, time::Duration};
+use std::{borrow::Cow, mem, net::TcpStream, path::Path, time::Duration};
 
 use log::error;
 use pareg::{ArgIterator, ByRef};
@@ -12,8 +12,10 @@ use crate::{
             msg::{self, Info, Request},
             Messenger,
         },
+        msg::PlayMsg,
         Result,
     },
+    starts,
 };
 
 use super::help::help_instance;
@@ -39,6 +41,14 @@ impl Instance {
             match arg {
                 "info" | "nfo" => {
                     self.messages.push(msg::Message::Request(Request::Info))
+                }
+                v if starts!(v, "p" | "play") => {
+                    self.messages.push(msg::Message::Play(PlayMsg::TmpPath(
+                        args.cur_key_val::<&str, &Path>('=')?
+                            .1
+                            .canonicalize()?
+                            .into(),
+                    )));
                 }
                 "-h" | "-?" | "--help" => help_instance(),
                 "-p" | "--port" => self.port = Some(args.next_arg()?),

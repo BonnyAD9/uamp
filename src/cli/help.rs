@@ -166,6 +166,9 @@ fn print_instance_help() {
 
   {'r}info nfo{'_}
     Shows the info about the playback of the currently runing instance.
+
+  {'r}play p{'w}=<file path>{'_}
+    Play the given file in the secondary playlist.
 "
     );
 }
@@ -252,6 +255,16 @@ fn print_control_messages_help() {
   {'r}rewind  rw{'gr}[=<duration>]{'_}
     Seek back by the given duration. Without artument seeks by the default
     duration.
+
+  {'r}set-playlist  sp{'gr}[=all]{'_}
+    Loads all songs into the playlist.
+
+  {'r}push-playlist  push{'gr}[=all]{'_}
+    Set the secondary playlist. The primary playlist can be restored with
+    {'r}pop{'_}.
+
+  {'r}pop-playlist  pop{'_}
+    Remove the secondary playlist and restore the primary playlist.
 
   {'r}save{'_}
     Triggers save (but saves only if there is change).

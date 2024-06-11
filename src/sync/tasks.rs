@@ -9,7 +9,7 @@ use log::error;
 
 use crate::{
     core::{msg::Msg, Error, Result},
-    library::LibraryLoadResult,
+    library::{LibraryLoadResult, SongId},
 };
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -23,7 +23,7 @@ pub enum TaskType {
 pub enum TaskMsg {
     Server(Result<TcpListener>),
     LibraryLoad(Result<Option<LibraryLoadResult>>),
-    LibrarySave(Result<()>),
+    LibrarySave(Result<Vec<SongId>>),
 }
 
 #[derive(Debug)]

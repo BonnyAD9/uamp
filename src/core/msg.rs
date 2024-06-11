@@ -2,6 +2,7 @@ use core::fmt::Debug;
 use std::{
     fmt::{Display, Write},
     mem::replace,
+    path::{Path, PathBuf},
     str::FromStr,
     sync::Arc,
     time::{Duration, Instant},
@@ -30,7 +31,7 @@ use super::{
 #[derive(Clone, Debug, Default)]
 pub enum Msg {
     /// Play song song at the given index in the playlist
-    _PlaySong(usize, Arc<[SongId]>),
+    PlaySong(PlayMsg),
     /// Some simple messages
     Control(ControlMsg),
     /// Player messges handled by the player
@@ -87,8 +88,18 @@ pub enum ControlMsg {
     Rewind(Option<Duration>),
     /// Sets the current playlist
     SetPlaylist(Filter),
+    /// Pushes new playlist.
+    PushPlaylist(Filter),
+    /// Pop the intercepted playlist
+    PopPlaylist,
     /// Thriggers save
     Save,
+}
+
+#[derive(Clone, Debug)]
+pub enum PlayMsg {
+    Playlist(usize, Arc<Vec<SongId>>),
+    TmpPath(Arc<Path>),
 }
 
 impl UampApp {
@@ -203,10 +214,48 @@ impl UampApp {
                     false,
                 );
             }
+            ControlMsg::PushPlaylist(filter) => {
+                let songs: Vec<_> = self.library.filter(filter).collect();
+                self.player.intercept(&mut self.library, songs, None, false);
+            }
+            ControlMsg::PopPlaylist => {
+                self.player.pop_intercept(&mut self.library);
+            }
             ControlMsg::Save => self.save_all(false, ctrl),
         };
 
         None
+    }
+
+    pub fn play_event(&mut self, msg: PlayMsg) -> Option<Msg> {
+        match msg {
+            PlayMsg::Playlist(index, songs) => {
+                self.player.play_playlist(
+                    &mut self.library,
+                    songs,
+                    Some(index),
+                    true,
+                );
+            }
+            PlayMsg::TmpPath(path) => {
+                let id = match self.library.add_tmp_path(path.as_ref()) {
+                    Err(e) => {
+                        error!("Failed to load song {path:?}: {e}");
+                        return None;
+                    }
+                    Ok(id) => id,
+                };
+
+                self.player.intercept(
+                    &mut self.library,
+                    vec![id],
+                    Some(0),
+                    true,
+                );
+            }
+        }
+
+        Some(Msg::Tick)
     }
 }
 
@@ -254,6 +303,8 @@ impl Display for ControlMsg {
                 write!(f, "rw={}", duration_to_string(*d, false))
             }
             ControlMsg::SetPlaylist(Filter::All) => f.write_str("sp"),
+            ControlMsg::PushPlaylist(Filter::All) => f.write_str("push"),
+            ControlMsg::PopPlaylist => f.write_str("pop"),
             ControlMsg::Save => f.write_str("save"),
         }
     }
@@ -371,6 +422,12 @@ impl FromStr for ControlMsg {
                     key_mval_arg::<&str, _>(v, '=')?.1.unwrap_or_default(),
                 ))
             }
+            v if starts!(v, "push-playlist" | "push") => {
+                Ok(ControlMsg::PushPlaylist(
+                    key_mval_arg::<&str, _>(v, '=')?.1.unwrap_or_default(),
+                ))
+            }
+            "pop" | "pop-playlist" => Ok(ControlMsg::PopPlaylist),
             "save" => Ok(ControlMsg::Save),
             v => Err(Error::ArgParse(ArgError::UnknownArgument(
                 v.to_owned().into(),
@@ -390,5 +447,57 @@ enum PlayPause {
 impl From<PlayPause> for bool {
     fn from(value: PlayPause) -> Self {
         matches!(value, PlayPause::Play)
+    }
+}
+
+#[derive(Serialize)]
+#[serde(untagged)]
+enum PlayMsgSe<'a> {
+    Playlist(usize, &'a Vec<SongId>),
+    TmpPath(&'a Path),
+}
+
+impl<'a> From<&'a PlayMsg> for PlayMsgSe<'a> {
+    fn from(value: &'a PlayMsg) -> Self {
+        match value {
+            PlayMsg::Playlist(idx, songs) => Self::Playlist(*idx, songs),
+            PlayMsg::TmpPath(path) => Self::TmpPath(path.as_ref()),
+        }
+    }
+}
+
+impl Serialize for PlayMsg {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        PlayMsgSe::from(self).serialize(serializer)
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum PlayMsgDe {
+    Playlist(usize, Vec<SongId>),
+    TmpPath(PathBuf),
+}
+
+impl From<PlayMsgDe> for PlayMsg {
+    fn from(value: PlayMsgDe) -> Self {
+        match value {
+            PlayMsgDe::Playlist(idx, songs) => {
+                Self::Playlist(idx, Arc::new(songs))
+            }
+            PlayMsgDe::TmpPath(path) => Self::TmpPath(path.into()),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for PlayMsg {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        PlayMsgDe::deserialize(deserializer).map(|m| m.into())
     }
 }
