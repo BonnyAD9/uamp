@@ -374,12 +374,18 @@ impl Player {
     }
 
     pub fn remove_deleted(&mut self, lib: &Library) {
-        let cur = self.now_playing();
-        self.playlist_mut()
-            .vec_mut()
-            .retain(|s| !lib[s].is_deleted());
-        if let Some(cur) = cur {
-            self.current_set(self.playlist.iter().position(|i| i == &cur));
+        self.change.set(true);
+        Self::playlist_remove_deleted(
+            lib,
+            self.playlist.vec_mut(),
+            &mut self.current,
+        );
+        if let Some(ic) = &mut self.intercept {
+            Self::playlist_remove_deleted(
+                lib,
+                ic.playlist.vec_mut(),
+                &mut ic.current,
+            );
         }
     }
 
@@ -447,6 +453,20 @@ impl Player {
 
         if !play {
             self.hard_pause();
+        }
+    }
+
+    fn playlist_remove_deleted(
+        lib: &Library,
+        playlist: &mut Vec<SongId>,
+        cur: &mut Option<usize>,
+    ) {
+        let cur_song = cur.map(|c| playlist[c]);
+        playlist.retain(|s| !lib[s].is_deleted());
+        if let (Some(cur_song), Some(cur_idx)) = (cur_song, &cur) {
+            if cur_song != playlist[*cur_idx] {
+                *cur = playlist.iter().position(|i| *i == cur_song);
+            }
         }
     }
 
