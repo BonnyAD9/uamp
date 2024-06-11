@@ -242,6 +242,20 @@ fn print_control_messages_help() {
   {'r}shuffle-playlist  shuffle{'_}
     Shuffle the current playlist.
 
+  {'r}sort-playlist  sort{'w}=<ord>{'_}
+    Sorts the current playlist according to the value of {'w}ord{'_}:
+    - `rev` `reverse`                   reverse the playlist.
+    - `rng` `rand` `random` `randomize` shuffle the playlist.
+    - `path`                            sort by the path.
+    - `title` `name`                    sort by the song title.
+    - `artist` `performer` `author`     sort by the artist.
+    - `album`                           sort by the album name.
+    - `track`                           sort by the track.
+    - `disc`                            sort by the disc number.
+    - `year` `date`                     sort by the date of release.
+    - `len` `length`                    sort by the length of the song.
+    - `genre`                           sort by the genre.
+
   {'r}exit  close  x{'_}
     Gracefully close the instance.
 

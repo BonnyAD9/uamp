@@ -63,14 +63,14 @@ impl Order {
                 Self::_sort(vec, self.reverse, |s| lib[*s].title())
             }
             OrderField::Track => {
-                Self::_sort(vec, self.reverse, |s| lib[*s]._track())
+                Self::_sort(vec, self.reverse, |s| lib[*s].track())
             }
             OrderField::Disc => {
                 if self.simple {
-                    Self::_sort(vec, self.reverse, |s| lib[*s]._disc());
+                    Self::_sort(vec, self.reverse, |s| lib[*s].disc());
                 } else {
                     Self::_sort(vec, self.reverse, |s| {
-                        (lib[*s]._disc(), lib[*s]._track())
+                        (lib[*s].disc(), lib[*s].track())
                     })
                 }
             }
@@ -79,7 +79,7 @@ impl Order {
                     Self::_sort(vec, self.reverse, |s| lib[*s].album())
                 } else {
                     Self::_sort(vec, self.reverse, |s| {
-                        (lib[*s].album(), lib[*s]._disc(), lib[*s]._track())
+                        (lib[*s].album(), lib[*s].disc(), lib[*s].track())
                     })
                 }
             }
@@ -90,24 +90,24 @@ impl Order {
                     Self::_sort(vec, self.reverse, |s| {
                         (
                             lib[*s].artist(),
-                            lib[*s]._year(),
+                            lib[*s].year(),
                             lib[*s].album(),
-                            lib[*s]._disc(),
-                            lib[*s]._track(),
+                            lib[*s].disc(),
+                            lib[*s].track(),
                         )
                     })
                 }
             }
             OrderField::Year => {
                 if self.simple {
-                    Self::_sort(vec, self.reverse, |s| lib[*s]._year())
+                    Self::_sort(vec, self.reverse, |s| lib[*s].year())
                 } else {
                     Self::_sort(vec, self.reverse, |s| {
                         (
-                            lib[*s]._year(),
+                            lib[*s].year(),
                             lib[*s].album(),
-                            lib[*s]._disc(),
-                            lib[*s]._track(),
+                            lib[*s].disc(),
+                            lib[*s].track(),
                         )
                     })
                 }
@@ -117,10 +117,10 @@ impl Order {
             }
             OrderField::Genre => {
                 if self.simple {
-                    Self::_sort(vec, self.reverse, |s| lib[*s]._genre());
+                    Self::_sort(vec, self.reverse, |s| lib[*s].genre());
                 } else {
                     Self::_sort(vec, self.reverse, |s| {
-                        (lib[*s]._genre(), lib[*s]._year())
+                        (lib[*s].genre(), lib[*s].year())
                     });
                 }
             }

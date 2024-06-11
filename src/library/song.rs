@@ -125,12 +125,12 @@ impl Song {
     }
 
     /// Gets the path to the song
-    pub fn path(&self) -> &PathBuf {
+    pub fn path(&self) -> &Path {
         &self.path
     }
 
     /// Gets the track number of the song in the album
-    pub fn _track(&self) -> u32 {
+    pub fn track(&self) -> u32 {
         self.track
     }
 
@@ -143,7 +143,7 @@ impl Song {
     }
 
     /// Gets the disc number of the song in the album
-    pub fn _disc(&self) -> u32 {
+    pub fn disc(&self) -> u32 {
         self.disc
     }
 
@@ -164,7 +164,7 @@ impl Song {
         self.deleted = true;
     }
 
-    pub fn _year(&self) -> i32 {
+    pub fn year(&self) -> i32 {
         self.year
     }
 
@@ -192,7 +192,7 @@ impl Song {
         self.length = len;
     }
 
-    pub fn _genre(&self) -> &str {
+    pub fn genre(&self) -> &str {
         &self.genre
     }
 }

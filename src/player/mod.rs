@@ -413,6 +413,15 @@ impl Player {
             self.intercept.as_mut().map(|a| a.playlist.clone()),
         )
     }
+
+    pub fn force_cur(&mut self, cur: Option<usize>) {
+        if let Some(c) = cur {
+            if c >= self.playlist().len() {
+                error!("Cannot jump to invalid playlist index {c}");
+            }
+        }
+        self.current_set(cur);
+    }
 }
 
 impl UampApp {

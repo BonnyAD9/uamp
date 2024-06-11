@@ -23,6 +23,7 @@ use crate::{
 use super::{
     command::AppCtrl,
     extensions::{duration_to_string, Wrap},
+    song_order::SongOrder,
     Error,
 };
 
@@ -90,6 +91,8 @@ pub enum ControlMsg {
     SetPlaylist(Filter),
     /// Pushes new playlist.
     PushPlaylist(Filter),
+    /// Sorts the top playlist.
+    SortPlaylist(SongOrder),
     /// Pop the intercepted playlist
     PopPlaylist,
     /// Thriggers save
@@ -218,6 +221,17 @@ impl UampApp {
                 let songs: Vec<_> = self.library.filter(filter).collect();
                 self.player.intercept(&mut self.library, songs, None, false);
             }
+            ControlMsg::SortPlaylist(ord) => {
+                let mut cur = self.player.current();
+                ord.sort(
+                    &self.library,
+                    &mut self.player.playlist_mut()[..],
+                    self.config.simple_sorting(),
+                    self.config.shuffle_current(),
+                    cur.as_mut(),
+                );
+                self.player.force_cur(cur);
+            }
             ControlMsg::PopPlaylist => {
                 self.player.pop_intercept(&mut self.library);
             }
@@ -304,6 +318,7 @@ impl Display for ControlMsg {
             }
             ControlMsg::SetPlaylist(Filter::All) => f.write_str("sp"),
             ControlMsg::PushPlaylist(Filter::All) => f.write_str("push"),
+            ControlMsg::SortPlaylist(ord) => write!(f, "sort={ord}"),
             ControlMsg::PopPlaylist => f.write_str("pop"),
             ControlMsg::Save => f.write_str("save"),
         }
@@ -426,6 +441,9 @@ impl FromStr for ControlMsg {
                 Ok(ControlMsg::PushPlaylist(
                     key_mval_arg::<&str, _>(v, '=')?.1.unwrap_or_default(),
                 ))
+            }
+            v if starts!(v, "sort-playlist" | "sort") => {
+                Ok(ControlMsg::SortPlaylist(key_val_arg::<&str, _>(v, '=')?.1))
             }
             "pop" | "pop-playlist" => Ok(ControlMsg::PopPlaylist),
             "save" => Ok(ControlMsg::Save),

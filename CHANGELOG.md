@@ -17,6 +17,7 @@
 - Add secondary playlist.
 - Support temorary songs that can exist only in playlist.
 - Add option to directly play file.
+- Add option to sort the playlist.
 
 ## v0.4.0
 - Add all options to settings including help
