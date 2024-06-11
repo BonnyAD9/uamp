@@ -29,33 +29,19 @@ impl SongOrder {
         lib: &Library,
         songs: &mut [SongId],
         simple: bool,
-        cur_first: bool,
         cur: Option<&mut usize>,
     ) {
         let cur = if let Some(cur) = cur {
             let cur_song = songs[*cur];
-            if cur_first {
-                songs[*cur] = songs[0];
-                songs[0] = cur_song;
-                *cur = 0;
-            }
             Some((cur, cur_song))
         } else {
             None
         };
 
-        {
-            let songs = if cur.is_some() && cur_first {
-                &mut songs[1..]
-            } else {
-                &mut songs[..]
-            };
-
-            if simple {
-                self.sort_simple(lib, songs);
-            } else {
-                self.sort_complex(lib, songs);
-            }
+        if simple {
+            self.sort_simple(lib, songs);
+        } else {
+            self.sort_complex(lib, songs);
         }
 
         if let Some((idx, song)) = cur {

@@ -227,7 +227,6 @@ impl UampApp {
                     &self.library,
                     &mut self.player.playlist_mut()[..],
                     self.config.simple_sorting(),
-                    self.config.shuffle_current(),
                     cur.as_mut(),
                 );
                 self.player.force_cur(cur);

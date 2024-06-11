@@ -240,21 +240,25 @@ fn print_control_messages_help() {
     - `{'i}m{'_}` randomly mix the songs in after the current song.
 
   {'r}shuffle-playlist  shuffle{'_}
-    Shuffle the current playlist.
+    Shuffle the current playlist. The difference from {'r}sort{'w}=rng{'_} is
+    that {'r}shuffle{'_} will respect the setting shuffle current.
 
   {'r}sort-playlist  sort{'w}=<ord>{'_}
     Sorts the current playlist according to the value of {'w}ord{'_}:
-    - `rev` `reverse`                   reverse the playlist.
-    - `rng` `rand` `random` `randomize` shuffle the playlist.
-    - `path`                            sort by the path.
-    - `title` `name`                    sort by the song title.
-    - `artist` `performer` `author`     sort by the artist.
-    - `album`                           sort by the album name.
-    - `track`                           sort by the track.
-    - `disc`                            sort by the disc number.
-    - `year` `date`                     sort by the date of release.
-    - `len` `length`                    sort by the length of the song.
-    - `genre`                           sort by the genre.
+    - `{'i}rev{'_}` `{'i}reverse{'_}`                   reverse the playlist.
+    - `{'i}rng{'_}` `{'i}rand{'_}` `{'i}random{'_}` `{'i}randomize{'_}` \
+      shuffle the playlist.
+    - `{'i}path{'_}`                            sort by the path.
+    - `{'i}title{'_}` `{'i}name{'_}`                    sort by the song title.
+    - `{'i}artist{'_}` `{'i}performer` `{'_}author`     sort by the artist.
+    - `{'i}album{'_}`                           sort by the album name.
+    - `{'i}track{'_}`                           sort by the track.
+    - `{'i}disc{'_}`                            sort by the disc number.
+    - `{'i}year{'_}` `{'i}date{'_}`                     sort by the date of \
+      release.
+    - `{'i}len{'_}` `{'i}length{'_}`                    sort by the length of \
+      the song.
+    - `{'i}genre{'_}`                           sort by the genre.
 
   {'r}exit  close  x{'_}
     Gracefully close the instance.
