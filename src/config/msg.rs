@@ -1,13 +1,18 @@
 use std::{path::PathBuf, time::Duration};
 
+use log::warn;
+
 use crate::core::command::AppCtrl;
 use crate::{app::UampApp, core::msg::Msg};
 
 use crate::config;
 
+use super::Config;
+
 #[derive(Debug, Clone)]
 #[allow(dead_code)] // TODO
 pub enum Message {
+    Reload,
     Reset(DefMessage),
     AddSearchPath(PathBuf),
     RemoveSearchPath(usize),
@@ -65,6 +70,37 @@ impl UampApp {
         msg: Message,
     ) -> Option<Msg> {
         match msg {
+            Message::Reload => {
+                let Some(path) = self.config.config_path.as_ref() else {
+                    warn!("Cannot reaload config because the path is unknwn");
+                    return None;
+                };
+
+                let conf = match Config::from_json(path) {
+                    Ok(c) => c,
+                    Err(e) => {
+                        warn!("Failed to reload config: {e}");
+                        return None;
+                    }
+                };
+
+                let reload_server = (conf.server_address()
+                    != self.config.server_address()
+                    || conf.port() != self.config.port()
+                    || conf.enable_server != self.config.enable_server)
+                    .then(|| {
+                        (
+                            self.config.server_address().clone(),
+                            self.config.port(),
+                            self.config.enable_server,
+                        )
+                    });
+                self.player.shuffle_current = conf.shuffle_current;
+                self.config = conf;
+                if let Some((adr, port, enable)) = reload_server {
+                    self.reload_server(adr, port, enable);
+                }
+            }
             Message::Reset(msg) => {
                 return self.reset_event(ctrl, msg);
             }
@@ -280,5 +316,14 @@ impl UampApp {
         }
 
         None
+    }
+
+    fn reload_server(
+        &mut self,
+        _old_adr: String,
+        _old_port: u16,
+        _old_enable: bool,
+    ) {
+        // TODO
     }
 }

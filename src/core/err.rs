@@ -23,9 +23,6 @@ pub enum Error {
     /// Failed to parse arguments
     #[error(transparent)]
     ArgParse(pareg::ArgError<'static>),
-    /// The audio tag library returned error
-    #[error(transparent)]
-    Image(#[from] image::ImageError),
     #[error(transparent)]
     AudioTag(#[from] audiotags::Error),
     /// The raplay library returned error
@@ -45,6 +42,8 @@ pub enum Error {
     Time(#[from] SystemTimeError),
     #[error("Failed to lock: {0}")]
     Poison(String),
+    #[error(transparent)]
+    Notify(#[from] notify::Error),
     /// Any other error
     #[error(transparent)]
     Other(anyhow::Error),

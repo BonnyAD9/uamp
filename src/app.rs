@@ -1,15 +1,17 @@
 use std::{
     net::{TcpListener, TcpStream},
+    path::Path,
     process, thread,
     time::{Duration, Instant},
 };
 
 use futures::{channel::mpsc::UnboundedSender, StreamExt};
 use log::{error, warn};
+use notify::{INotifyWatcher, Watcher};
 use signal_hook_async_std::Signals;
 
 use crate::{
-    config::Config,
+    config::{ConfMessage, Config},
     core::{
         command::AppCtrl,
         messenger::{self, Messenger, MsgMessage},
@@ -46,6 +48,8 @@ pub struct UampApp {
     pub last_save: Instant,
 
     pub last_prev: Instant,
+
+    _config_watch: Option<INotifyWatcher>,
 }
 
 //===========================================================================//
@@ -202,6 +206,18 @@ impl UampApp {
             }
         }
 
+        let config_watch = if let Some(path) = &conf.config_path {
+            match Self::watch_config_task(sender.clone(), path.as_path()) {
+                Ok(r) => Some(r),
+                Err(e) => {
+                    error!("Failed to watch config file: {e}");
+                    None
+                }
+            }
+        } else {
+            None
+        };
+
         Ok(UampApp {
             config: conf,
             library: lib,
@@ -215,6 +231,8 @@ impl UampApp {
             last_prev: Instant::now(),
 
             hard_pause_at: None,
+
+            _config_watch: config_watch,
         })
     }
 
@@ -265,6 +283,36 @@ impl UampApp {
         ctrl.add_stream(stream);
 
         Ok(())
+    }
+
+    pub fn watch_config_task(
+        sender: UnboundedSender<Msg>,
+        watched: &Path,
+    ) -> Result<INotifyWatcher> {
+        let wat = watched.to_owned();
+        let mut watcher = notify::recommended_watcher(move |res| {
+            let v: notify::Event = match res {
+                Ok(r) => r,
+                Err(e) => {
+                    error!("File watch failed: {e}");
+                    return;
+                }
+            };
+
+            if (v.kind.is_create() || v.kind.is_modify())
+                && v.paths.contains(&wat)
+            {
+                if let Err(e) =
+                    sender.unbounded_send(Msg::Config(ConfMessage::Reload))
+                {
+                    error!("Failed to send message: {e}");
+                }
+            }
+        })?;
+
+        watcher.watch(watched, notify::RecursiveMode::NonRecursive)?;
+
+        Ok(watcher)
     }
 
     /*fn clock_subscription(&self, tick: Duration) -> Subscription {

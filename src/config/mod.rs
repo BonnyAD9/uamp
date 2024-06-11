@@ -173,12 +173,18 @@ impl Config {
     /// Loads config from the default json file. If the loading fails, creates
     /// default config.
     pub fn from_default_json() -> Self {
-        Config::from_json(default_config_path().join("config.json"))
+        match Config::from_json(default_config_path().join("config.json")) {
+            Ok(c) => c,
+            Err(e) => {
+                error!("Failed to load config: {e}");
+                Config::default()
+            }
+        }
     }
 
     /// Loads config from the given json file. If the loading fails, creates
     /// default config.
-    pub fn from_json<P: AsRef<Path>>(path: P) -> Self {
+    pub fn from_json<P: AsRef<Path>>(path: P) -> Result<Self> {
         let file = match File::open(path.as_ref()) {
             Ok(f) => f,
             Err(_) => {
@@ -193,17 +199,11 @@ impl Config {
                         path.as_ref()
                     );
                 }
-                return conf;
+                return Ok(conf);
             }
         };
 
-        match serde_json::from_reader(file) {
-            Ok(c) => c,
-            Err(e) => {
-                error!("Failed to load config file: {e}");
-                Config::default()
-            }
-        }
+        Ok(serde_json::from_reader(file)?)
     }
 
     /// Saves the config to the default json file. Doesn't save if there was no
