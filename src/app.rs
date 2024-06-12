@@ -1,9 +1,4 @@
-use std::{
-    net::{TcpListener, TcpStream},
-    path::Path,
-    process, thread,
-    time::{Duration, Instant},
-};
+use std::{net::TcpListener, path::Path, process, time::Instant};
 
 use futures::{channel::mpsc::UnboundedSender, StreamExt};
 use log::{error, warn};
@@ -78,49 +73,22 @@ impl UampApp {
         self.last_save = Instant::now();
     }
 
-    pub fn _stop_server(&self, wait: Option<String>) {
-        let adr =
-            format!("{}:{}", self.config.server_address(), self.config.port());
-        thread::spawn(move || {
-            let err = (|| -> Result<()> {
-                if let Some(adr) = wait {
-                    let s = TcpStream::connect(adr)?;
-                    if let Err(e) = s.set_nodelay(true) {
-                        warn!("Failed to set no delay when waiting to stop server: {e}");
-                    }
-                    s.set_write_timeout(Some(Duration::from_secs(5)))?;
-                    let mut msg = Messenger::try_new(&s)?;
-                    msg.send(MsgMessage::WaitExit(Duration::from_secs(5)))?;
-                    match msg.recieve()? {
-                        MsgMessage::Success => {}
-                        m => {
-                            warn!("Unexpected response when pinging new server before stopping the old one: {m:?}");
-                        }
-                    }
-                }
-
-                let s = TcpStream::connect(adr)?;
-                if let Err(e) = s.set_nodelay(true) {
-                    warn!("Failed to set no delay when stopping server: {e}");
-                }
-                s.set_write_timeout(Some(Duration::from_secs(5)))?;
-                let mut msg = Messenger::try_new(&s)?;
-                msg.send(MsgMessage::WaitExit(Duration::from_secs(0)))?;
-                Ok(())
-            })();
-
-            if let Err(e) = err {
-                error!("Failed to stop server: {e}");
-            }
-        });
-    }
-
     pub fn task_end(&mut self, ctrl: &mut AppCtrl, task_res: TaskMsg) {
         match task_res {
             TaskMsg::Server(Err(e)) => {
                 error!("Server unexpectedly ended: {e}");
             }
-            TaskMsg::Server(Ok(_)) => {}
+            TaskMsg::Server(Ok(_)) => {
+                if self.config.enable_server() {
+                    if let Err(e) = Self::start_server(
+                        &self.config,
+                        ctrl,
+                        self.sender.clone(),
+                    ) {
+                        error!("Failed to restart server: {e}");
+                    }
+                }
+            }
             TaskMsg::LibraryLoad(res) => {
                 self.finish_library_load(ctrl, res);
             }
@@ -237,7 +205,7 @@ impl UampApp {
     }
 
     /// Starts the tcp server
-    fn start_server(
+    pub fn start_server(
         conf: &Config,
         ctrl: &mut AppCtrl,
         sender: UnboundedSender<Msg>,
@@ -341,8 +309,7 @@ impl UampApp {
             let rec = msgr.recieve();
 
             let rec = match rec {
-                Ok(MsgMessage::WaitExit(d)) => {
-                    thread::sleep(d);
+                Ok(MsgMessage::Stop) => {
                     return listener;
                 }
                 Ok(MsgMessage::Ping) => {

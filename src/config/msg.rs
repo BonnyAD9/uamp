@@ -1,8 +1,12 @@
+use std::net::TcpStream;
 use std::{path::PathBuf, time::Duration};
 
-use log::warn;
+use log::{error, warn};
 
 use crate::core::command::AppCtrl;
+use crate::core::messenger::{msg, Messenger};
+use crate::core::Result;
+use crate::sync::tasks::TaskType;
 use crate::{app::UampApp, core::msg::Msg};
 
 use crate::config;
@@ -76,7 +80,7 @@ impl UampApp {
                     return None;
                 };
 
-                let conf = match Config::from_json(path) {
+                let mut conf = match Config::from_json(path) {
                     Ok(c) => c,
                     Err(e) => {
                         warn!("Failed to reload config: {e}");
@@ -92,13 +96,15 @@ impl UampApp {
                         (
                             self.config.server_address().clone(),
                             self.config.port(),
-                            self.config.enable_server,
                         )
                     });
                 self.player.shuffle_current = conf.shuffle_current;
+                conf.force_server = self.config.force_server;
                 self.config = conf;
-                if let Some((adr, port, enable)) = reload_server {
-                    self.reload_server(adr, port, enable);
+                if let Some((adr, port)) = reload_server {
+                    if let Err(e) = self.reload_server(ctrl, adr, port) {
+                        error!("Failed to reload server: {e}");
+                    }
                 }
             }
             Message::Reset(msg) => {
@@ -320,10 +326,18 @@ impl UampApp {
 
     fn reload_server(
         &mut self,
-        _old_adr: String,
-        _old_port: u16,
-        _old_enable: bool,
-    ) {
-        // TODO
+        ctrl: &mut AppCtrl,
+        old_adr: String,
+        old_port: u16,
+    ) -> Result<()> {
+        if ctrl.any_task(|t| t == TaskType::Server) {
+            let stream = TcpStream::connect(format!("{old_adr}:{old_port}"))?;
+            let mut msgr = Messenger::try_new(&stream)?;
+            msgr.send(msg::Message::Stop)?;
+        } else if self.config.enable_server() {
+            Self::start_server(&self.config, ctrl, self.sender.clone())?;
+        }
+
+        Ok(())
     }
 }

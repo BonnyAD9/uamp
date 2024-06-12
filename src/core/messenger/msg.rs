@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use serde::{Deserialize, Serialize};
 
 use raplay::Timestamp;
@@ -24,8 +22,8 @@ pub enum Message {
     Info(Box<Info>),
     /// Message indicating success
     Success,
-    /// Wait for the given time and exit
-    WaitExit(Duration),
+    /// Stop the server
+    Stop,
     Ping,
 }
 

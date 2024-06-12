@@ -203,7 +203,9 @@ impl Config {
             }
         };
 
-        Ok(serde_json::from_reader(file)?)
+        let mut conf: Self = serde_json::from_reader(file)?;
+        conf.config_path = Some(path.as_ref().to_owned());
+        Ok(conf)
     }
 
     /// Saves the config to the default json file. Doesn't save if there was no
