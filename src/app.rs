@@ -1,4 +1,4 @@
-use std::{net::TcpListener, path::Path, process, time::Instant};
+use std::{fs, net::TcpListener, path::Path, process, time::Instant};
 
 use futures::{channel::mpsc::UnboundedSender, StreamExt};
 use log::{error, warn};
@@ -6,7 +6,7 @@ use notify::{INotifyWatcher, Watcher};
 use signal_hook_async_std::Signals;
 
 use crate::{
-    config::{ConfMessage, Config},
+    config::{default_config_path, Config, ConfigMsg},
     core::{
         command::AppCtrl,
         messenger::{self, Messenger, MsgMessage},
@@ -138,6 +138,21 @@ impl UampApp {
 
         let up = self.library_lib_update();
         self.player_lib_update(up);
+    }
+
+    /// Deletes old logs.
+    pub fn delete_old_logs(&self) -> Result<()> {
+        let dir = fs::read_dir(default_config_path().join("log"))?;
+
+        for d in dir {
+            let d = d?;
+            let mt = d.metadata()?.modified()?;
+            if mt.elapsed()? > self.config.delete_logs_after().0 {
+                fs::remove_file(d.path())?;
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -272,7 +287,7 @@ impl UampApp {
                 && v.paths.contains(&wat)
             {
                 if let Err(e) =
-                    sender.unbounded_send(Msg::Config(ConfMessage::Reload))
+                    sender.unbounded_send(Msg::Config(ConfigMsg::Reload))
                 {
                     error!("Failed to send message: {e}");
                 }
@@ -305,7 +320,7 @@ impl UampApp {
     ) -> TcpListener {
         loop {
             let stream = listener.accept().unwrap();
-            let mut msgr = Messenger::try_new(&stream.0).unwrap();
+            let mut msgr = Messenger::new(&stream.0);
 
             let rec = msgr.recieve();
 
@@ -322,9 +337,9 @@ impl UampApp {
                 Ok(m) => m,
                 Err(e) => {
                     warn!("Failed to recieve message: {e}");
-                    if let Err(e) = msgr.send(messenger::msg::Message::Error(
-                        messenger::msg::Error::new(
-                            messenger::msg::ErrorType::DeserializeFailed,
+                    if let Err(e) = msgr.send(MsgMessage::Error(
+                        messenger::Error::new(
+                            messenger::ErrorKind::DeserializeFailed,
                             e.to_string(),
                         ),
                     )) {

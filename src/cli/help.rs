@@ -4,22 +4,26 @@ use crate::core::Result;
 
 use super::Args;
 
-/// Parses help arguments
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
+/// Parses help arguments.
 pub fn help<'a>(
     args: &mut impl Iterator<Item = &'a str>,
     res: &mut Args,
-) -> Result<()> {
+) {
     res.should_exit = true;
 
     let arg = match args.next() {
         Some(a) => a,
         None => {
             help_all();
-            return Ok(());
+            return;
         }
     };
 
-    print_help_header();
+    help_version();
 
     let mut show_cmsg = false;
     let mut cmsg_shown = false;
@@ -48,36 +52,30 @@ pub fn help<'a>(
     if show_cmsg && !cmsg_shown {
         print_control_messages_help();
     }
-
-    Ok(())
 }
 
-fn print_help() {
-    print_basic_help();
-    print_instance_help();
-    print_run_help();
-    print_control_messages_help();
-}
-
+/// Prints the whole help.
 pub fn help_all() {
-    print_help_header();
+    help_version();
     print_help();
 }
 
+/// Prints the help for the instance action.
 pub fn help_instance() {
-    print_help_header();
+    help_version();
     print_instance_help();
     print_control_messages_help();
 }
 
+/// Prints help for the run action.
 pub fn help_run() {
-    print_help_header();
+    help_version();
     print_run_help();
     print_control_messages_help();
 }
 
-/// Prints the help header
-pub fn print_help_header() {
+/// Prints the help header and version.
+pub fn help_version() {
     let v: Option<&str> = option_env!("CARGO_PKG_VERSION");
     printcln!(
         "Welcome in {'i g}uamp{'_} by {}{'_}
@@ -86,6 +84,17 @@ Version {}
         gradient("BonnyAD9", (250, 50, 170), (180, 50, 240)),
         v.unwrap_or("unknown")
     )
+}
+
+//===========================================================================//
+//                                  Private                                  //
+//===========================================================================//
+
+fn print_help() {
+    print_basic_help();
+    print_instance_help();
+    print_run_help();
+    print_control_messages_help();
 }
 
 /// Prints the basic usage help

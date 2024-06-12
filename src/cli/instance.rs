@@ -9,8 +9,7 @@ use crate::{
     core::{
         extensions::duration_to_string,
         messenger::{
-            msg::{self, Info, Request},
-            Messenger,
+            Info, Messenger, MsgMessage, Request
         },
         msg::PlayMsg,
         Result,
@@ -20,15 +19,26 @@ use crate::{
 
 use super::help::help_instance;
 
-#[derive(Default)]
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
+/// Messages to be sent to a running instance.
+#[derive(Default, Debug)]
 pub struct Instance {
-    pub messages: Vec<msg::Message>,
+    /// Messages to send to a running instance.
+    pub messages: Vec<MsgMessage>,
+    /// Port number of the server of the running instance.
     pub port: Option<u16>,
+    /// Server address of the running instance.
     pub server: Option<String>,
 }
 
 impl Instance {
-    /// Parses the instance action arguments
+    /// Parses the instance action arguments.
+    ///
+    /// # Errors
+    /// - The arguments are invalid.
     pub(super) fn parse<'a, I>(
         &mut self,
         args: &mut ArgIterator<'a, I>,
@@ -40,10 +50,10 @@ impl Instance {
         while let Some(arg) = args.next() {
             match arg {
                 "info" | "nfo" => {
-                    self.messages.push(msg::Message::Request(Request::Info))
+                    self.messages.push(MsgMessage::Request(Request::Info))
                 }
                 v if starts!(v, "p" | "play") => {
-                    self.messages.push(msg::Message::Play(PlayMsg::TmpPath(
+                    self.messages.push(MsgMessage::Play(PlayMsg::TmpPath(
                         args.cur_key_val::<&str, &Path>('=')?
                             .1
                             .canonicalize()?
@@ -55,7 +65,7 @@ impl Instance {
                 "-a" | "--address" => self.server = Some(args.next_arg()?),
                 "--" => break,
                 _ => {
-                    self.messages.push(msg::Message::Control(args.cur_arg()?))
+                    self.messages.push(MsgMessage::Control(args.cur_arg()?))
                 }
             }
         }
@@ -63,6 +73,11 @@ impl Instance {
         Ok(())
     }
 
+    /// Sends the messages to the running instance.
+    ///
+    /// # Errors
+    /// - There is no running instance of uamp with the server address and
+    ///   port.
     pub fn send(mut self, conf: &Config) -> Result<()> {
         self.port = self.port.or(Some(conf.port()));
         self.server = self
@@ -73,8 +88,8 @@ impl Instance {
         for m in mem::take(&mut self.messages) {
             let res = self.send_message(m);
             match res {
-                Ok(msg::Message::Success) => {}
-                Ok(msg::Message::Info(i)) => {
+                Ok(MsgMessage::Success) => {}
+                Ok(MsgMessage::Info(i)) => {
                     Self::print_info(*i);
                 }
                 Err(e) => println!("{e}"),
@@ -86,9 +101,14 @@ impl Instance {
 
         Ok(())
     }
+}
 
-    /// Sends message to a existing uamp instance
-    fn send_message(&self, msg: msg::Message) -> Result<msg::Message> {
+//===========================================================================//
+//                                  Private                                  //
+//===========================================================================//
+
+impl Instance {
+    fn send_message(&self, msg: MsgMessage) -> Result<MsgMessage> {
         assert!(self.server.is_some());
         assert!(self.port.is_some());
 
@@ -101,14 +121,13 @@ impl Instance {
             error!("failed to send message: {}", e);
         }
 
-        let mut msgr = Messenger::try_new(&stream)?;
+        let mut msgr = Messenger::new(&stream);
 
         msgr.send(msg)?;
 
         msgr.recieve()
     }
 
-    /// Prints the info about instance playback
     fn print_info(info: Info) {
         let mut title: Cow<str> = "--".into();
         let mut artist: Cow<str> = "--".into();

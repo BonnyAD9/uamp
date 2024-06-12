@@ -1,8 +1,14 @@
 use super::{Instance, Run};
 
-/// Action that can be done with cli
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
+#[derive(Debug)]
+/// Action that can be done with cli.
 pub enum Action {
-    /// Sends the given message
+    /// Sends the given messages to a running instance.
     Instance(Instance),
+    /// Runs uamp as detached process.
     RunDetached(Run),
 }

@@ -1,4 +1,4 @@
-use std::{iter, path::PathBuf, str::FromStr, time::Duration};
+use std::{fmt::Debug, iter, path::PathBuf, str::FromStr, time::Duration};
 
 use itertools::Itertools;
 use pareg::{ArgError, FromArgStr};
@@ -122,6 +122,12 @@ pub fn str_to_duration(s: &str) -> Option<Duration> {
 }
 
 pub struct Wrap<T>(pub T);
+
+impl<T> Debug for Wrap<T> where T: Debug {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Wrap").field(&self.0).finish()
+    }
+}
 
 impl<T> Clone for Wrap<T>
 where

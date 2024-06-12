@@ -13,11 +13,7 @@ use pareg::{key_mval_arg, key_val_arg, proc::FromArg, ArgError, FromArgStr};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    app::UampApp,
-    config::ConfMessage,
-    library::{Filter, LoadOpts, SongId},
-    player::PlayerMessage,
-    sync::tasks::TaskType,
+    app::UampApp, config::ConfigMsg, library::{Filter, LoadOpts, SongId}, player::PlayerMessage, sync::tasks::TaskType
 };
 
 use super::{
@@ -41,7 +37,7 @@ pub enum Msg {
     Player(PlayerMessage),
     /// Dellegate the message
     Delegate(Arc<dyn MessageDelegate>),
-    Config(ConfMessage),
+    Config(ConfigMsg),
     // General update
     Tick,
     #[default]
@@ -151,7 +147,7 @@ impl UampApp {
                 }
 
                 self.player.play_prev(&mut self.library, n.unwrap_or(1));
-                if let Err(e) = self.config.delete_old_logs() {
+                if let Err(e) = self.delete_old_logs() {
                     error!("Failed to remove logs: {e}");
                 }
                 return Some(Msg::Tick);

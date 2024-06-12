@@ -1,32 +1,41 @@
 use pareg::{ArgError, ArgIterator, ByRef};
 
-use crate::{cli::help::print_help_header, config::Config, core::err::Result};
+use crate::{cli::help::help_version, config::Config, core::err::Result};
 
 use super::{
     help::{help, help_all},
     Action, Instance, Run,
 };
 
-/// Contains the CLI arguments values
-#[derive(Default)]
-pub struct Args {
-    /// Actions to do
-    pub actions: Vec<Action>,
-
-    pub port: Option<u16>,
-    pub server_address: Option<String>,
-
-    /// The gui should not run, unless `must_run` is set to `true`
-    pub should_exit: bool,
-    /// The gui should run in all cases if this is `true`
-    pub run: Option<Run>,
-}
-
 //===========================================================================//
 //                                   Public                                  //
 //===========================================================================//
 
+/// Contains the CLI arguments values.
+#[derive(Default, Debug)]
+pub struct Args {
+    /// Actions to do.
+    pub actions: Vec<Action>,
+
+    /// Port for the server.
+    pub port: Option<u16>,
+    /// Address of the server.
+    pub server_address: Option<String>,
+
+    /// The mailoop should not run, unless `must_run` is set to `true`.
+    pub should_exit: bool,
+    /// The mainloop should run in all cases if this is `true`.
+    pub run: Option<Run>,
+}
+
 impl Args {
+    /// Parses the arguments.
+    ///
+    /// # Returns
+    /// The parsed arguments.
+    ///
+    /// # Errors
+    /// - The arguments are invalid.
     pub fn parse<'a, I>(mut args: ArgIterator<'a, I>) -> Result<Self>
     where
         I: Iterator,
@@ -41,6 +50,11 @@ impl Args {
         Ok(res)
     }
 
+    /// Loads config based on the arguments.
+    ///
+    /// # Returns
+    /// New configuration readed from the default file and modified by the
+    /// values in the arguments.
     pub fn make_config(&self) -> Config {
         let mut res = Config::from_default_json();
 
@@ -80,7 +94,7 @@ impl Args {
         while let Some(a) = args.next() {
             match a {
                 "i" | "instance" => self.instance(args)?,
-                "h" | "help" => help(args, self)?,
+                "h" | "help" => help(args, self),
                 "run" => self.run(args)?,
                 "-h" | "--help" | "-?" => {
                     self.should_exit = true;
@@ -88,7 +102,7 @@ impl Args {
                 }
                 "--version" => {
                     self.should_exit = true;
-                    print_help_header();
+                    help_version();
                 }
                 "-p" | "--port" => {
                     self.port = args.next_arg()?;
@@ -109,7 +123,7 @@ impl Args {
                     }
 
                     if let Some(i) = a.strip_prefix("-H") {
-                        help(&mut opt_iter(i), self)?;
+                        help(&mut opt_iter(i), self);
                         continue;
                     }
 
@@ -121,7 +135,6 @@ impl Args {
         Ok(())
     }
 
-    /// Parses the instance action arguments
     fn instance<'a, I>(&mut self, args: &mut ArgIterator<'a, I>) -> Result<()>
     where
         I: Iterator,

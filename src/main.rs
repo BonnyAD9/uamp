@@ -6,7 +6,6 @@ use log::info;
 use crate::{
     cli::{Action, Args},
     core::{messenger, Result},
-    messenger::msg,
 };
 
 mod app;
