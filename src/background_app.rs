@@ -1,4 +1,4 @@
-use futures::{channel::mpsc, StreamExt};
+use futures::{channel::mpsc, future, StreamExt};
 use log::{error, trace};
 
 use crate::{
@@ -24,11 +24,18 @@ pub fn run_background_app(
     let (sender, reciever) = mpsc::unbounded::<Msg>();
 
     let mut streams = Streams::new();
-    let mut tasks = UniqueTasks::new(sender.clone());
+    // I don't know why, but adding this stream that does nothing to the streams
+    // reduces usage of main thread from 100% to basicly 0% :)
+    streams.add(Box::new(MsgGen::new((), |_| async {
+        let msg = future::pending::<Msg>().await;
+        (Some(()), msg)
+    })));
     streams.add(Box::new(MsgGen::new(reciever, |mut r| async {
         let msg = r.next().await.unwrap();
         (Some(r), msg)
     })));
+
+    let mut tasks = UniqueTasks::new(sender.clone());
 
     for m in init {
         if let Err(e) = sender.unbounded_send(Msg::Control(m)) {
