@@ -334,7 +334,7 @@ impl UampApp {
             let stream = TcpStream::connect(format!("{old_adr}:{old_port}"))?;
             let mut msgr = Messenger::try_new(&stream)?;
             msgr.send(msg::Message::Stop)?;
-        } else if self.config.enable_server() {
+        } else if self.config.enable_server() || self.config.force_server {
             Self::start_server(&self.config, ctrl, self.sender.clone())?;
         }
 

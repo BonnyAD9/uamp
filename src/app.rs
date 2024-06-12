@@ -79,7 +79,7 @@ impl UampApp {
                 error!("Server unexpectedly ended: {e}");
             }
             TaskMsg::Server(Ok(_)) => {
-                if self.config.enable_server() {
+                if self.config.enable_server() || self.config.force_server {
                     if let Err(e) = Self::start_server(
                         &self.config,
                         ctrl,
