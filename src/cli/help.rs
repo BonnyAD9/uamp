@@ -1,7 +1,5 @@
 use termal::{gradient, printcln};
 
-use crate::core::Result;
-
 use super::Args;
 
 //===========================================================================//
@@ -9,10 +7,7 @@ use super::Args;
 //===========================================================================//
 
 /// Parses help arguments.
-pub fn help<'a>(
-    args: &mut impl Iterator<Item = &'a str>,
-    res: &mut Args,
-) {
+pub fn help<'a>(args: &mut impl Iterator<Item = &'a str>, res: &mut Args) {
     res.should_exit = true;
 
     let arg = match args.next() {

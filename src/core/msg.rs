@@ -13,7 +13,11 @@ use pareg::{key_mval_arg, key_val_arg, proc::FromArg, ArgError, FromArgStr};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    app::UampApp, config::ConfigMsg, library::{Filter, LoadOpts, SongId}, player::PlayerMessage, sync::tasks::TaskType
+    app::UampApp,
+    config::ConfigMsg,
+    library::{Filter, LoadOpts, SongId},
+    player::PlayerMessage,
+    sync::tasks::TaskType,
 };
 
 use super::{

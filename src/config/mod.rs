@@ -1,15 +1,16 @@
-mod config_struct;
-mod song_pos_save;
-mod json;
 mod config_msg;
+mod config_struct;
+mod json;
+mod song_pos_save;
 
 //===========================================================================//
 //                                   Public                                  //
 //===========================================================================//
 
+use self::json::*;
 use std::path::PathBuf;
 
-pub use self::{config_struct::*, config_msg::*, json::*, song_pos_save::*};
+pub use self::{config_msg::*, config_struct::*};
 
 /// Gets the unique app identifier, it is different when debugging.
 pub fn _app_id() -> String {

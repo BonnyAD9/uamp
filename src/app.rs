@@ -337,12 +337,12 @@ impl UampApp {
                 Ok(m) => m,
                 Err(e) => {
                     warn!("Failed to recieve message: {e}");
-                    if let Err(e) = msgr.send(MsgMessage::Error(
-                        messenger::Error::new(
+                    if let Err(e) =
+                        msgr.send(MsgMessage::Error(messenger::Error::new(
                             messenger::ErrorKind::DeserializeFailed,
                             e.to_string(),
-                        ),
-                    )) {
+                        )))
+                    {
                         warn!("Failed to send error message: {e}");
                     }
                     continue;

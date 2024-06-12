@@ -8,9 +8,7 @@ use crate::{
     config::Config,
     core::{
         extensions::duration_to_string,
-        messenger::{
-            Info, Messenger, MsgMessage, Request
-        },
+        messenger::{Info, Messenger, MsgMessage, Request},
         msg::PlayMsg,
         Result,
     },
@@ -64,9 +62,7 @@ impl Instance {
                 "-p" | "--port" => self.port = Some(args.next_arg()?),
                 "-a" | "--address" => self.server = Some(args.next_arg()?),
                 "--" => break,
-                _ => {
-                    self.messages.push(MsgMessage::Control(args.cur_arg()?))
-                }
+                _ => self.messages.push(MsgMessage::Control(args.cur_arg()?)),
             }
         }
 

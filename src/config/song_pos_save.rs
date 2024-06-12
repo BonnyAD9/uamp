@@ -4,7 +4,9 @@ use serde::{Deserialize, Serialize};
 //                                   Public                                  //
 //===========================================================================//
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(
+    Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Default,
+)]
 pub enum SongPosSave {
     #[default]
     Never,

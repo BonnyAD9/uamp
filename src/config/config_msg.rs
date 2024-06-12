@@ -1,8 +1,17 @@
-use std::{net::TcpStream, path::PathBuf, time::Duration};
+use std::net::TcpStream;
 
 use log::{error, warn};
 
-use crate::{app::UampApp, core::{command::AppCtrl, messenger::{Messenger, MsgMessage}, msg::Msg, Result}, sync::tasks::TaskType};
+use crate::{
+    app::UampApp,
+    core::{
+        command::AppCtrl,
+        messenger::{Messenger, MsgMessage},
+        msg::Msg,
+        Result,
+    },
+    sync::tasks::TaskType,
+};
 
 use super::Config;
 
@@ -46,12 +55,9 @@ impl UampApp {
                     != self.config.server_address()
                     || conf.port() != self.config.port()
                     || conf.enable_server() != self.config.enable_server())
-                    .then(|| {
-                        (
-                            self.config.server_address().clone(),
-                            self.config.port(),
-                        )
-                    });
+                .then(|| {
+                    (self.config.server_address().clone(), self.config.port())
+                });
                 self.player.shuffle_current = conf.shuffle_current();
                 conf.force_server = self.config.force_server;
                 self.config = conf;

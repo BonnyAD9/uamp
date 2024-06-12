@@ -5,7 +5,7 @@ use log::info;
 
 use crate::{
     cli::{Action, Args},
-    core::{messenger, Result},
+    core::Result,
 };
 
 mod app;

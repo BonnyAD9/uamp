@@ -2,12 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use raplay::Timestamp;
 
-use crate::{
-    core::msg::{AnyControlMsg, PlayMsg},
-    library::Song,
-};
-
-use super::MsgMessage;
+use crate::library::Song;
 
 //===========================================================================//
 //                                   Public                                  //
@@ -42,7 +37,6 @@ pub enum ErrorKind {
     /// Error occured when trying to do what was requested.
     InternalError,
 }
-
 
 /// Request someting from the other side.
 #[derive(Debug, Serialize, Deserialize)]

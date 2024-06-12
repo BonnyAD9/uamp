@@ -1,4 +1,3 @@
-
 use log::{error, warn};
 use rmp_serde::Serializer;
 use serde::Serialize;
@@ -10,7 +9,10 @@ use std::{
 use crate::{
     app::UampApp,
     core::{
-        command::AppCtrl, err::Result, messenger::{Error, ErrorKind}, msg::{FnDelegate, Msg}
+        command::AppCtrl,
+        err::Result,
+        messenger::{Error, ErrorKind},
+        msg::{FnDelegate, Msg},
     },
 };
 
@@ -118,7 +120,10 @@ impl UampApp {
             MsgMessage::Play(msg) => {
                 (Some(MsgMessage::Success), Some(Msg::PlaySong(msg)))
             }
-            _ => (Some(MsgMessage::new_error(ErrorKind::ExpectedControl)), None),
+            _ => (
+                Some(MsgMessage::new_error(ErrorKind::ExpectedControl)),
+                None,
+            ),
         }
     }
 }

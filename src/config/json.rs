@@ -1,4 +1,7 @@
-use std::{fs::{self, File}, path::{Path, PathBuf}};
+use std::{
+    fs::{self, File},
+    path::{Path, PathBuf},
+};
 
 use log::{error, info};
 use serde::Serialize;

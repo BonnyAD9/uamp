@@ -1,16 +1,10 @@
-
-use log::{error, info};
 use serde::{Deserialize, Serialize};
-use std::{
-    cell::Cell,
-    collections::HashMap,
-    fs::{create_dir_all, read_dir, remove_file, File},
-    path::{Path, PathBuf},
-    time::Duration,
-};
+use std::{cell::Cell, collections::HashMap, path::PathBuf, time::Duration};
 
 use crate::{
-    config::default_config_path_json, core::{control_msg_vec::ControlMsgVec, extensions::Wrap, Result}, gen_struct
+    config::default_config_path_json,
+    core::{control_msg_vec::ControlMsgVec, extensions::Wrap},
+    gen_struct,
 };
 
 use super::{default_config_path, song_pos_save::SongPosSave};
