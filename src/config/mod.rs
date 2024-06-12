@@ -1,7 +1,9 @@
+mod control_msg_vec;
 mod msg;
 
 pub use self::msg::{/*DefMessage, */ Message as ConfMessage};
 
+use control_msg_vec::ControlMsgVec;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -81,6 +83,10 @@ gen_struct! {
 
         server_address: String { pub, pub } => pub(super) () {
             "127.0.0.1".to_owned()
+        },
+
+        control_aliases: HashMap<String, ControlMsgVec> { pub, pub } => pub(super) () {
+            Default::default()
         },
 
         ; // fields passed by value:
@@ -272,6 +278,7 @@ impl Config {
             seek_jump: default_seek_jump(),
             port: default_port(),
             server_address: default_server_address(),
+            control_aliases: default_control_aliases(),
             delete_logs_after: default_delete_logs_after(),
             enable_server: default_enable_server(),
             shuffle_current: default_shuffle_current(),

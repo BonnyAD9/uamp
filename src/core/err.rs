@@ -44,6 +44,8 @@ pub enum Error {
     Poison(String),
     #[error(transparent)]
     Notify(#[from] notify::Error),
+    #[error(transparent)]
+    ShellWords(#[from] shell_words::ParseError),
     /// Any other error
     #[error(transparent)]
     Other(anyhow::Error),

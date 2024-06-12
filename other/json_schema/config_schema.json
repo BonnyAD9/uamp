@@ -167,6 +167,15 @@
             "description": "By default, when you sort songs in the library, they are also sorted by additional properties. Enable this to change that behaviour",
             "type": "boolean",
             "default": false
+        },
+        "control_aliases": {
+            "description": "Aliases for actions",
+            "type": "object",
+            "additionalProperties": {
+                "description": "Defines what this alias does.",
+                "type": "string"
+            },
+            "default": {}
         }
     }
 }

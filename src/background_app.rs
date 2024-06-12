@@ -6,7 +6,7 @@ use crate::{
     config::Config,
     core::{
         command::{AppCtrl, Command},
-        msg::{ControlMsg, Msg},
+        msg::{AnyControlMsg, Msg},
         Result,
     },
     sync::{
@@ -17,7 +17,7 @@ use crate::{
 
 pub fn run_background_app(
     mut conf: Config,
-    init: Vec<ControlMsg>,
+    init: Vec<AnyControlMsg>,
 ) -> Result<()> {
     conf.force_server = true;
     let mut cmd_queue = vec![];
@@ -38,8 +38,8 @@ pub fn run_background_app(
     let mut tasks = UniqueTasks::new(sender.clone());
 
     for m in init {
-        if let Err(e) = sender.unbounded_send(Msg::Control(m)) {
-            error!("Failed to send init message `{m}`: {e}");
+        if let Err(e) = sender.unbounded_send(m.into()) {
+            error!("Failed to send init message: {e}");
         }
     }
 

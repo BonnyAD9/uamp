@@ -35,6 +35,8 @@ pub enum Msg {
     PlaySong(PlayMsg),
     /// Some simple messages
     Control(ControlMsg),
+    /// More complicated messages
+    DataControl(DataControlMsg),
     /// Player messges handled by the player
     Player(PlayerMessage),
     /// Dellegate the message
@@ -97,6 +99,17 @@ pub enum ControlMsg {
     PopPlaylist,
     /// Thriggers save
     Save,
+}
+/// Messages that can be safely send across threads
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum DataControlMsg {
+    Alias(String),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum AnyControlMsg {
+    Control(ControlMsg),
+    Data(DataControlMsg),
 }
 
 #[derive(Clone, Debug)]
@@ -238,6 +251,22 @@ impl UampApp {
         };
 
         None
+    }
+
+    pub fn data_control_event(
+        &mut self,
+        ctrl: &mut AppCtrl,
+        msg: DataControlMsg,
+    ) -> Option<Msg> {
+        match msg {
+            DataControlMsg::Alias(name) => {
+                for m in self.config.control_aliases().get(&name)?.clone() {
+                    self.update(ctrl, m.into())
+                }
+
+                None
+            }
+        }
     }
 
     pub fn play_event(&mut self, msg: PlayMsg) -> Option<Msg> {
@@ -518,3 +547,57 @@ impl<'de> Deserialize<'de> for PlayMsg {
         PlayMsgDe::deserialize(deserializer).map(|m| m.into())
     }
 }
+
+impl FromStr for DataControlMsg {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            v if starts!(v, "al" | "alias") => {
+                Ok(DataControlMsg::Alias(key_val_arg::<&str, _>(v, '=')?.1))
+            }
+            v => Err(Error::ArgParse(ArgError::UnknownArgument(
+                v.to_owned().into(),
+            ))),
+        }
+    }
+}
+
+impl Display for DataControlMsg {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DataControlMsg::Alias(alias) => write!(f, "al={alias}"),
+        }
+    }
+}
+
+impl FromStr for AnyControlMsg {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        ControlMsg::from_str(s)
+            .map(AnyControlMsg::Control)
+            .or_else(|_| DataControlMsg::from_str(s).map(AnyControlMsg::Data))
+    }
+}
+
+impl Display for AnyControlMsg {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AnyControlMsg::Control(ctrl) => write!(f, "{ctrl}"),
+            AnyControlMsg::Data(data) => write!(f, "{data}"),
+        }
+    }
+}
+
+impl From<AnyControlMsg> for Msg {
+    fn from(value: AnyControlMsg) -> Self {
+        match value {
+            AnyControlMsg::Control(ctrl) => Self::Control(ctrl),
+            AnyControlMsg::Data(data) => Self::DataControl(data),
+        }
+    }
+}
+
+impl FromArgStr for DataControlMsg {}
+impl FromArgStr for AnyControlMsg {}

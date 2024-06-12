@@ -102,6 +102,7 @@ impl UampApp {
         let msg = match message {
             Msg::PlaySong(msg) => self.play_event(msg),
             Msg::Control(msg) => self.control_event(ctrl, msg),
+            Msg::DataControl(msg) => self.data_control_event(ctrl, msg),
             Msg::Player(msg) => self.player_event(msg),
             Msg::Delegate(d) => d.update(self, ctrl),
             Msg::Config(msg) => self.config_event(ctrl, msg),

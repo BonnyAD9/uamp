@@ -123,7 +123,7 @@ impl UampApp {
                 )
             }
             Message::Control(msg) => {
-                (Some(Message::Success), Some(Msg::Control(msg)))
+                (Some(Message::Success), Some(msg.into()))
             }
             Message::Play(msg) => {
                 (Some(Message::Success), Some(Msg::PlaySong(msg)))

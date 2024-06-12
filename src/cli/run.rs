@@ -9,7 +9,7 @@ use pareg::{ArgIterator, ByRef};
 use crate::{
     background_app::run_background_app,
     config::Config,
-    core::{msg::ControlMsg, Error, Result},
+    core::{msg::AnyControlMsg, Error, Result},
 };
 
 use super::help::help_run;
@@ -21,7 +21,7 @@ pub struct Run {
     pub port: Option<u16>,
     pub server_address: Option<String>,
 
-    pub init: Vec<ControlMsg>,
+    pub init: Vec<AnyControlMsg>,
 }
 
 impl Run {

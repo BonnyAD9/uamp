@@ -286,6 +286,9 @@ fn print_control_messages_help() {
 
   {'r}save{'_}
     Triggers save (but saves only if there is change).
+
+  {'r}alias  al{'w}=<alias name>{'_}
+    Runs the actions given by the alias.
 "
     )
 }

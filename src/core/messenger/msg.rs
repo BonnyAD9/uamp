@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use raplay::Timestamp;
 
 use crate::{
-    core::msg::{ControlMsg, PlayMsg},
+    core::msg::{AnyControlMsg, PlayMsg},
     library::Song,
 };
 
@@ -17,7 +17,7 @@ pub enum Message {
     /// todo
     Request(Request),
     /// Send simple action to be done
-    Control(ControlMsg),
+    Control(AnyControlMsg),
     /// todo
     Info(Box<Info>),
     /// Message indicating success
@@ -102,7 +102,7 @@ macro_rules! extract {
 impl Message {
     extract!(_error, Error, Error);
     extract!(_request, Request, Request);
-    extract!(_control, ControlMsg, Control);
+    extract!(_control, AnyControlMsg, Control);
 
     pub fn _info(self) -> Option<Info> {
         if let Self::Info(e) = self {
