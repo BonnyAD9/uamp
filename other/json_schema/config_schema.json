@@ -53,11 +53,6 @@
             "type": "boolean",
             "default": true
         },
-        "register_global_hotkeys": {
-            "description": "When true uamp will try to register global hotkeys (they don't properly work with wayland)",
-            "type": "boolean",
-            "default": true
-        },
         "volume_jump": {
             "description": "specifies how much the volume should change with heach volume up/down",
             "type": "number",
@@ -81,31 +76,10 @@
             "default": "0.15",
             "pattern": "^([0-9]*d)?([0-9]*:)?([0-9]*:)?([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])$"
         },
-        "global_hotkeys": {
-            "description": "Maps global hotkeys to their action.",
-            "type": "object",
-            "additionalProperties": {
-                "description": "Defines what a global shortcut will do. It can by any of the CLI instance actions separated by whitespace.",
-                "type": "string"
-            },
-            "default": {
-                "ctrl+alt+home": "pp",
-                "ctrl+alt+pg_down": "ns",
-                "ctrl+alt+pg_up": "ps",
-                "ctrl+alt+up": "vu",
-                "ctrl+alt+down": "vd"
-            }
-        },
         "gapless": {
             "description": "Enable/disable gapless playback.",
             "type": "boolean",
             "default": "false"
-        },
-        "tick_length": {
-            "description": "Determines how often is the seek bar refreshed, in seconds",
-            "type": "string",
-            "default": "1",
-            "pattern": "^([0-9]*d)?([0-9]*:)?([0-9]*:)?([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])$"
         },
         "seek_jump": {
             "description": "Determines how much should be seeked with fast-forward/rewind",
@@ -134,17 +108,8 @@
             "type": "boolean",
             "default": true
         },
-        "gui_state_path": {
-            "description": "Path to json file containing the gui state. When null, gui state is not saved or load.",
-            "type": ["string", "null"]
-        },
         "shuffle_current": {
             "description": "When false, if you shuffle the playlist, the current playling song will be first.",
-            "type": "boolean",
-            "default": true
-        },
-        "show_help": {
-            "description": "When true, you will see help in the settings when you hover over something.",
             "type": "boolean",
             "default": true
         },
@@ -152,11 +117,6 @@
             "description": "When not null, the action for previous will go to previous only if the last previous action was in the given time, otherwise it will rewind to start",
             "type": ["string", "null"],
             "default": null
-        },
-        "show_remaining_time": {
-            "description": "When enabled, the time to the right of the seek slider will show the remaining time instead of total time.",
-            "type": "boolean",
-            "default": "false"
         },
         "play_on_start": {
             "description": "When enabled, uamp will start playing when it starts.",
