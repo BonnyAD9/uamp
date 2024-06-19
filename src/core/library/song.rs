@@ -10,7 +10,10 @@ use log::warn;
 use raplay::source::{Source, Symph};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::core::{extensions::duration_to_string, Error, Result};
+use crate::{
+    core::{Error, Result},
+    ext::extensions::duration_to_string,
+};
 
 /// Describes song
 #[derive(Debug, Clone, Serialize, Deserialize)]

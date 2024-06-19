@@ -7,13 +7,11 @@ use std::{
 };
 
 use crate::{
-    app::UampApp,
     core::{
-        command::AppCtrl,
-        err::Result,
         messenger::{Error, ErrorKind},
-        msg::{FnDelegate, Msg},
+        FnDelegate, Msg, Result, UampApp,
     },
+    env::AppCtrl,
 };
 
 use super::{Info, MsgMessage, Request};

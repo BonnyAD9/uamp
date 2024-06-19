@@ -1,15 +1,17 @@
-pub mod alc_vec;
-pub mod command;
-/// Adds some features to existing data types
-pub mod extensions;
+mod control_msg_vec;
+mod err;
+mod msg;
+mod song_order;
+mod task_msg;
+mod uamp_app;
+
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
+pub mod config;
+pub mod library;
 pub mod messenger;
-pub mod msg;
+pub mod player;
 
-pub mod err;
-mod save_struct_macro;
-pub mod song_order;
-
-pub mod control_msg_vec;
-
-pub use err::*;
-//pub use save_struct_macro::*;
+pub use self::{err::*, msg::*, song_order::*, task_msg::*, uamp_app::*};

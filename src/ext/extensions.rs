@@ -5,7 +5,7 @@ use pareg::{ArgError, FromArgStr};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use super::Error;
+use crate::core::Error;
 
 #[derive(Error, Debug)]
 pub enum ParseError {

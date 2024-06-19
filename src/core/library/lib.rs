@@ -11,12 +11,13 @@ use std::{
 };
 
 use crate::{
-    app::UampApp,
-    config::Config,
-    core::{alc_vec::AlcVec, command::AppCtrl, Error, Result},
+    core::{
+        config::Config, player::Player, Error, Result, TaskMsg, TaskType,
+        UampApp,
+    },
+    env::AppCtrl,
+    ext::alc_vec::AlcVec,
     gen_struct,
-    player::Player,
-    sync::tasks::{TaskMsg, TaskType},
 };
 
 use super::{

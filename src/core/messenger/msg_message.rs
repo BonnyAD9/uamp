@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::core::msg::{AnyControlMsg, PlayMsg};
+use crate::core::{AnyControlMsg, PlayMsg};
 
 use super::{Error, ErrorKind, Info, Request};
 

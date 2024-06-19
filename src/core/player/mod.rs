@@ -23,12 +23,12 @@ use rand::{seq::SliceRandom, thread_rng};
 use raplay::{CallbackInfo, Timestamp};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    app::UampApp,
+use crate::{core::UampApp, ext::alc_vec::AlcVec, gen_struct};
+
+use super::{
     config::Config,
-    core::{alc_vec::AlcVec, msg::Msg, Result},
-    gen_struct,
     library::{Library, LibraryUpdate, SongId},
+    Msg, Result,
 };
 
 gen_struct! {

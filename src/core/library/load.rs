@@ -3,7 +3,9 @@ use std::{fmt::Debug, str::FromStr};
 use pareg::FromArgStr;
 use serde::{Deserialize, Serialize};
 
-use crate::{core::extensions::ParseError, player::add_policy::AddPolicy};
+use crate::{
+    core::player::add_policy::AddPolicy, ext::extensions::ParseError,
+};
 
 use super::{Song, SongId};
 

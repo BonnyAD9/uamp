@@ -1,6 +1,6 @@
 use std::{
     mem,
-    ops::{Index, IndexMut, RangeBounds},
+    ops::{Bound, Index, IndexMut, RangeBounds},
     slice::{Iter, IterMut, SliceIndex},
     sync::Arc,
 };
@@ -8,8 +8,21 @@ use std::{
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
 /// Thread safe lazily cloned vector. The vector may be cloned only when you
 /// actually need to mutate its data.
+///
+/// May be in one of two states: [`AlcVec::Static`] or [`AlcVec::Dynamic`].
+///
+/// When in static state, the vector is immutable and when mutation is necesary
+/// it will have to be cloned, or if this is the only instance of the static
+/// data, the data will be reclaimed.
+///
+/// In dynamic mode, this is same as vector.
+#[derive(Debug)]
 pub enum AlcVec<T>
 where
     T: Clone,
@@ -20,14 +33,11 @@ where
     Dynamic(Vec<T>),
 }
 
-//===========================================================================//
-//                                   Public                                  //
-//===========================================================================//
-
 impl<T> AlcVec<T>
 where
     T: Clone,
 {
+    /// Creates new [`AlcVec`]
     pub fn new() -> Self {
         Self::default()
     }
@@ -45,37 +55,40 @@ where
         self[..].iter()
     }
 
-    /// This may clone the vector.
+    /// Gets a mutable iterator for the data.
+    ///
+    /// - This may clone the vector.
+    /// - The vector will be in dynamic state after this.
     pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         self.vec_mut()[..].iter_mut()
     }
 
     /// Gets/Creates arc from the vector.
+    ///
+    /// - The vector wil be in static state after this.
     pub fn make_arc(&mut self) -> Arc<Vec<T>> {
         self.make_static().clone()
     }
 
-    /// This doesn't invoke clone on the vector.
-    pub fn _vec(&self) -> &Vec<T> {
-        match self {
-            Self::Static(s) => s,
-            Self::Dynamic(d) => d,
-        }
-    }
-
-    /// This may clone the vector.
+    /// Gets mutable reference to the vector.
+    ///
+    /// - This may clone the vector.
+    /// - The vector will be in dynamic state after this.
     pub fn vec_mut(&mut self) -> &mut Vec<T> {
         self.make_dynamic()
     }
 
     /// Creates lazy clone of the vector.
+    ///
+    /// - The vector will be in static state after this.
     pub fn clone(&mut self) -> Self {
         Self::Static(self.make_arc())
     }
 
-    /// Replaces the given range of values with the given value. This may clone
-    /// the vector, but it will not clone the vector if the iterator of new
-    /// values is empty.
+    /// Replaces the given range of values with the given value.
+    ///
+    /// - If the range or iterator is not empty, this may clone the vector.
+    /// - If the range or iterator is not empty, the vector will be dynamic.
     pub fn splice<R, I>(&mut self, range: R, replace_with: I)
     where
         R: RangeBounds<usize>,
@@ -83,15 +96,17 @@ where
     {
         let mut iter = replace_with.into_iter();
         let i = iter.next();
-        if i.is_none() {
+        if i.is_none() && is_range_empty(&range) {
             return;
         }
 
         self.make_dynamic().splice(range, i.into_iter().chain(iter));
     }
 
-    /// Mix new values after the given index. This may clone the vector, but it
-    /// will not clone the vector if the iterator of new values is empty.
+    /// Mix new values after the given index.
+    ///
+    /// - If the iterator is not empty, this may clone the vector.
+    /// - If the iterator is not empty, the vector will be dynamic.
     pub fn mix_after<I>(&mut self, after: usize, iter: I)
     where
         I: IntoIterator<Item = T>,
@@ -306,5 +321,19 @@ where
             }
             Self::Static(s) => s,
         }
+    }
+}
+
+fn is_range_empty<R, T>(range: &R) -> bool
+where
+    R: RangeBounds<T>,
+    T: PartialOrd,
+{
+    match (range.start_bound(), range.end_bound()) {
+        (Bound::Unbounded, _) => false,
+        (_, Bound::Unbounded) => false,
+        (Bound::Included(a), _) => range.contains(a),
+        (_, Bound::Included(a)) => range.contains(a),
+        (Bound::Excluded(a), Bound::Excluded(b)) => a >= b,
     }
 }

@@ -1,30 +1,16 @@
 use std::{
     collections::{hash_map::Entry, HashMap},
-    net::TcpListener,
     thread::{self, JoinHandle},
 };
 
 use futures::channel::mpsc::UnboundedSender;
 use log::error;
 
-use crate::{
-    core::{msg::Msg, Error, Result},
-    library::{LibraryLoadResult, SongId},
-};
+use crate::core::{Error, Msg, Result, TaskMsg, TaskType};
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub enum TaskType {
-    Server,
-    LibraryLoad,
-    LibrarySave,
-}
-
-#[derive(Debug)]
-pub enum TaskMsg {
-    Server(Result<TcpListener>),
-    LibraryLoad(Result<Option<LibraryLoadResult>>),
-    LibrarySave(Result<Vec<SongId>>),
-}
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
 
 #[derive(Debug)]
 pub struct UniqueTasks {
@@ -83,20 +69,6 @@ impl UniqueTasks {
                 }));
                 Ok(())
             }
-        }
-    }
-}
-
-impl TaskType {
-    pub fn panicked(&self) -> TaskMsg {
-        match self {
-            Self::LibraryLoad => {
-                TaskMsg::LibraryLoad(Err(Error::ThreadPanicked))
-            }
-            Self::LibrarySave => {
-                TaskMsg::LibrarySave(Err(Error::ThreadPanicked))
-            }
-            Self::Server => TaskMsg::Server(Err(Error::ThreadPanicked)),
         }
     }
 }

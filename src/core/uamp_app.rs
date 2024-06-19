@@ -6,19 +6,19 @@ use notify::{INotifyWatcher, Watcher};
 use signal_hook_async_std::Signals;
 
 use crate::{
-    config::{default_config_path, Config, ConfigMsg},
     core::{
-        command::AppCtrl,
         messenger::{self, Messenger, MsgMessage},
         msg::{ControlMsg, Msg},
         Error, Result,
     },
+    env::{AppCtrl, MsgGen},
+};
+
+use super::{
+    config::{default_config_path, Config, ConfigMsg},
     library::Library,
     player::Player,
-    sync::{
-        msg_stream::MsgGen,
-        tasks::{TaskMsg, TaskType},
-    },
+    TaskMsg, TaskType,
 };
 
 /// The uamp app state
@@ -52,6 +52,65 @@ pub struct UampApp {
 //===========================================================================//
 
 impl UampApp {
+    pub fn new(
+        conf: Config,
+        ctrl: &mut AppCtrl,
+        sender: UnboundedSender<Msg>,
+    ) -> Result<Self> {
+        let mut lib = Library::from_config(&conf);
+
+        if conf.update_library_on_start() {
+            lib.start_get_new_songs(&conf, ctrl, Default::default())?;
+        }
+
+        let mut player = Player::from_config(&mut lib, sender.clone(), &conf);
+        player.load_config(&conf);
+        player.remove_deleted(&lib);
+
+        if conf.enable_server() || conf.force_server {
+            Self::start_server(&conf, ctrl, sender.clone())?;
+        }
+
+        Self::signal_task(ctrl)?;
+
+        if conf.play_on_start() {
+            if let Err(e) = sender.unbounded_send(Msg::Control(
+                ControlMsg::PlayPause(Some(true)),
+            )) {
+                error!("Failed to send message to play on startup: {e}");
+            }
+        }
+
+        let config_watch = if let Some(path) = &conf.config_path {
+            match Self::watch_config_task(sender.clone(), path.as_path()) {
+                Ok(r) => Some(r),
+                Err(e) => {
+                    error!("Failed to watch config file: {e}");
+                    None
+                }
+            }
+        } else {
+            None
+        };
+
+        Ok(UampApp {
+            config: conf,
+            library: lib,
+            player,
+
+            sender,
+
+            pending_close: false,
+
+            last_save: Instant::now(),
+            last_prev: Instant::now(),
+
+            hard_pause_at: None,
+
+            _config_watch: config_watch,
+        })
+    }
+
     /// Saves all the data that is saved by uamp
     pub fn save_all(&mut self, closing: bool, ctrl: &mut AppCtrl) {
         match self.library.start_to_default_json(
@@ -154,71 +213,6 @@ impl UampApp {
 
         Ok(())
     }
-}
-
-//===========================================================================//
-//                                  Private                                  //
-//===========================================================================//
-
-impl UampApp {
-    pub fn new(
-        conf: Config,
-        ctrl: &mut AppCtrl,
-        sender: UnboundedSender<Msg>,
-    ) -> Result<Self> {
-        let mut lib = Library::from_config(&conf);
-
-        if conf.update_library_on_start() {
-            lib.start_get_new_songs(&conf, ctrl, Default::default())?;
-        }
-
-        let mut player = Player::from_config(&mut lib, sender.clone(), &conf);
-        player.load_config(&conf);
-        player.remove_deleted(&lib);
-
-        if conf.enable_server() || conf.force_server {
-            Self::start_server(&conf, ctrl, sender.clone())?;
-        }
-
-        Self::signal_task(ctrl)?;
-
-        if conf.play_on_start() {
-            if let Err(e) = sender.unbounded_send(Msg::Control(
-                ControlMsg::PlayPause(Some(true)),
-            )) {
-                error!("Failed to send message to play on startup: {e}");
-            }
-        }
-
-        let config_watch = if let Some(path) = &conf.config_path {
-            match Self::watch_config_task(sender.clone(), path.as_path()) {
-                Ok(r) => Some(r),
-                Err(e) => {
-                    error!("Failed to watch config file: {e}");
-                    None
-                }
-            }
-        } else {
-            None
-        };
-
-        Ok(UampApp {
-            config: conf,
-            library: lib,
-            player,
-
-            sender,
-
-            pending_close: false,
-
-            last_save: Instant::now(),
-            last_prev: Instant::now(),
-
-            hard_pause_at: None,
-
-            _config_watch: config_watch,
-        })
-    }
 
     /// Starts the tcp server
     pub fn start_server(
@@ -242,8 +236,14 @@ impl UampApp {
 
         Ok(())
     }
+}
 
-    pub fn signal_task(ctrl: &mut AppCtrl) -> Result<()> {
+//===========================================================================//
+//                                  Private                                  //
+//===========================================================================//
+
+impl UampApp {
+    fn signal_task(ctrl: &mut AppCtrl) -> Result<()> {
         let sig = Signals::new(signal_hook::consts::TERM_SIGNALS)?;
 
         let stream = MsgGen::new((sig, 0), |(mut sig, cnt)| async move {
@@ -269,7 +269,7 @@ impl UampApp {
         Ok(())
     }
 
-    pub fn watch_config_task(
+    fn watch_config_task(
         sender: UnboundedSender<Msg>,
         watched: &Path,
     ) -> Result<INotifyWatcher> {
@@ -298,21 +298,6 @@ impl UampApp {
 
         Ok(watcher)
     }
-
-    /*fn clock_subscription(&self, tick: Duration) -> Subscription {
-        iced::subscription::unfold(
-            format!("{} tick ({})", app_id(), duration_to_string(tick, false)),
-            Instant::now(),
-            move |i| async move {
-                let now = Instant::now();
-                let dif = now - i;
-                if dif < tick {
-                    thread::sleep(tick - dif);
-                }
-                (Msg::Gui(GuiMessage::Tick), i + tick)
-            },
-        )
-    }*/
 
     fn server_task(
         listener: TcpListener,

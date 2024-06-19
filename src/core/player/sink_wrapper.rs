@@ -5,9 +5,9 @@ use raplay::{
     CallbackInfo, Sink, Timestamp,
 };
 
-use crate::{
-    core::Result,
+use crate::core::{
     library::{Library, LibraryUpdate, SongId},
+    Result,
 };
 
 /// Wrapps the sink

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use raplay::Timestamp;
 
-use crate::library::Song;
+use crate::core::library::Song;
 
 //===========================================================================//
 //                                   Public                                  //

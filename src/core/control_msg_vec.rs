@@ -3,7 +3,7 @@ use std::{fmt::Display, str::FromStr};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{msg::AnyControlMsg, Error};
+use super::{AnyControlMsg, Error};
 
 #[derive(Debug, Clone)]
 pub struct ControlMsgVec {

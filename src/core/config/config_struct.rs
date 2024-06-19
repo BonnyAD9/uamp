@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::{cell::Cell, collections::HashMap, path::PathBuf, time::Duration};
 
 use crate::{
-    config::default_config_path_json,
-    core::{control_msg_vec::ControlMsgVec, extensions::Wrap},
+    core::{config::default_config_path_json, control_msg_vec::ControlMsgVec},
+    ext::extensions::Wrap,
     gen_struct,
 };
 

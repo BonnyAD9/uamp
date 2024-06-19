@@ -2,17 +2,8 @@ use futures::{channel::mpsc, future, StreamExt};
 use log::{error, trace};
 
 use crate::{
-    app::UampApp,
-    config::Config,
-    core::{
-        command::{AppCtrl, Command},
-        msg::{AnyControlMsg, Msg},
-        Result,
-    },
-    sync::{
-        msg_stream::{MsgGen, Streams},
-        tasks::UniqueTasks,
-    },
+    core::{config::Config, AnyControlMsg, Msg, Result, UampApp},
+    env::{AppCtrl, Command, MsgGen, Streams, UniqueTasks},
 };
 
 pub fn run_background_app(

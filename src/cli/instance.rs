@@ -5,13 +5,12 @@ use pareg::{ArgIterator, ByRef};
 use termal::printcln;
 
 use crate::{
-    config::Config,
     core::{
-        extensions::duration_to_string,
+        config::Config,
         messenger::{Info, Messenger, MsgMessage, Request},
-        msg::PlayMsg,
-        Result,
+        PlayMsg, Result,
     },
+    ext::extensions::duration_to_string,
     starts,
 };
 

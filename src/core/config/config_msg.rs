@@ -3,14 +3,11 @@ use std::net::TcpStream;
 use log::{error, warn};
 
 use crate::{
-    app::UampApp,
     core::{
-        command::AppCtrl,
         messenger::{Messenger, MsgMessage},
-        msg::Msg,
-        Result,
+        Msg, Result, TaskType, UampApp,
     },
-    sync::tasks::TaskType,
+    env::AppCtrl,
 };
 
 use super::Config;

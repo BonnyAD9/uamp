@@ -8,8 +8,7 @@ use pareg::{ArgIterator, ByRef};
 
 use crate::{
     background_app::run_background_app,
-    config::Config,
-    core::{msg::AnyControlMsg, Error, Result},
+    core::{config::Config, AnyControlMsg, Error, Result},
 };
 
 use super::help::help_run;

@@ -13,18 +13,16 @@ use pareg::{key_mval_arg, key_val_arg, proc::FromArg, ArgError, FromArgStr};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    app::UampApp,
-    config::ConfigMsg,
-    library::{Filter, LoadOpts, SongId},
-    player::PlayerMessage,
-    sync::tasks::TaskType,
+    core::UampApp,
+    env::AppCtrl,
+    ext::extensions::{duration_to_string, Wrap},
 };
 
 use super::{
-    command::AppCtrl,
-    extensions::{duration_to_string, Wrap},
-    song_order::SongOrder,
-    Error,
+    config::ConfigMsg,
+    library::{Filter, LoadOpts, SongId},
+    player::PlayerMessage,
+    Error, SongOrder, TaskType,
 };
 
 /// Event messages in uamp

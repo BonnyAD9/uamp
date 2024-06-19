@@ -1,6 +1,9 @@
 use pareg::{ArgError, ArgIterator, ByRef};
 
-use crate::{cli::help::help_version, config::Config, core::err::Result};
+use crate::{
+    cli::help::help_version,
+    core::{config::Config, Result},
+};
 
 use super::{
     help::{help, help_all},

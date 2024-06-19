@@ -4,9 +4,10 @@ use pareg::{ArgError, FromArgStr};
 use rand::{seq::SliceRandom, thread_rng};
 use serde::{Deserialize, Serialize};
 
-use crate::library::{Library, SongId};
-
-use super::Error;
+use super::{
+    library::{Library, SongId},
+    Error,
+};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SongOrder {

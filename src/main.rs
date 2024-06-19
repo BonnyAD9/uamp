@@ -1,3 +1,4 @@
+use core::config;
 use std::env::args;
 
 use cli::Run;
@@ -8,14 +9,11 @@ use crate::{
     core::Result,
 };
 
-mod app;
 mod background_app;
 mod cli;
-mod config;
 mod core;
-mod library;
-mod player;
-mod sync;
+mod env;
+mod ext;
 
 fn main() {
     if let Err(e) = start() {
