@@ -1,7 +1,6 @@
 use std::{
     fs::{self, File},
     path::Path,
-    time::Duration,
 };
 
 use futures::channel::mpsc::UnboundedSender;
@@ -35,13 +34,17 @@ impl Player {
     /// # Errors
     /// - cannot create parrent directory
     /// - Failed to serialize
-    pub fn to_default_json(&self, closing: bool, conf: &Config) -> Result<()> {
+    pub fn save_to_default_json(
+        &mut self,
+        closing: bool,
+        conf: &Config,
+    ) -> Result<()> {
         let save_pos = conf.save_playback_pos().save(closing);
         if !save_pos && !self.get_change() {
             return Ok(());
         }
         if let Some(p) = conf.player_path() {
-            self.to_json(save_pos, p)?;
+            self.save_to_json(save_pos, p)?;
         }
         self.set_change(false);
         Ok(())
@@ -54,7 +57,7 @@ impl Player {
         sender: UnboundedSender<Msg>,
         path: impl AsRef<Path>,
     ) -> Self {
-        let data = if let Ok(file) = File::open(path.as_ref()) {
+        let mut data = if let Ok(file) = File::open(path.as_ref()) {
             match serde_json::from_reader(file) {
                 Ok(p) => p,
                 Err(e) => {
@@ -67,6 +70,8 @@ impl Player {
             PlayerDataLoad::default()
         };
 
+        let play_pos = data.playlist.pop_play_pos();
+
         let mut res = Self::new(
             SinkWrapper::new(),
             Playback::Stopped,
@@ -78,7 +83,7 @@ impl Player {
         );
 
         res.init_inner(sender);
-        if let Some(p) = data.position {
+        if let Some(p) = play_pos {
             res.play(lib, false);
             res.seek_to(p);
         }
@@ -99,8 +104,6 @@ struct PlayerDataLoad {
     #[serde(default)]
     playlist: Playlist,
     #[serde(default)]
-    position: Option<Duration>,
-    #[serde(default)]
     intercept: Option<Playlist>,
 }
 
@@ -110,7 +113,6 @@ impl Default for PlayerDataLoad {
             mute: false,
             volume: default_volume(),
             playlist: Playlist::default(),
-            position: None,
             intercept: None,
         }
     }
@@ -125,7 +127,6 @@ struct PlayerDataSave<'a> {
     volume: f32,
     /// The current playlist
     playlist: &'a Playlist,
-    position: Option<Duration>,
     intercept: Option<&'a Playlist>,
 }
 
@@ -135,15 +136,20 @@ impl Player {
     /// # Errors
     /// - cannot create parrent directory
     /// - Failed to serialize
-    fn to_json(&self, save_pos: bool, path: impl AsRef<Path>) -> Result<()> {
+    fn save_to_json(
+        &mut self,
+        save_pos: bool,
+        path: impl AsRef<Path>,
+    ) -> Result<()> {
         if let Some(par) = path.as_ref().parent() {
             fs::create_dir_all(par)?;
         }
 
-        let position = save_pos
-            .then(|| self.timestamp())
-            .flatten()
-            .map(|t| t.current);
+        if save_pos {
+            if let Some(t) = self.timestamp() {
+                self.playlist_mut().set_play_pos(t.current);
+            }
+        }
 
         serde_json::to_writer(
             File::create(path)?,
@@ -151,10 +157,11 @@ impl Player {
                 playlist: self.playlist(),
                 volume: self.volume(),
                 mute: self.mute(),
-                position,
                 intercept: self.intercept().as_ref(),
             },
         )?;
+
+        self.playlist_mut().pop_play_pos();
         Ok(())
     }
 }

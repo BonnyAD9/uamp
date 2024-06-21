@@ -122,7 +122,8 @@ impl UampApp {
             Err(e) => error!("Failed to start library save: {e}"),
             _ => {}
         }
-        if let Err(e) = self.player.to_default_json(closing, &self.config) {
+        if let Err(e) = self.player.save_to_default_json(closing, &self.config)
+        {
             error!("Failed to save play state: {e}");
         }
         if let Err(e) = self.config.to_default_json() {
