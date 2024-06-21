@@ -1,4 +1,4 @@
-use std::{fs::File, time::Duration};
+use std::{fmt::Debug, fs::File, time::Duration};
 
 use raplay::{
     source::{symph::SymphOptions, Source, Symph},
@@ -122,5 +122,14 @@ impl SinkWrapper {
     pub fn hard_pause(&mut self) -> Result<()> {
         self.sink.hard_pause()?;
         Ok(())
+    }
+}
+
+impl Debug for SinkWrapper {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SinkWrapper")
+            .field("sink", &self.sink)
+            .field("symph", &())
+            .finish()
     }
 }

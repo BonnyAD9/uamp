@@ -55,7 +55,7 @@ impl UampApp {
                 .then(|| {
                     (self.config.server_address().clone(), self.config.port())
                 });
-                self.player.shuffle_current = conf.shuffle_current();
+                self.player.load_config(&conf);
                 conf.force_server = self.config.force_server;
                 self.config = conf;
                 if let Some((adr, port)) = reload_server {

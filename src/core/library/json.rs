@@ -173,7 +173,7 @@ impl UampApp {
         }
 
         if let Some(p) = res.add_policy {
-            self.player.add_songs(
+            self.player.playlist_mut().add_songs(
                 (res.first_new..self.library.songs().len())
                     .map(SongId)
                     .chain(res.sparse_new),

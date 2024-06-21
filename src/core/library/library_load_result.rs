@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::core::player::add_policy::AddPolicy;
+use crate::core::player::AddPolicy;
 
 use super::{Song, SongId};
 

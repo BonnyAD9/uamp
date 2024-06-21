@@ -21,7 +21,7 @@ use crate::{
 use super::{
     config::ConfigMsg,
     library::{Filter, LoadOpts, SongId},
-    player::PlayerMessage,
+    player::{PlayerMsg, Playlist},
     Error, SongOrder, TaskType,
 };
 
@@ -36,7 +36,7 @@ pub enum Msg {
     /// More complicated messages
     DataControl(DataControlMsg),
     /// Player messges handled by the player
-    Player(PlayerMessage),
+    Player(PlayerMsg),
     /// Dellegate the message
     Delegate(Arc<dyn MessageDelegate>),
     Config(ConfigMsg),
@@ -129,7 +129,7 @@ impl UampApp {
                 if pp {
                     self.hard_pause_at = None;
                 }
-                self.player.play_pause(&mut self.library, pp);
+                self.player.play(&mut self.library, pp);
                 return Some(Msg::Tick);
             }
             ControlMsg::NextSong(n) => {
@@ -165,7 +165,9 @@ impl UampApp {
                 return None;
             }
             ControlMsg::Shuffle => {
-                self.player.shuffle();
+                self.player
+                    .playlist_mut()
+                    .shuffle(self.config.shuffle_current());
                 return Some(Msg::Tick);
             }
             ControlMsg::SetVolume(v) => {
@@ -182,11 +184,7 @@ impl UampApp {
                 .clamp(0., 1.),
             ),
             ControlMsg::PlaylistJump(i) => {
-                self.player.play_at(
-                    &mut self.library,
-                    i,
-                    self.player.is_playing(),
-                );
+                self.player.jump_to(&mut self.library, i);
                 return Some(Msg::Tick);
             }
             ControlMsg::Mute(b) => {
@@ -223,27 +221,27 @@ impl UampApp {
                 let songs: Vec<_> = self.library.filter(filter).collect();
                 self.player.play_playlist(
                     &mut self.library,
-                    songs,
-                    None,
+                    songs.into(),
                     false,
                 );
             }
             ControlMsg::PushPlaylist(filter) => {
                 let songs: Vec<_> = self.library.filter(filter).collect();
-                self.player.intercept(&mut self.library, songs, None, false);
+                self.player.push_playlist(
+                    &mut self.library,
+                    songs.into(),
+                    false,
+                );
             }
             ControlMsg::SortPlaylist(ord) => {
-                let mut cur = self.player.current();
-                ord.sort(
+                self.player.playlist_mut().sort(
                     &self.library,
-                    &mut self.player.playlist_mut()[..],
                     self.config.simple_sorting(),
-                    cur.as_mut(),
+                    ord,
                 );
-                self.player.force_cur(cur);
             }
             ControlMsg::PopPlaylist => {
-                self.player.pop_intercept(&mut self.library);
+                self.player.pop_playlist(&mut self.library);
             }
             ControlMsg::Save => self.save_all(false, ctrl),
         };
@@ -272,8 +270,7 @@ impl UampApp {
             PlayMsg::Playlist(index, songs) => {
                 self.player.play_playlist(
                     &mut self.library,
-                    songs,
-                    Some(index),
+                    Playlist::new(songs, index),
                     true,
                 );
             }
@@ -286,10 +283,9 @@ impl UampApp {
                     Ok(id) => id,
                 };
 
-                self.player.intercept(
+                self.player.push_playlist(
                     &mut self.library,
-                    vec![id],
-                    Some(0),
+                    vec![id].into(),
                     true,
                 );
             }

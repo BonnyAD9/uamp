@@ -100,7 +100,10 @@ impl UampApp {
                                         .now_playing()
                                         .map(|i| app.library[i].clone()),
                                     playlist_len: app.player.playlist().len(),
-                                    playlist_pos: app.player.current(),
+                                    playlist_pos: app
+                                        .player
+                                        .playlist()
+                                        .get_pos(),
                                     is_playing: app.player.is_playing(),
                                     timestamp: app.player.timestamp(),
                                 })))

@@ -1,7 +1,11 @@
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
 /// State of the player playback
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Debug)]
 pub enum Playback {
-    /// No song is playing
+    /// No song is playing (no song is loaded)
     #[default]
     Stopped,
     /// Song is playing

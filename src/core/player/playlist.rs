@@ -1,236 +1,143 @@
-use std::{
-    mem,
-    ops::{Index, IndexMut},
-    slice::{Iter, SliceIndex},
-    sync::{Arc, Weak},
-};
+use std::time::Duration;
 
-use itertools::Itertools;
-use rand::Rng;
+use rand::{seq::SliceRandom, thread_rng};
 use serde::{Deserialize, Serialize};
 
-use crate::library::{Library, SongId};
+use crate::{
+    core::{
+        library::{Library, SongId},
+        SongOrder,
+    },
+    ext::alc_vec::AlcVec,
+};
 
-/// A playlist, lazily cloned
-pub enum Playlist {
-    /// There is static immutable reference to the playlist
-    Static(Arc<Vec<SongId>>),
-    /// There is owned vector with the playlist
-    Dynamic(Vec<SongId>),
+use super::AddPolicy;
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct Playlist {
+    #[serde(default)]
+    songs: AlcVec<SongId>,
+    #[serde(default)]
+    current: usize,
+    #[serde(default)]
+    play_pos: Option<Duration>,
 }
 
-//===========================================================================//
-//                                   Public                                  //
-//===========================================================================//
-
 impl Playlist {
-    /// Gets the number of items in the playlist
-    pub fn len(&self) -> usize {
-        match self {
-            Self::Static(s) => s.len(),
-            Self::Dynamic(d) => d.len(),
+    pub fn new<S>(songs: S, mut current: usize) -> Self
+    where
+        S: Into<AlcVec<SongId>>,
+    {
+        let songs = songs.into();
+        if current > songs.len() {
+            current = songs.len().saturating_sub(1);
+        }
+
+        Self {
+            songs,
+            current,
+            play_pos: None,
         }
     }
 
-    /// Returns iterator over the items
-    pub fn iter(&self) -> Iter<'_, SongId> {
-        self[..].iter()
+    #[inline(always)]
+    pub fn current(&self) -> Option<SongId> {
+        (self.current < self.songs.len()).then(|| self.songs[self.current])
     }
 
-    /// Gets/Creates arc from the playlist. This will create copy if playlist
-    /// is dynamic.
-    pub fn get_arc(&mut self) -> Arc<Vec<SongId>> {
-        self.make_static().clone()
+    pub fn shuffle(&mut self, shuffle_current: bool) {
+        let id = self.current();
+        self.songs[..].shuffle(&mut thread_rng());
+        // find the currently playing in the shuffled playlist
+        if let Some(id) = id {
+            self.locate_current(id);
+            if !shuffle_current {
+                self.songs[..].swap(self.current, 0);
+                self.current = 0;
+            }
+        }
     }
 
     pub fn remove_deleted(&mut self, lib: &Library) {
-        match self {
-            Playlist::Static(a) => {
-                *self = Playlist::Dynamic(
-                    a.iter()
-                        .copied()
-                        .filter(|s| !lib[*s].is_deleted())
-                        .collect_vec(),
-                )
-            }
-            Playlist::Dynamic(v) => v.retain(|s| !lib[*s].is_deleted()),
+        let cur = self.current();
+        self.songs.vec_mut().retain(|s| !lib[s].is_deleted());
+        if let Some(cur) = cur {
+            self.locate_current(cur)
         }
     }
 
-    pub fn mix_in<I>(&mut self, after: usize, iter: I)
+    pub fn add_songs<I>(&mut self, songs: I, policy: AddPolicy)
     where
         I: IntoIterator<Item = SongId>,
     {
-        let mut it = iter.into_iter();
-        let i = it.next();
-        if i.is_none() {
-            return;
-        }
-
-        let v = self.make_dynamic();
-        let mut rng = rand::thread_rng();
-        for s in i.into_iter().chain(it) {
-            let idx = rng.gen_range(after + 1..=v.len());
-            let o = v[idx];
-            v[idx] = s;
-            v.push(o);
+        let i = self.current + 1;
+        match policy {
+            AddPolicy::End => self.songs.extend(songs),
+            AddPolicy::Next => self.songs.splice(i..i, songs),
+            AddPolicy::MixIn => self.songs.mix_after(i, songs),
         }
     }
 
-    pub fn insert_at<I>(&mut self, idx: usize, iter: I)
-    where
-        I: IntoIterator<Item = SongId>,
-    {
-        let mut it = iter.into_iter();
-        let i = it.next();
-        if i.is_none() {
-            return;
-        }
-
-        let v = self.make_dynamic();
-        v.splice(idx..idx, i.into_iter().chain(it));
+    pub fn sort(&mut self, lib: &Library, simple: bool, order: SongOrder) {
+        order.sort(lib, &mut self.songs[..], simple, Some(&mut self.current))
     }
-}
 
-impl Default for Playlist {
-    fn default() -> Self {
-        [][..].into()
+    #[inline(always)]
+    pub fn len(&self) -> usize {
+        self.songs.len()
     }
-}
 
-impl<T: SliceIndex<[SongId]>> Index<T> for Playlist {
-    type Output = T::Output;
+    pub fn clone_songs(&mut self) -> AlcVec<SongId> {
+        self.songs.clone()
+    }
 
-    fn index(&self, index: T) -> &Self::Output {
-        match self {
-            Self::Static(s) => s.index(index),
-            Self::Dynamic(d) => d.index(index),
+    pub fn get_pos(&self) -> Option<usize> {
+        (self.current < self.len()).then_some(self.current)
+    }
+
+    pub(super) fn nth_next(&mut self, n: usize) -> Option<SongId> {
+        self.current += n;
+        if self.current < self.len() {
+            self.current()
+        } else {
+            self.current = 0;
+            None
         }
     }
-}
 
-impl<T: SliceIndex<[SongId]>> IndexMut<T> for Playlist {
-    #[inline]
-    fn index_mut(&mut self, index: T) -> &mut Self::Output {
-        self.make_dynamic().index_mut(index)
+    pub(super) fn nth_prev(&mut self, n: usize) -> Option<SongId> {
+        self.jump_to(self.current.saturating_sub(n))
+    }
+
+    pub(super) fn jump_to(&mut self, index: usize) -> Option<SongId> {
+        (index < self.len()).then(|| {
+            self.current = index;
+            self.songs[index]
+        })
+    }
+
+    pub(super) fn set_play_pos(&mut self, play_pos: Duration) {
+        self.play_pos = Some(play_pos);
+    }
+
+    pub(super) fn pop_play_pos(&mut self) -> Option<Duration> {
+        self.play_pos.take()
     }
 }
 
-impl From<&[SongId]> for Playlist {
-    fn from(value: &[SongId]) -> Self {
-        Self::Dynamic(value.into())
+impl<V> From<V> for Playlist
+where
+    V: Into<AlcVec<SongId>>,
+{
+    fn from(value: V) -> Self {
+        Self::new(value, 0)
     }
 }
-
-impl From<Vec<SongId>> for Playlist {
-    fn from(value: Vec<SongId>) -> Self {
-        Self::Dynamic(value)
-    }
-}
-
-impl From<Arc<Vec<SongId>>> for Playlist {
-    fn from(value: Arc<Vec<SongId>>) -> Self {
-        Self::Static(value)
-    }
-}
-
-impl Extend<SongId> for Playlist {
-    fn extend<T: IntoIterator<Item = SongId>>(&mut self, iter: T) {
-        let mut it = iter.into_iter();
-        let i = it.next();
-        if i.is_some() {
-            self.make_dynamic().extend(i.into_iter().chain(it))
-        }
-    }
-}
-
-impl<'a> Extend<&'a SongId> for Playlist {
-    fn extend<T: IntoIterator<Item = &'a SongId>>(&mut self, iter: T) {
-        let mut it = iter.into_iter();
-        let i = it.next();
-        if i.is_some() {
-            self.make_dynamic().extend(i.into_iter().chain(it))
-        }
-    }
-}
-
-impl Serialize for Playlist {
-    fn serialize<S>(
-        &self,
-        serializer: S,
-    ) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        match self {
-            Self::Static(s) => s.as_ref().serialize(serializer),
-            Self::Dynamic(v) => v.serialize(serializer),
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for Playlist {
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        Ok(Self::Dynamic(Vec::deserialize(deserializer)?))
-    }
-
-    fn deserialize_in_place<D>(
-        deserializer: D,
-        place: &mut Self,
-    ) -> std::result::Result<(), D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        match place {
-            Playlist::Static(_) => {
-                *place = Self::Dynamic(Vec::deserialize(deserializer)?);
-                Ok(())
-            }
-            Playlist::Dynamic(v) => Vec::deserialize_in_place(deserializer, v),
-        }
-    }
-}
-
-//===========================================================================//
-//                                  Private                                  //
-//===========================================================================//
 
 impl Playlist {
-    /// Clones the playlist and creates owned vector
-    #[inline]
-    fn make_dynamic(&mut self) -> &mut Vec<SongId> {
-        match self {
-            Self::Dynamic(d) => d,
-            Self::Static(_) => {
-                let Self::Static(v) = mem::take(self) else { panic!(); };
-                match Arc::try_unwrap(v) {
-                    Ok(v) => {
-                        *self = Self::Dynamic(v);
-                        let Self::Dynamic(d) = self else { panic!(); };
-                        d
-                    },
-                    Err(a) => {
-                        *self = Self::Dynamic(a.as_ref().clone());
-                        let Self::Dynamic(d) = self else { panic!(); };
-                        d
-                    }
-                }
-            }
-        }
-    }
-
-    #[inline]
-    fn make_static(&mut self) -> &Arc<Vec<SongId>> {
-        match self {
-            Self::Dynamic(d) => {
-                *self = Self::Static(Arc::new(mem::take(d)));
-                let Self::Static(s) = self else { panic!(); };
-                s
-            }
-            Self::Static(s) => s,
+    fn locate_current(&mut self, cur: SongId) {
+        if let Some(cur) = self.songs.iter().position(|i| *i == cur) {
+            self.current = cur;
         }
     }
 }
