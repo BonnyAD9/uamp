@@ -10,6 +10,25 @@ use crate::core::{config::Config, Result};
 
 use super::{LibraryLoadResult, Song, SongId};
 
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
+/// Adds new songs to the given vector of songs
+pub(super) fn add_new_songs(
+    res: &mut LibraryLoadResult,
+    conf: &Config,
+    remove_missing: bool,
+) {
+    let mut state = State::new(res, conf, remove_missing);
+    state.init();
+    state.load();
+}
+
+//===========================================================================//
+//                                  Private                                  //
+//===========================================================================//
+
 struct State<'a> {
     conf: &'a Config,
     remove_missing: bool,
@@ -41,17 +60,6 @@ macro_rules! err_cont {
             }
         }
     };
-}
-
-/// Adds new songs to the given vector of songs
-pub(super) fn add_new_songs(
-    res: &mut LibraryLoadResult,
-    conf: &Config,
-    remove_missing: bool,
-) {
-    let mut state = State::new(res, conf, remove_missing);
-    state.init();
-    state.load();
 }
 
 impl<'a> State<'a> {

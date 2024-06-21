@@ -10,34 +10,35 @@ use log::warn;
 use raplay::source::{Source, Symph};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{
-    core::{Error, Result},
-    ext::extensions::duration_to_string,
-};
+use crate::core::{Error, Result};
+
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
 
 /// Describes song
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Song {
-    /// Path to the song file
+    /// Path to the song file.
     path: PathBuf,
-    /// Title/Name of the song
+    /// Title/Name of the song.
     title: String,
-    /// The main artist in the song
+    /// The main artist in the song.
     artist: String,
-    /// The album of the song
+    /// The album of the song.
     album: String,
-    /// The track number in the album
+    /// The track number in the album.
     track: u32,
-    /// The disc number in the album
+    /// The disc number in the album.
     disc: u32,
-    /// The year of release
+    /// The year of release.
     year: i32,
-    /// The duration/length of the track
+    /// The duration/length of the track.
     length: Duration,
-    /// The genre of the song
+    /// The genre of the song.
     genre: String,
     /// True if the song is deleted, deleted songs should be skipped in all
-    /// all cases, and should be removed from all collections
+    /// all cases, and should be removed from all collections.
     #[serde(default = "default_deleted")]
     deleted: bool,
 }
@@ -96,7 +97,7 @@ impl Song {
         Ok(s)
     }
 
-    /// Constructs invalid "ghost" song
+    /// Constructs invalid "ghost" song.
     pub fn invalid() -> Self {
         Self {
             path: "<ghost>".into(),
@@ -112,31 +113,32 @@ impl Song {
         }
     }
 
-    /// Gets the song title/name
+    /// Gets the song title/name.
     pub fn title(&self) -> &str {
         &self.title
     }
 
-    /// Gets the main artist in the song
+    /// Gets the main artist in the song.
     pub fn artist(&self) -> &str {
         &self.artist
     }
 
-    /// Gets the album of the song
+    /// Gets the album of the song.
     pub fn album(&self) -> &str {
         &self.album
     }
 
-    /// Gets the path to the song
+    /// Gets the path to the song.
     pub fn path(&self) -> &Path {
         &self.path
     }
 
-    /// Gets the track number of the song in the album
+    /// Gets the track number of the song in the album.
     pub fn track(&self) -> u32 {
         self.track
     }
 
+    /// Gets the track number as string.
     pub fn track_str(&self) -> String {
         if self.track == u32::MAX {
             "-".to_owned()
@@ -145,11 +147,12 @@ impl Song {
         }
     }
 
-    /// Gets the disc number of the song in the album
+    /// Gets the disc number of the song in the album.
     pub fn disc(&self) -> u32 {
         self.disc
     }
 
+    /// Gets the disc number as string.
     pub fn disc_str(&self) -> String {
         if self.disc == u32::MAX {
             "-".to_owned()
@@ -163,42 +166,35 @@ impl Song {
         self.deleted
     }
 
+    /// Marks this song as deleted.
     pub fn delete(&mut self) {
         self.deleted = true;
     }
 
+    /// Gets the year of the release of the song.
     pub fn year(&self) -> i32 {
         self.year
     }
 
-    pub fn _year_str(&self) -> String {
-        if self.year == i32::MAX {
-            "-".to_owned()
-        } else {
-            self.year.to_string()
-        }
-    }
-
+    /// Gets the playback length of the song.
     pub fn length(&self) -> Duration {
         self.length
     }
 
-    pub fn _length_str(&self) -> String {
-        if self.length == Duration::ZERO {
-            "--:--".to_owned()
-        } else {
-            duration_to_string(self.length, true)
-        }
-    }
-
+    /// Sets the playback length of the song.
     pub fn set_length(&mut self, len: Duration) {
         self.length = len;
     }
 
+    /// Gets the genre.
     pub fn genre(&self) -> &str {
         &self.genre
     }
 }
+
+//===========================================================================//
+//                                  Private                                  //
+//===========================================================================//
 
 fn default_deleted() -> bool {
     false

@@ -7,28 +7,21 @@ use crate::{
     core::player::add_policy::AddPolicy, ext::extensions::ParseError,
 };
 
-use super::{Song, SongId};
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
 
-/// Result of library load on another thread
-pub struct LibraryLoadResult {
-    pub(super) removed: bool,
-    pub(super) songs: Vec<Song>,
-    pub(super) add_policy: Option<AddPolicy>,
-    pub(super) first_new: usize,
-    pub(super) sparse_new: Vec<SongId>,
-}
-
-impl LibraryLoadResult {
-    pub fn any_change(&self) -> bool {
-        self.removed
-            || self.first_new != self.songs.len()
-            || !self.sparse_new.is_empty()
-    }
-}
-
+/// Specifies how new are new songs loaded.
 #[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub struct LoadOpts {
+    /// - [`None`] - use value from configuration
+    /// - `true` - remove songs from library where the path no longer exists
+    /// - `false` - don't remove songs from library where the path no longer
+    ///   exists
     pub remove_missing: Option<bool>,
+    /// Determines how to add songs to the playlist.
+    ///
+    /// [`None`] means don't add to playlist.
     pub add_to_playlist: Option<AddPolicy>,
 }
 
@@ -103,13 +96,3 @@ impl FromStr for LoadOpts {
 }
 
 impl FromArgStr for LoadOpts {}
-
-impl Debug for LibraryLoadResult {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("LibraryLoadResult")
-            .field("removed", &self.removed)
-            .field("add_policy", &self.add_policy)
-            .field("first_new", &self.first_new)
-            .finish()
-    }
-}

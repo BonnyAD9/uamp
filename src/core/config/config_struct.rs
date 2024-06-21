@@ -62,39 +62,28 @@ gen_struct! {
         #[doc = "When enabled uamp will sort only by the primary attribute."]
         simple_sorting: bool { pub, pub } => pub(super) () false,
 
-        #[doc =
-            "When enabled, uamp will start playing immidietly when it starts"
-        ]
+        #[doc = "When enabled, uamp will start playing immidietly when it"]
+        #[doc = "starts."]
         play_on_start: bool { pub, pub } => pub(super) () false,
 
-        #[doc =
-            "When disabled the currently playing song will be inserted to the \
-            first position in playlist after shuffling."
-        ]
+        #[doc = "When disabled the currently playing song will be inserted to"]
+        #[doc = "the first position in playlist after shuffling."]
         shuffle_current: bool { pub, pub } => pub(super) () true,
 
-        #[doc =
-            "Determines whether to recursively traverse directories when \
-            searching for new songs."
-        ]
+        #[doc = "Determines whether to recursively traverse directories when"]
+        #[doc = "searching for new songs."]
         recursive_search: bool { pub, pub } => pub(super) () true,
 
-        #[doc =
-            "When enabled, uamp will automatically look for new songs \
-            immidietly when it starts."
-        ]
+        #[doc = "When enabled, uamp will automatically look for new songs"]
+        #[doc = "immidietly when it starts."]
         update_library_on_start: bool { pub, pub } => pub(super) () true,
 
-        #[doc =
-            "When enbled, non existing songs will be removed from library when \
-            looking for new songs."
-        ]
+        #[doc = "When enbled, non existing songs will be removed from library"]
+        #[doc = "when looking for new songs."]
         remove_missing_on_load: bool { pub, pub } => pub(super) () true,
 
-        #[doc =
-            "Determines how much the volumes changes with volume up/down \
-            message"
-        ]
+        #[doc = "Determines how much the volumes changes with volume up/down"]
+        #[doc = "message."]
         volume_jump: f32 { pub, pub } => pub(super) () 0.025,
 
         #[doc = "Determines whether the playback position is saved."]
@@ -132,25 +121,20 @@ gen_struct! {
             }
         },
 
-        #[doc =
-            "Determines how old must logs be so that they are automatically \
-            deleted."
-        ]
+        #[doc = "Determines how old must logs be so that they are"]
+        #[doc = "automatically deleted."]
         delete_logs_after: Wrap<Duration> { pub, pub } => pub(super) () {
             // 3 days
             Wrap(Duration::from_secs(60 * 60 * 24 * 3))
         },
 
-        #[doc =
-            "Enable/Disable server that is used to control uamp. Server is \
-            sometimes forced to be enabled and so this has somtimes no effect."
-        ]
+        #[doc = "Enable/Disable server that is used to control uamp. Server"]
+        #[doc = "is sometimes forced to be enabled and so this has somtimes"]
+        #[doc = "no effect."]
         enable_server: bool { pub, pub } => pub(super) () true,
 
-        #[doc =
-            "When jumping to the start of the song, if the command is issued \
-            again within this time, previous song will be played."
-        ]
+        #[doc = "When jumping to the start of the song, if the command is"]
+        #[doc = "issued again within this time, previous song will be played."]
         previous_timeout: Option<Wrap<Duration>> { pub, pub }
             => pub(super) () None,
 

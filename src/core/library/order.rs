@@ -4,6 +4,12 @@ use serde::{Deserialize, Serialize};
 
 use super::{Library, SongId};
 
+// TODO: unify to ../song_order.rs
+
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
 /// Defines which field should be primarly ordered by
 #[derive(
     Default, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Debug,
@@ -31,14 +37,16 @@ pub enum OrderField {
     Genre,
 }
 
-/// Defines how to order songs
+/// Defines how to order songs.
 #[derive(
     Default, Copy, Clone, Serialize, Deserialize, Debug, PartialEq, Eq,
 )]
 pub struct Order {
+    /// What field should be ordered.
     pub field: OrderField,
     /// When true, it will be ordered only by the field
     pub simple: bool,
+    /// Reverse the order.
     pub reverse: bool,
 }
 

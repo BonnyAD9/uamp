@@ -1,14 +1,11 @@
-use log::{error, info};
-use serde_derive::{Deserialize, Serialize};
-
 use std::{
-    cell::Cell,
     collections::HashSet,
-    fs::{create_dir_all, File},
+    fs::{self, File},
     mem,
-    ops::{Index, IndexMut},
     path::Path,
 };
+
+use log::{error, info};
 
 use crate::{
     core::{
@@ -16,62 +13,18 @@ use crate::{
         UampApp,
     },
     env::AppCtrl,
-    ext::alc_vec::AlcVec,
-    gen_struct,
 };
 
 use super::{
-    add_new_songs::add_new_songs,
-    load::{LibraryLoadResult, LoadOpts},
-    Filter, LibraryUpdate, Song, SongId,
+    add_new_songs::add_new_songs, Library, LibraryLoadResult, LibraryUpdate,
+    LoadOpts, Song, SongId,
 };
-
-gen_struct! {
-    #[derive(Serialize, Deserialize)]
-    pub Library {
-        // Fields passed by reference
-        songs: AlcVec<Song> { pri , pri },
-        #[serde(default)]
-        tmp_songs: AlcVec<Song> { pri, pri },
-        // albums: Vec<SongId> { pri, pri },
-        ; // Fields passed by value
-        ; // Other fields
-        /// invalid song
-        #[serde(skip, default = "default_ghost")]
-        ghost: Song,
-        #[serde(skip)]
-        lib_update: LibraryUpdate,
-        ; // attributes for the auto field
-        #[serde(skip)]
-    }
-}
 
 //===========================================================================//
 //                                   Public                                  //
 //===========================================================================//
 
 impl Library {
-    pub fn clone_songs(&mut self) -> AlcVec<Song> {
-        self.songs.clone()
-    }
-
-    /// Creates empty library
-    pub fn new() -> Self {
-        Library {
-            songs: AlcVec::new(),
-            tmp_songs: AlcVec::new(),
-            lib_update: LibraryUpdate::None,
-            change: Cell::new(true),
-            ghost: Song::invalid(),
-        }
-    }
-
-    pub fn update(&mut self, up: LibraryUpdate) {
-        if up > self.lib_update {
-            self.lib_update = up;
-        }
-    }
-
     /// Loads library according to config, returns empty library on fail
     pub fn from_config(conf: &Config) -> Self {
         if let Some(p) = conf.library_path() {
@@ -81,27 +34,37 @@ impl Library {
         }
     }
 
-    /// Filters songs in the library
-    pub fn filter<'a>(
-        &'a self,
-        filter: Filter,
-    ) -> Box<dyn Iterator<Item = SongId> + 'a> {
-        match filter {
-            Filter::All => Box::new(
-                (0..self.songs().len())
-                    .map(SongId)
-                    .filter(|s| !self[*s].is_deleted()),
-            ),
+    /// Loads the library from the given json file. Returns default library on
+    /// error.
+    pub fn from_json(path: impl AsRef<Path>) -> Self {
+        if let Ok(file) = File::open(path.as_ref()) {
+            match serde_json::from_reader(file) {
+                Ok(l) => l,
+                Err(e) => {
+                    error!("Failed to load library: {e}");
+                    Library::default()
+                }
+            }
+        } else {
+            info!("library file {:?} doesn't exist", path.as_ref());
+            Self::default()
         }
     }
 
+    /// Starts new task that saves the library to json.
+    ///
+    /// The task is started only when there is any change in the library and if
+    /// it is not yet running.
+    ///
+    /// # Errors
+    /// - The save task is already running.
     pub fn start_to_default_json(
         &mut self,
         conf: &Config,
         ctrl: &mut AppCtrl,
         player: &mut Player,
     ) -> Result<()> {
-        if !self.change.get() {
+        if !self.get_change() {
             return Ok(());
         }
 
@@ -137,29 +100,12 @@ impl Library {
             ctrl.add_task(TaskType::LibraryLoad, task);
         }
 
-        self.change.set(false);
+        self.set_change(false);
 
         Ok(())
     }
 
-    /// Loads the library from the given json file. Returns default library on
-    /// error.
-    pub fn from_json(path: impl AsRef<Path>) -> Self {
-        if let Ok(file) = File::open(path.as_ref()) {
-            match serde_json::from_reader(file) {
-                Ok(l) => l,
-                Err(e) => {
-                    error!("Failed to load library: {e}");
-                    Library::default()
-                }
-            }
-        } else {
-            info!("library file {:?} doesn't exist", path.as_ref());
-            Self::default()
-        }
-    }
-
-    /// Loads new songs on another thread
+    /// Loads new songs on another thread.
     pub fn start_get_new_songs(
         &mut self,
         conf: &Config,
@@ -198,94 +144,13 @@ impl Library {
 
         Ok(())
     }
-
-    pub fn clone(&mut self) -> Self {
-        Self {
-            songs: self.clone_songs(),
-            tmp_songs: self.tmp_songs.clone(),
-            lib_update: LibraryUpdate::None,
-            ghost: self.ghost.clone(),
-            change: self.change.clone(),
-        }
-    }
-
-    pub fn add_tmp_song(&mut self, song: Song) -> SongId {
-        for (i, s) in self.tmp_songs_mut().iter_mut().enumerate() {
-            if s.is_deleted() {
-                *s = song;
-                return SongId::tmp(i);
-            }
-        }
-
-        self.tmp_songs_mut().vec_mut().push(song);
-        SongId::tmp(self.tmp_songs.len() - 1)
-    }
-
-    pub fn add_tmp_path<P>(&mut self, path: P) -> Result<SongId>
-    where
-        P: AsRef<Path>,
-    {
-        Ok(self.add_tmp_song(Song::from_path(path)?))
-    }
-}
-
-impl Index<SongId> for Library {
-    type Output = Song;
-    fn index(&self, index: SongId) -> &Self::Output {
-        if index.0 >= self.songs().len() {
-            let idx = index.as_tmp();
-            if idx >= self.tmp_songs().len() || self.songs()[idx].is_deleted()
-            {
-                &self.ghost
-            } else {
-                &self.tmp_songs()[idx]
-            }
-        } else if self.songs()[index.0].is_deleted() {
-            &self.ghost
-        } else {
-            &self.songs()[index.0]
-        }
-    }
-}
-
-impl IndexMut<SongId> for Library {
-    fn index_mut(&mut self, index: SongId) -> &mut Song {
-        if index.0 >= self.songs().len() {
-            let idx = index.as_tmp();
-            if idx >= self.tmp_songs().len() || self.songs()[idx].is_deleted()
-            {
-                &mut self.ghost
-            } else {
-                &mut self.tmp_songs_mut()[idx]
-            }
-        } else if self.songs()[index.0].is_deleted() {
-            &mut self.ghost
-        } else {
-            &mut self.songs_mut()[index.0]
-        }
-    }
-}
-
-impl Index<&SongId> for Library {
-    type Output = Song;
-    fn index(&self, index: &SongId) -> &Self::Output {
-        &self[*index]
-    }
-}
-
-impl IndexMut<&SongId> for Library {
-    fn index_mut(&mut self, index: &SongId) -> &mut Song {
-        &mut self[*index]
-    }
-}
-
-impl Default for Library {
-    fn default() -> Self {
-        Library::new()
-    }
 }
 
 impl UampApp {
+    /// Finishes loading songs started with `start_get_new_songs`.
+    ///
+    /// This will also start to save the library to json if there is any
+    /// change.
     pub fn finish_library_load(
         &mut self,
         ctrl: &mut AppCtrl,
@@ -327,18 +192,16 @@ impl UampApp {
         }
     }
 
+    /// Finish up task for saving songs to json started with
+    /// `start_to_default_json`.
     pub fn finish_library_save_songs(&mut self, res: Result<Vec<SongId>>) {
         match res {
             Ok(free) => self.library.remove_free_tmp_songs(&free),
             Err(e) => {
                 error!("Failed to save library: {e}");
-                self.library.change.set(true);
+                self.library.set_change(true);
             }
         }
-    }
-
-    pub fn library_lib_update(&mut self) -> LibraryUpdate {
-        mem::replace(&mut self.library.lib_update, LibraryUpdate::None)
     }
 }
 
@@ -347,19 +210,13 @@ impl UampApp {
 //===========================================================================//
 
 impl Library {
-    /// Saves the library to the specified path.
-    ///
-    /// # Errors
-    /// - Fails to create the parent directory
-    /// - Fails to write file
-    /// - Fails to serialize
     fn write_json<P, I>(&mut self, path: P, used: I) -> Result<Vec<SongId>>
     where
         P: AsRef<Path>,
         I: IntoIterator<Item = SongId>,
     {
         if let Some(par) = path.as_ref().parent() {
-            create_dir_all(par)?;
+            fs::create_dir_all(par)?;
         }
 
         let free = self.get_free_tmp_songs(used);
@@ -394,8 +251,4 @@ impl Library {
     fn is_tmp(&self, id: SongId) -> bool {
         id.0 >= self.songs.len() && usize::MAX - id.0 <= self.tmp_songs.len()
     }
-}
-
-fn default_ghost() -> Song {
-    Song::invalid()
 }
