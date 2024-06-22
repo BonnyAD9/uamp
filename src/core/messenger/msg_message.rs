@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::core::{AnyControlMsg, PlayMsg};
+use crate::core::{AnyControlMsg, ControlMsg, DataControlMsg, Msg, PlayMsg};
 
 use super::{Error, ErrorKind, Info, Request};
 
@@ -29,30 +29,72 @@ impl MsgMessage {
     /// Creates new error with a default message for its type
     pub fn new_error(typ: ErrorKind) -> Self {
         match typ {
-            ErrorKind::DeserializeFailed => Self::Error(Error::new(
+            ErrorKind::DeserializeFailed => Error::new(
                 typ,
                 "Failed to deserialize the incoming message".to_owned(),
-            )),
-            ErrorKind::ExpectedRequest => Self::Error(Error::new(
+            ).into(),
+            ErrorKind::ExpectedRequest => Error::new(
                 typ,
                 "Expected request message".to_owned(),
-            )),
-            ErrorKind::ExpectedControl => Self::Error(Error::new(
+            ).into(),
+            ErrorKind::ExpectedControl => Error::new(
                 typ,
                 "Expected control message".to_owned(),
-            )),
-            ErrorKind::ExpectedInfo => Self::Error(Error::new(
+            ).into(),
+            ErrorKind::ExpectedInfo => Error::new(
                 typ,
                 "Expected info message".to_owned(),
-            )),
-            ErrorKind::ExpectedRequestOrControl => Self::Error(Error::new(
+            ).into(),
+            ErrorKind::ExpectedRequestOrControl => Error::new(
                 typ,
                 "Expected request or control message".to_owned(),
-            )),
-            ErrorKind::InternalError => Self::Error(Error::new(
+            ).into(),
+            ErrorKind::InternalError => Error::new(
                 typ,
                 "Error occured when trying to fulfill request.".to_owned(),
-            )),
+            ).into(),
         }
+    }
+}
+
+impl From<Error> for MsgMessage {
+    fn from(value: Error) -> Self {
+        Self::Error(value)
+    }
+}
+
+impl From<PlayMsg> for MsgMessage {
+    fn from(value: PlayMsg) -> Self {
+        Self::Play(value)
+    }
+}
+
+impl From<Request> for MsgMessage {
+    fn from(value: Request) -> Self {
+        Self::Request(value)
+    }
+}
+
+impl From<AnyControlMsg> for MsgMessage {
+    fn from(value: AnyControlMsg) -> Self {
+        Self::Control(value)
+    }
+}
+
+impl From<ControlMsg> for MsgMessage {
+    fn from(value: ControlMsg) -> Self {
+        Self::Control(value.into())
+    }
+}
+
+impl From<DataControlMsg> for MsgMessage {
+    fn from(value: DataControlMsg) -> Self {
+        Self::Control(value.into())
+    }
+}
+
+impl From<Info> for MsgMessage {
+    fn from(value: Info) -> Self {
+        Self::Info(Box::new(value))
     }
 }

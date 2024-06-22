@@ -4,8 +4,7 @@ use log::{error, warn};
 
 use crate::{
     core::{
-        messenger::{Messenger, MsgMessage},
-        Msg, Result, TaskType, UampApp,
+        messenger::{Messenger, MsgMessage}, AnyControlMsg, Msg, Result, TaskType, UampApp
     },
     env::AppCtrl,
 };
@@ -101,11 +100,5 @@ impl UampApp {
         }
 
         Ok(())
-    }
-}
-
-impl From<ConfigMsg> for Msg {
-    fn from(value: ConfigMsg) -> Self {
-        Msg::Config(value)
     }
 }

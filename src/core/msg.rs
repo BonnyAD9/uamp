@@ -4,8 +4,7 @@ use std::sync::Arc;
 use crate::{core::UampApp, env::AppCtrl};
 
 use super::{
-    config::ConfigMsg, player::PlayerMsg, ControlMsg, DataControlMsg,
-    MessageDelegate, PlayMsg,
+    config::ConfigMsg, player::PlayerMsg, AnyControlMsg, ControlMsg, DataControlMsg, MessageDelegate, PlayMsg
 };
 
 /// Event messages in uamp
@@ -39,5 +38,44 @@ impl UampApp {
             Msg::Config(msg) => self.config_event(ctrl, msg),
             Msg::None => None,
         }
+    }
+}
+
+impl From<PlayMsg> for Msg {
+    fn from(value: PlayMsg) -> Self {
+        Self::PlaySong(value)
+    }
+}
+
+impl From<ControlMsg> for Msg {
+    fn from(value: ControlMsg) -> Self {
+        Self::Control(value)
+    }
+}
+
+impl From<DataControlMsg> for Msg {
+    fn from(value: DataControlMsg) -> Self {
+        Self::DataControl(value)
+    }
+}
+
+impl From<AnyControlMsg> for Msg {
+    fn from(value: AnyControlMsg) -> Self {
+        match value {
+            AnyControlMsg::Control(ctrl) => Self::Control(ctrl),
+            AnyControlMsg::Data(data) => Self::DataControl(data),
+        }
+    }
+}
+
+impl From<PlayerMsg> for Msg {
+    fn from(value: PlayerMsg) -> Self {
+        Self::Player(value)
+    }
+}
+
+impl From<ConfigMsg> for Msg {
+    fn from(value: ConfigMsg) -> Self {
+        Msg::Config(value)
     }
 }

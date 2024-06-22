@@ -5,9 +5,16 @@ use serde::{Deserialize, Serialize};
 
 use super::{ControlMsg, DataControlMsg, Error, Msg};
 
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
+/// Either [`ControlMsg`] or [`DataControlMsg`]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum AnyControlMsg {
+    /// [`ControlMsg`]
     Control(ControlMsg),
+    /// [`DataControlMsg`]
     Data(DataControlMsg),
 }
 
@@ -30,13 +37,16 @@ impl Display for AnyControlMsg {
     }
 }
 
-impl From<AnyControlMsg> for Msg {
-    fn from(value: AnyControlMsg) -> Self {
-        match value {
-            AnyControlMsg::Control(ctrl) => Self::Control(ctrl),
-            AnyControlMsg::Data(data) => Self::DataControl(data),
-        }
+impl FromArgStr for AnyControlMsg {}
+
+impl From<ControlMsg> for AnyControlMsg {
+    fn from(value: ControlMsg) -> Self {
+        Self::Control(value)
     }
 }
 
-impl FromArgStr for AnyControlMsg {}
+impl From<DataControlMsg> for AnyControlMsg {
+    fn from(value: DataControlMsg) -> Self {
+        Self::Data(value)
+    }
+}

@@ -4,10 +4,13 @@ use crate::env::AppCtrl;
 
 use super::{Msg, UampApp};
 
+/// Message that can do its own action.
 pub trait MessageDelegate: Sync + Send + Debug {
+    /// Action that this message does.
     fn update(&self, app: &mut UampApp, ctrl: &mut AppCtrl) -> Option<Msg>;
 }
 
+/// Wrapper to implement [`MessageDelegate`] for closures.
 pub struct FnDelegate<T>(T)
 where
     T: Sync + Send + Fn(&mut UampApp, &mut AppCtrl) -> Option<Msg>;
@@ -40,6 +43,7 @@ where
 }
 
 impl Msg {
+    /// Creates delegate message.
     pub fn delegate<I, D>(d: I) -> Self
     where
         D: MessageDelegate + 'static,

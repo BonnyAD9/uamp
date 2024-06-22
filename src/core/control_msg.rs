@@ -20,7 +20,11 @@ use super::{
     Error, Msg, SongOrder, TaskType, UampApp,
 };
 
-/// only simple messages that can be safely send across threads and copied
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
+/// Simple messages that can be safely send across threads and copied
 #[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum ControlMsg {
     /// Toggle/set between play/pause, [`None`] to toggle, [`Some`] to set
@@ -64,7 +68,7 @@ pub enum ControlMsg {
 }
 
 impl UampApp {
-    /// handles the control events
+    /// Handles events for [`ControlMsg`].
     pub fn control_event(
         &mut self,
         ctrl: &mut AppCtrl,

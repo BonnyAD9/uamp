@@ -74,13 +74,13 @@ impl UampApp {
                     Err(e) => {
                         error!("Failed to clone tcp stream: {e}");
                         return (
-                            Some(MsgMessage::Error(Error::new(
+                            Some(Error::new(
                                 ErrorKind::InternalError,
                                 format!(
                                 "Error occured when trying to fulfill request\
                                 : {e}"
                             ),
-                            ))),
+                            ).into()),
                             None,
                         );
                     }
@@ -91,7 +91,7 @@ impl UampApp {
                         move |app: &mut UampApp, _: &mut AppCtrl| {
                             let mut msg = Messenger::new(&stream);
                             if let Err(e) =
-                                msg.send(MsgMessage::Info(Box::new(Info {
+                                msg.send(Info {
                                     version: option_env!("CARGO_PKG_VERSION")
                                         .unwrap_or("unknown")
                                         .to_owned(),
@@ -106,7 +106,7 @@ impl UampApp {
                                         .get_pos(),
                                     is_playing: app.player.is_playing(),
                                     timestamp: app.player.timestamp(),
-                                })))
+                                }.into())
                             {
                                 error!("Failed to send message: {e}");
                             };

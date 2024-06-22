@@ -7,13 +7,20 @@ use crate::{env::AppCtrl, starts};
 
 use super::{Error, Msg, UampApp};
 
-/// Messages that can be safely send across threads
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
+/// Messages that can be safely send across threads, but not necesarily esily
+/// copied.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum DataControlMsg {
+    /// Invoke alias.
     Alias(String),
 }
 
 impl UampApp {
+    /// Handles events for [`DataControlMsg`]
     pub fn data_control_event(
         &mut self,
         ctrl: &mut AppCtrl,
