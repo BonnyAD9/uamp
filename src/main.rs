@@ -71,7 +71,7 @@ fn start_logger() -> Result<()> {
         flexi_logger::FileSpec::default()
             .directory(config::default_config_path().join("log")),
     )
-    .write_mode(flexi_logger::WriteMode::BufferAndFlush)
+    .write_mode(flexi_logger::WriteMode::Direct)
     .start()?;
     Ok(())
 }
