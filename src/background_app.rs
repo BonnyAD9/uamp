@@ -6,6 +6,12 @@ use crate::{
     env::{AppCtrl, Command, MsgGen, Streams, UniqueTasks},
 };
 
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
+/// Runs uamp as background app that must have server so that it can be
+/// controlled.
 pub fn run_background_app(
     mut conf: Config,
     init: Vec<AnyControlMsg>,
