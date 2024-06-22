@@ -144,11 +144,10 @@ impl Player {
     /// # Errors
     /// - cannot create parrent directory
     /// - Failed to serialize
-    fn save_to_json(
-        &mut self,
-        save_pos: bool,
-        path: impl AsRef<Path>,
-    ) -> Result<()> {
+    fn save_to_json<P>(&mut self, save_pos: bool, path: P) -> Result<()>
+    where
+        P: AsRef<Path>,
+    {
         if let Some(par) = path.as_ref().parent() {
             fs::create_dir_all(par)?;
         }

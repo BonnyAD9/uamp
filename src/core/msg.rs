@@ -218,7 +218,7 @@ impl UampApp {
                 return Some(Msg::Tick);
             }
             ControlMsg::SetPlaylist(filter) => {
-                let songs: Vec<_> = self.library.filter(filter).collect();
+                let songs = self.library.filter(filter);
                 self.player.play_playlist(
                     &mut self.library,
                     songs.into(),
@@ -226,7 +226,7 @@ impl UampApp {
                 );
             }
             ControlMsg::PushPlaylist(filter) => {
-                let songs: Vec<_> = self.library.filter(filter).collect();
+                let songs = self.library.filter(filter);
                 self.player.push_playlist(
                     &mut self.library,
                     songs.into(),

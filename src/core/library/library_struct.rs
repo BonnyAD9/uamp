@@ -70,16 +70,12 @@ impl Library {
     }
 
     /// Filters songs in the library
-    pub fn filter<'a>(
-        &'a self,
-        filter: Filter,
-    ) -> Box<dyn Iterator<Item = SongId> + 'a> {
+    pub fn filter(&self, filter: Filter) -> AlcVec<SongId> {
         match filter {
-            Filter::All => Box::new(
-                (0..self.songs().len())
-                    .map(SongId)
-                    .filter(|s| !self[*s].is_deleted()),
-            ),
+            Filter::All => (0..self.songs().len())
+                .map(SongId)
+                .filter(|s| !self[*s].is_deleted())
+                .collect(),
         }
     }
 
@@ -113,10 +109,7 @@ impl Library {
     ///
     /// # Errors
     /// - The song fails to load from the given path.
-    pub fn add_tmp_path<P>(&mut self, path: P) -> Result<SongId>
-    where
-        P: AsRef<Path>,
-    {
+    pub fn add_tmp_path(&mut self, path: impl AsRef<Path>) -> Result<SongId> {
         Ok(self.add_tmp_song(Song::from_path(path)?))
     }
 

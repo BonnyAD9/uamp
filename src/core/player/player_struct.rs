@@ -43,19 +43,13 @@ impl Player {
     /// - `play`: play when `true`, otherwise pause.
     pub fn play(&mut self, lib: &mut Library, play: bool) {
         if !self.state.is_stopped() {
-            match self.inner.play(play) {
-                Ok(_) => {
-                    self.state = Playback::play(play);
-                }
-                Err(e) => error!("Failed to play/pause: {}", e),
-            }
-            return;
+            self.inner.play(play);
         }
 
         if let Some(id) = self.playlist().current() {
             self.load(lib, id, play);
         } else {
-            _ = self.inner.play(false);
+            self.inner.play(false);
             error!("Cannot play/pause, the playlist is empty.");
         }
     }
@@ -65,10 +59,7 @@ impl Player {
     /// - `volume`: Value from 0 to 1 (can be outside of this range but it may
     ///   result in distorted audio). It is on square root scale.
     pub fn set_volume(&mut self, volume: f32) {
-        match self.inner.set_volume(volume) {
-            Ok(_) => _ = self.volume_set(volume),
-            Err(e) => error!("Failed to set volume: {}", e),
-        }
+        self.inner.set_volume(volume);
     }
 
     /// Mute/Unmute.
@@ -77,11 +68,7 @@ impl Player {
     ///   field `volume`.
     pub fn set_mute(&mut self, mute: bool) {
         let vol = if mute { 0. } else { self.volume() };
-
-        match self.inner.set_volume(vol) {
-            Ok(_) => _ = self.mute_set(mute),
-            Err(e) => error!("Failed to mute: {}", e),
-        }
+        self.inner.set_volume(vol);
     }
 
     /// Loads the given playlist.
@@ -125,12 +112,13 @@ impl Player {
 
     /// Changes the state to [`Playback::Stopped`]
     pub fn stop(&mut self) {
-        match self.inner.play(false) {
-            Ok(_) => self.state = Playback::Stopped,
-            Err(e) => error!("Failed to stop playback: {}", e),
+        if !self.state.is_stopped() {
+            self.inner.play(false);
+            self.state = Playback::Stopped;
         }
     }
 
+    /// Push the given playlist to the stack and set it as current.
     pub fn push_playlist(
         &mut self,
         lib: &mut Library,
@@ -149,6 +137,7 @@ impl Player {
         self.try_load(lib, self.playlist.current(), play);
     }
 
+    /// If there are more playlists in the stack, end the top one.
     pub fn pop_playlist(&mut self, lib: &mut Library) {
         let Some(playlist) = self.intercept.take() else {
             return;
@@ -161,9 +150,7 @@ impl Player {
 
     /// Sets the fade duration for play/pause
     pub fn fade_play_pause(&mut self, t: Duration) {
-        if let Err(e) = self.inner.fade_play_pause(t) {
-            error!("Failed to set the fade duration: {e}");
-        }
+        self.inner.fade_play_pause(t);
     }
 
     /// Configures the player
@@ -173,7 +160,7 @@ impl Player {
     }
 
     /// Gets timestamp of the current playback, returns [`None`] if nothing
-    /// is playing
+    /// is playing.
     pub fn timestamp(&self) -> Option<Timestamp> {
         if self.state.is_stopped() {
             None
@@ -193,6 +180,11 @@ impl Player {
         }
     }
 
+    /// Seeks by the given amount.
+    ///
+    /// - `t`: seek amount
+    /// - `forward`: the direction of seeking. `true` - forward, `false` -
+    ///   backwards
     pub fn seek_by(
         &mut self,
         t: Duration,
@@ -207,12 +199,14 @@ impl Player {
         }
     }
 
+    /// Does hard pause without the fading (if configured).
     pub fn hard_pause(&mut self) {
         if let Err(e) = self.inner.hard_pause() {
             warn!("Failed to hard pause: {e}");
         }
     }
 
+    /// Gets the IDS of the songs in the playlists.
     pub fn get_ids(&mut self) -> (AlcVec<SongId>, Option<AlcVec<SongId>>) {
         (
             self.playlist.clone_songs(),
@@ -220,6 +214,7 @@ impl Player {
         )
     }
 
+    /// Removes all deleted songs from the playlists.
     pub fn remove_deleted(&mut self, lib: &Library) {
         self.playlist_mut().remove_deleted(lib);
         if let Some(p) = self.intercept_mut() {
@@ -243,6 +238,7 @@ impl Player {
         res
     }
 
+    /// Creates new player from the given configuration. Doesn't init.
     pub(super) fn new(
         inner: SinkWrapper,
         state: Playback,
@@ -263,33 +259,26 @@ impl Player {
         }
     }
 
+    /// Initializes the player.
     pub(super) fn init_inner(&mut self, sender: UnboundedSender<Msg>) {
-        if let Err(e) = self
-            .inner
-            .on_callback(move |msg| Self::song_end_handler(msg, &sender))
-        {
-            error!("Failed to set the song end callback: {e}");
-        }
+        self.inner.on_callback(move |msg| {
+            Self::inner_callback_handler(msg, &sender)
+        });
 
-        (self.mute, self.volume) = if self.mute {
-            if let Err(e) = self.inner.set_volume(0.) {
-                error!("Failed to set the initial volume: {e}");
-                (false, 1.) // 1 is the default volume of the player
-            } else {
-                (true, self.volume)
-            }
-        } else if let Err(e) = self.inner.set_volume(self.volume) {
-            error!("Failed to set the initial volume: {e}");
-            (false, 1.) // 1 is the default volume of the player
+        if self.mute {
+            self.inner.set_volume(0.);
         } else {
-            (false, self.volume)
-        };
+            self.inner.set_volume(self.volume);
+        }
     }
 
+    /// Gets value indicating whether there was any changle since the last
+    /// save.
     pub(super) fn get_change(&self) -> bool {
         self.change.get()
     }
 
+    /// Sets value indicating whether there was any change since the last save.
     pub(super) fn set_change(&self, val: bool) {
         self.change.set(val);
     }
@@ -307,6 +296,7 @@ impl UampApp {
         None
     }
 
+    /// Updates the stored song metadata based on the update level.
     pub fn player_lib_update(&mut self, up: LibraryUpdate) {
         if up >= LibraryUpdate::RemoveData {
             self.player.remove_deleted(&self.library);
@@ -326,10 +316,8 @@ impl Player {
     ) -> bool {
         let Some(id) = id else {
             if !self.state.is_stopped() {
+                self.inner.play(false);
                 self.state = Playback::Stopped;
-                if let Err(e) = self.inner.play(false) {
-                    error!("Failed to stop playback: {e}");
-                }
             }
             return false;
         };
@@ -340,7 +328,6 @@ impl Player {
         }
     }
 
-    /// Tries to load a song into the library. Stops on failure.
     fn try_load(
         &mut self,
         lib: &mut Library,
@@ -355,7 +342,6 @@ impl Player {
         }
     }
 
-    /// Loads a song into the player.
     fn load(&mut self, lib: &mut Library, id: SongId, play: bool) -> bool {
         match self.inner.load(lib, id, play) {
             Ok(_) => {
@@ -370,7 +356,10 @@ impl Player {
         }
     }
 
-    fn song_end_handler(msg: CallbackInfo, sender: &UnboundedSender<Msg>) {
+    fn inner_callback_handler(
+        msg: CallbackInfo,
+        sender: &UnboundedSender<Msg>,
+    ) {
         let message = match msg {
             CallbackInfo::SourceEnded => Msg::Player(PlayerMsg::SongEnd),
             CallbackInfo::PauseEnds(i) => {

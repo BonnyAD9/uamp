@@ -3,7 +3,7 @@
 //===========================================================================//
 
 /// State of the player playback
-#[derive(Clone, Copy, Default, Debug)]
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
 pub enum Playback {
     /// No song is playing (no song is loaded)
     #[default]
@@ -27,5 +27,17 @@ impl Playback {
     /// Returns true if this is [`Playback::Stopped`]
     pub fn is_stopped(&self) -> bool {
         matches!(self, Playback::Stopped)
+    }
+}
+
+impl From<bool> for Playback {
+    fn from(value: bool) -> Self {
+        Self::play(value)
+    }
+}
+
+impl From<Option<bool>> for Playback {
+    fn from(value: Option<bool>) -> Self {
+        value.map_or(Playback::Stopped, Playback::play)
     }
 }

@@ -45,7 +45,7 @@ pub struct Song {
 
 impl Song {
     /// Creates song from the given path
-    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
+    pub fn from_path(path: impl AsRef<Path>) -> Result<Self> {
         let tag = match Tag::new().read_from_path(&path) {
             Ok(tag) => tag,
             Err(audiotags::Error::UnsupportedFormat(_)) => {

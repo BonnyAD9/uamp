@@ -272,6 +272,15 @@ where
     }
 }
 
+impl<T> FromIterator<T> for AlcVec<T>
+where
+    T: Clone,
+{
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        Self::Dynamic(Vec::from_iter(iter))
+    }
+}
+
 //===========================================================================//
 //                                  Private                                  //
 //===========================================================================//

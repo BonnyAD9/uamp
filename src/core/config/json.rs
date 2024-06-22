@@ -32,7 +32,7 @@ impl Config {
     ///
     /// # Errors
     /// - The config fails to parse.
-    pub fn from_json<P: AsRef<Path>>(path: P) -> Result<Self> {
+    pub fn from_json(path: impl AsRef<Path>) -> Result<Self> {
         let file = match File::open(path.as_ref()) {
             Ok(f) => f,
             Err(_) => {
@@ -78,7 +78,7 @@ impl Config {
     /// - Fails to create parent directory
     /// - Fails to write to file
     /// - Fails to serialize
-    pub fn to_json<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+    pub fn to_json(&self, path: impl AsRef<Path>) -> Result<()> {
         if let Some(par) = path.as_ref().parent() {
             fs::create_dir_all(par)?;
         }
