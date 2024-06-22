@@ -18,6 +18,10 @@ use super::{
     playback::Playback, sink_wrapper::SinkWrapper, PlayerMsg, Playlist,
 };
 
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
 gen_struct! {
     #[derive(Debug)]
     pub Player {
@@ -33,12 +37,10 @@ gen_struct! {
     }
 }
 
-//===========================================================================//
-//                                   Public                                  //
-//===========================================================================//
-
 impl Player {
-    /// Sets the playback state to play/pause
+    /// Play/Pause.
+    ///
+    /// - `play`: play when `true`, otherwise pause.
     pub fn play(&mut self, lib: &mut Library, play: bool) {
         if !self.state.is_stopped() {
             match self.inner.play(play) {
@@ -58,7 +60,10 @@ impl Player {
         }
     }
 
-    /// Sets the playback volume. It is not set on error.
+    /// Sets the playback volume.
+    ///
+    /// - `volume`: Value from 0 to 1 (can be outside of this range but it may
+    ///   result in distorted audio). It is on square root scale.
     pub fn set_volume(&mut self, volume: f32) {
         match self.inner.set_volume(volume) {
             Ok(_) => _ = self.volume_set(volume),
@@ -66,7 +71,10 @@ impl Player {
         }
     }
 
-    /// Sets the mute state. It is not set on error.
+    /// Mute/Unmute.
+    ///
+    /// - `mute`: when `true` the audio will be muted. This doesn't affect the
+    ///   field `volume`.
     pub fn set_mute(&mut self, mute: bool) {
         let vol = if mute { 0. } else { self.volume() };
 
@@ -76,7 +84,7 @@ impl Player {
         }
     }
 
-    /// Loads the given playlist
+    /// Loads the given playlist.
     pub fn play_playlist(
         &mut self,
         lib: &mut Library,

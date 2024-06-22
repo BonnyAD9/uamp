@@ -13,9 +13,13 @@ use crate::core::{
 
 use super::{playback::Playback, sink_wrapper::SinkWrapper, Player, Playlist};
 
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
 impl Player {
     /// Loads the playback state from json based on the config, returns default
-    /// [`Player`] on fail
+    /// [`Player`] on fail.
     pub fn from_config(
         lib: &mut Library,
         sender: UnboundedSender<Msg>,
@@ -90,6 +94,10 @@ impl Player {
         res
     }
 }
+
+//===========================================================================//
+//                                  Private                                  //
+//===========================================================================//
 
 /// Used for deserializing the data of the [`Player`]
 #[derive(Deserialize)]
