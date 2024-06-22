@@ -4,8 +4,13 @@ use std::sync::Arc;
 use crate::{core::UampApp, env::AppCtrl};
 
 use super::{
-    config::ConfigMsg, player::PlayerMsg, AnyControlMsg, ControlMsg, DataControlMsg, MessageDelegate, PlayMsg
+    config::ConfigMsg, player::PlayerMsg, AnyControlMsg, ControlMsg,
+    DataControlMsg, MessageDelegate, PlayMsg,
 };
+
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
 
 /// Event messages in uamp
 #[allow(missing_debug_implementations)]
@@ -23,12 +28,18 @@ pub enum Msg {
     Delegate(Arc<dyn MessageDelegate>),
     /// Message for configuration.
     Config(ConfigMsg),
+    /// Nothing, just do the usual updates.
     #[default]
     None,
 }
 
 impl UampApp {
-    pub fn msg_event(&mut self, ctrl: &mut AppCtrl, msg: Msg) -> Option<Msg> {
+    /// Handle the message event.
+    pub(in crate::core) fn msg_event(
+        &mut self,
+        ctrl: &mut AppCtrl,
+        msg: Msg,
+    ) -> Option<Msg> {
         match msg {
             Msg::PlaySong(msg) => self.play_event(msg),
             Msg::Control(msg) => self.control_event(ctrl, msg),

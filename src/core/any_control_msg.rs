@@ -3,7 +3,7 @@ use std::{fmt::Display, str::FromStr};
 use pareg::FromArgStr;
 use serde::{Deserialize, Serialize};
 
-use super::{ControlMsg, DataControlMsg, Error, Msg};
+use super::{ControlMsg, DataControlMsg, Error};
 
 //===========================================================================//
 //                                   Public                                  //

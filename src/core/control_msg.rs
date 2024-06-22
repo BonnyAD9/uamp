@@ -69,7 +69,7 @@ pub enum ControlMsg {
 
 impl UampApp {
     /// Handles events for [`ControlMsg`].
-    pub fn control_event(
+    pub(in crate::core) fn control_event(
         &mut self,
         ctrl: &mut AppCtrl,
         msg: ControlMsg,
@@ -332,6 +332,10 @@ impl FromStr for ControlMsg {
 }
 
 impl FromArgStr for ControlMsg {}
+
+//===========================================================================//
+//                                  Private                                  //
+//===========================================================================//
 
 #[derive(FromArg)]
 enum PlayPause {

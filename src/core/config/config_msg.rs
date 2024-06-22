@@ -4,7 +4,8 @@ use log::{error, warn};
 
 use crate::{
     core::{
-        messenger::{Messenger, MsgMessage}, AnyControlMsg, Msg, Result, TaskType, UampApp
+        messenger::{Messenger, MsgMessage},
+        Msg, Result, TaskType, UampApp,
     },
     env::AppCtrl,
 };
@@ -27,7 +28,7 @@ impl UampApp {
     ///
     /// # Returns
     /// May return newly generated message that should be handled.
-    pub fn config_event(
+    pub(in crate::core) fn config_event(
         &mut self,
         ctrl: &mut AppCtrl,
         msg: ConfigMsg,
@@ -68,7 +69,11 @@ impl UampApp {
         None
     }
 
-    pub fn config_update(&mut self, ctrl: &mut AppCtrl, now: Instant) {
+    pub(in crate::core) fn config_update(
+        &mut self,
+        ctrl: &mut AppCtrl,
+        now: Instant,
+    ) {
         if self
             .config
             .save_timeout()

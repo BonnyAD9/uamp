@@ -21,37 +21,40 @@ use super::{
     ControlMsg, TaskMsg, TaskType,
 };
 
-/// The uamp app state
-pub struct UampApp {
-    /// The configuration
-    pub config: Config,
-    /// The song library
-    pub library: Library,
-    /// The song player
-    pub player: Player,
-
-    /// Sender for async messages to be synchronized with the main message
-    /// handler
-    pub sender: UnboundedSender<Msg>,
-
-    /// Messages that can be processed only if there are no running processes
-    pub pending_close: bool,
-
-    pub hard_pause_at: Option<Instant>,
-
-    /// When was last save
-    pub last_save: Instant,
-
-    pub last_prev: Instant,
-
-    _config_watch: Option<INotifyWatcher>,
-}
-
 //===========================================================================//
 //                                   Public                                  //
 //===========================================================================//
 
+/// The uamp app state
+pub struct UampApp {
+    /// The configuration
+    pub(super) config: Config,
+    /// The song library
+    pub(super) library: Library,
+    /// The song player
+    pub(super) player: Player,
+
+    /// Sender for async messages to be synchronized with the main message
+    /// handler
+    pub(super) sender: UnboundedSender<Msg>,
+
+    /// Messages that can be processed only if there are no running processes
+    pub(super) pending_close: bool,
+
+    /// When this has value, it says when you can safely trigger hard pause.
+    pub(super) hard_pause_at: Option<Instant>,
+
+    /// When was last save
+    pub(super) last_save: Instant,
+
+    /// Las time that song was rewinded to the start with button.
+    pub(super) last_prev: Instant,
+
+    _config_watch: Option<INotifyWatcher>,
+}
+
 impl UampApp {
+    /// Creates new uamp application instance.
     pub fn new(
         conf: Config,
         ctrl: &mut AppCtrl,
@@ -111,8 +114,28 @@ impl UampApp {
         })
     }
 
-    /// Saves all the data that is saved by uamp
-    pub fn save_all(&mut self, closing: bool, ctrl: &mut AppCtrl) {
+    /// Handles the message sent to uamp.
+    pub fn update(&mut self, ctrl: &mut AppCtrl, message: Msg) {
+        let msg = self.msg_event(ctrl, message);
+
+        if let Some(msg) = msg {
+            return self.update(ctrl, msg);
+        }
+
+        if self.pending_close && !ctrl.any_task(|t| t != TaskType::Server) {
+            self.pending_close = false;
+            return self.update(ctrl, Msg::Control(ControlMsg::Close));
+        }
+
+        let now = Instant::now();
+
+        let up = self.library_update();
+        self.player_update(now, up);
+        self.config_update(ctrl, now);
+    }
+
+    /// Saves all the data that is saved by uamp.
+    pub(super) fn save_all(&mut self, closing: bool, ctrl: &mut AppCtrl) {
         match self.library.start_to_default_json(
             &self.config,
             ctrl,
@@ -133,52 +156,8 @@ impl UampApp {
         self.last_save = Instant::now();
     }
 
-    pub fn task_end(&mut self, ctrl: &mut AppCtrl, task_res: TaskMsg) {
-        match task_res {
-            TaskMsg::Server(Err(e)) => {
-                error!("Server unexpectedly ended: {e}");
-            }
-            TaskMsg::Server(Ok(_)) => {
-                if self.config.enable_server() || self.config.force_server {
-                    if let Err(e) = Self::start_server(
-                        &self.config,
-                        ctrl,
-                        self.sender.clone(),
-                    ) {
-                        error!("Failed to restart server: {e}");
-                    }
-                }
-            }
-            TaskMsg::LibraryLoad(res) => {
-                self.finish_library_load(ctrl, res);
-            }
-            TaskMsg::LibrarySave(res) => {
-                self.finish_library_save_songs(res);
-            }
-        }
-    }
-
-    pub fn update(&mut self, ctrl: &mut AppCtrl, message: Msg) {
-        let msg = self.msg_event(ctrl, message);
-
-        if let Some(msg) = msg {
-            return self.update(ctrl, msg);
-        }
-
-        if self.pending_close && !ctrl.any_task(|t| t != TaskType::Server) {
-            self.pending_close = false;
-            return self.update(ctrl, Msg::Control(ControlMsg::Close));
-        }
-
-        let now = Instant::now();
-
-        let up = self.library_update();
-        self.player_update(now, up);
-        self.config_update(ctrl, now);
-    }
-
     /// Deletes old logs.
-    pub fn delete_old_logs(&self) -> Result<()> {
+    pub(super) fn delete_old_logs(&self) -> Result<()> {
         let dir = fs::read_dir(default_config_path().join("log"))?;
 
         for d in dir {
@@ -192,8 +171,8 @@ impl UampApp {
         Ok(())
     }
 
-    /// Starts the tcp server
-    pub fn start_server(
+    /// Starts the tcp server.
+    pub(super) fn start_server(
         conf: &Config,
         ctrl: &mut AppCtrl,
         sender: UnboundedSender<Msg>,

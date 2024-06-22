@@ -46,16 +46,17 @@ impl Instance {
     {
         while let Some(arg) = args.next() {
             match arg {
-                "info" | "nfo" => {
-                    self.messages.push(Request::Info.into())
-                }
+                "info" | "nfo" => self.messages.push(Request::Info.into()),
                 v if starts!(v, "p" | "play") => {
-                    self.messages.push(PlayMsg::TmpPath(
-                        args.cur_key_val::<&str, &Path>('=')?
-                            .1
-                            .canonicalize()?
-                            .into(),
-                    ).into());
+                    self.messages.push(
+                        PlayMsg::TmpPath(
+                            args.cur_key_val::<&str, &Path>('=')?
+                                .1
+                                .canonicalize()?
+                                .into(),
+                        )
+                        .into(),
+                    );
                 }
                 "-h" | "-?" | "--help" => help_instance(),
                 "-p" | "--port" => self.port = Some(args.next_arg()?),

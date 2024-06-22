@@ -19,7 +19,10 @@ pub enum PlayerMsg {
 
 impl UampApp {
     /// Handles player event messages
-    pub fn player_event(&mut self, msg: PlayerMsg) -> Option<Msg> {
+    pub(in crate::core) fn player_event(
+        &mut self,
+        msg: PlayerMsg,
+    ) -> Option<Msg> {
         match msg {
             PlayerMsg::SongEnd => {
                 self.player.play_next(&mut self.library, 1);
@@ -30,7 +33,11 @@ impl UampApp {
     }
 
     /// Updates the stored song metadata based on the update level.
-    pub fn player_update(&mut self, now: Instant, up: LibraryUpdate) {
+    pub(in crate::core) fn player_update(
+        &mut self,
+        now: Instant,
+        up: LibraryUpdate,
+    ) {
         // TODO move logic here
         if up >= LibraryUpdate::RemoveData {
             self.player.remove_deleted(&self.library);

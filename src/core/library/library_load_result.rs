@@ -54,7 +54,7 @@ impl UampApp {
     ///
     /// This will also start to save the library to json if there is any
     /// change.
-    pub fn finish_library_load(
+    pub(in crate::core) fn finish_library_load(
         &mut self,
         ctrl: &mut AppCtrl,
         res: Result<Option<LibraryLoadResult>>,

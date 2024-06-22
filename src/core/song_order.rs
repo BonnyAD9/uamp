@@ -13,29 +13,58 @@ use super::{
     Error,
 };
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum OrderField {
-    Reverse,
-    Randomize,
-    Path,
-    Title,
-    Artist,
-    Album,
-    Track,
-    Disc,
-    Year,
-    Length,
-    Genre,
-}
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
 
+/// Describes how to order songs.
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct SongOrder {
+    /// Enable/Disable simple ordering. When using simple ordering, the songs
+    /// are ordered only by the main field.
+    ///
+    /// When [`None`] use the default value.
     pub simple: Option<bool>,
+    /// The main field to order by.
     pub field: OrderField,
+    /// When `true`, reverse after the sorting.
     pub reverse: bool,
 }
 
+/// Describes the main ordering field.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum OrderField {
+    /// Just reverse.
+    Reverse,
+    /// Randomly shuffle.
+    Randomize,
+    /// Order by file path.
+    Path,
+    /// Order by song title.
+    Title,
+    /// Order by song artist.
+    Artist,
+    /// Order by song album.
+    Album,
+    /// Order by the track number.
+    Track,
+    /// Order by the disc number.
+    Disc,
+    /// Order by the release date.
+    Year,
+    /// Order by total track length.
+    Length,
+    /// Order by the genre.
+    Genre,
+}
+
 impl SongOrder {
+    /// Sorts the songs and updates the position of cur if set.
+    ///
+    /// - `songs`: Songs to order.
+    /// - `simple`: Defaule value for *enable simple sorting* when it is unset.
+    /// - `cur`: Index to the array of cur. When [`Some`] it is updated after
+    ///   the sorting so that it points to the same song.
     pub fn sort(
         &self,
         lib: &Library,
@@ -134,6 +163,10 @@ impl Display for SongOrder {
 }
 
 impl FromArgStr for SongOrder {}
+
+//===========================================================================//
+//                                  Private                                  //
+//===========================================================================//
 
 impl SongOrder {
     fn sort_key<F, O>(&self, songs: &mut [SongId], f: F)

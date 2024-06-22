@@ -21,7 +21,7 @@ pub enum DataControlMsg {
 
 impl UampApp {
     /// Handles events for [`DataControlMsg`]
-    pub fn data_control_event(
+    pub(in crate::core) fn data_control_event(
         &mut self,
         ctrl: &mut AppCtrl,
         msg: DataControlMsg,

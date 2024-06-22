@@ -4,6 +4,10 @@ use crate::env::AppCtrl;
 
 use super::{Msg, UampApp};
 
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
 /// Message that can do its own action.
 pub trait MessageDelegate: Sync + Send + Debug {
     /// Action that this message does.

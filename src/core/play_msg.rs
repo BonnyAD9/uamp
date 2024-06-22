@@ -8,14 +8,22 @@ use serde::{Deserialize, Serialize};
 
 use super::{library::SongId, player::Playlist, Msg, UampApp};
 
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
+/// Message to play some specific songs.
 #[derive(Clone, Debug)]
 pub enum PlayMsg {
+    /// Play the given playlist from the given index.
     Playlist(usize, Arc<Vec<SongId>>),
+    /// Play the song at the given path.
     TmpPath(Arc<Path>),
 }
 
 impl UampApp {
-    pub fn play_event(&mut self, msg: PlayMsg) -> Option<Msg> {
+    /// Handle play events.
+    pub(in crate::core) fn play_event(&mut self, msg: PlayMsg) -> Option<Msg> {
         match msg {
             PlayMsg::Playlist(index, songs) => {
                 self.player.play_playlist(
@@ -45,6 +53,28 @@ impl UampApp {
     }
 }
 
+impl Serialize for PlayMsg {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        PlayMsgSe::from(self).serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for PlayMsg {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        PlayMsgDe::deserialize(deserializer).map(|m| m.into())
+    }
+}
+
+//===========================================================================//
+//                                  Private                                  //
+//===========================================================================//
+
 #[derive(Serialize)]
 #[serde(untagged)]
 enum PlayMsgSe<'a> {
@@ -68,15 +98,6 @@ impl<'a> From<&'a PlayMsg> for PlayMsgSe<'a> {
     }
 }
 
-impl Serialize for PlayMsg {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        PlayMsgSe::from(self).serialize(serializer)
-    }
-}
-
 impl From<PlayMsgDe> for PlayMsg {
     fn from(value: PlayMsgDe) -> Self {
         match value {
@@ -85,14 +106,5 @@ impl From<PlayMsgDe> for PlayMsg {
             }
             PlayMsgDe::TmpPath(path) => Self::TmpPath(path.into()),
         }
-    }
-}
-
-impl<'de> Deserialize<'de> for PlayMsg {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        PlayMsgDe::deserialize(deserializer).map(|m| m.into())
     }
 }

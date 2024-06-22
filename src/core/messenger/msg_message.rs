@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::core::{AnyControlMsg, ControlMsg, DataControlMsg, Msg, PlayMsg};
+use crate::core::{AnyControlMsg, ControlMsg, DataControlMsg, PlayMsg};
 
 use super::{Error, ErrorKind, Info, Request};
 
@@ -32,27 +32,27 @@ impl MsgMessage {
             ErrorKind::DeserializeFailed => Error::new(
                 typ,
                 "Failed to deserialize the incoming message".to_owned(),
-            ).into(),
-            ErrorKind::ExpectedRequest => Error::new(
-                typ,
-                "Expected request message".to_owned(),
-            ).into(),
-            ErrorKind::ExpectedControl => Error::new(
-                typ,
-                "Expected control message".to_owned(),
-            ).into(),
-            ErrorKind::ExpectedInfo => Error::new(
-                typ,
-                "Expected info message".to_owned(),
-            ).into(),
+            )
+            .into(),
+            ErrorKind::ExpectedRequest => {
+                Error::new(typ, "Expected request message".to_owned()).into()
+            }
+            ErrorKind::ExpectedControl => {
+                Error::new(typ, "Expected control message".to_owned()).into()
+            }
+            ErrorKind::ExpectedInfo => {
+                Error::new(typ, "Expected info message".to_owned()).into()
+            }
             ErrorKind::ExpectedRequestOrControl => Error::new(
                 typ,
                 "Expected request or control message".to_owned(),
-            ).into(),
+            )
+            .into(),
             ErrorKind::InternalError => Error::new(
                 typ,
                 "Error occured when trying to fulfill request.".to_owned(),
-            ).into(),
+            )
+            .into(),
         }
     }
 }

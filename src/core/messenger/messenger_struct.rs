@@ -63,7 +63,7 @@ impl UampApp {
     ///
     /// Returns message that should be sent as a response and the translated
     /// [`UampMessage`] if it should produce one.
-    pub fn message_event(
+    pub(in crate::core) fn message_event(
         msg: MsgMessage,
         stream: &TcpStream,
     ) -> (Option<MsgMessage>, Option<Msg>) {
@@ -74,13 +74,16 @@ impl UampApp {
                     Err(e) => {
                         error!("Failed to clone tcp stream: {e}");
                         return (
-                            Some(Error::new(
-                                ErrorKind::InternalError,
-                                format!(
+                            Some(
+                                Error::new(
+                                    ErrorKind::InternalError,
+                                    format!(
                                 "Error occured when trying to fulfill request\
                                 : {e}"
                             ),
-                            ).into()),
+                                )
+                                .into(),
+                            ),
                             None,
                         );
                     }
@@ -90,8 +93,8 @@ impl UampApp {
                     Some(Msg::delegate::<_, FnDelegate<_>>(
                         move |app: &mut UampApp, _: &mut AppCtrl| {
                             let mut msg = Messenger::new(&stream);
-                            if let Err(e) =
-                                msg.send(Info {
+                            if let Err(e) = msg.send(
+                                Info {
                                     version: option_env!("CARGO_PKG_VERSION")
                                         .unwrap_or("unknown")
                                         .to_owned(),
@@ -106,8 +109,9 @@ impl UampApp {
                                         .get_pos(),
                                     is_playing: app.player.is_playing(),
                                     timestamp: app.player.timestamp(),
-                                }.into())
-                            {
+                                }
+                                .into(),
+                            ) {
                                 error!("Failed to send message: {e}");
                             };
                             None
