@@ -10,7 +10,7 @@ use crate::{
         messenger::{Info, Messenger, MsgMessage, Request},
         PlayMsg, Result,
     },
-    ext::extensions::duration_to_string,
+    ext::duration_to_string,
     starts,
 };
 

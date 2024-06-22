@@ -6,7 +6,7 @@ use std::{
     path::Path,
 };
 
-use crate::{core::Result, ext::alc_vec::AlcVec, gen_struct};
+use crate::{core::Result, ext::AlcVec, gen_struct};
 
 use super::{Filter, LibraryUpdate, Song, SongId};
 

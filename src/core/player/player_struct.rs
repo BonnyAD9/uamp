@@ -10,7 +10,7 @@ use crate::{
         library::{Library, SongId},
         Msg,
     },
-    ext::alc_vec::AlcVec,
+    ext::AlcVec,
     gen_struct,
 };
 

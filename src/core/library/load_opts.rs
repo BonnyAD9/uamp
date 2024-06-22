@@ -3,7 +3,7 @@ use std::{fmt::Debug, str::FromStr};
 use pareg::FromArgStr;
 use serde::{Deserialize, Serialize};
 
-use crate::{core::player::AddPolicy, ext::extensions::ParseError};
+use crate::core::{player::AddPolicy, Error};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -50,26 +50,23 @@ impl ToString for LoadOpts {
 }
 
 impl FromStr for LoadOpts {
-    type Err = ParseError;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut res = LoadOpts::default();
 
-        fn set_rm(res: &mut LoadOpts, v: bool) -> Result<(), ParseError> {
+        fn set_rm(res: &mut LoadOpts, v: bool) -> Result<(), Error> {
             if res.remove_missing.is_some() {
-                Err(ParseError::FailedToParse("LoadOpts"))
+                Err(Error::FailedToParse("LoadOpts"))
             } else {
                 res.remove_missing = Some(v);
                 Ok(())
             }
         }
 
-        fn set_atp(
-            res: &mut LoadOpts,
-            v: AddPolicy,
-        ) -> Result<(), ParseError> {
+        fn set_atp(res: &mut LoadOpts, v: AddPolicy) -> Result<(), Error> {
             if res.add_to_playlist.is_some() {
-                Err(ParseError::FailedToParse("LoadOpts"))
+                Err(Error::FailedToParse("LoadOpts"))
             } else {
                 res.add_to_playlist = Some(v);
                 Ok(())
@@ -84,7 +81,7 @@ impl FromStr for LoadOpts {
                 'n' => set_atp(&mut res, AddPolicy::Next)?,
                 'm' => set_atp(&mut res, AddPolicy::MixIn)?,
                 _ => {
-                    return Err(ParseError::FailedToParse("LoadOpts"));
+                    return Err(Error::FailedToParse("LoadOpts"));
                 }
             }
         }

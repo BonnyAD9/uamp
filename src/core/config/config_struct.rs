@@ -3,7 +3,7 @@ use std::{cell::Cell, collections::HashMap, path::PathBuf, time::Duration};
 
 use crate::{
     core::{config::default_config_path_json, control_msg_vec::ControlMsgVec},
-    ext::extensions::Wrap,
+    ext::Wrap,
     gen_struct,
 };
 

@@ -20,12 +20,18 @@ pub enum Error {
     /// Invalid value.
     #[error("{0}")]
     InvalidValue(&'static str),
+    /// Falied to parse to type.
+    #[error("Failed to parse to type {0}")]
+    FailedToParse(&'static str),
     /// The requested operatoin was invalid at the time.
     #[error("Operation is invalid: {0}")]
     InvalidOperation(&'static str),
     /// A secondary thread panicked.
     #[error("A spawned thread panicked")]
     ThreadPanicked,
+    /// Failed to parse integer from string.
+    #[error(transparent)]
+    IntParse(#[from] std::num::ParseIntError),
     /// Failed to parse arguments.
     #[error(transparent)]
     ArgParse(pareg::ArgError<'static>),

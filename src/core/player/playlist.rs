@@ -9,7 +9,7 @@ use crate::{
         library::{Library, SongId},
         SongOrder,
     },
-    ext::alc_vec::AlcVec,
+    ext::AlcVec,
 };
 
 use super::AddPolicy;
