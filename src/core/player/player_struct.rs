@@ -7,8 +7,8 @@ use raplay::{CallbackInfo, Timestamp};
 use crate::{
     core::{
         config::Config,
-        library::{Library, LibraryUpdate, SongId},
-        Msg, UampApp,
+        library::{Library, SongId},
+        Msg,
     },
     ext::alc_vec::AlcVec,
     gen_struct,
@@ -281,26 +281,6 @@ impl Player {
     /// Sets value indicating whether there was any change since the last save.
     pub(super) fn set_change(&self, val: bool) {
         self.change.set(val);
-    }
-}
-
-impl UampApp {
-    /// Handles player event messages
-    pub fn player_event(&mut self, msg: PlayerMsg) -> Option<Msg> {
-        match msg {
-            PlayerMsg::SongEnd => {
-                self.player.play_next(&mut self.library, 1);
-            }
-            PlayerMsg::HardPauseAt(i) => self.hard_pause_at = Some(i),
-        }
-        None
-    }
-
-    /// Updates the stored song metadata based on the update level.
-    pub fn player_lib_update(&mut self, up: LibraryUpdate) {
-        if up >= LibraryUpdate::RemoveData {
-            self.player.remove_deleted(&self.library);
-        }
     }
 }
 

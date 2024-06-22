@@ -1,6 +1,11 @@
+mod any_control_msg;
+mod control_msg;
 mod control_msg_vec;
+mod data_control_msg;
 mod err;
+mod message_delegate;
 mod msg;
+mod play_msg;
 mod song_order;
 mod task_msg;
 mod uamp_app;
@@ -14,4 +19,8 @@ pub mod library;
 pub mod messenger;
 pub mod player;
 
-pub use self::{err::*, msg::*, song_order::*, task_msg::*, uamp_app::*};
+pub use self::{
+    any_control_msg::*, control_msg::*, data_control_msg::*, err::*,
+    message_delegate::*, msg::*, play_msg::*, song_order::*, task_msg::*,
+    uamp_app::*,
+};

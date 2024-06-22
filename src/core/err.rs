@@ -4,49 +4,59 @@ use flexi_logger::FlexiLoggerError;
 use log::error;
 use thiserror::Error;
 
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
 /// Result with the unified error type of uamp
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Unified error type of uamp
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("Cannot get my own name.")]
+    /// Cannot get my own name.
+    #[error("Cannot get my own name. :(")]
     NoProgramName,
+    /// Invalid value.
     #[error("{0}")]
     InvalidValue(&'static str),
-    /// The requested operatoin was invalid at the time
+    /// The requested operatoin was invalid at the time.
     #[error("Operation is invalid: {0}")]
     InvalidOperation(&'static str),
-    /// A secondary thread panicked
+    /// A secondary thread panicked.
     #[error("A spawned thread panicked")]
     ThreadPanicked,
-    /// Failed to parse arguments
+    /// Failed to parse arguments.
     #[error(transparent)]
     ArgParse(pareg::ArgError<'static>),
+    /// the audiotags library error.
     #[error(transparent)]
     AudioTag(#[from] audiotags::Error),
-    /// The raplay library returned error
+    /// The raplay library returned error.
     #[error(transparent)]
     Raplay(#[from] raplay::Error),
-    /// The serde library returned error
+    /// The serde library returned error.
     #[error(transparent)]
     Serde(#[from] SerdeError),
-    /// The logger returned error (oops :|| )
+    /// The logger returned error (oops :|| ).
     #[error(transparent)]
     Logger(#[from] FlexiLoggerError),
-    /// Some standard library io error
+    /// Some standard library io error.
     #[error(transparent)]
     Io(#[from] std::io::Error),
     /// Time dowsn't work :||
     #[error(transparent)]
     Time(#[from] SystemTimeError),
+    /// Synchronization error :|| Shouldn't happen.
     #[error("Failed to lock: {0}")]
     Poison(String),
+    /// Errors from the notify library.
     #[error(transparent)]
     Notify(#[from] notify::Error),
+    /// Errors from the library shell_words.
     #[error(transparent)]
     ShellWords(#[from] shell_words::ParseError),
-    /// Any other error
+    /// Any other error.
     #[error(transparent)]
     Other(anyhow::Error),
 }

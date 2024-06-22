@@ -1,8 +1,13 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, mem};
 
-use crate::core::player::AddPolicy;
+use log::error;
 
-use super::{Song, SongId};
+use crate::{
+    core::{player::AddPolicy, Error, Result, UampApp},
+    env::AppCtrl,
+};
+
+use super::{LibraryUpdate, Song, SongId};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -41,5 +46,52 @@ impl Debug for LibraryLoadResult {
             .field("first_new", &self.first_new)
             .field("sparse_new.len", &self.sparse_new.len())
             .finish()
+    }
+}
+
+impl UampApp {
+    /// Finishes loading songs started with `start_get_new_songs`.
+    ///
+    /// This will also start to save the library to json if there is any
+    /// change.
+    pub fn finish_library_load(
+        &mut self,
+        ctrl: &mut AppCtrl,
+        res: Result<Option<LibraryLoadResult>>,
+    ) {
+        let mut res = match res {
+            Ok(Some(res)) => res,
+            Ok(None) => return,
+            Err(e) => {
+                error!("Failed to load new songs: {e}");
+                return;
+            }
+        };
+
+        *self.library.songs_mut() = mem::take(&mut res.songs).into();
+        if res.removed {
+            self.library.update(LibraryUpdate::RemoveData);
+        } else {
+            self.library.update(LibraryUpdate::NewData);
+        }
+
+        if let Some(p) = res.add_policy {
+            self.player.playlist_mut().add_songs(
+                (res.first_new..self.library.songs().len())
+                    .map(SongId)
+                    .chain(res.sparse_new),
+                p,
+            );
+        };
+
+        match self.library.start_to_default_json(
+            &self.config,
+            ctrl,
+            &mut self.player,
+        ) {
+            Err(Error::InvalidOperation(_)) => {}
+            Err(e) => error!("Failed to start library save: {e}"),
+            _ => {}
+        }
     }
 }

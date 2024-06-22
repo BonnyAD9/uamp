@@ -2,16 +2,11 @@ use serde_derive::{Deserialize, Serialize};
 
 use std::{
     cell::Cell,
-    mem,
     ops::{Index, IndexMut},
     path::Path,
 };
 
-use crate::{
-    core::{Result, UampApp},
-    ext::alc_vec::AlcVec,
-    gen_struct,
-};
+use crate::{core::Result, ext::alc_vec::AlcVec, gen_struct};
 
 use super::{Filter, LibraryUpdate, Song, SongId};
 
@@ -38,7 +33,7 @@ gen_struct! {
         #[serde(skip, default = "default_ghost")]
         ghost: Song,
         #[serde(skip)]
-        lib_update: LibraryUpdate,
+        pub(super) lib_update: LibraryUpdate,
         ; // attributes for the auto field
         #[serde(skip)]
     }
@@ -179,14 +174,6 @@ impl IndexMut<&SongId> for Library {
 impl Default for Library {
     fn default() -> Self {
         Library::new()
-    }
-}
-
-impl UampApp {
-    /// Updates references to songs in the scope of the library with the given
-    /// change.
-    pub fn library_lib_update(&mut self) -> LibraryUpdate {
-        mem::replace(&mut self.library.lib_update, LibraryUpdate::None)
     }
 }
 

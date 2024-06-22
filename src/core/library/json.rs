@@ -1,23 +1,19 @@
 use std::{
     collections::HashSet,
     fs::{self, File},
-    mem,
     path::Path,
 };
 
 use log::{error, info};
 
 use crate::{
-    core::{
-        config::Config, player::Player, Error, Result, TaskMsg, TaskType,
-        UampApp,
-    },
+    core::{config::Config, player::Player, Error, Result, TaskMsg, TaskType},
     env::AppCtrl,
 };
 
 use super::{
-    add_new_songs::add_new_songs, Library, LibraryLoadResult, LibraryUpdate,
-    LoadOpts, Song, SongId,
+    add_new_songs::add_new_songs, Library, LibraryLoadResult, LoadOpts, Song,
+    SongId,
 };
 
 //===========================================================================//
@@ -146,65 +142,6 @@ impl Library {
     }
 }
 
-impl UampApp {
-    /// Finishes loading songs started with `start_get_new_songs`.
-    ///
-    /// This will also start to save the library to json if there is any
-    /// change.
-    pub fn finish_library_load(
-        &mut self,
-        ctrl: &mut AppCtrl,
-        res: Result<Option<LibraryLoadResult>>,
-    ) {
-        let mut res = match res {
-            Ok(Some(res)) => res,
-            Ok(None) => return,
-            Err(e) => {
-                error!("Failed to load new songs: {e}");
-                return;
-            }
-        };
-
-        *self.library.songs_mut() = mem::take(&mut res.songs).into();
-        if res.removed {
-            self.library.update(LibraryUpdate::RemoveData);
-        } else {
-            self.library.update(LibraryUpdate::NewData);
-        }
-
-        if let Some(p) = res.add_policy {
-            self.player.playlist_mut().add_songs(
-                (res.first_new..self.library.songs().len())
-                    .map(SongId)
-                    .chain(res.sparse_new),
-                p,
-            );
-        };
-
-        match self.library.start_to_default_json(
-            &self.config,
-            ctrl,
-            &mut self.player,
-        ) {
-            Err(Error::InvalidOperation(_)) => {}
-            Err(e) => error!("Failed to start library save: {e}"),
-            _ => {}
-        }
-    }
-
-    /// Finish up task for saving songs to json started with
-    /// `start_to_default_json`.
-    pub fn finish_library_save_songs(&mut self, res: Result<Vec<SongId>>) {
-        match res {
-            Ok(free) => self.library.remove_free_tmp_songs(&free),
-            Err(e) => {
-                error!("Failed to save library: {e}");
-                self.library.set_change(true);
-            }
-        }
-    }
-}
-
 //===========================================================================//
 //                                  Private                                  //
 //===========================================================================//
@@ -238,7 +175,7 @@ impl Library {
             .collect()
     }
 
-    fn remove_free_tmp_songs(&mut self, free: &[SongId]) {
+    pub(super) fn remove_free_tmp_songs(&mut self, free: &[SongId]) {
         let songs = self.tmp_songs.vec_mut();
         for s in free {
             songs[usize::MAX - s.0].delete();

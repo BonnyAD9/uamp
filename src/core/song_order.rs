@@ -1,4 +1,8 @@
-use std::{fmt::Display, str::FromStr};
+use std::{
+    cmp::Reverse,
+    fmt::{Display, Write},
+    str::FromStr,
+};
 
 use pareg::{ArgError, FromArgStr};
 use rand::{seq::SliceRandom, thread_rng};
@@ -10,7 +14,7 @@ use super::{
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum SongOrder {
+pub enum OrderField {
     Reverse,
     Randomize,
     Path,
@@ -22,6 +26,13 @@ pub enum SongOrder {
     Year,
     Length,
     Genre,
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct SongOrder {
+    pub simple: Option<bool>,
+    pub field: OrderField,
+    pub reverse: bool,
 }
 
 impl SongOrder {
@@ -39,10 +50,18 @@ impl SongOrder {
             None
         };
 
-        if simple {
-            self.sort_simple(lib, songs);
-        } else {
-            self.sort_complex(lib, songs);
+        match self.field {
+            OrderField::Reverse => self.reverse(songs),
+            OrderField::Randomize => self.randomize(songs),
+            OrderField::Path => self.path(lib, songs),
+            OrderField::Title => self.title(lib, songs),
+            OrderField::Artist => self.artist(lib, simple, songs),
+            OrderField::Album => self.album(lib, simple, songs),
+            OrderField::Track => self.track(lib, songs),
+            OrderField::Disc => self.disc(lib, simple, songs),
+            OrderField::Year => self.year(lib, simple, songs),
+            OrderField::Length => self.length(lib, songs),
+            OrderField::Genre => self.genre(lib, songs),
         }
 
         if let Some((idx, song)) = cur {
@@ -51,30 +70,105 @@ impl SongOrder {
             }
         }
     }
+}
 
-    pub fn sort_simple(&self, lib: &Library, songs: &mut [SongId]) {
-        match self {
-            Self::Reverse => songs.reverse(),
-            Self::Randomize => songs.shuffle(&mut thread_rng()),
-            Self::Path => songs.sort_by_key(|s| lib[s].path()),
-            Self::Title => songs.sort_by_key(|s| lib[s].title()),
-            Self::Artist => songs.sort_by_key(|s| lib[s].artist()),
-            Self::Album => songs.sort_by_key(|s| lib[s].artist()),
-            Self::Track => songs.sort_by_key(|s| lib[s].track()),
-            Self::Disc => songs.sort_by_key(|s| lib[s].disc()),
-            Self::Year => songs.sort_by_key(|s| lib[s].year()),
-            Self::Length => songs.sort_by_key(|s| lib[s].length()),
-            Self::Genre => songs.sort_by_key(|s| lib[s].genre()),
+impl FromStr for SongOrder {
+    type Err = Error;
+
+    fn from_str(mut s: &str) -> Result<Self, Self::Err> {
+        let mut reverse = false;
+        if let Some(rest) = s.strip_prefix('-') {
+            s = rest;
+            reverse = true;
+        }
+
+        let field = match s {
+            "rev" | "reverse" => OrderField::Reverse,
+            "rng" | "rand" | "random" | "randomize" => OrderField::Randomize,
+            "path" => OrderField::Path,
+            "title" | "name" => OrderField::Title,
+            "artist" | "performer" | "author" => OrderField::Artist,
+            "album" => OrderField::Album,
+            "track" => OrderField::Track,
+            "disc" => OrderField::Disc,
+            "year" | "date" => OrderField::Year,
+            "len" | "length" => OrderField::Length,
+            "genre" => OrderField::Genre,
+            _ => {
+                return Err(Error::ArgParse(ArgError::FailedToParse {
+                    typ: "SongOrder",
+                    value: s.to_owned().into(),
+                    msg: Some("Invalid enum value.".into()),
+                }))
+            }
+        };
+
+        Ok(Self {
+            simple: None,
+            reverse,
+            field,
+        })
+    }
+}
+
+impl Display for SongOrder {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.reverse {
+            f.write_char('-')?;
+        }
+
+        match self.field {
+            OrderField::Reverse => write!(f, "rev"),
+            OrderField::Randomize => write!(f, "rng"),
+            OrderField::Path => write!(f, "path"),
+            OrderField::Title => write!(f, "title"),
+            OrderField::Artist => write!(f, "artist"),
+            OrderField::Album => write!(f, "album"),
+            OrderField::Track => write!(f, "track"),
+            OrderField::Disc => write!(f, "disc"),
+            OrderField::Year => write!(f, "date"),
+            OrderField::Length => write!(f, "len"),
+            OrderField::Genre => write!(f, "genre"),
+        }
+    }
+}
+
+impl FromArgStr for SongOrder {}
+
+impl SongOrder {
+    fn sort_key<F, O>(&self, songs: &mut [SongId], f: F)
+    where
+        O: Ord,
+        F: Fn(SongId) -> O,
+    {
+        if self.reverse {
+            songs.sort_by_key(|i| Reverse(f(*i)));
+        } else {
+            songs.sort_by_key(|i| f(*i));
         }
     }
 
-    pub fn sort_complex(&self, lib: &Library, songs: &mut [SongId]) {
-        match self {
-            Self::Reverse => songs.reverse(),
-            Self::Randomize => songs.shuffle(&mut thread_rng()),
-            Self::Path => songs.sort_by_key(|s| lib[s].path()),
-            Self::Title => songs.sort_by_key(|s| lib[s].title()),
-            Self::Artist => songs.sort_by_key(|s| {
+    fn reverse(&self, songs: &mut [SongId]) {
+        songs.reverse();
+    }
+
+    fn randomize(&self, songs: &mut [SongId]) {
+        songs.shuffle(&mut thread_rng());
+    }
+
+    fn path(&self, lib: &Library, songs: &mut [SongId]) {
+        self.sort_key(songs, |s| lib[s].path());
+    }
+
+    fn title(&self, lib: &Library, songs: &mut [SongId]) {
+        self.sort_key(songs, |s| lib[s].title());
+    }
+
+    fn artist(&self, lib: &Library, simple: bool, songs: &mut [SongId]) {
+        if self.simple.unwrap_or(simple) {
+            self.sort_key(songs, |s| lib[s].artist());
+        } else {
+            self.sort_key(songs, |s| {
                 (
                     lib[s].artist(),
                     lib[s].year(),
@@ -82,64 +176,47 @@ impl SongOrder {
                     lib[s].disc(),
                     lib[s].track(),
                 )
-            }),
-            Self::Album => songs.sort_by_key(|s| {
+            })
+        }
+    }
+
+    fn album(&self, lib: &Library, simple: bool, songs: &mut [SongId]) {
+        if self.simple.unwrap_or(simple) {
+            self.sort_key(songs, |s| lib[s].album());
+        } else {
+            self.sort_key(songs, |s| {
                 (lib[s].album(), lib[s].disc(), lib[s].track())
-            }),
-            Self::Track => songs.sort_by_key(|s| lib[s].track()),
-            Self::Disc => songs.sort_by_key(|s| {
-                (lib[s].disc(), lib[s].album(), lib[s].track())
-            }),
-            Self::Year => songs.sort_by_key(|s| {
+            });
+        }
+    }
+
+    fn track(&self, lib: &Library, songs: &mut [SongId]) {
+        self.sort_key(songs, |s| lib[s].track());
+    }
+
+    fn disc(&self, lib: &Library, simple: bool, songs: &mut [SongId]) {
+        if self.simple.unwrap_or(simple) {
+            self.sort_key(songs, |s| lib[s].disc());
+        } else {
+            self.sort_key(songs, |s| (lib[s].disc(), lib[s].track()));
+        }
+    }
+
+    fn year(&self, lib: &Library, simple: bool, songs: &mut [SongId]) {
+        if self.simple.unwrap_or(simple) {
+            self.sort_key(songs, |s| lib[s].year());
+        } else {
+            self.sort_key(songs, |s| {
                 (lib[s].year(), lib[s].album(), lib[s].disc(), lib[s].track())
-            }),
-            Self::Length => songs.sort_by_key(|s| lib[s].length()),
-            Self::Genre => songs.sort_by_key(|s| lib[s].genre()),
+            });
         }
     }
-}
 
-impl FromStr for SongOrder {
-    type Err = Error;
+    fn length(&self, lib: &Library, songs: &mut [SongId]) {
+        self.sort_key(songs, |s| lib[s].length());
+    }
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "rev" | "reverse" => Ok(Self::Reverse),
-            "rng" | "rand" | "random" | "randomize" => Ok(Self::Randomize),
-            "path" => Ok(Self::Path),
-            "title" | "name" => Ok(Self::Title),
-            "artist" | "performer" | "author" => Ok(Self::Artist),
-            "album" => Ok(Self::Album),
-            "track" => Ok(Self::Track),
-            "disc" => Ok(Self::Disc),
-            "year" | "date" => Ok(Self::Year),
-            "len" | "length" => Ok(Self::Length),
-            "genre" => Ok(Self::Genre),
-            _ => Err(Error::ArgParse(ArgError::FailedToParse {
-                typ: "SongOrder",
-                value: s.to_owned().into(),
-                msg: Some("Invalid enum value.".into()),
-            })),
-        }
+    fn genre(&self, lib: &Library, songs: &mut [SongId]) {
+        self.sort_key(songs, |s| lib[s].genre());
     }
 }
-
-impl Display for SongOrder {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Reverse => write!(f, "rev"),
-            Self::Randomize => write!(f, "rng"),
-            Self::Path => write!(f, "path"),
-            Self::Title => write!(f, "title"),
-            Self::Artist => write!(f, "artist"),
-            Self::Album => write!(f, "album"),
-            Self::Track => write!(f, "track"),
-            Self::Disc => write!(f, "disc"),
-            Self::Year => write!(f, "date"),
-            Self::Length => write!(f, "len"),
-            Self::Genre => write!(f, "genre"),
-        }
-    }
-}
-
-impl FromArgStr for SongOrder {}

@@ -8,7 +8,7 @@ use signal_hook_async_std::Signals;
 use crate::{
     core::{
         messenger::{self, Messenger, MsgMessage},
-        msg::{ControlMsg, Msg},
+        msg::Msg,
         Error, Result,
     },
     env::{AppCtrl, MsgGen},
@@ -18,7 +18,7 @@ use super::{
     config::{default_config_path, Config, ConfigMsg},
     library::Library,
     player::Player,
-    TaskMsg, TaskType,
+    ControlMsg, TaskMsg, TaskType,
 };
 
 /// The uamp app state
@@ -159,16 +159,7 @@ impl UampApp {
     }
 
     pub fn update(&mut self, ctrl: &mut AppCtrl, message: Msg) {
-        let msg = match message {
-            Msg::PlaySong(msg) => self.play_event(msg),
-            Msg::Control(msg) => self.control_event(ctrl, msg),
-            Msg::DataControl(msg) => self.data_control_event(ctrl, msg),
-            Msg::Player(msg) => self.player_event(msg),
-            Msg::Delegate(d) => d.update(self, ctrl),
-            Msg::Config(msg) => self.config_event(ctrl, msg),
-            Msg::Tick => None,
-            Msg::None => None,
-        };
+        let msg = self.msg_event(ctrl, message);
 
         if let Some(msg) = msg {
             return self.update(ctrl, msg);
@@ -180,24 +171,10 @@ impl UampApp {
         }
 
         let now = Instant::now();
-        if let Some(t) = self.hard_pause_at {
-            if t <= now {
-                self.player.hard_pause();
-                self.hard_pause_at = None;
-            }
-        }
 
-        if self
-            .config
-            .save_timeout()
-            .map(|t| now - self.last_save >= t.0)
-            .unwrap_or_default()
-        {
-            self.save_all(false, ctrl);
-        }
-
-        let up = self.library_lib_update();
-        self.player_lib_update(up);
+        let up = self.library_update();
+        self.player_update(now, up);
+        self.config_update(ctrl, now);
     }
 
     /// Deletes old logs.

@@ -5,12 +5,18 @@ use serde::{Deserialize, Serialize};
 
 use super::{AnyControlMsg, Error};
 
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
+/// Multiple control messages in order. Implements [`Display`] and [`FromStr`].
 #[derive(Debug, Clone)]
 pub struct ControlMsgVec {
     msgs: Vec<AnyControlMsg>,
 }
 
 impl ControlMsgVec {
+    /// Creates control messages from the given vector.
     pub fn new(msgs: Vec<AnyControlMsg>) -> Self {
         Self { msgs }
     }

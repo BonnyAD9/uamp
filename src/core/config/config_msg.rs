@@ -1,4 +1,4 @@
-use std::net::TcpStream;
+use std::{net::TcpStream, time::Instant};
 
 use log::{error, warn};
 
@@ -68,6 +68,17 @@ impl UampApp {
 
         None
     }
+
+    pub fn config_update(&mut self, ctrl: &mut AppCtrl, now: Instant) {
+        if self
+            .config
+            .save_timeout()
+            .map(|t| now - self.last_save >= t.0)
+            .unwrap_or_default()
+        {
+            self.save_all(false, ctrl);
+        }
+    }
 }
 
 //===========================================================================//
@@ -90,5 +101,11 @@ impl UampApp {
         }
 
         Ok(())
+    }
+}
+
+impl From<ConfigMsg> for Msg {
+    fn from(value: ConfigMsg) -> Self {
+        Msg::Config(value)
     }
 }
