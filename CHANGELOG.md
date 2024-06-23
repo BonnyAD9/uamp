@@ -19,6 +19,7 @@
 - Add option to directly play file.
 - Add option to sort the playlist.
 - Add aliases for control messages.
+- Add playlist end actions.
 
 ## v0.4.0
 - Add all options to settings including help

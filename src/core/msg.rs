@@ -40,7 +40,7 @@ impl UampApp {
         ctrl: &mut AppCtrl,
         msg: Msg,
     ) -> Vec<Msg> {
-        match msg {
+        let mut res = match msg {
             Msg::PlaySong(msg) => self.play_event(msg),
             Msg::Control(msg) => self.control_event(ctrl, msg),
             Msg::DataControl(msg) => self.data_control_event(ctrl, msg),
@@ -48,7 +48,10 @@ impl UampApp {
             Msg::Delegate(d) => d.update(self, ctrl),
             Msg::Config(msg) => self.config_event(ctrl, msg),
             Msg::None => vec![],
-        }
+        };
+
+        res.splice(0..0, self.player.get_playlist_action());
+        res
     }
 }
 

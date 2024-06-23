@@ -10,7 +10,7 @@ use super::{ControlMsg, DataControlMsg, Error};
 //===========================================================================//
 
 /// Either [`ControlMsg`] or [`DataControlMsg`]
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum AnyControlMsg {
     /// [`ControlMsg`]
     Control(ControlMsg),

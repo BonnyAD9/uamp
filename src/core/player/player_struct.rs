@@ -8,7 +8,7 @@ use crate::{
     core::{
         config::Config,
         library::{Library, SongId},
-        Msg,
+        DataControlMsg, Msg,
     },
     ext::AlcVec,
     gen_struct,
@@ -34,6 +34,7 @@ gen_struct! {
         ; // other
         state: Playback,
         inner: SinkWrapper,
+        playlist_ended: bool,
     }
 }
 
@@ -95,6 +96,9 @@ impl Player {
     /// Plays the `n`th next song in the playlist
     pub fn play_next(&mut self, lib: &mut Library, n: usize) {
         let id = self.playlist_mut().nth_next(n);
+        if id.is_none() {
+            self.playlist_ended = true;
+        }
         self.try_load_state(lib, id);
     }
 
@@ -222,6 +226,20 @@ impl Player {
         }
     }
 
+    /// If any playlist action is triggered, return its messages and clear the
+    /// trigger flag.
+    pub fn get_playlist_action(&mut self) -> Option<Msg> {
+        if self.playlist_ended {
+            self.playlist_ended = false;
+            self.playlist()
+                .on_end
+                .clone()
+                .map(|a| DataControlMsg::Alias(a).into())
+        } else {
+            None
+        }
+    }
+
     /// Creates new player from the sender
     pub(super) fn new_default(sender: UnboundedSender<Msg>) -> Self {
         let mut res = Self {
@@ -232,6 +250,7 @@ impl Player {
             state: Playback::Stopped,
             inner: SinkWrapper::new(),
             change: Cell::new(true),
+            playlist_ended: false,
         };
 
         res.init_inner(sender);
@@ -256,6 +275,7 @@ impl Player {
             volume,
             mute,
             change: change.into(),
+            playlist_ended: false,
         }
     }
 
@@ -331,6 +351,9 @@ impl Player {
             Err(e) => {
                 error!("Failed to load song {:?}: {e}", lib[id].path());
                 let next = self.playlist.nth_next(1);
+                if next.is_none() {
+                    self.playlist_ended = true;
+                }
                 self.try_load(lib, next, play)
             }
         }

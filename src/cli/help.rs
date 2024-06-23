@@ -293,6 +293,10 @@ fn print_control_messages_help() {
 
   {'r}alias  al{'w}=<alias name>{'_}
     Runs the actions given by the alias.
+
+  {'r}playlist-end-action  playlist-end  pl-end  spea{'gr}[=<alias name>]{'_}
+    Sets the playlist end action of the current playlist to actions specified
+    by the alias.
 "
     )
 }
