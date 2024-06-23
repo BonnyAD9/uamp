@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{env::AppCtrl, starts};
 
-use super::{Error, Msg, UampApp};
+use super::{control_msg_vec::ControlMsgVec, Error, Msg, UampApp};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -23,17 +23,16 @@ impl UampApp {
     /// Handles events for [`DataControlMsg`]
     pub(in crate::core) fn data_control_event(
         &mut self,
-        ctrl: &mut AppCtrl,
+        _ctrl: &mut AppCtrl,
         msg: DataControlMsg,
-    ) -> Option<Msg> {
+    ) -> Vec<Msg> {
         match msg {
-            DataControlMsg::Alias(name) => {
-                for m in self.config.control_aliases().get(&name)?.clone() {
-                    self.update(ctrl, m.into())
-                }
-
-                None
-            }
+            DataControlMsg::Alias(name) => self
+                .config
+                .control_aliases()
+                .get(&name)
+                .map(ControlMsgVec::get_msg_vec)
+                .unwrap_or_default(),
         }
     }
 }

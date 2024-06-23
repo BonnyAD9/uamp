@@ -114,7 +114,7 @@ impl UampApp {
                             ) {
                                 error!("Failed to send message: {e}");
                             };
-                            None
+                            vec![]
                         },
                     )),
                 )

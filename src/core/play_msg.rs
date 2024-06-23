@@ -23,7 +23,7 @@ pub enum PlayMsg {
 
 impl UampApp {
     /// Handle play events.
-    pub(in crate::core) fn play_event(&mut self, msg: PlayMsg) -> Option<Msg> {
+    pub(in crate::core) fn play_event(&mut self, msg: PlayMsg) -> Vec<Msg> {
         match msg {
             PlayMsg::Playlist(index, songs) => {
                 self.player.play_playlist(
@@ -36,7 +36,7 @@ impl UampApp {
                 let id = match self.library.add_tmp_path(path.as_ref()) {
                     Err(e) => {
                         error!("Failed to load song {path:?}: {e}");
-                        return None;
+                        return vec![];
                     }
                     Ok(id) => id,
                 };
@@ -49,7 +49,7 @@ impl UampApp {
             }
         }
 
-        None
+        vec![]
     }
 }
 

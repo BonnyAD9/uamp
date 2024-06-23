@@ -39,7 +39,7 @@ impl UampApp {
         &mut self,
         ctrl: &mut AppCtrl,
         msg: Msg,
-    ) -> Option<Msg> {
+    ) -> Vec<Msg> {
         match msg {
             Msg::PlaySong(msg) => self.play_event(msg),
             Msg::Control(msg) => self.control_event(ctrl, msg),
@@ -47,7 +47,7 @@ impl UampApp {
             Msg::Player(msg) => self.player_event(msg),
             Msg::Delegate(d) => d.update(self, ctrl),
             Msg::Config(msg) => self.config_event(ctrl, msg),
-            Msg::None => None,
+            Msg::None => vec![],
         }
     }
 }

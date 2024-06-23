@@ -3,14 +3,14 @@ use std::{fmt::Display, str::FromStr};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-use super::{AnyControlMsg, Error};
+use super::{AnyControlMsg, Error, Msg};
 
 //===========================================================================//
 //                                   Public                                  //
 //===========================================================================//
 
 /// Multiple control messages in order. Implements [`Display`] and [`FromStr`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ControlMsgVec {
     msgs: Vec<AnyControlMsg>,
 }
@@ -19,6 +19,16 @@ impl ControlMsgVec {
     /// Creates control messages from the given vector.
     pub fn new(msgs: Vec<AnyControlMsg>) -> Self {
         Self { msgs }
+    }
+
+    /// Gets iterator over all the messages.
+    pub fn iter(&self) -> std::slice::Iter<'_, AnyControlMsg> {
+        self.msgs.iter()
+    }
+
+    /// Clone the control messages into a new vector of messages.
+    pub fn get_msg_vec(&self) -> Vec<Msg> {
+        self.iter().cloned().map(|m| m.into()).collect()
     }
 }
 

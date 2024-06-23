@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::{
+        control_msg_vec::ControlMsgVec,
         library::{Library, SongId},
         SongOrder,
     },
@@ -27,6 +28,7 @@ pub struct Playlist {
     current: usize,
     #[serde(default)]
     play_pos: Option<Duration>,
+    on_end: ControlMsgVec,
 }
 
 impl Playlist {
@@ -43,6 +45,7 @@ impl Playlist {
             songs,
             current,
             play_pos: None,
+            on_end: ControlMsgVec::default(),
         }
     }
 

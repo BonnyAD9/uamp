@@ -22,14 +22,14 @@ impl UampApp {
     pub(in crate::core) fn player_event(
         &mut self,
         msg: PlayerMsg,
-    ) -> Option<Msg> {
+    ) -> Vec<Msg> {
         match msg {
             PlayerMsg::SongEnd => {
                 self.player.play_next(&mut self.library, 1);
             }
             PlayerMsg::HardPauseAt(i) => self.hard_pause_at = Some(i),
         }
-        None
+        vec![]
     }
 
     /// Updates the stored song metadata based on the update level.

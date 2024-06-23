@@ -116,10 +116,14 @@ impl UampApp {
 
     /// Handles the message sent to uamp.
     pub fn update(&mut self, ctrl: &mut AppCtrl, message: Msg) {
-        let msg = self.msg_event(ctrl, message);
+        let mut msgs = self.msg_event(ctrl, message);
+        if msgs.len() == 1 {
+            return self.update(ctrl, msgs.pop().unwrap());
+        }
 
-        if let Some(msg) = msg {
-            return self.update(ctrl, msg);
+        msgs.reverse();
+        while let Some(msg) = msgs.pop() {
+            msgs.extend(self.msg_event(ctrl, msg).into_iter().rev());
         }
 
         if self.pending_close && !ctrl.any_task(|t| t != TaskType::Server) {

@@ -73,7 +73,7 @@ impl UampApp {
         &mut self,
         ctrl: &mut AppCtrl,
         msg: ControlMsg,
-    ) -> Option<Msg> {
+    ) -> Vec<Msg> {
         match msg {
             ControlMsg::PlayPause(p) => {
                 let pp = p.unwrap_or(!self.player.is_playing());
@@ -81,11 +81,9 @@ impl UampApp {
                     self.hard_pause_at = None;
                 }
                 self.player.play(&mut self.library, pp);
-                return None;
             }
             ControlMsg::NextSong(n) => {
                 self.player.play_next(&mut self.library, n);
-                return None;
             }
             ControlMsg::PrevSong(n) => {
                 if let Some(t) = self.config.previous_timeout() {
@@ -93,9 +91,9 @@ impl UampApp {
                         let now = Instant::now();
                         if now - mem::replace(&mut self.last_prev, now) >= t.0
                         {
-                            return Some(Msg::Control(ControlMsg::SeekTo(
+                            return vec![Msg::Control(ControlMsg::SeekTo(
                                 Duration::ZERO,
-                            )));
+                            ))];
                         }
                     }
                 }
@@ -104,23 +102,19 @@ impl UampApp {
                 if let Err(e) = self.delete_old_logs() {
                     error!("Failed to remove logs: {e}");
                 }
-                return None;
             }
             ControlMsg::Close => {
                 self.save_all(true, ctrl);
                 if ctrl.any_task(|t| t != TaskType::Server) {
                     self.pending_close = true;
-                    return None;
+                    return vec![];
                 }
-                // return ComMsg::Command(window::close());
                 ctrl.exit();
-                return None;
             }
             ControlMsg::Shuffle => {
                 self.player
                     .playlist_mut()
                     .shuffle(self.config.shuffle_current());
-                return None;
             }
             ControlMsg::SetVolume(v) => {
                 self.player.set_volume(v.clamp(0., 1.))
@@ -137,7 +131,6 @@ impl UampApp {
             ),
             ControlMsg::PlaylistJump(i) => {
                 self.player.jump_to(&mut self.library, i);
-                return None;
             }
             ControlMsg::Mute(b) => {
                 self.player.set_mute(b.unwrap_or(!self.player.mute()))
@@ -157,17 +150,14 @@ impl UampApp {
             }
             ControlMsg::SeekTo(d) => {
                 self.player.seek_to(d);
-                return None;
             }
             ControlMsg::FastForward(d) => {
                 let t = d.unwrap_or(self.config.seek_jump().0);
                 self.player.seek_by(t, true);
-                return None;
             }
             ControlMsg::Rewind(d) => {
                 let t = d.unwrap_or(self.config.seek_jump().0);
                 self.player.seek_by(t, false);
-                return None;
             }
             ControlMsg::SetPlaylist(filter) => {
                 let songs = self.library.filter(filter);
@@ -198,7 +188,7 @@ impl UampApp {
             ControlMsg::Save => self.save_all(false, ctrl),
         };
 
-        None
+        vec![]
     }
 }
 

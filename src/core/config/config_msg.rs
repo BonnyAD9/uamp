@@ -32,19 +32,19 @@ impl UampApp {
         &mut self,
         ctrl: &mut AppCtrl,
         msg: ConfigMsg,
-    ) -> Option<Msg> {
+    ) -> Vec<Msg> {
         match msg {
             ConfigMsg::Reload => {
                 let Some(path) = self.config.config_path.as_ref() else {
                     warn!("Cannot reaload config because the path is unknwn");
-                    return None;
+                    return vec![];
                 };
 
                 let mut conf = match Config::from_json(path) {
                     Ok(c) => c,
                     Err(e) => {
                         warn!("Failed to reload config: {e}");
-                        return None;
+                        return vec![];
                     }
                 };
 
@@ -66,7 +66,7 @@ impl UampApp {
             }
         }
 
-        None
+        vec![]
     }
 
     pub(in crate::core) fn config_update(
