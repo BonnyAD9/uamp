@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## v0.5.2
+## v0.5.3
 - Remove gui and related features.
 - Add non gui mode for running in background.
 - Add options to add newly loaded songs to the current playlist.
