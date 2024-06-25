@@ -1,9 +1,11 @@
 use std::{fmt::Display, str::FromStr};
 
-use pareg::{key_mval_arg, key_val_arg, ArgError, FromArgStr};
+use pareg::{
+    has_any_key, mval_arg, starts_any, val_arg, ArgError, FromArgStr,
+};
 use serde::{Deserialize, Serialize};
 
-use crate::{env::AppCtrl, starts};
+use crate::env::AppCtrl;
 
 use super::{control_msg_vec::ControlMsgVec, Error, Msg, UampApp};
 
@@ -51,17 +53,19 @@ impl FromStr for DataControlMsg {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            v if starts!(v, "al" | "alias") => {
-                Ok(DataControlMsg::Alias(key_val_arg::<&str, _>(v, '=')?.1))
+            v if starts_any!(v, "al", "alias") => {
+                Ok(DataControlMsg::Alias(val_arg(v, '=')?))
             }
-            v if starts!(
+            v if has_any_key!(
                 v,
-                "spea" | "pl-end" | "playlist-end" | "playlist-end-action"
+                '=',
+                "spea",
+                "pl-end",
+                "playlist-end",
+                "playlist-end-action"
             ) =>
             {
-                Ok(DataControlMsg::SetPlaylistEndAction(
-                    key_mval_arg::<&str, _>(v, '=')?.1,
-                ))
+                Ok(DataControlMsg::SetPlaylistEndAction(mval_arg(v, '=')?))
             }
             v => Err(Error::ArgParse(ArgError::UnknownArgument(
                 v.to_owned().into(),

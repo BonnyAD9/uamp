@@ -1,7 +1,6 @@
 mod alc_vec;
 mod durstr;
 mod save_struct_macro;
-mod starts_macro;
 mod wrap;
 
 //===========================================================================//

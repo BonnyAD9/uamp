@@ -34,7 +34,7 @@ pub enum Error {
     IntParse(#[from] std::num::ParseIntError),
     /// Failed to parse arguments.
     #[error(transparent)]
-    ArgParse(pareg::ArgError<'static>),
+    ArgParse(#[from] pareg::ArgError),
     /// the audiotags library error.
     #[error(transparent)]
     AudioTag(#[from] audiotags::Error),
@@ -113,10 +113,4 @@ pub enum SerdeError {
     /// Rmp error while decoding
     #[error(transparent)]
     RmpDecode(#[from] rmp_serde::decode::Error),
-}
-
-impl<'a> From<pareg::ArgError<'a>> for Error {
-    fn from(value: pareg::ArgError<'a>) -> Self {
-        Self::ArgParse(value.into_owned())
-    }
 }

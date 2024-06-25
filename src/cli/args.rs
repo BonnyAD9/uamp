@@ -130,7 +130,7 @@ impl Args {
                         continue;
                     }
 
-                    Err(ArgError::UnknownArgument(a.into()))?
+                    Err(ArgError::UnknownArgument(a.to_owned().into()))?
                 }
             }
         }

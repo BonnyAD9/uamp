@@ -1,7 +1,7 @@
 use std::{borrow::Cow, mem, net::TcpStream, path::Path, time::Duration};
 
 use log::error;
-use pareg::{ArgIterator, ByRef};
+use pareg::{has_any_key, ArgIterator, ByRef};
 use termal::printcln;
 
 use crate::{
@@ -11,7 +11,6 @@ use crate::{
         PlayMsg, Result,
     },
     ext::duration_to_string,
-    starts,
 };
 
 use super::help::help_instance;
@@ -47,13 +46,10 @@ impl Instance {
         while let Some(arg) = args.next() {
             match arg {
                 "info" | "nfo" => self.messages.push(Request::Info.into()),
-                v if starts!(v, "p" | "play") => {
+                v if has_any_key!(v, '=', "p", "play") => {
                     self.messages.push(
                         PlayMsg::TmpPath(
-                            args.cur_key_val::<&str, &Path>('=')?
-                                .1
-                                .canonicalize()?
-                                .into(),
+                            args.cur_val::<&Path>('=')?.canonicalize()?.into(),
                         )
                         .into(),
                     );

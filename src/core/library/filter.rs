@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use pareg::proc::FromArg;
+use pareg::FromArg;
 use serde::{Deserialize, Serialize};
 
 /// Filter for iterating library song ids.

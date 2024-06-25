@@ -6,13 +6,14 @@ use std::{
 };
 
 use log::{error, info};
-use pareg::{key_mval_arg, key_val_arg, proc::FromArg, ArgError, FromArgStr};
+use pareg::{
+    has_any_key, mval_arg, starts_any, val_arg, ArgError, FromArg, FromArgStr,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     env::AppCtrl,
     ext::{duration_to_string, Wrap},
-    starts,
 };
 
 use super::{
@@ -249,28 +250,30 @@ impl FromStr for ControlMsg {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            v if starts!(v, "play-pause" | "pp") => Ok(ControlMsg::PlayPause(
-                key_mval_arg::<&str, PlayPause>(v, '=')?.1.map(|i| i.into()),
-            )),
-            v if starts!(v, "volume-up" | "vol-up" | "vu") => {
-                Ok(ControlMsg::VolumeUp(key_mval_arg::<&str, _>(v, '=')?.1))
-            }
-            v if starts!(v, "volume-down" | "vol-down" | "vd") => {
-                Ok(ControlMsg::VolumeDown(key_mval_arg::<&str, _>(v, '=')?.1))
-            }
-            v if starts!(v, "next-song" | "ns") => Ok(ControlMsg::NextSong(
-                key_mval_arg::<&str, _>(v, '=')?.1.unwrap_or(1),
-            )),
-            v if starts!(v, "previous-song" | "ps") => {
-                Ok(ControlMsg::PrevSong(key_mval_arg::<&str, _>(v, '=')?.1))
-            }
-            v if starts!(v, "playlist-jump" | "pj") => {
-                Ok(ControlMsg::PlaylistJump(
-                    key_mval_arg::<&str, _>(v, '=')?.1.unwrap_or_default(),
+            v if has_any_key!(v, '=', "play-pause", "pp") => {
+                Ok(ControlMsg::PlayPause(
+                    mval_arg::<PlayPause>(v, '=')?.map(|i| i.into()),
                 ))
             }
-            v if starts!(v, "volume" | "vol" | "v") => {
-                let v = key_val_arg::<&str, f32>(v, '=')?.1;
+            v if has_any_key!(v, '=', "volume-up", "vol-up", "vu") => {
+                Ok(ControlMsg::VolumeUp(mval_arg(v, '=')?))
+            }
+            v if has_any_key!(v, '=', "volume-down", "vol-down", "vd") => {
+                Ok(ControlMsg::VolumeDown(mval_arg(v, '=')?))
+            }
+            v if has_any_key!(v, '=', "next-song", "ns") => {
+                Ok(ControlMsg::NextSong(mval_arg(v, '=')?.unwrap_or(1)))
+            }
+            v if has_any_key!(v, '=', "previous-song", "ps") => {
+                Ok(ControlMsg::PrevSong(mval_arg(v, '=')?))
+            }
+            v if has_any_key!(v, '=', "playlist-jump", "pj") => {
+                Ok(ControlMsg::PlaylistJump(
+                    mval_arg(v, '=')?.unwrap_or_default(),
+                ))
+            }
+            v if starts_any!(v, "volume=", "vol=", "v=") => {
+                let v = val_arg(v, '=')?;
                 if !(0.0..=1.).contains(&v) {
                     return Err(Error::InvalidValue(
                         "volume must be in range from 0 to 1",
@@ -278,39 +281,39 @@ impl FromStr for ControlMsg {
                 }
                 Ok(ControlMsg::SetVolume(v))
             }
-            v if starts!(v, "mute") => {
-                Ok(ControlMsg::Mute(key_mval_arg::<&str, _>(v, '=')?.1))
+            v if has_any_key!(v, '=', "mute") => {
+                Ok(ControlMsg::Mute(mval_arg(v, '=')?))
             }
-            v if starts!(v, "load-songs") => Ok(ControlMsg::LoadNewSongs(
-                key_mval_arg::<&str, _>(v, '=')?.1.unwrap_or_default(),
-            )),
+            v if has_any_key!(v, '=', "load-songs") => {
+                Ok(ControlMsg::LoadNewSongs(
+                    mval_arg(v, '=')?.unwrap_or_default(),
+                ))
+            }
             "shuffle-playlist" | "shuffle" => Ok(ControlMsg::Shuffle),
             "exit" | "close" | "x" => Ok(ControlMsg::Close),
-            v if starts!(v, "seek-to" | "seek") => Ok(ControlMsg::SeekTo(
-                key_val_arg::<&str, Wrap<Duration>>(v, '=')?.1 .0,
-            )),
-            v if starts!(v, "fast-forward" | "ff") => {
+            v if starts_any!(v, "seek-to=", "seek=") => {
+                Ok(ControlMsg::SeekTo(val_arg::<Wrap<Duration>>(v, '=')?.0))
+            }
+            v if has_any_key!(v, '=', "fast-forward", "ff") => {
                 Ok(ControlMsg::FastForward(
-                    key_mval_arg::<&str, Wrap<Duration>>(v, '=')?
-                        .1
-                        .map(|a| a.0),
+                    mval_arg::<Wrap<Duration>>(v, '=')?.map(|a| a.0),
                 ))
             }
-            v if starts!(v, "rewind" | "rw") => Ok(ControlMsg::Rewind(
-                key_mval_arg::<&str, Wrap<Duration>>(v, '=')?.1.map(|a| a.0),
-            )),
-            v if starts!(v, "set-playlist" | "sp") => {
-                Ok(ControlMsg::SetPlaylist(
-                    key_mval_arg::<&str, _>(v, '=')?.1.unwrap_or_default(),
+            v if has_any_key!(v, '=', "rewind", "rw") => {
+                Ok(ControlMsg::Rewind(
+                    mval_arg::<Wrap<Duration>>(v, '=')?.map(|a| a.0),
                 ))
             }
-            v if starts!(v, "push-playlist" | "push") => {
+            v if has_any_key!(v, '=', "set-playlist", "sp") => Ok(
+                ControlMsg::SetPlaylist(mval_arg(v, '=')?.unwrap_or_default()),
+            ),
+            v if has_any_key!(v, '=', "push-playlist", "push") => {
                 Ok(ControlMsg::PushPlaylist(
-                    key_mval_arg::<&str, _>(v, '=')?.1.unwrap_or_default(),
+                    mval_arg(v, '=')?.unwrap_or_default(),
                 ))
             }
-            v if starts!(v, "sort-playlist" | "sort") => {
-                Ok(ControlMsg::SortPlaylist(key_val_arg::<&str, _>(v, '=')?.1))
+            v if starts_any!(v, "sort-playlist", "sort") => {
+                Ok(ControlMsg::SortPlaylist(val_arg(v, '=')?))
             }
             "pop" | "pop-playlist" => Ok(ControlMsg::PopPlaylist),
             "save" => Ok(ControlMsg::Save),

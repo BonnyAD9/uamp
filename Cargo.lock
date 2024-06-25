@@ -1150,9 +1150,9 @@ checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
 name = "pareg"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cba55972eb62236f7d87bf47c471b671039f76f32eef68e8fadb9e457b456350"
+checksum = "0127fbd944bb7d344dff90d31a0cd787b7b9223c0c67b2f5376fbc0a65c9dbbd"
 dependencies = [
  "pareg_core",
  "pareg_proc",
@@ -1160,9 +1160,9 @@ dependencies = [
 
 [[package]]
 name = "pareg_core"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c8cec1b1589c0afb665ea75a7e1f1b43bfd59d9d7e3e816da12ca9966de80117"
+checksum = "bb96996e4c32ee6bc531dab7218a4cf1f9b08efb006a23f45686bcbaf0105980"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1172,9 +1172,9 @@ dependencies = [
 
 [[package]]
 name = "pareg_proc"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed7496e41b6826863a1fe99a81990f9cae461d14134a1f49aff0c8c8999689a2"
+checksum = "6c93fa493d946f87ab8aef2561d502980a6db9c8955a9b16e57477be7483fe9f"
 dependencies = [
  "pareg_core",
 ]
