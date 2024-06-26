@@ -74,7 +74,9 @@ impl UampApp {
             Self::start_server(&conf, ctrl, sender.clone())?;
         }
 
-        Self::signal_task(ctrl)?;
+        // Signal stream is broken with receiver stream.
+        //Self::signal_task(ctrl)?;
+        Self::start_signal_thread(ctrl, sender.clone())?;
 
         if conf.play_on_start() {
             if let Err(e) = sender.unbounded_send(Msg::Control(
@@ -197,6 +199,33 @@ impl UampApp {
 
         Ok(())
     }
+
+    /// Starts a thread for handling signals. This is only temorary workaround
+    /// until a bug is fixed and `signal_task` will work properly.
+    pub(super) fn start_signal_thread(
+        ctrl: &mut AppCtrl,
+        sender: UnboundedSender<Msg>,
+    ) -> Result<()> {
+        if ctrl.is_task_running(TaskType::Signals) {
+            return Err(Error::InvalidOperation(
+                "Signals thread is already running.",
+            ));
+        }
+
+        let signals = signal_hook::iterator::Signals::new(
+            signal_hook::consts::TERM_SIGNALS,
+        )?;
+
+        let task = move || {
+            TaskMsg::Signals({
+                Self::signal_thread(sender, signals);
+                Ok(())
+            })
+        };
+        ctrl.add_task(TaskType::Signals, task);
+
+        Ok(())
+    }
 }
 
 //===========================================================================//
@@ -204,7 +233,7 @@ impl UampApp {
 //===========================================================================//
 
 impl UampApp {
-    fn signal_task(ctrl: &mut AppCtrl) -> Result<()> {
+    fn _signal_task(ctrl: &mut AppCtrl) -> Result<()> {
         let sig = Signals::new(signal_hook::consts::TERM_SIGNALS)?;
 
         let stream = MsgGen::new((sig, 0), |(mut sig, cnt)| async move {
@@ -225,7 +254,7 @@ impl UampApp {
                 (Some((sig, cnt)), Msg::None)
             }
         });
-        ctrl.add_stream(stream);
+        ctrl._add_stream(stream);
 
         Ok(())
     }
@@ -308,6 +337,32 @@ impl UampApp {
                 }
             } else {
                 continue;
+            }
+        }
+    }
+
+    fn signal_thread(
+        sender: UnboundedSender<Msg>,
+        mut signals: signal_hook::iterator::Signals,
+    ) {
+        let mut cnt = 0;
+
+        for sig in &mut signals {
+            if signal_hook::consts::TERM_SIGNALS.contains(&sig) {
+                cnt += 1;
+                // fourth close request will force the exit
+                if cnt == 4 {
+                    warn!("Received 4 close signals. Exiting now.");
+                    println!("Received 4 close signals. Exiting now.");
+                    process::exit(130);
+                }
+                if let Err(e) =
+                    sender.unbounded_send(Msg::Control(ControlMsg::Close))
+                {
+                    error!("Failed to send close message: {e}");
+                }
+            } else {
+                warn!("Received unknown signal {sig}");
             }
         }
     }

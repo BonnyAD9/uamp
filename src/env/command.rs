@@ -13,7 +13,7 @@ pub enum Command {
     /// Request exit.
     Exit,
     /// Add stream to run asynchronously.
-    AddStream(Box<dyn MsgStream<Msg>>),
+    _AddStream(Box<dyn MsgStream<Msg>>),
     /// Add task to run in parallel on a thread.
     AddTask(TaskType, Box<dyn FnOnce() -> TaskMsg + Send + 'static>),
 }
@@ -22,7 +22,7 @@ impl Debug for Command {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Exit => write!(f, "Exit"),
-            Self::AddStream(_) => f.debug_tuple("AddStream").finish(),
+            Self::_AddStream(_) => f.debug_tuple("AddStream").finish(),
             Self::AddTask(t, _) => f.debug_tuple("AddTask").field(t).finish(),
         }
     }

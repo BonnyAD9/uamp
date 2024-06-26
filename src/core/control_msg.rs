@@ -106,7 +106,9 @@ impl UampApp {
             }
             ControlMsg::Close => {
                 self.save_all(true, ctrl);
-                if ctrl.any_task(|t| t != TaskType::Server) {
+                if ctrl.any_task(|t| {
+                    t != TaskType::Server && t != TaskType::Signals
+                }) {
                     self.pending_close = true;
                     return vec![];
                 }

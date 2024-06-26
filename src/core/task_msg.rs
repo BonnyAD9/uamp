@@ -1,6 +1,6 @@
 use std::net::TcpListener;
 
-use log::error;
+use log::{error, warn};
 
 use crate::env::AppCtrl;
 
@@ -22,6 +22,8 @@ pub enum TaskType {
     LibraryLoad,
     /// Library is being saved to json.
     LibrarySave,
+    /// Watches for signals.
+    Signals,
 }
 
 /// Message sent from the task when it completes.
@@ -36,6 +38,8 @@ pub enum TaskMsg {
     /// Library has finished saving. Sends the temporary song ids that no
     /// longer have any references.
     LibrarySave(Result<Vec<SongId>>),
+    /// Signals has ended.
+    Signals(Result<()>),
 }
 
 impl TaskType {
@@ -50,6 +54,7 @@ impl TaskType {
                 TaskMsg::LibrarySave(Err(Error::ThreadPanicked))
             }
             Self::Server => TaskMsg::Server(Err(Error::ThreadPanicked)),
+            Self::Signals => TaskMsg::Signals(Err(Error::ThreadPanicked)),
         }
     }
 }
@@ -77,6 +82,17 @@ impl UampApp {
             }
             TaskMsg::LibrarySave(res) => {
                 self.finish_library_save_songs(res);
+            }
+            TaskMsg::Signals(Err(e)) => {
+                error!("Signals task has unexpectedly ended: {e}");
+            }
+            TaskMsg::Signals(Ok(_)) => {
+                warn!("Signals task has unexpectedly ended, restarting.");
+                if let Err(e) =
+                    Self::start_signal_thread(ctrl, self.sender.clone())
+                {
+                    error!("Failed to start signals thread: {e}");
+                }
             }
         }
     }
