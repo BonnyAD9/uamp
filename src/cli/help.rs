@@ -134,16 +134,20 @@ fn print_basic_help() {
   {'b}run {'gr}[run arguments] [--]{'_}
     Runs new instance of uamp.
 
-  {'b}h  help {'gr}[help aguments]{'_}
+  {'b}h  help {'gr}[help aguments] [--]{'_}
     Shows help. With no arguments whole help, with arguments only help specific
     to the given arguments. Possible arguments are:
-    - {'w}all elp{'_}: print whole help.
-    - {'w}basic{'_}: print the basic help.
-    - {'w}i instance{'_}: print help for {'b}instance{'_}.
-    - {'w}run{'_}: print help for {'b}run{'_}.
-    - {'w}control-message control-msg cmsg{'_}: print help for control messages.
-    - {'w}--{'_}: print nothing and stop printing help. (this can be used if you
-      want to print only the title and version)
+    - `{'i}all{'_}` `{'i}elp{'_}`                            print whole help.
+    - `{'i}basic{'_}`                                print the basic help.
+    - `{'i}i{'_}` `{'i}instance{'_}`                         print help for \
+      {'b}instance{'_}.
+    - `{'i}run{'_}`                                  print help for \
+      {'b}run{'_}.
+    - `{'i}control-message{'_}` `{'i}control-msg{'_}` `{'i}cmsg{'_}` print \
+      help for control messages.
+    - `{'i}--{'_}`                                   stop printing help.
+    Note that using `{'i}--{'_}` without any of the help arguments will not
+    print the whole help but only the help header.
 "
     )
 }
@@ -247,14 +251,15 @@ fn print_control_messages_help() {
     Shuffle the current playlist. The difference from {'r}sort{'w}=rng{'_} is
     that {'r}shuffle{'_} will respect the setting shuffle current.
 
-  {'r}sort-playlist  sort{'w}=<ord>{'_}
+  {'r}sort-playlist  sort{'w}={'gr}[-]{'w}<ord>{'_}
     Sorts the current playlist according to the value of {'w}ord{'_}:
     - `{'i}rev{'_}` `{'i}reverse{'_}`                   reverse the playlist.
     - `{'i}rng{'_}` `{'i}rand{'_}` `{'i}random{'_}` `{'i}randomize{'_}` \
       shuffle the playlist.
     - `{'i}path{'_}`                            sort by the path.
     - `{'i}title{'_}` `{'i}name{'_}`                    sort by the song title.
-    - `{'i}artist{'_}` `{'i}performer` `{'_}author`     sort by the artist.
+    - `{'i}artist{'_}` `{'i}performer{'_}` `{'i}author{'_}`     sort by the \
+      artist.
     - `{'i}album{'_}`                           sort by the album name.
     - `{'i}track{'_}`                           sort by the track.
     - `{'i}disc{'_}`                            sort by the disc number.
@@ -263,6 +268,8 @@ fn print_control_messages_help() {
     - `{'i}len{'_}` `{'i}length{'_}`                    sort by the length of \
       the song.
     - `{'i}genre{'_}`                           sort by the genre.
+    You can prepend `{'i}-{'_}` to {'w}ord{'_} to sort in descending order.
+    Note that this is ignored by some values of {'w}ord{'_}.
 
   {'r}exit  close  x{'_}
     Gracefully close the instance.
@@ -296,7 +303,7 @@ fn print_control_messages_help() {
 
   {'r}playlist-end-action  playlist-end  pl-end  spea{'gr}[=<alias name>]{'_}
     Sets the playlist end action of the current playlist to actions specified
-    by the alias.
+    by the alias. Without value, unsets the playlist end action.
 "
     )
 }
