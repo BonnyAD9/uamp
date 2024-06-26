@@ -45,6 +45,8 @@ impl Player {
     pub fn play(&mut self, lib: &mut Library, play: bool) {
         if !self.state.is_stopped() {
             self.inner.play(play);
+            self.state = Playback::play(play);
+            return;
         }
 
         if let Some(id) = self.playlist().current() {
