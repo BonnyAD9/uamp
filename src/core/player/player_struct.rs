@@ -60,6 +60,7 @@ impl Player {
     /// - `volume`: Value from 0 to 1 (can be outside of this range but it may
     ///   result in distorted audio). It is on square root scale.
     pub fn set_volume(&mut self, volume: f32) {
+        self.volume_set(volume);
         self.inner.set_volume(volume);
     }
 
@@ -69,6 +70,7 @@ impl Player {
     ///   field `volume`.
     pub fn set_mute(&mut self, mute: bool) {
         let vol = if mute { 0. } else { self.volume() };
+        self.mute_set(mute);
         self.inner.set_volume(vol);
     }
 
