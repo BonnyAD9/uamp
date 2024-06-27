@@ -1,4 +1,6 @@
-use pareg::{ArgError, ArgIterator, ByRef};
+use std::io::{self, IsTerminal};
+
+use pareg::{starts_any, ArgError, ArgIterator, ByRef, FromArg};
 
 use crate::{
     cli::help::help_version,
@@ -15,7 +17,7 @@ use super::{
 //===========================================================================//
 
 /// Contains the CLI arguments values.
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct Args {
     /// Actions to do.
     pub actions: Vec<Action>,
@@ -29,6 +31,9 @@ pub struct Args {
     pub should_exit: bool,
     /// The mainloop should run in all cases if this is `true`.
     pub run: Option<Run>,
+
+    /// Determines whether color should be used in standard output.
+    pub stdout_color: bool,
 }
 
 impl Args {
@@ -76,9 +81,30 @@ impl Args {
     }
 }
 
+impl Default for Args {
+    fn default() -> Self {
+        Self {
+            actions: vec![],
+            port: None,
+            server_address: None,
+            should_exit: false,
+            run: None,
+            stdout_color: io::stdout().is_terminal(),
+        }
+    }
+}
+
 //===========================================================================//
 //                                  Private                                  //
 //===========================================================================//
+
+#[derive(Copy, Clone, Eq, PartialEq, FromArg, Default)]
+enum EnableColor {
+    #[default]
+    Auto,
+    Always,
+    Never,
+}
 
 impl Args {
     fn top_level<'a, I>(&mut self, args: &mut ArgIterator<'a, I>) -> Result<()>
@@ -101,17 +127,24 @@ impl Args {
                 "run" => self.run(args)?,
                 "-h" | "--help" | "-?" => {
                     self.should_exit = true;
-                    help_all();
+                    help_all(self.stdout_color);
                 }
                 "--version" => {
                     self.should_exit = true;
-                    help_version();
+                    help_version(self.stdout_color);
                 }
                 "-p" | "--port" => {
                     self.port = args.next_arg()?;
                 }
                 "-a" | "--address" => {
                     self.server_address = args.next_arg()?;
+                }
+                "--color" | "--colour" => {
+                    self.stdout_color = args.next_arg::<EnableColor>()?.into();
+                }
+                v if starts_any!(v, "--color=", "--colour") => {
+                    self.stdout_color =
+                        args.cur_val::<EnableColor>('=')?.into();
                 }
                 "--" => {}
                 a => {
@@ -146,7 +179,7 @@ impl Args {
         self.should_exit = true;
 
         let mut instance = Instance::default();
-        instance.parse(args)?;
+        instance.parse(args, self.stdout_color)?;
 
         if !instance.messages.is_empty() {
             self.actions.push(Action::Instance(instance));
@@ -161,7 +194,7 @@ impl Args {
         I::Item: ByRef<&'a str>,
     {
         let mut info = Run::default();
-        info.parse(args)?;
+        info.parse(args, self.stdout_color)?;
 
         if info.detach {
             self.should_exit = true;
@@ -171,5 +204,15 @@ impl Args {
         }
 
         Ok(())
+    }
+}
+
+impl From<EnableColor> for bool {
+    fn from(value: EnableColor) -> Self {
+        match value {
+            EnableColor::Auto => io::stdout().is_terminal(),
+            EnableColor::Always => true,
+            EnableColor::Never => false,
+        }
     }
 }

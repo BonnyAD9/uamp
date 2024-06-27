@@ -20,6 +20,7 @@
 - Add option to sort the playlist.
 - Add aliases for control messages.
 - Add playlist end actions.
+- Add option to enable/disable color in terminal.
 
 ## v0.4.0
 - Add all options to settings including help

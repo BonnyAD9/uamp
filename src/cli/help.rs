@@ -1,4 +1,9 @@
-use termal::{gradient, printcln};
+use std::{
+    borrow::Cow,
+    io::{self, IsTerminal},
+};
+
+use termal::{eprintmcln, gradient, printmcln};
 
 use super::Args;
 
@@ -13,71 +18,79 @@ pub fn help<'a>(args: &mut impl Iterator<Item = &'a str>, res: &mut Args) {
     let arg = match args.next() {
         Some(a) => a,
         None => {
-            help_all();
+            help_all(res.stdout_color);
             return;
         }
     };
 
-    help_version();
+    help_version(res.stdout_color);
 
     let mut show_cmsg = false;
     let mut cmsg_shown = false;
 
     for arg in Some(arg).into_iter().chain(args) {
         match arg {
-            "basic" => print_basic_help(),
+            "basic" => print_basic_help(res.stdout_color),
             "i" | "instance" => {
-                print_instance_help();
+                print_instance_help(res.stdout_color);
                 show_cmsg = true;
             }
             "run" => {
-                print_run_help();
+                print_run_help(res.stdout_color);
                 show_cmsg = true;
             }
-            "all" | "elp" => print_help(),
+            "all" | "elp" => print_help(res.stdout_color),
             "control-message" | "control-msg" | "cmsg" => {
-                print_control_messages_help();
+                print_control_messages_help(res.stdout_color);
                 cmsg_shown = true;
             }
             "--" => break,
-            a => println!("Invalid help option {a}"),
+            a => eprintmcln!(
+                io::stderr().is_terminal(),
+                "{'m}warning: {'_}Invalid help option {a}"
+            ),
         }
     }
 
     if show_cmsg && !cmsg_shown {
-        print_control_messages_help();
+        print_control_messages_help(res.stdout_color);
     }
 }
 
 /// Prints the whole help.
-pub fn help_all() {
-    help_version();
-    print_help();
+pub fn help_all(color: bool) {
+    help_version(color);
+    print_help(color);
 }
 
 /// Prints the help for the instance action.
-pub fn help_instance() {
-    help_version();
-    print_instance_help();
-    print_control_messages_help();
+pub fn help_instance(color: bool) {
+    help_version(color);
+    print_instance_help(color);
+    print_control_messages_help(color);
 }
 
 /// Prints help for the run action.
-pub fn help_run() {
-    help_version();
-    print_run_help();
-    print_control_messages_help();
+pub fn help_run(color: bool) {
+    help_version(color);
+    print_run_help(color);
+    print_control_messages_help(color);
 }
 
 /// Prints the help header and version.
-pub fn help_version() {
-    let v: Option<&str> = option_env!("CARGO_PKG_VERSION");
-    printcln!(
-        "Welcome in {'i g}uamp{'_} by {}{'_}
-Version {}
-",
-        gradient("BonnyAD9", (250, 50, 170), (180, 50, 240)),
-        v.unwrap_or("unknown")
+pub fn help_version(color: bool) {
+    let v = option_env!("CARGO_PKG_VERSION").unwrap_or("unknown");
+    let signature: Cow<str> = if color {
+        gradient("BonnyAD9", (250, 50, 170), (180, 50, 240)).into()
+    } else {
+        "BonnyAD9".into()
+    };
+
+    printmcln!(
+        color,
+        "Welcome in {'i g}uamp{'_} by {signature}{'_}
+Version {v}
+"
     )
 }
 
@@ -85,16 +98,17 @@ Version {}
 //                                  Private                                  //
 //===========================================================================//
 
-fn print_help() {
-    print_basic_help();
-    print_instance_help();
-    print_run_help();
-    print_control_messages_help();
+fn print_help(color: bool) {
+    print_basic_help(color);
+    print_instance_help(color);
+    print_run_help(color);
+    print_control_messages_help(color);
 }
 
 /// Prints the basic usage help
-fn print_basic_help() {
-    printcln!(
+fn print_basic_help(color: bool) {
+    printmcln!(
+        color,
         "{'g}Usage:{'_}
   {'c}uamp{'_}
     Starts the background player.
@@ -127,6 +141,11 @@ fn print_basic_help() {
   {'y}-H{'gr}[arg]{'_}
     Equivalent to `{'b}h {'gr}[arg] {'w}--{'_}`.
 
+  {'y}--color  --colour {'w}<(auto|always|never)>
+  {'y}--color  --colour{'w}=<(auto|always|never)>{'_}
+    Enable/disable color in stdout. This will apply for help only when
+    specified before.
+
 {'g}Actions:{'_}
   {'b}i  instance {'gr}[instance arguments] [--]{'_}
     Operates on a running instance of uamp.
@@ -153,8 +172,9 @@ fn print_basic_help() {
 }
 
 /// Prints the instance help
-fn print_instance_help() {
-    printcln!(
+fn print_instance_help(color: bool) {
+    printmcln!(
+        color,
         "{'g}Instance usage:
   {'c}uamp {'b}i {'gr}[{'dy}flags{'gr}] [{'dr}messages{'gr}] [--]{'_}
     Sends the messages to a running instance of uamp using the server.
@@ -181,8 +201,9 @@ fn print_instance_help() {
     );
 }
 
-fn print_run_help() {
-    printcln!(
+fn print_run_help(color: bool) {
+    printmcln!(
+        color,
         "{'g}Run usage:
   {'c}uamp {'b}run {'gr}[{'dy}flags{'gr}] [{'dr}messages{'gr}] [--]{'_}
     Runs new instance of uamp. The given messages are executed on the new
@@ -209,8 +230,9 @@ fn print_run_help() {
     )
 }
 
-fn print_control_messages_help() {
-    printcln!(
+fn print_control_messages_help(color: bool) {
+    printmcln!(
+        color,
         "{'g}Control messages:
   {'r}play-pause  pp{'gr}[=(play|pause)]{'_}
     Play or pause. When without argument, toggle.

@@ -43,6 +43,7 @@ impl Run {
     pub(super) fn parse<'a, I>(
         &mut self,
         args: &mut ArgIterator<'a, I>,
+        color: bool,
     ) -> Result<()>
     where
         I: Iterator,
@@ -50,7 +51,7 @@ impl Run {
     {
         while let Some(arg) = args.next() {
             match arg {
-                "-h" | "-?" | "--help" => help_run(),
+                "-h" | "-?" | "--help" => help_run(color),
                 "-d" | "--detach" => self.detach = true,
                 "-p" | "--port" => self.port = args.next_arg()?,
                 "-a" | "--address" => self.server_address = args.next_arg()?,

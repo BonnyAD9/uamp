@@ -1,8 +1,12 @@
 use core::config;
-use std::env::args;
+use std::{
+    env::args,
+    io::{self, IsTerminal},
+};
 
 use cli::Run;
 use log::info;
+use termal::eprintmcln;
 
 use crate::{
     cli::{Action, Args},
@@ -17,14 +21,17 @@ mod ext;
 
 fn main() {
     if let Err(e) = start() {
-        println!("{e}");
+        eprintmcln!(io::stderr().is_terminal(), "{'r}error: {'_}{e}");
     }
 }
 
 /// Main wraps this function, this is the entry point of the application
 fn start() -> Result<()> {
     if let Err(e) = start_logger() {
-        eprintln!("failed to start logger: {e}");
+        eprintmcln!(
+            io::stderr().is_terminal(),
+            "{'r}error: {'_}failed to start logger: {e}"
+        );
     }
 
     info!("started");
@@ -36,7 +43,7 @@ fn start() -> Result<()> {
 
     for a in args.actions {
         match a {
-            Action::Instance(i) => i.send(&conf)?,
+            Action::Instance(i) => i.send(&conf, args.stdout_color)?,
             Action::RunDetached(mut i) => {
                 i.port = i.port.or(args.port);
                 i.server_address = i

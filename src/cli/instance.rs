@@ -1,8 +1,15 @@
-use std::{borrow::Cow, mem, net::TcpStream, path::Path, time::Duration};
+use std::{
+    borrow::Cow,
+    io::{self, IsTerminal},
+    mem,
+    net::TcpStream,
+    path::Path,
+    time::Duration,
+};
 
 use log::error;
 use pareg::{has_any_key, ArgIterator, ByRef};
-use termal::printcln;
+use termal::{eprintmcln, printmcln};
 
 use crate::{
     core::{
@@ -38,6 +45,7 @@ impl Instance {
     pub(super) fn parse<'a, I>(
         &mut self,
         args: &mut ArgIterator<'a, I>,
+        color: bool,
     ) -> Result<()>
     where
         I: Iterator,
@@ -54,7 +62,7 @@ impl Instance {
                         .into(),
                     );
                 }
-                "-h" | "-?" | "--help" => help_instance(),
+                "-h" | "-?" | "--help" => help_instance(color),
                 "-p" | "--port" => self.port = Some(args.next_arg()?),
                 "-a" | "--address" => self.server = Some(args.next_arg()?),
                 "--" => break,
@@ -70,7 +78,7 @@ impl Instance {
     /// # Errors
     /// - There is no running instance of uamp with the server address and
     ///   port.
-    pub fn send(mut self, conf: &Config) -> Result<()> {
+    pub fn send(mut self, conf: &Config, color: bool) -> Result<()> {
         self.port = self.port.or(Some(conf.port()));
         self.server = self
             .server
@@ -82,11 +90,14 @@ impl Instance {
             match res {
                 Ok(MsgMessage::Success) => {}
                 Ok(MsgMessage::Info(i)) => {
-                    Self::print_info(*i);
+                    Self::print_info(*i, color);
                 }
-                Err(e) => println!("{e}"),
+                Err(e) => eprintmcln!(color, "{'r}error: {'_}{e}"),
                 Ok(r) => {
-                    println!("Unexpected response: {r:?}");
+                    eprintmcln!(
+                        io::stderr().is_terminal(),
+                        "{'r}error: {'_}Unexpected response: {r:?}"
+                    );
                 }
             }
         }
@@ -120,7 +131,7 @@ impl Instance {
         msgr.recieve()
     }
 
-    fn print_info(info: Info) {
+    fn print_info(info: Info, color: bool) {
         let mut title: Cow<str> = "--".into();
         let mut artist: Cow<str> = "--".into();
         let mut album: Cow<str> = "--".into();
@@ -172,7 +183,8 @@ impl Instance {
         let playlist = format!("{pos}/{plen}");
         let dt = format!("<{disc}-{track}>");
 
-        printcln!(
+        printmcln!(
+            color,
             "
 {'bold y}{title: ^80}{'_}
 {: >blen$}{'gr}by {'dc}{artist} {'gr}from {'dm}{album}{'_}
