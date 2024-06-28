@@ -53,8 +53,18 @@ gen_struct! {
         },
 
         #[doc = "Aliases for groups of control actions."]
-        control_aliases: HashMap<String, ControlMsgVec> { pub, pub } => pub(super) () {
-            Default::default()
+        control_aliases: HashMap<String, ControlMsgVec> { pub, pub } =>
+        pub(super) () {
+            let mut res = HashMap::new();
+            res.insert("nothing".to_owned(), vec![].into());
+            res
+        },
+
+        #[doc = "This will be used as playlist end action if the end action"]
+        #[doc = "is not set."]
+        default_playlist_end_action: Option<String> { pub, pub } =>
+        pub(super) () {
+            None
         },
 
         ; // fields passed by value:
@@ -183,6 +193,7 @@ impl Config {
             port: default_port(),
             server_address: default_server_address(),
             control_aliases: default_control_aliases(),
+            default_playlist_end_action: default_default_playlist_end_action(),
             delete_logs_after: default_delete_logs_after(),
             enable_server: default_enable_server(),
             shuffle_current: default_shuffle_current(),

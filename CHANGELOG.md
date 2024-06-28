@@ -21,6 +21,7 @@
 - Add aliases for control messages.
 - Add playlist end actions.
 - Add option to enable/disable color in terminal.
+- Add option to set default playlist end action.
 
 ## v0.4.0
 - Add all options to settings including help

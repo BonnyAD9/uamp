@@ -85,3 +85,9 @@ impl IntoIterator for ControlMsgVec {
         self.msgs.into_iter()
     }
 }
+
+impl From<Vec<AnyControlMsg>> for ControlMsgVec {
+    fn from(value: Vec<AnyControlMsg>) -> Self {
+        Self::new(value)
+    }
+}

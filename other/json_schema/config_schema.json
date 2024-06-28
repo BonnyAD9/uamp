@@ -135,7 +135,14 @@
                 "description": "Defines what this alias does.",
                 "type": "string"
             },
-            "default": {}
+            "default": {
+                "nothing": ""
+            }
+        },
+        "default_playlist_end_action": {
+            "description": "This will be used as playlist end action if the end action is not set.",
+            "type": ["string", null],
+            "default": null
         }
     }
 }

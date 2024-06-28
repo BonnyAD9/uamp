@@ -50,7 +50,12 @@ impl UampApp {
             Msg::None => vec![],
         };
 
-        res.splice(0..0, self.player.get_playlist_action());
+        res.splice(
+            0..0,
+            self.player.get_playlist_action(
+                self.config.default_playlist_end_action().as_ref(),
+            ),
+        );
         res
     }
 }

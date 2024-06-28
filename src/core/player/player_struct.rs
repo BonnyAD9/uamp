@@ -232,12 +232,16 @@ impl Player {
 
     /// If any playlist action is triggered, return its messages and clear the
     /// trigger flag.
-    pub fn get_playlist_action(&mut self) -> Option<Msg> {
+    pub fn get_playlist_action(
+        &mut self,
+        default: Option<&String>,
+    ) -> Option<Msg> {
         if self.playlist_ended {
             self.playlist_ended = false;
             self.playlist()
                 .on_end
                 .clone()
+                .or_else(|| default.cloned())
                 .map(|a| DataControlMsg::Alias(a).into())
         } else {
             None
