@@ -1,27 +1,35 @@
 # CHANGELOG
 
+## future
+- Add option to enable/disable color in terminal.
+- Add option to set default playlist end action.
+
 ## v0.5.3
-- Remove gui and related features.
-- Add non gui mode for running in background.
-- Add options to add newly loaded songs to the current playlist.
-- Add option for playlist jump from console.
-- Add option to remove songs with non existing paths from library on library
-  load, this is enabled by default.
+- Add aliases for control messages.
+- Add playlist end actions.
+
+## v0.5.2
+- Add option to save position within song (`save_playback_pos`).
+- Add secondary playlist.
+- Support temorary songs that can exist only in playlist.
+- Add option to directly play file.
+- Add option to sort the playlist.
+
+## v0.5.1
 - Speed up searching for new songs.
 - Support multiple arguments at once after instance.
 - Add option to start the app in detached mode (`run -d`).
 - Add option to send messages to multiple instances at once.
 - Add alternative ways to use actions (`-I`, `-R`, ...).
 - Add option to print version (`--version`).
-- Add option to save position within song (`save_playback_pos`).
-- Add secondary playlist.
-- Support temorary songs that can exist only in playlist.
-- Add option to directly play file.
-- Add option to sort the playlist.
-- Add aliases for control messages.
-- Add playlist end actions.
-- Add option to enable/disable color in terminal.
-- Add option to set default playlist end action.
+
+## v0.5.0
+- Remove gui and related features.
+- Add non gui mode for running in background.
+- Add options to add newly loaded songs to the current playlist.
+- Add option for playlist jump from console.
+- Add option to remove songs with non existing paths from library on library
+  load, this is enabled by default.
 
 ## v0.4.0
 - Add all options to settings including help
