@@ -14,6 +14,7 @@
 - Support temorary songs that can exist only in playlist.
 - Add option to directly play file.
 - Add option to sort the playlist.
+- Watch the config file for changes and automatically reload the configuration.
 
 ## v0.5.1
 - Speed up searching for new songs.
@@ -22,6 +23,8 @@
 - Add option to send messages to multiple instances at once.
 - Add alternative ways to use actions (`-I`, `-R`, ...).
 - Add option to print version (`--version`).
+- Handle exit signals.
+- Improve info print.
 
 ## v0.5.0
 - Remove gui and related features.
