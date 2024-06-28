@@ -1799,9 +1799,9 @@ dependencies = [
 
 [[package]]
 name = "termal"
-version = "1.0.2"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b3ad5d007b5d3d029ee63c7df4ea7b81597b51c25b9be00771c15f850493928"
+checksum = "5aa528a92cdf7f9ce7600b6bf4cfb85d9126ee35b3f07db51362c96c923b244e"
 dependencies = [
  "termal_core",
  "termal_proc",

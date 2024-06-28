@@ -1,9 +1,6 @@
-use std::{
-    borrow::Cow,
-    io::{self, IsTerminal},
-};
+use std::borrow::Cow;
 
-use termal::{eprintmcln, gradient, printmcln};
+use termal::{eprintacln, gradient, printmcln};
 
 use super::Args;
 
@@ -45,10 +42,7 @@ pub fn help<'a>(args: &mut impl Iterator<Item = &'a str>, res: &mut Args) {
                 cmsg_shown = true;
             }
             "--" => break,
-            a => eprintmcln!(
-                io::stderr().is_terminal(),
-                "{'m}warning: {'_}Invalid help option {a}"
-            ),
+            a => eprintacln!("{'m}warning: {'_}Invalid help option {a}"),
         }
     }
 
@@ -90,7 +84,7 @@ pub fn help_version(color: bool) {
         color,
         "Welcome in {'i g}uamp{'_} by {signature}{'_}
 Version {v}
-"
+",
     )
 }
 
@@ -167,7 +161,7 @@ fn print_basic_help(color: bool) {
     - `{'i}--{'_}`                                   stop printing help.
     Note that using `{'i}--{'_}` without any of the help arguments will not
     print the whole help but only the help header.
-"
+",
     )
 }
 
@@ -197,7 +191,7 @@ fn print_instance_help(color: bool) {
 
   {'r}play p{'w}=<file path>{'_}
     Play the given file in the secondary playlist.
-"
+",
     );
 }
 
@@ -226,7 +220,7 @@ fn print_run_help(color: bool) {
 
 {'g}Run messages:{'_}
   Any {'g}control message{'_}.
-"
+",
     )
 }
 
@@ -326,6 +320,6 @@ fn print_control_messages_help(color: bool) {
   {'r}playlist-end-action  playlist-end  pl-end  spea{'gr}[=<alias name>]{'_}
     Sets the playlist end action of the current playlist to actions specified
     by the alias. Without value, unsets the playlist end action.
-"
+",
     )
 }

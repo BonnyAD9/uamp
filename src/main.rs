@@ -6,7 +6,7 @@ use std::{
 
 use cli::Run;
 use log::info;
-use termal::eprintmcln;
+use termal::{eprintacln, eprintmcln};
 
 use crate::{
     cli::{Action, Args},
@@ -21,7 +21,7 @@ mod ext;
 
 fn main() {
     if let Err(e) = start() {
-        eprintmcln!(io::stderr().is_terminal(), "{'r}error: {'_}{e}");
+        eprintacln!("{'r}error: {'_}{e}");
     }
 }
 

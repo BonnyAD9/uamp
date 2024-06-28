@@ -1,15 +1,8 @@
-use std::{
-    borrow::Cow,
-    io::{self, IsTerminal},
-    mem,
-    net::TcpStream,
-    path::Path,
-    time::Duration,
-};
+use std::{borrow::Cow, mem, net::TcpStream, path::Path, time::Duration};
 
 use log::error;
 use pareg::{has_any_key, ArgIterator, ByRef};
-use termal::{eprintmcln, printmcln};
+use termal::{eprintacln, printmcln};
 
 use crate::{
     core::{
@@ -92,12 +85,9 @@ impl Instance {
                 Ok(MsgMessage::Info(i)) => {
                     Self::print_info(*i, color);
                 }
-                Err(e) => eprintmcln!(color, "{'r}error: {'_}{e}"),
+                Err(e) => eprintacln!("{'r}error: {'_}{e}"),
                 Ok(r) => {
-                    eprintmcln!(
-                        io::stderr().is_terminal(),
-                        "{'r}error: {'_}Unexpected response: {r:?}"
-                    );
+                    eprintacln!("{'r}error: {'_}Unexpected response: {r:?}");
                 }
             }
         }
@@ -195,7 +185,7 @@ impl Instance {
 {'gr}{playlist: ^80}
 {dt: ^80}
 uamp{version: >76}{'_}",
-            ' '
+            ' ',
         );
     }
 }
