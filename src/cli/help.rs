@@ -127,13 +127,13 @@ fn print_basic_help(color: bool) {
     Print the version.
 
   {'y}-I{'gr}[arg]{'_}
-    Equivalent to `{'b}i {'gr}[arg] {'w}--{'_}`.
+    Equivalent to `{'b}i {'gr}[arg]`.
 
   {'y}-R{'gr}[arg]{'_}
-    Equivalent to `{'b}run {'gr}[arg] {'w}--{'_}`.
+    Equivalent to `{'b}run {'gr}[arg]`.
 
   {'y}-H{'gr}[arg]{'_}
-    Equivalent to `{'b}h {'gr}[arg] {'w}--{'_}`.
+    Equivalent to `{'b}h {'gr}[arg]`.
 
   {'y}--color  --colour {'w}<(auto|always|never)>
   {'y}--color  --colour{'w}=<(auto|always|never)>{'_}
@@ -150,17 +150,15 @@ fn print_basic_help(color: bool) {
   {'b}h  help {'gr}[help aguments] [--]{'_}
     Shows help. With no arguments whole help, with arguments only help specific
     to the given arguments. Possible arguments are:
-    - `{'i}all{'_}` `{'i}elp{'_}`                            print whole help.
-    - `{'i}basic{'_}`                                print the basic help.
-    - `{'i}i{'_}` `{'i}instance{'_}`                         print help for \
-      {'b}instance{'_}.
-    - `{'i}run{'_}`                                  print help for \
-      {'b}run{'_}.
-    - `{'i}control-message{'_}` `{'i}control-msg{'_}` `{'i}cmsg{'_}` print \
-      help for control messages.
-    - `{'i}--{'_}`                                   stop printing help.
-    Note that using `{'i}--{'_}` without any of the help arguments will not
-    print the whole help but only the help header.
+    - `{'r}all  elp{'_}`                           print whole help.
+    - `{'r}basic{'_}`                              print the basic help.
+    - `{'r}i  instance{'_}`                        print help for
+                                           {'b}instance{'_}.
+    - `{'r}run{'_}`                                print help for {'b}run{'_}.
+    - `{'r}control-message  control-msg  cmsg{'_}` print help for control
+                                           messages.
+    Note that using {'w}--{'_} without any of the help arguments will not print
+    the whole help but only the help header.
 ",
     )
 }
