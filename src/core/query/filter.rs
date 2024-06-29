@@ -24,13 +24,21 @@ pub enum FilterType {
     Any,
     /// Nothing passes this filter.
     None,
+    /// Song title, artist or album name contains the given string.
     AnyName(String),
+    /// Song title contains the given string.
     Title(String),
+    /// Song artist contains the given string.
     Artist(String),
+    /// Song album contains the given string.
     Album(String),
+    /// Track number has the given value.
     Track(u32),
+    /// Disc number has the given value.
     Disc(u32),
+    /// Song was released within the given year.
     Year(i32),
+    /// Song genre contains the given string.
     Genre(String),
 }
 
@@ -139,7 +147,7 @@ impl FromStr for FilterType {
                 "artist:",
                 "performer:",
                 "auth:",
-                "author:"
+                "author:",
             ) =>
             {
                 Ok(Self::Artist(val_arg(v, ':')?))

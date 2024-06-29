@@ -7,6 +7,7 @@
 - Add new add policy: `none`/`-` - explicit *don't add to playlist*.
 - Add option to select the sorting complexity from cli.
 - Allow unlimited playlist stack.
+- Add new filtering options.
 
 ## v0.5.3
 - Add aliases for control messages.
