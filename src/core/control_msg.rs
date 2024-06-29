@@ -18,6 +18,7 @@ use crate::{
 
 use super::{
     library::{Filter, LoadOpts},
+    player::AddPolicy,
     Error, Msg, SongOrder, TaskType, UampApp,
 };
 
@@ -62,8 +63,10 @@ pub enum ControlMsg {
     PushPlaylist(Filter),
     /// Sorts the top playlist.
     SortPlaylist(SongOrder),
-    /// Pop the intercepted playlist
+    /// Pop the intercepted playlist.
     PopPlaylist,
+    /// Set the playlist add policy.
+    SetPlaylistAddPolicy(Option<AddPolicy>),
     /// Thriggers save
     Save,
 }
@@ -188,6 +191,9 @@ impl UampApp {
             ControlMsg::PopPlaylist => {
                 self.player.pop_playlist(&mut self.library);
             }
+            ControlMsg::SetPlaylistAddPolicy(policy) => {
+                self.player.playlist_mut().add_policy = policy;
+            }
             ControlMsg::Save => self.save_all(false, ctrl),
         };
 
@@ -242,6 +248,8 @@ impl Display for ControlMsg {
             ControlMsg::PushPlaylist(Filter::All) => f.write_str("push"),
             ControlMsg::SortPlaylist(ord) => write!(f, "sort={ord}"),
             ControlMsg::PopPlaylist => f.write_str("pop"),
+            ControlMsg::SetPlaylistAddPolicy(None) => f.write_str("pap"),
+            ControlMsg::SetPlaylistAddPolicy(Some(p)) => write!(f, "pap={p}"),
             ControlMsg::Save => f.write_str("save"),
         }
     }
@@ -318,6 +326,16 @@ impl FromStr for ControlMsg {
                 Ok(ControlMsg::SortPlaylist(val_arg(v, '=')?))
             }
             "pop" | "pop-playlist" => Ok(ControlMsg::PopPlaylist),
+            v if has_any_key!(
+                v,
+                '=',
+                "playlist-add-policy",
+                "add-policy",
+                "pap"
+            ) =>
+            {
+                Ok(ControlMsg::SetPlaylistAddPolicy(mval_arg(v, '=')?))
+            }
             "save" => Ok(ControlMsg::Save),
             v => Err(Error::ArgParse(ArgError::UnknownArgument(
                 v.to_owned().into(),

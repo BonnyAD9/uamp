@@ -254,14 +254,17 @@ fn print_control_messages_help(color: bool) {
   {'r}mute{'gr}[=(true|false)]{'_}
     Mute/Unmute. When without argument, toggle.
 
-  {'r}load-songs{'gr}[=<opts>]{'_}
+  {'r}load-songs{'gr}[=[l|r][-|e|n|m]]{'_}
     Look for new songs. This can be modifed with the load options of the form
-    `{'i}[r|l][e|n|m]{'_}`:
-    - `{'i}r{'_}` also remove songs with invalid path.
-    - `{'i}l{'_}` don't remove songs with invalid path.
-    - `{'i}e{'_}` add new songs to the end of the queue.
-    - `{'i}n{'_}` add new songs after the current song.
-    - `{'i}m{'_}` randomly mix the songs in after the current song.
+    `{'i}[r|l][-|e|n|m]{'_}`:
+      Remove songs with invalid path:
+      - `{'i}r{'_}` also remove songs with invalid path.
+      - `{'i}l{'_}` don't remove songs with invalid path.
+      Add policy (overrides playlist property):
+      - `{'i}-{'_}` don't add the songs to playlist.
+      - `{'i}e{'_}` add new songs to the end of the queue.
+      - `{'i}n{'_}` add new songs after the current song.
+      - `{'i}m{'_}` randomly mix the songs in after the current song.
 
   {'r}shuffle-playlist  shuffle{'_}
     Shuffle the current playlist. The difference from {'r}sort{'w}=rng{'_} is
@@ -320,6 +323,18 @@ fn print_control_messages_help(color: bool) {
   {'r}playlist-end-action  playlist-end  pl-end  spea{'gr}[=<alias name>]{'_}
     Sets the playlist end action of the current playlist to actions specified
     by the alias. Without value, unsets the playlist end action.
+
+  {'r}playlist-add-policy  add-polocy  pap{'gr}[=<add policy>]{'_}
+    Sets the playlist add policy. It is one of the following:
+    - `{'i}-{'_}`  `{'i}none{'_}`          don't add new songs to the playlist.
+    - `{'i}e{'_}`  `{'i}end{'_}`           add new sobgs to the end of the \
+      playlist.
+    - `{'i}n{'_}`  `{'i}next{'_}`          add new songs after the currently \
+      playing song.
+    - `{'i}m{'_}`  `{'i}mix{'_}`  `{'i}mix-in{'_}` randomly mix the the songs \
+      after the currently
+                           playing song.
+    Without value it is the same as setting it to `{'i}none{'_}`.
 ",
     )
 }

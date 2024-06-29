@@ -75,14 +75,12 @@ impl UampApp {
             self.library.update(LibraryUpdate::NewData);
         }
 
-        if let Some(p) = res.add_policy {
-            self.player.playlist_mut().add_songs(
-                (res.first_new..self.library.songs().len())
-                    .map(SongId)
-                    .chain(res.sparse_new),
-                p,
-            );
-        };
+        self.player.playlist_mut().add_songs(
+            (res.first_new..self.library.songs().len())
+                .map(SongId)
+                .chain(res.sparse_new),
+            res.add_policy,
+        );
 
         match self.library.start_to_default_json(
             &self.config,

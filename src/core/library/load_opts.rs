@@ -34,10 +34,11 @@ impl ToString for LoadOpts {
         }
 
         match self.add_to_playlist {
+            Some(AddPolicy::None) => res.push('-'),
             Some(AddPolicy::End) => res.push('e'),
             Some(AddPolicy::Next) => res.push('n'),
             Some(AddPolicy::MixIn) => res.push('m'),
-            _ => {}
+            None => {}
         }
 
         if res.is_empty() {
@@ -77,6 +78,7 @@ impl FromStr for LoadOpts {
             match c {
                 'r' => set_rm(&mut res, true)?,
                 'l' => set_rm(&mut res, false)?,
+                '-' => set_atp(&mut res, AddPolicy::None)?,
                 'e' => set_atp(&mut res, AddPolicy::End)?,
                 'n' => set_atp(&mut res, AddPolicy::Next)?,
                 'm' => set_atp(&mut res, AddPolicy::MixIn)?,

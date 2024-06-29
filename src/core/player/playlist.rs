@@ -27,8 +27,12 @@ pub struct Playlist {
     current: usize,
     #[serde(default)]
     play_pos: Option<Duration>,
+    /// Alias to run when the playlist ends.
     #[serde(default)]
     pub on_end: Option<String>,
+    /// How songs should be added to the playlist.
+    #[serde(default)]
+    pub add_policy: Option<AddPolicy>,
 }
 
 impl Playlist {
@@ -46,6 +50,7 @@ impl Playlist {
             current,
             play_pos: None,
             on_end: None,
+            add_policy: None,
         }
     }
 
@@ -87,12 +92,17 @@ impl Playlist {
     ///
     /// - `songs`: Iterator over songs to add.
     /// - `policy`: Where in the playlist the songs should be added.
-    pub fn add_songs<I>(&mut self, songs: I, policy: AddPolicy)
+    pub fn add_songs<I>(&mut self, songs: I, policy: Option<AddPolicy>)
     where
         I: IntoIterator<Item = SongId>,
     {
+        let Some(policy) = policy.or(self.add_policy) else {
+            return;
+        };
+
         let i = self.current + 1;
         match policy {
+            AddPolicy::None => {}
             AddPolicy::End => self.songs.extend(songs),
             AddPolicy::Next => self.songs.splice(i..i, songs),
             AddPolicy::MixIn => self.songs.mix_after(i, songs),

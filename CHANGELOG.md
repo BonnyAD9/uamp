@@ -3,6 +3,8 @@
 ## future
 - Add option to enable/disable color in terminal.
 - Add option to set default playlist end action.
+- Add option to set add policy as property of playlist.
+- Add new add policy: `none`/`-` - explicit *don't add to playlist*.
 
 ## v0.5.3
 - Add aliases for control messages.
