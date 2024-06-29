@@ -27,7 +27,7 @@ gen_struct! {
     pub Player {
         // Reference
         playlist: Playlist { pub, pub },
-        intercept: Option<Playlist> { pub(super), pri },
+        playlist_stack: Vec<Playlist> { pub(super), pri },
         ; // value
         volume: f32 { pub, pri },
         mute: bool { pub, pri },
@@ -133,21 +133,18 @@ impl Player {
         playlist: Playlist,
         play: bool,
     ) {
-        if self.intercept.is_some() {
-            self.play_playlist(lib, playlist, play);
-            return;
-        }
         if let Some(t) = self.timestamp() {
-            self.playlist.set_play_pos(t.current)
+            self.playlist_mut().set_play_pos(t.current)
         }
 
-        self.intercept = Some(mem::replace(self.playlist_mut(), playlist));
+        let old = mem::replace(self.playlist_mut(), playlist);
+        self.playlist_stack_mut().push(old);
         self.try_load(lib, self.playlist.current(), play);
     }
 
     /// If there are more playlists in the stack, end the top one.
     pub fn pop_playlist(&mut self, lib: &mut Library) {
-        let Some(playlist) = self.intercept.take() else {
+        let Some(playlist) = self.playlist_stack.pop() else {
             return;
         };
         *self.playlist_mut() = playlist;
@@ -215,18 +212,18 @@ impl Player {
     }
 
     /// Gets the IDS of the songs in the playlists.
-    pub fn get_ids(&mut self) -> (AlcVec<SongId>, Option<AlcVec<SongId>>) {
-        (
-            self.playlist.clone_songs(),
-            self.intercept.as_mut().map(|p| p.clone_songs()),
-        )
+    pub fn get_ids(&mut self) -> Vec<AlcVec<SongId>> {
+        Some(self.playlist.clone_songs())
+            .into_iter()
+            .chain(self.playlist_stack.iter_mut().map(|a| a.clone_songs()))
+            .collect()
     }
 
     /// Removes all deleted songs from the playlists.
     pub fn remove_deleted(&mut self, lib: &Library) {
         self.playlist_mut().remove_deleted(lib);
-        if let Some(p) = self.intercept_mut() {
-            p.remove_deleted(lib);
+        for p in self.playlist_stack_mut() {
+            p.remove_deleted(lib)
         }
     }
 
@@ -252,7 +249,7 @@ impl Player {
     pub(super) fn new_default(sender: UnboundedSender<Msg>) -> Self {
         let mut res = Self {
             playlist: Playlist::default(),
-            intercept: None,
+            playlist_stack: vec![],
             volume: default_volume(),
             mute: false,
             state: Playback::Stopped,
@@ -270,7 +267,7 @@ impl Player {
         inner: SinkWrapper,
         state: Playback,
         playlist: Playlist,
-        intercept: Option<Playlist>,
+        playlist_stack: Vec<Playlist>,
         volume: f32,
         mute: bool,
         change: bool,
@@ -279,7 +276,7 @@ impl Player {
             inner,
             state,
             playlist,
-            intercept,
+            playlist_stack,
             volume,
             mute,
             change: change.into(),

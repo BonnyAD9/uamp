@@ -6,6 +6,7 @@
 - Add option to set add policy as property of playlist.
 - Add new add policy: `none`/`-` - explicit *don't add to playlist*.
 - Add option to select the sorting complexity from cli.
+- Allow unlimited playlist stack.
 
 ## v0.5.3
 - Add aliases for control messages.

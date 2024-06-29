@@ -281,6 +281,32 @@ where
     }
 }
 
+impl<'a, T> IntoIterator for &'a mut AlcVec<T>
+where
+    T: Clone,
+{
+    type Item = &'a mut T;
+
+    type IntoIter = std::slice::IterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a AlcVec<T>
+where
+    T: Clone,
+{
+    type Item = &'a T;
+
+    type IntoIter = std::slice::Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
 //===========================================================================//
 //                                  Private                                  //
 //===========================================================================//

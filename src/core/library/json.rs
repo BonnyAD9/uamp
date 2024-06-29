@@ -77,19 +77,7 @@ impl Library {
 
             let task = move || {
                 TaskMsg::LibrarySave(
-                    me.write_json(
-                        path,
-                        used.0
-                            .iter()
-                            .chain(
-                                used.1
-                                    .as_ref()
-                                    .map(|a| a.iter())
-                                    .into_iter()
-                                    .flatten(),
-                            )
-                            .copied(),
-                    ),
+                    me.write_json(path, used.iter().flatten().copied()),
                 )
             };
 

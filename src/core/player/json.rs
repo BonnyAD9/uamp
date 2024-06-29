@@ -80,7 +80,7 @@ impl Player {
             SinkWrapper::new(),
             Playback::Stopped,
             data.playlist,
-            data.intercept,
+            data.playlist_stack,
             data.volume,
             data.mute,
             true,
@@ -112,7 +112,7 @@ struct PlayerDataLoad {
     #[serde(default)]
     playlist: Playlist,
     #[serde(default)]
-    intercept: Option<Playlist>,
+    playlist_stack: Vec<Playlist>,
 }
 
 impl Default for PlayerDataLoad {
@@ -121,7 +121,7 @@ impl Default for PlayerDataLoad {
             mute: false,
             volume: default_volume(),
             playlist: Playlist::default(),
-            intercept: None,
+            playlist_stack: vec![],
         }
     }
 }
@@ -135,7 +135,7 @@ struct PlayerDataSave<'a> {
     volume: f32,
     /// The current playlist
     playlist: &'a Playlist,
-    intercept: Option<&'a Playlist>,
+    intercept: &'a Vec<Playlist>,
 }
 
 impl Player {
@@ -164,7 +164,7 @@ impl Player {
                 playlist: self.playlist(),
                 volume: self.volume(),
                 mute: self.mute(),
-                intercept: self.intercept().as_ref(),
+                intercept: self.playlist_stack(),
             },
         )?;
 

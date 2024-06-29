@@ -130,6 +130,16 @@ impl Playlist {
         (self.current < self.len()).then_some(self.current)
     }
 
+    /// Gets iterator over all of the songs in the playlist.
+    pub fn iter(&self) -> std::slice::Iter<'_, SongId> {
+        self.songs.iter()
+    }
+
+    /// Gets mutable iterator over all of the songs in the playlist
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, SongId> {
+        self.songs.iter_mut()
+    }
+
     /// Moves current to the nth next song and returns its id.
     ///
     /// If the nth next song is outside of the playlist, jump to the first song
@@ -186,6 +196,26 @@ where
 {
     fn from(value: V) -> Self {
         Self::new(value, 0)
+    }
+}
+
+impl<'a> IntoIterator for &'a mut Playlist {
+    type Item = &'a mut SongId;
+
+    type IntoIter = std::slice::IterMut<'a, SongId>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
+impl<'a> IntoIterator for &'a Playlist {
+    type Item = &'a SongId;
+
+    type IntoIter = std::slice::Iter<'a, SongId>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 
