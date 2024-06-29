@@ -1,5 +1,4 @@
 mod add_new_songs;
-mod filter;
 mod json;
 mod library_load_result;
 mod library_msg;
@@ -14,6 +13,6 @@ mod song_id;
 //===========================================================================//
 
 pub use self::{
-    filter::*, library_load_result::*, library_struct::*, library_update::*,
+    library_load_result::*, library_struct::*, library_update::*,
     load_opts::*, song::*, song_id::*,
 };

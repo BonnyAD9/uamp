@@ -132,14 +132,16 @@ impl FromStr for SongOrder {
             "rev" | "reverse" => OrderField::Reverse,
             "rng" | "rand" | "random" | "randomize" => OrderField::Randomize,
             "path" => OrderField::Path,
-            "title" | "name" => OrderField::Title,
-            "artist" | "performer" | "author" => OrderField::Artist,
-            "album" => OrderField::Album,
-            "track" => OrderField::Track,
+            "tit" | "title" | "name" => OrderField::Title,
+            "art" | "artist" | "performer" | "auth" | "author" => {
+                OrderField::Artist
+            }
+            "alb" | "album" => OrderField::Album,
+            "trk" | "track" | "track-number" => OrderField::Track,
             "disc" => OrderField::Disc,
-            "year" | "date" => OrderField::Year,
+            "y" | "year" | "date" => OrderField::Year,
             "len" | "length" => OrderField::Length,
-            "genre" => OrderField::Genre,
+            "g" | "genre" => OrderField::Genre,
             _ => {
                 return Err(Error::ArgParse(ArgError::FailedToParse {
                     typ: "SongOrder",

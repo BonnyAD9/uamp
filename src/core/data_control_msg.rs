@@ -7,7 +7,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::env::AppCtrl;
 
-use super::{control_msg_vec::ControlMsgVec, Error, Msg, UampApp};
+use super::{
+    control_msg_vec::ControlMsgVec, query::Filter, Error, Msg, UampApp,
+};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -21,6 +23,10 @@ pub enum DataControlMsg {
     Alias(String),
     /// Sets the current playlist end action.
     SetPlaylistEndAction(Option<String>),
+    /// Sets the current playlist
+    SetPlaylist(Filter),
+    /// Pushes new playlist.
+    PushPlaylist(Filter),
 }
 
 impl UampApp {
@@ -41,6 +47,22 @@ impl UampApp {
             }
             DataControlMsg::SetPlaylistEndAction(act) => {
                 self.player.playlist_mut().on_end = act;
+            }
+            DataControlMsg::SetPlaylist(filter) => {
+                let songs = self.library.filter(filter);
+                self.player.play_playlist(
+                    &mut self.library,
+                    songs.into(),
+                    false,
+                );
+            }
+            DataControlMsg::PushPlaylist(filter) => {
+                let songs = self.library.filter(filter);
+                self.player.push_playlist(
+                    &mut self.library,
+                    songs.into(),
+                    false,
+                );
             }
         }
 
@@ -67,6 +89,16 @@ impl FromStr for DataControlMsg {
             {
                 Ok(DataControlMsg::SetPlaylistEndAction(mval_arg(v, '=')?))
             }
+            v if has_any_key!(v, '=', "set-playlist", "sp") => {
+                Ok(DataControlMsg::SetPlaylist(
+                    mval_arg(v, '=')?.unwrap_or_default(),
+                ))
+            }
+            v if has_any_key!(v, '=', "push-playlist", "push") => {
+                Ok(DataControlMsg::PushPlaylist(
+                    mval_arg(v, '=')?.unwrap_or_default(),
+                ))
+            }
             v => Err(Error::ArgParse(ArgError::UnknownArgument(
                 v.to_owned().into(),
             ))),
@@ -82,6 +114,8 @@ impl Display for DataControlMsg {
             DataControlMsg::SetPlaylistEndAction(Some(act)) => {
                 write!(f, "spea={act}")
             }
+            DataControlMsg::SetPlaylist(ft) => write!(f, "sp={ft}"),
+            DataControlMsg::PushPlaylist(ft) => write!(f, "push={ft}"),
         }
     }
 }

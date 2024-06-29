@@ -272,21 +272,18 @@ fn print_control_messages_help(color: bool) {
 
   {'r}sort-playlist  sort{'w}={'gr}[<|>][+|-]{'w}<ord>{'_}
     Sorts the current playlist according to the value of {'w}ord{'_}:
-    - `{'i}rev{'_}` `{'i}reverse{'_}`                   reverse the playlist.
-    - `{'i}rng{'_}` `{'i}rand{'_}` `{'i}random{'_}` `{'i}randomize{'_}` \
-      shuffle the playlist.
-    - `{'i}path{'_}`                            sort by the path.
-    - `{'i}title{'_}` `{'i}name{'_}`                    sort by the song title.
-    - `{'i}artist{'_}` `{'i}performer{'_}` `{'i}author{'_}`     sort by the \
-      artist.
-    - `{'i}album{'_}`                           sort by the album name.
-    - `{'i}track{'_}`                           sort by the track.
-    - `{'i}disc{'_}`                            sort by the disc number.
-    - `{'i}year{'_}` `{'i}date{'_}`                     sort by the date of \
-      release.
-    - `{'i}len{'_}` `{'i}length{'_}`                    sort by the length of \
-      the song.
-    - `{'i}genre{'_}`                           sort by the genre.
+    - `{'i}rev  reverse{'_}`                         reverse the playlist.
+    - `{'i}rng  rand  random  randomize{'_}`         shuffle the playlist.
+    - `{'i}path{'_}`                                 sort by the path.
+    - `{'i}tit  title  name{'_}`                     sort by the song title.
+    - `{'i}art  artist  performer  auth  author{'_}` sort by the artist.
+    - `{'i}alb  album{'_}`                           sort by the album name.
+    - `{'i}trk  track  track-number{'_}`             sort by the track number.
+    - `{'i}disc{'_}`                                 sort by the disc number.
+    - `{'i}year  date{'_}`                           sort by the release date.
+    - `{'i}len  length{'_}`                          sort by the length of the
+                                             song.
+    - `{'i}genre{'_}`                                sort by the genre.
     You can alter the sorting with one of the following (some values of
     {'w}ord{'_} ignore some of this):
     - `{'i}<{'_}` sort in ascending order (this is the default).
@@ -310,12 +307,14 @@ fn print_control_messages_help(color: bool) {
     Seek back by the given duration. Without artument seeks by the default
     duration.
 
-  {'r}set-playlist  sp{'gr}[=all]{'_}
-    Loads all songs into the playlist.
+  {'r}set-playlist  sp{'gr}[={'bold}<filter>{'_bold}]{'_}
+    Loads subset as the current playlist. Without value for {'w}filter{'_}
+    loads all songs. See {'w bold}filter{'_} in {'g}formats{'_} for more info.
 
-  {'r}push-playlist  push{'gr}[=all]{'_}
-    Set the secondary playlist. The primary playlist can be restored with
-    {'r}pop{'_}.
+  {'r}push-playlist  push{'gr}[={'bold}<filter>{'_bold}]{'_}
+    Push new playlist on top of the current one. Without value for
+    {'w}filter{'_} pushes all songs. See {'w bold}filter{'_} in {'g}formats{'_}
+    for more info.
 
   {'r}pop-playlist  pop{'_}
     Remove the secondary playlist and restore the primary playlist.
@@ -332,15 +331,50 @@ fn print_control_messages_help(color: bool) {
 
   {'r}playlist-add-policy  add-polocy  pap{'gr}[=<add policy>]{'_}
     Sets the playlist add policy. It is one of the following:
-    - `{'i}-{'_}`  `{'i}none{'_}`          don't add new songs to the playlist.
-    - `{'i}e{'_}`  `{'i}end{'_}`           add new sobgs to the end of the \
-      playlist.
-    - `{'i}n{'_}`  `{'i}next{'_}`          add new songs after the currently \
-      playing song.
-    - `{'i}m{'_}`  `{'i}mix{'_}`  `{'i}mix-in{'_}` randomly mix the the songs \
-      after the currently
-                           playing song.
+    - `{'i}-  none{'_}`        don't add new songs to the playlist.
+    - `{'i}e  end{'_}`         add new sobgs to the end of the playlist.
+    - `{'i}n  next{'_}`        add new songs after the currently playing song.
+    - `{'i}m  mix  mix-in{'_}` randomly mix the the songs after the currently
+                       playing song.
     Without value it is the same as setting it to `{'i}none{'_}`.
+
+{'g}Formats:
+  {'w bold}filter:{'_}
+    Specifies how to filter songs. It is one of:
+      {'r}any{'_}
+        All songs pass this filter.
+
+      {'r}none{'_}
+        No songs pass this filter.
+
+      {'r}an  any-name{'w}:<string>{'_}
+        Matches all songs where either title, artist or album contains the
+        given string.
+
+      {'r}tit  title  name{'w}:<string>{'_}
+        Matches all songs where title contains the given string.
+
+      {'r}art  artist  performer  auth  author{'w}:<string>{'_}
+        Matches all songs where the performer name contains the given string.
+
+      {'r}alb  album{'w}:<string>{'_}
+        Matches all songs where the album name contains the given string.
+
+      {'r}trk  track  track-number{'w}:<uint>{'_}
+        Matches all songs with the given track number.
+
+      {'r}disc{'w}:<uint>{'_}
+        Matches all songs with the given disc number. {'w}0{'_} means no disc
+        number.
+
+      {'r}y  year{'w}:<int>{'_}
+        Matches all songs with release within the given year.
+
+      {'r}g  genre{'w}:<string>{'_}
+        Matches all songs which genre contains the given string.
+
+    All comparisons are done on the strings converted to ascii and without
+    whitespace.
 ",
     )
 }

@@ -18,6 +18,7 @@ pub mod config;
 pub mod library;
 pub mod messenger;
 pub mod player;
+pub mod query;
 
 pub use self::{
     any_control_msg::*, control_msg::*, data_control_msg::*, err::*,

@@ -17,9 +17,8 @@ use crate::{
 };
 
 use super::{
-    library::{Filter, LoadOpts},
-    player::AddPolicy,
-    Error, Msg, SongOrder, TaskType, UampApp,
+    library::LoadOpts, player::AddPolicy, Error, Msg, SongOrder, TaskType,
+    UampApp,
 };
 
 //===========================================================================//
@@ -57,10 +56,6 @@ pub enum ControlMsg {
     FastForward(Option<Duration>),
     /// Seeks backward
     Rewind(Option<Duration>),
-    /// Sets the current playlist
-    SetPlaylist(Filter),
-    /// Pushes new playlist.
-    PushPlaylist(Filter),
     /// Sorts the top playlist.
     SortPlaylist(SongOrder),
     /// Pop the intercepted playlist.
@@ -165,22 +160,6 @@ impl UampApp {
                 let t = d.unwrap_or(self.config.seek_jump().0);
                 self.player.seek_by(t, false);
             }
-            ControlMsg::SetPlaylist(filter) => {
-                let songs = self.library.filter(filter);
-                self.player.play_playlist(
-                    &mut self.library,
-                    songs.into(),
-                    false,
-                );
-            }
-            ControlMsg::PushPlaylist(filter) => {
-                let songs = self.library.filter(filter);
-                self.player.push_playlist(
-                    &mut self.library,
-                    songs.into(),
-                    false,
-                );
-            }
             ControlMsg::SortPlaylist(ord) => {
                 self.player.playlist_mut().sort(
                     &self.library,
@@ -244,8 +223,6 @@ impl Display for ControlMsg {
             ControlMsg::Rewind(Some(d)) => {
                 write!(f, "rw={}", duration_to_string(*d, false))
             }
-            ControlMsg::SetPlaylist(Filter::All) => f.write_str("sp"),
-            ControlMsg::PushPlaylist(Filter::All) => f.write_str("push"),
             ControlMsg::SortPlaylist(ord) => write!(f, "sort={ord}"),
             ControlMsg::PopPlaylist => f.write_str("pop"),
             ControlMsg::SetPlaylistAddPolicy(None) => f.write_str("pap"),
@@ -312,14 +289,6 @@ impl FromStr for ControlMsg {
             v if has_any_key!(v, '=', "rewind", "rw") => {
                 Ok(ControlMsg::Rewind(
                     mval_arg::<Wrap<Duration>>(v, '=')?.map(|a| a.0),
-                ))
-            }
-            v if has_any_key!(v, '=', "set-playlist", "sp") => Ok(
-                ControlMsg::SetPlaylist(mval_arg(v, '=')?.unwrap_or_default()),
-            ),
-            v if has_any_key!(v, '=', "push-playlist", "push") => {
-                Ok(ControlMsg::PushPlaylist(
-                    mval_arg(v, '=')?.unwrap_or_default(),
                 ))
             }
             v if starts_any!(v, "sort-playlist", "sort") => {

@@ -6,9 +6,13 @@ use std::{
     path::Path,
 };
 
-use crate::{core::Result, ext::AlcVec, gen_struct};
+use crate::{
+    core::{query::Filter, Result},
+    ext::AlcVec,
+    gen_struct,
+};
 
-use super::{Filter, LibraryUpdate, Song, SongId};
+use super::{LibraryUpdate, Song, SongId};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -66,12 +70,13 @@ impl Library {
 
     /// Filters songs in the library
     pub fn filter(&self, filter: Filter) -> AlcVec<SongId> {
-        match filter {
-            Filter::All => (0..self.songs().len())
-                .map(SongId)
-                .filter(|s| !self[*s].is_deleted())
-                .collect(),
-        }
+        let mut buf = String::new();
+        (0..self.songs().len())
+            .map(SongId)
+            .filter(|s| {
+                !self[s].is_deleted() && filter.matches(&self[s], &mut buf)
+            })
+            .collect()
     }
 
     /// Creates clone of the library. (Works as lazily as possible)
