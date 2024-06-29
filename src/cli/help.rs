@@ -270,7 +270,7 @@ fn print_control_messages_help(color: bool) {
     Shuffle the current playlist. The difference from {'r}sort{'w}=rng{'_} is
     that {'r}shuffle{'_} will respect the setting shuffle current.
 
-  {'r}sort-playlist  sort{'w}={'gr}[-]{'w}<ord>{'_}
+  {'r}sort-playlist  sort{'w}={'gr}[<|>][+|-]{'w}<ord>{'_}
     Sorts the current playlist according to the value of {'w}ord{'_}:
     - `{'i}rev{'_}` `{'i}reverse{'_}`                   reverse the playlist.
     - `{'i}rng{'_}` `{'i}rand{'_}` `{'i}random{'_}` `{'i}randomize{'_}` \
@@ -287,8 +287,14 @@ fn print_control_messages_help(color: bool) {
     - `{'i}len{'_}` `{'i}length{'_}`                    sort by the length of \
       the song.
     - `{'i}genre{'_}`                           sort by the genre.
-    You can prepend `{'i}-{'_}` to {'w}ord{'_} to sort in descending order.
-    Note that this is ignored by some values of {'w}ord{'_}.
+    You can alter the sorting with one of the following (some values of
+    {'w}ord{'_} ignore some of this):
+    - `{'i}<{'_}` sort in ascending order (this is the default).
+    - `{'i}>{'_}` sort in descending order.
+    - `{'i}+{'_}` use complex sorting.
+    - `{'i}-{'_}` use simple sorting.
+    If the complexity of the sorting is not set, it will use the default from
+    settings.
 
   {'r}exit  close  x{'_}
     Gracefully close the instance.

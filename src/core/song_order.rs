@@ -4,6 +4,7 @@ use std::{
     str::FromStr,
 };
 
+use itertools::PeekingNext;
 use pareg::{ArgError, FromArgStr};
 use rand::{seq::SliceRandom, thread_rng};
 use serde::{Deserialize, Serialize};
@@ -104,14 +105,30 @@ impl SongOrder {
 impl FromStr for SongOrder {
     type Err = Error;
 
-    fn from_str(mut s: &str) -> Result<Self, Self::Err> {
-        let mut reverse = false;
-        if let Some(rest) = s.strip_prefix('-') {
-            s = rest;
-            reverse = true;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut reverse = None;
+        let mut simple = None;
+
+        let mut chrs = s.chars();
+        while let Some(c) = chrs.peeking_next(|c| "<>+-".contains(*c)) {
+            match c {
+                '<' | '>' => {
+                    if reverse.is_some() {
+                        return Err(Error::FailedToParse("SongOrder"));
+                    }
+                    reverse = Some(c == '>');
+                }
+                '+' | '-' => {
+                    if simple.is_some() {
+                        return Err(Error::FailedToParse("SongOrder"));
+                    }
+                    simple = Some(c == '-');
+                }
+                _ => unreachable!(),
+            }
         }
 
-        let field = match s {
+        let field = match chrs.as_str() {
             "rev" | "reverse" => OrderField::Reverse,
             "rng" | "rand" | "random" | "randomize" => OrderField::Randomize,
             "path" => OrderField::Path,
@@ -133,8 +150,8 @@ impl FromStr for SongOrder {
         };
 
         Ok(Self {
-            simple: None,
-            reverse,
+            simple,
+            reverse: reverse.unwrap_or_default(),
             field,
         })
     }
@@ -143,7 +160,7 @@ impl FromStr for SongOrder {
 impl Display for SongOrder {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.reverse {
-            f.write_char('-')?;
+            f.write_char('>')?;
         }
 
         match self.field {

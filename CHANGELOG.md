@@ -5,6 +5,7 @@
 - Add option to set default playlist end action.
 - Add option to set add policy as property of playlist.
 - Add new add policy: `none`/`-` - explicit *don't add to playlist*.
+- Add option to select the sorting complexity from cli.
 
 ## v0.5.3
 - Add aliases for control messages.
@@ -29,6 +30,7 @@
 - Improve info print.
 
 ## v0.5.0
+- Option to start playing on start
 - Remove gui and related features.
 - Add non gui mode for running in background.
 - Add options to add newly loaded songs to the current playlist.
