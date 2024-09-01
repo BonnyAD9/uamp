@@ -103,7 +103,7 @@ create alias in `config.json`:
   // ...
   "control_aliases": {
     // ...
-    "reset-playlist": "sp sort=rng pj pp=play spea=reset-playlist"
+    "reset-playlist": "sp sort=rng pj pp=play pap=m spea=reset-playlist"
   }
 }
 ```
@@ -111,6 +111,9 @@ create alias in `config.json`:
 Now you can start the playback with `uamp i al=reset-playlist` and you never
 have to worry about it. It will shuffle all your songs into a playlist and when
 the playlist ends it will reshuffle the playlist and start from the start.
+
+When you will load new songs, they will also be automatically mixed in the
+playlist after the currently playing song.
 
 ## How to get it
 To use the player you have to compile it yourself, but that shouldn't be any
