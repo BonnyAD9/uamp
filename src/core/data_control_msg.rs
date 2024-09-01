@@ -27,6 +27,9 @@ pub enum DataControlMsg {
     SetPlaylist(Filter),
     /// Pushes new playlist.
     PushPlaylist(Filter),
+    /// Pushes new playlist and seamlessly moves the currently playing song
+    /// from the current playlist to the start of the new playlist.
+    PushPlaylistAndCur(Filter),
     /// Add songs specified by the filter to the end of the playlist.
     Queue(Filter),
     /// Add songs specified by the filter after the current song in playlist.
@@ -67,6 +70,10 @@ impl UampApp {
                     songs.into(),
                     false,
                 );
+            }
+            DataControlMsg::PushPlaylistAndCur(filter) => {
+                let songs = self.library.filter(filter);
+                self.player.push_with_cur(songs);
             }
             DataControlMsg::Queue(filter) => {
                 let songs = self.library.filter(filter);
@@ -111,6 +118,11 @@ impl FromStr for DataControlMsg {
                     mval_arg(v, '=')?.unwrap_or_default(),
                 ))
             }
+            v if has_any_key!(v, '=', "push-with-cur", "push-cur", "pc") => {
+                Ok(DataControlMsg::PushPlaylistAndCur(
+                    mval_arg(v, '=')?.unwrap_or_default(),
+                ))
+            }
             v if has_any_key!(v, '=', "queue", "q") => Ok(
                 DataControlMsg::Queue(mval_arg(v, '=')?.unwrap_or_default()),
             ),
@@ -136,6 +148,7 @@ impl Display for DataControlMsg {
             }
             DataControlMsg::SetPlaylist(ft) => write!(f, "sp={ft}"),
             DataControlMsg::PushPlaylist(ft) => write!(f, "push={ft}"),
+            DataControlMsg::PushPlaylistAndCur(ft) => write!(f, "pc={ft}"),
             DataControlMsg::Queue(ft) => write!(f, "q={ft}"),
             DataControlMsg::PlayNext(ft) => write!(f, "qn={ft}"),
         }

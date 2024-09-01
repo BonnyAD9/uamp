@@ -57,7 +57,13 @@ impl Playlist {
     /// Gets the song id of the current song.
     #[inline(always)]
     pub fn current(&self) -> Option<SongId> {
-        (self.current < self.songs.len()).then(|| self.songs[self.current])
+        self.current_idx().map(|c| self.songs[c])
+    }
+
+    /// Gets the index of the current song in the playlist
+    #[inline(always)]
+    pub fn current_idx(&self) -> Option<usize> {
+        (self.current < self.songs.len()).then_some(self.current)
     }
 
     /// Shuffles the playlist.
@@ -193,6 +199,16 @@ impl Playlist {
     /// Gets the position within song in the current playlists and unsets it.
     pub(super) fn pop_play_pos(&mut self) -> Option<Duration> {
         self.play_pos.take()
+    }
+
+    /// Removes the current song from the playlist, moves the position to the
+    /// next song and returns the removed song id.
+    pub(super) fn pop_current(&mut self) -> Option<SongId> {
+        self.current_idx().map(|c| {
+            let s = self.songs[c];
+            self.songs.vec_mut().remove(c);
+            s
+        })
     }
 }
 

@@ -314,6 +314,11 @@ fn print_control_messages_help(color: bool) {
     {'w}filter{'_} pushes all songs. See {'w bold}filter{'_} in {'g}formats{'_}
     for more info.
 
+  {'r}push-with-cur  push-cur  pc{'gr}[={'bold}<filter>{'_bold}]{'_}
+    Seamlessly push new playlist on top of the current one by moving the
+    currently playing song to the start of the new playlist. See
+    {'w bold}filter{'_} in {'g}formats{'_} for more info.
+
   {'r}pop-playlist  pop{'_}
     Remove the secondary playlist and restore the primary playlist.
 

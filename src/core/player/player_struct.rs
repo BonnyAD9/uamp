@@ -142,6 +142,14 @@ impl Player {
         self.try_load(lib, self.playlist.current(), play);
     }
 
+    /// Pushes new playlist to the stack without changing the play staty by
+    /// moving the now playing song to the start of the new playlist.
+    pub fn push_with_cur(&mut self, mut songs: AlcVec<SongId>) {
+        songs.splice(0..0, self.playlist_mut().pop_current());
+        let old = mem::replace(self.playlist_mut(), songs.into());
+        self.playlist_stack_mut().push(old);
+    }
+
     /// If there are more playlists in the stack, end the top one.
     pub fn pop_playlist(&mut self, lib: &mut Library) {
         let Some(playlist) = self.playlist_stack.pop() else {
