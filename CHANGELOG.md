@@ -12,6 +12,7 @@
   `push-with-cur`, `flatten`)
 - Add 1 to playlist position when displaying with `-Info` (so it starts from 1
   instead of 0)
+- Log playback errors.
 
 ## v0.5.3
 - Add aliases for control messages.
