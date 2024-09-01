@@ -27,6 +27,10 @@ pub enum DataControlMsg {
     SetPlaylist(Filter),
     /// Pushes new playlist.
     PushPlaylist(Filter),
+    /// Add songs specified by the filter to the end of the playlist.
+    Queue(Filter),
+    /// Add songs specified by the filter after the current song in playlist.
+    PlayNext(Filter),
 }
 
 impl UampApp {
@@ -64,6 +68,14 @@ impl UampApp {
                     false,
                 );
             }
+            DataControlMsg::Queue(filter) => {
+                let songs = self.library.filter(filter);
+                self.player.playlist_mut().extend(songs.iter().copied());
+            }
+            DataControlMsg::PlayNext(filter) => {
+                let songs = self.library.filter(filter);
+                self.player.playlist_mut().play_next(songs.iter().copied());
+            }
         }
 
         vec![]
@@ -99,6 +111,14 @@ impl FromStr for DataControlMsg {
                     mval_arg(v, '=')?.unwrap_or_default(),
                 ))
             }
+            v if has_any_key!(v, '=', "queue", "q") => Ok(
+                DataControlMsg::Queue(mval_arg(v, '=')?.unwrap_or_default()),
+            ),
+            v if has_any_key!(v, '=', "play-next", "queue-next", "qn") => {
+                Ok(DataControlMsg::PlayNext(
+                    mval_arg(v, '=')?.unwrap_or_default(),
+                ))
+            }
             v => Err(Error::ArgParse(ArgError::UnknownArgument(
                 v.to_owned().into(),
             ))),
@@ -116,6 +136,8 @@ impl Display for DataControlMsg {
             }
             DataControlMsg::SetPlaylist(ft) => write!(f, "sp={ft}"),
             DataControlMsg::PushPlaylist(ft) => write!(f, "push={ft}"),
+            DataControlMsg::Queue(ft) => write!(f, "q={ft}"),
+            DataControlMsg::PlayNext(ft) => write!(f, "qn={ft}"),
         }
     }
 }

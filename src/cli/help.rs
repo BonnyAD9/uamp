@@ -317,6 +317,16 @@ fn print_control_messages_help(color: bool) {
   {'r}pop-playlist  pop{'_}
     Remove the secondary playlist and restore the primary playlist.
 
+  {'r}queue  q{'gr}[={'bold}<filter>{'_bold}]{'_}
+    Adds songs to the end of the queue (current playlist). See {'w bold}filter
+    {'_}in {'g}formats{'_} for more info about selecting songs to queue.
+    Without value, queues all songs.
+
+  {'r}play-next  queue-next  qn{'gr}[={'bold}<filter>{'_bold}]{'_}
+    Adds songs after the currently playing in the current playlist. See
+    {'w bold}filter{'_} in {'g}formats{'_} for more info. Without value, queues
+    all songs.
+
   {'r}save{'_}
     Triggers save (but saves only if there is change).
 
@@ -345,18 +355,17 @@ fn print_control_messages_help(color: bool) {
       {'r}none{'_}
         No songs pass this filter.
 
-      {'r}an  any-name{'w}:<string>{'_}
-        Matches all songs where either title, artist or album contains the
-        given string.
+      {'r}an  any-name{'w}:<pattern>{'_}
+        Matches all songs where either title, artist or album matches.
 
-      {'r}tit  title  name{'w}:<string>{'_}
-        Matches all songs where title contains the given string.
+      {'r}tit  title  name{'w}:<pattern>{'_}
+        Matches all songs where title matches.
 
-      {'r}art  artist  performer  auth  author{'w}:<string>{'_}
-        Matches all songs where the performer name contains the given string.
+      {'r}art  artist  performer  auth  author{'w}:<pattern>{'_}
+        Matches all songs where the performer name matches.
 
-      {'r}alb  album{'w}:<string>{'_}
-        Matches all songs where the album name contains the given string.
+      {'r}alb  album{'w}:<pattern>{'_}
+        Matches all songs where the album name matches.
 
       {'r}trk  track  track-number{'w}:<uint>{'_}
         Matches all songs with the given track number.
@@ -368,11 +377,17 @@ fn print_control_messages_help(color: bool) {
       {'r}y  year{'w}:<int>{'_}
         Matches all songs with release within the given year.
 
-      {'r}g  genre{'w}:<string>{'_}
-        Matches all songs which genre contains the given string.
+      {'r}g  genre{'w}:<pattern>{'_}
+        Matches all songs which genre that matches.
 
-    All comparisons are done on the strings converted to ascii and without
-    whitespace.
+    Instead of `{'i}:{'_}` you can use different separator to change the
+    comparison:
+      `{'i}={'_}` The string must match exactly.
+      `{'i}+{'_}` The string must contain the exact pattern.
+      `{'i}:{'_}` The strings converted to lowercase ascii without whitespace
+          must match.
+      `{'i}~{'_}` The string converted to lowercase asci without whitespace
+          must contain the pattern (also converted in the same way).
 ",
     )
 }

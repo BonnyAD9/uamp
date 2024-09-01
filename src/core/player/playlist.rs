@@ -140,6 +140,12 @@ impl Playlist {
         self.songs.iter_mut()
     }
 
+    /// Adds the songs to the playlist after the currently playing song.
+    pub fn play_next(&mut self, iter: impl IntoIterator<Item = SongId>) {
+        let c = self.current + 1;
+        self.songs.splice(c..c, iter)
+    }
+
     /// Moves current to the nth next song and returns its id.
     ///
     /// If the nth next song is outside of the playlist, jump to the first song
@@ -216,6 +222,12 @@ impl<'a> IntoIterator for &'a Playlist {
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
+    }
+}
+
+impl Extend<SongId> for Playlist {
+    fn extend<T: IntoIterator<Item = SongId>>(&mut self, iter: T) {
+        self.songs.extend(iter)
     }
 }
 

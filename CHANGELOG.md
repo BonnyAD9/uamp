@@ -8,6 +8,7 @@
 - Add option to select the sorting complexity from cli.
 - Allow unlimited playlist stack.
 - Add new filtering options.
+- Add new options to edit the current playlist (`queue`, `play-next`)
 
 ## v0.5.3
 - Add aliases for control messages.

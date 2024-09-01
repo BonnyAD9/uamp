@@ -1,6 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
-use pareg::{starts_any, val_arg, ArgError, FromArgStr};
+use pareg::{ArgError, FromArgStr};
 use serde::{Deserialize, Serialize};
 use unidecode::unidecode_char;
 
@@ -13,6 +13,7 @@ use crate::core::{library::Song, Error};
 /// Filter for searching in songs.
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct Filter {
+    cmp: CmpType,
     typ: FilterType,
 }
 
@@ -42,16 +43,31 @@ pub enum FilterType {
     Genre(String),
 }
 
+#[derive(
+    Clone, Debug, Serialize, Deserialize, Default, Copy, Eq, PartialEq,
+)]
+pub enum CmpType {
+    // =
+    Strict,
+    // /
+    StrictContains,
+    // :
+    Lenient,
+    // ~
+    #[default]
+    LenientContains,
+}
+
 impl Filter {
     /// Creates new filter.
-    pub fn new(mut typ: FilterType) -> Self {
-        typ.prepare();
-        Self { typ }
+    pub fn new(mut typ: FilterType, cmp: CmpType) -> Self {
+        typ.prepare(cmp);
+        Self { cmp, typ }
     }
 
     /// Check if the given song passes the filter.
     pub fn matches(&self, song: &Song, buf: &mut String) -> bool {
-        self.typ.matches(song, buf)
+        self.typ.matches(song, self.cmp, buf)
     }
 }
 
@@ -59,12 +75,13 @@ impl FilterType {
     /// Checks if the given song passes the filter.
     ///
     /// - `buf` is temporary strorage used for comparisons.
-    pub fn matches(&self, song: &Song, buf: &mut String) -> bool {
-        let mut eq = |c, s| {
-            buf.clear();
-            cache_str(s, buf);
-            buf == c
-        };
+    pub fn matches(
+        &self,
+        song: &Song,
+        cmp: CmpType,
+        buf: &mut String,
+    ) -> bool {
+        let mut eq = |c, s| cmp.matches(c, s, buf);
 
         match self {
             Self::Any => true,
@@ -85,7 +102,11 @@ impl FilterType {
     }
 
     /// Prepare the filter. This must be called before any call to `matches`.
-    pub fn prepare(&mut self) {
+    pub fn prepare(&mut self, cmp: CmpType) {
+        if cmp.is_strict() {
+            return;
+        }
+
         match self {
             Self::AnyName(s) => *s = cache_new_str(s),
             Self::Title(s) => *s = cache_new_str(s),
@@ -97,73 +118,110 @@ impl FilterType {
     }
 }
 
-impl Display for Filter {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.typ)
+impl CmpType {
+    pub fn is_lenient(&self) -> bool {
+        matches!(self, CmpType::Lenient | CmpType::LenientContains)
     }
-}
 
-impl Display for FilterType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Any => f.write_str("any"),
-            Self::None => f.write_str("none"),
-            Self::AnyName(n) => write!(f, "an:{n}"),
-            Self::Title(t) => write!(f, "tit:{t}"),
-            Self::Artist(a) => write!(f, "art:{a}"),
-            Self::Album(a) => write!(f, "alb:{a}"),
-            Self::Track(t) => write!(f, "trk:{t}"),
-            Self::Disc(d) => write!(f, "disc:{d}"),
-            Self::Year(y) => write!(f, "y:{y}"),
-            Self::Genre(g) => write!(f, "g:{g}"),
+    pub fn is_contains(&self) -> bool {
+        matches!(self, CmpType::StrictContains | CmpType::LenientContains)
+    }
+
+    pub fn is_strict(&self) -> bool {
+        !self.is_lenient()
+    }
+
+    pub fn matches(
+        &self,
+        pat: impl AsRef<str>,
+        s: impl AsRef<str>,
+        buf: &mut String,
+    ) -> bool {
+        let s = if self.is_lenient() {
+            buf.clear();
+            cache_str(s.as_ref(), buf);
+            buf.as_str()
+        } else {
+            s.as_ref()
+        };
+
+        if self.is_contains() {
+            s.contains(pat.as_ref())
+        } else {
+            *pat.as_ref() == *s
         }
     }
 }
 
+impl Display for Filter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let c = match self.cmp {
+            CmpType::Strict => '=',
+            CmpType::StrictContains => '+',
+            CmpType::Lenient => ':',
+            CmpType::LenientContains => '~',
+        };
+
+        match &self.typ {
+            FilterType::Any => f.write_str("any"),
+            FilterType::None => f.write_str("none"),
+            FilterType::AnyName(n) => write!(f, "an{c}{n}"),
+            FilterType::Title(t) => write!(f, "tit{c}{t}"),
+            FilterType::Artist(a) => write!(f, "art{c}{a}"),
+            FilterType::Album(a) => write!(f, "alb{c}{a}"),
+            FilterType::Track(t) => write!(f, "trk{c}{t}"),
+            FilterType::Disc(d) => write!(f, "disc{c}{d}"),
+            FilterType::Year(y) => write!(f, "y{c}{y}"),
+            FilterType::Genre(g) => write!(f, "g{c}{g}"),
+        }
+    }
+}
 impl FromStr for Filter {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self::new(s.parse()?))
-    }
-}
+        let Some((p, c)) = s
+            .char_indices()
+            .find(|(_, c)| matches!(c, '=' | '+' | ':' | '~'))
+        else {
+            return match s {
+                "any" => Ok(Self::new(FilterType::Any, CmpType::default())),
+                "none" => Ok(Self::new(FilterType::None, CmpType::default())),
+                v => {
+                    Err(ArgError::UnknownArgument(v.to_owned().into()).into())
+                }
+            };
+        };
+        let typ = &s[..p];
+        let val = &s[p + c.len_utf8()..];
+        let cmp = match c {
+            '=' => CmpType::Strict,
+            '+' => CmpType::StrictContains,
+            ':' => CmpType::Lenient,
+            '~' => CmpType::LenientContains,
+            _ => unreachable!(),
+        };
 
-impl FromStr for FilterType {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "any" => Ok(Self::Any),
-            "none" => Ok(Self::None),
-            v if starts_any!(v, "an:", "any-name:") => {
-                Ok(Self::AnyName(val_arg(v, ':')?))
+        match typ {
+            "an" | "any-name" => {
+                Ok(Self::new(FilterType::AnyName(val.to_owned()), cmp))
             }
-            v if starts_any!(v, "tit:", "title:", "name:") => {
-                Ok(Self::Title(val_arg(v, ':')?))
+            "tit" | "title" | "name" => {
+                Ok(Self::new(FilterType::Title(val.to_owned()), cmp))
             }
-            v if starts_any!(
-                v,
-                "art:",
-                "artist:",
-                "performer:",
-                "auth:",
-                "author:",
-            ) =>
-            {
-                Ok(Self::Artist(val_arg(v, ':')?))
+            "art" | "artist" | "performer" | "auth" | "author" => {
+                Ok(Self::new(FilterType::Artist(val.to_owned()), cmp))
             }
-            v if starts_any!(v, "alb:", "album:") => {
-                Ok(Self::Album(val_arg(v, ':')?))
+            "alb" | "album" => {
+                Ok(Self::new(FilterType::Album(val.to_owned()), cmp))
             }
-            v if starts_any!(v, "trk:", "track:", "track-number:") => {
-                Ok(Self::Track(val_arg(v, ':')?))
+            "trk" | "track" | "track-number" => {
+                Ok(Self::new(FilterType::Track(val.parse()?), cmp))
             }
-            v if starts_any!(v, "disc:") => Ok(Self::Disc(val_arg(v, ':')?)),
-            v if starts_any!(v, "y:", "year:") => {
-                Ok(Self::Year(val_arg(v, ':')?))
-            }
-            v if starts_any!(v, "g:", "genre:") => {
-                Ok(Self::Genre(val_arg(v, ':')?))
+            "disc" => Ok(Self::new(FilterType::Disc(val.parse()?), cmp)),
+            "y" | "year" => Ok(Self::new(FilterType::Year(val.parse()?), cmp)),
+            "g" | "genre" => {
+                Ok(Self::new(FilterType::Genre(val.to_owned()), cmp))
             }
             v => Err(ArgError::UnknownArgument(v.to_owned().into()).into()),
         }
