@@ -8,7 +8,8 @@
 - Add option to select the sorting complexity from cli.
 - Allow unlimited playlist stack.
 - Add new filtering options.
-- Add new options to edit the current playlist (`queue`, `play-next`)
+- Add new options to edit the current playlist (`queue`, `play-next`,
+  `push-with-cur`)
 - Add 1 to playlist position when displaying with `-Info` (so it starts from 1
   instead of 0)
 
