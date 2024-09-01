@@ -322,6 +322,11 @@ fn print_control_messages_help(color: bool) {
   {'r}pop-playlist  pop{'_}
     Remove the secondary playlist and restore the primary playlist.
 
+  {'r}flatten  flat{'gr}[=<cnt>]{'_}
+    Seamlessly insert the top playlist to the next playlist on the stack. The
+    currently playing song doesn't change. Do this {'i}cnt{'_} times. The
+    default value for {'i}cnt{'_} is 1. 0 means flatten the whole stack.
+
   {'r}queue  q{'gr}[={'bold}<filter>{'_bold}]{'_}
     Adds songs to the end of the queue (current playlist). See {'w bold}filter
     {'_}in {'g}formats{'_} for more info about selecting songs to queue.

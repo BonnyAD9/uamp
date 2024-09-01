@@ -210,6 +210,17 @@ impl Playlist {
             s
         })
     }
+
+    /// Insert `other` at the current position. If current position is [`None`]
+    /// it is inserted at the end. Retain the now playing from the `other`
+    /// playlist.
+    pub(super) fn flatten(&mut self, other: Playlist) {
+        let pos = self.current_idx().unwrap_or(self.songs.len());
+        let cur = other.current_idx().map(|a| a + pos);
+        self.songs.splice(pos..pos, other.iter().copied());
+        self.current = cur.unwrap_or(self.songs.len());
+        self.play_pos = other.play_pos;
+    }
 }
 
 impl<V> From<V> for Playlist

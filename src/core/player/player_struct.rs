@@ -161,6 +161,21 @@ impl Player {
         }
     }
 
+    /// Insert the current playlist onto the next top playlist `cnt` times.
+    /// This is seamless because the currently playing song stays the same.
+    pub fn flatten(&mut self, cnt: usize) {
+        let cnt = if cnt == 0 { usize::MAX } else { cnt };
+        for _ in 0..cnt {
+            let Some(mut p) = self.playlist_stack.pop() else {
+                break;
+            };
+
+            let pl = mem::take(self.playlist_mut());
+            p.flatten(pl);
+            *self.playlist_mut() = p;
+        }
+    }
+
     /// Sets the fade duration for play/pause
     pub fn fade_play_pause(&mut self, t: Duration) {
         self.inner.fade_play_pause(t);

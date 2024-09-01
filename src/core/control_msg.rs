@@ -60,6 +60,8 @@ pub enum ControlMsg {
     SortPlaylist(SongOrder),
     /// Pop the intercepted playlist.
     PopPlaylist,
+    /// Flatten the playlist `n` times. `0` means flatten all.
+    Flatten(usize),
     /// Set the playlist add policy.
     SetPlaylistAddPolicy(Option<AddPolicy>),
     /// Thriggers save
@@ -170,6 +172,9 @@ impl UampApp {
             ControlMsg::PopPlaylist => {
                 self.player.pop_playlist(&mut self.library);
             }
+            ControlMsg::Flatten(cnt) => {
+                self.player.flatten(cnt);
+            }
             ControlMsg::SetPlaylistAddPolicy(policy) => {
                 self.player.playlist_mut().add_policy = policy;
             }
@@ -225,6 +230,8 @@ impl Display for ControlMsg {
             }
             ControlMsg::SortPlaylist(ord) => write!(f, "sort={ord}"),
             ControlMsg::PopPlaylist => f.write_str("pop"),
+            ControlMsg::Flatten(1) => f.write_str("flat"),
+            ControlMsg::Flatten(c) => write!(f, "flat={c}"),
             ControlMsg::SetPlaylistAddPolicy(None) => f.write_str("pap"),
             ControlMsg::SetPlaylistAddPolicy(Some(p)) => write!(f, "pap={p}"),
             ControlMsg::Save => f.write_str("save"),
@@ -295,6 +302,9 @@ impl FromStr for ControlMsg {
                 Ok(ControlMsg::SortPlaylist(val_arg(v, '=')?))
             }
             "pop" | "pop-playlist" => Ok(ControlMsg::PopPlaylist),
+            v if has_any_key!(v, '=', "flatten", "flat") => {
+                Ok(ControlMsg::Flatten(mval_arg(v, '=')?.unwrap_or(1)))
+            }
             v if has_any_key!(
                 v,
                 '=',
