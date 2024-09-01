@@ -146,7 +146,7 @@ impl Instance {
         }
 
         if let Some(p) = info.playlist_pos {
-            pos = p.to_string().into();
+            pos = (p + 1).to_string().into();
         }
 
         if let Some(t) = info.timestamp {

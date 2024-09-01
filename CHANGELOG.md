@@ -9,6 +9,8 @@
 - Allow unlimited playlist stack.
 - Add new filtering options.
 - Add new options to edit the current playlist (`queue`, `play-next`)
+- Add 1 to playlist position when displaying with `-Info` (so it starts from 1
+  instead of 0)
 
 ## v0.5.3
 - Add aliases for control messages.
