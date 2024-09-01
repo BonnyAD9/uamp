@@ -3,6 +3,13 @@ Universal Advanced Music Player written in Rust using Iced.
 
 (May not be as advanced yet)
 
+The newest versions of uamp are in the branch
+[revamp](https://github.com/BonnyAD9/uamp/tree/revamp). The reason for that is
+that because of some issues with iced, the version on that branch has no gui.
+I would like to add gui back in the future, but the player is perfectly usable
+without the gui. The version there has much more features and all of them are
+exposed to the CLI. Read the readme there for more info.
+
 ## Configuration
 The configuration is saved in the efault configuration folder on your
 platform, on linux that is `~/.config/uamp`.
@@ -20,6 +27,7 @@ If you enable shortcuts in the configuration, this is what they are:
 - **`Ctrl` + `Alt` + `Right`:** Fast forward
 You can customize the shortcuts in `config.json`
 
+## CLI
 For example to play/pause you can use the command:
 ```
 uamp instance play-pause
@@ -29,7 +37,6 @@ or the short version
 uamp i pp
 ```
 
-## CLI
 This is the output of help:
 ```
 Welcome in uamp by BonnyAD9
