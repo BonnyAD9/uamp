@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::{AnyControlMsg, ControlMsg, DataControlMsg, PlayMsg};
 
-use super::{Error, ErrorKind, Info, Request};
+use super::{DataResponse, Error, ErrorKind, Request};
 
 /// Messages passed between uamp instances.
 #[derive(Debug, Serialize, Deserialize)]
@@ -16,7 +16,7 @@ pub enum MsgMessage {
     /// Send simple action to be done.
     Control(AnyControlMsg),
     /// Response to info request.
-    Info(Box<Info>),
+    Data(DataResponse),
     /// Message indicating success.
     Success,
     /// Stop the server
@@ -93,8 +93,8 @@ impl From<DataControlMsg> for MsgMessage {
     }
 }
 
-impl From<Info> for MsgMessage {
-    fn from(value: Info) -> Self {
-        Self::Info(Box::new(value))
+impl From<DataResponse> for MsgMessage {
+    fn from(value: DataResponse) -> Self {
+        Self::Data(value)
     }
 }

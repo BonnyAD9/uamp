@@ -187,6 +187,10 @@ fn print_instance_help(color: bool) {
   {'r}info nfo{'_}
     Shows the info about the playback of the currently runing instance.
 
+  {'r}query  list  l{'gr}[={'bold}<filter>{'_bold}]{'_}
+    Print all songs that pass the filter. See {'w bold}filter{'_} in
+    {'g}formats{'_} for more info. Without value, lists all songs.
+
   {'r}play p{'w}=<file path>{'_}
     Play the given file in the secondary playlist.
 ",

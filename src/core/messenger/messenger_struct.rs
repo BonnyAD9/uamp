@@ -8,7 +8,8 @@ use std::{
 
 use crate::{
     core::{
-        messenger::{Error, ErrorKind},
+        messenger::{DataResponse, Error, ErrorKind},
+        query::Filter,
         FnDelegate, Msg, Result, UampApp,
     },
     env::AppCtrl,
@@ -68,57 +69,7 @@ impl UampApp {
         stream: &TcpStream,
     ) -> (Option<MsgMessage>, Option<Msg>) {
         match msg {
-            MsgMessage::Request(Request::Info) => {
-                let stream = match stream.try_clone() {
-                    Ok(s) => s,
-                    Err(e) => {
-                        error!("Failed to clone tcp stream: {e}");
-                        return (
-                            Some(
-                                Error::new(
-                                    ErrorKind::InternalError,
-                                    format!(
-                                "Error occured when trying to fulfill request\
-                                : {e}"
-                            ),
-                                )
-                                .into(),
-                            ),
-                            None,
-                        );
-                    }
-                };
-                (
-                    None,
-                    Some(Msg::delegate::<_, FnDelegate<_>>(
-                        move |app: &mut UampApp, _: &mut AppCtrl| {
-                            let mut msg = Messenger::new(&stream);
-                            if let Err(e) = msg.send(
-                                Info {
-                                    version: option_env!("CARGO_PKG_VERSION")
-                                        .unwrap_or("unknown")
-                                        .to_owned(),
-                                    now_playing: app
-                                        .player
-                                        .now_playing()
-                                        .map(|i| app.library[i].clone()),
-                                    playlist_len: app.player.playlist().len(),
-                                    playlist_pos: app
-                                        .player
-                                        .playlist()
-                                        .get_pos(),
-                                    is_playing: app.player.is_playing(),
-                                    timestamp: app.player.timestamp(),
-                                }
-                                .into(),
-                            ) {
-                                error!("Failed to send message: {e}");
-                            };
-                            vec![]
-                        },
-                    )),
-                )
-            }
+            MsgMessage::Request(r) => Self::handle_request(r, stream),
             MsgMessage::Control(msg) => {
                 (Some(MsgMessage::Success), Some(msg.into()))
             }
@@ -130,5 +81,115 @@ impl UampApp {
                 None,
             ),
         }
+    }
+
+    fn handle_request(
+        req: Request,
+        stream: &TcpStream,
+    ) -> (Option<MsgMessage>, Option<Msg>) {
+        match req {
+            Request::Info => Self::request_info(stream),
+            Request::Query(f) => Self::query_request(stream, f),
+        }
+    }
+
+    fn request_info(stream: &TcpStream) -> (Option<MsgMessage>, Option<Msg>) {
+        let stream = match Self::clone_stream(stream) {
+            Ok(s) => s,
+            Err(e) => return e,
+        };
+
+        let delegate = Msg::delegate::<_, FnDelegate<_>>(
+            move |app: &mut UampApp, _: &mut AppCtrl| {
+                app.info_response(&stream)
+            },
+        );
+
+        (None, Some(delegate))
+    }
+
+    fn info_response(&mut self, stream: &TcpStream) -> Vec<Msg> {
+        let mut msg = Messenger::new(stream);
+
+        let info = Info {
+            version: option_env!("CARGO_PKG_VERSION")
+                .unwrap_or("unknown")
+                .to_owned(),
+            now_playing: self
+                .player
+                .now_playing()
+                .map(|i| self.library[i].clone()),
+            playlist_len: self.player.playlist().len(),
+            playlist_pos: self.player.playlist().get_pos(),
+            is_playing: self.player.is_playing(),
+            timestamp: self.player.timestamp(),
+        };
+
+        if let Err(e) = msg.send(DataResponse::Info(Box::new(info)).into()) {
+            error!("Failed to send message: {e}");
+        };
+
+        vec![]
+    }
+
+    fn query_request(
+        stream: &TcpStream,
+        filter: Filter,
+    ) -> (Option<MsgMessage>, Option<Msg>) {
+        let stream = match Self::clone_stream(stream) {
+            Ok(s) => s,
+            Err(e) => return e,
+        };
+
+        let delegate = Msg::delegate::<_, FnDelegate<_>>(
+            move |app: &mut UampApp, _: &mut AppCtrl| {
+                app.query_response(&stream, &filter)
+            },
+        );
+
+        (None, Some(delegate))
+    }
+
+    fn query_response(
+        &mut self,
+        stream: &TcpStream,
+        filter: &Filter,
+    ) -> Vec<Msg> {
+        let mut msg = Messenger::new(stream);
+
+        let songs = self
+            .library
+            .filter(filter)
+            .iter()
+            .map(|s| self.library[s].clone())
+            .collect();
+
+        if let Err(e) = msg.send(DataResponse::SongList(songs).into()) {
+            error!("Failed to send message: {e}");
+        }
+
+        vec![]
+    }
+
+    fn clone_stream(
+        stream: &TcpStream,
+    ) -> std::result::Result<TcpStream, (Option<MsgMessage>, Option<Msg>)>
+    {
+        stream.try_clone().map_err(|e| {
+            error!("Failed to clone tcp stream: {e}");
+            (
+                Some(
+                    Error::new(
+                        ErrorKind::InternalError,
+                        format!(
+                            "Error occured when trying to fulfill request\
+                    : {e}"
+                        ),
+                    )
+                    .into(),
+                ),
+                None,
+            )
+        })
     }
 }

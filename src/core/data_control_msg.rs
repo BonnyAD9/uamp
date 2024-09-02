@@ -56,7 +56,7 @@ impl UampApp {
                 self.player.playlist_mut().on_end = act;
             }
             DataControlMsg::SetPlaylist(filter) => {
-                let songs = self.library.filter(filter);
+                let songs = self.library.filter(&filter);
                 self.player.play_playlist(
                     &mut self.library,
                     songs.into(),
@@ -64,7 +64,7 @@ impl UampApp {
                 );
             }
             DataControlMsg::PushPlaylist(filter) => {
-                let songs = self.library.filter(filter);
+                let songs = self.library.filter(&filter);
                 self.player.push_playlist(
                     &mut self.library,
                     songs.into(),
@@ -72,15 +72,15 @@ impl UampApp {
                 );
             }
             DataControlMsg::PushPlaylistAndCur(filter) => {
-                let songs = self.library.filter(filter);
+                let songs = self.library.filter(&filter);
                 self.player.push_with_cur(songs);
             }
             DataControlMsg::Queue(filter) => {
-                let songs = self.library.filter(filter);
+                let songs = self.library.filter(&filter);
                 self.player.playlist_mut().extend(songs.iter().copied());
             }
             DataControlMsg::PlayNext(filter) => {
-                let songs = self.library.filter(filter);
+                let songs = self.library.filter(&filter);
                 self.player.playlist_mut().play_next(songs.iter().copied());
             }
         }

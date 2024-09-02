@@ -2,12 +2,13 @@ use std::{borrow::Cow, mem, net::TcpStream, path::Path, time::Duration};
 
 use log::error;
 use pareg::{has_any_key, ArgIterator, ByRef};
-use termal::{eprintacln, printmcln};
+use termal::{eprintacln, printmc, printmcln};
 
 use crate::{
     core::{
         config::Config,
-        messenger::{Info, Messenger, MsgMessage, Request},
+        library::Song,
+        messenger::{DataResponse, Info, Messenger, MsgMessage, Request},
         PlayMsg, Result,
     },
     ext::duration_to_string,
@@ -55,6 +56,14 @@ impl Instance {
                         .into(),
                     );
                 }
+                v if has_any_key!(v, '=', "query", "list", "l") => {
+                    self.messages.push(
+                        Request::Query(
+                            args.cur_mval('=')?.unwrap_or_default(),
+                        )
+                        .into(),
+                    );
+                }
                 "-h" | "-?" | "--help" => help_instance(color),
                 "-p" | "--port" => self.port = Some(args.next_arg()?),
                 "-a" | "--address" => self.server = Some(args.next_arg()?),
@@ -82,8 +91,8 @@ impl Instance {
             let res = self.send_message(m);
             match res {
                 Ok(MsgMessage::Success) => {}
-                Ok(MsgMessage::Info(i)) => {
-                    Self::print_info(*i, color);
+                Ok(MsgMessage::Data(i)) => {
+                    Self::print_data(i, color);
                 }
                 Err(e) => eprintacln!("{'r}error: {'_}{e}"),
                 Ok(r) => {
@@ -119,6 +128,13 @@ impl Instance {
         msgr.send(msg)?;
 
         msgr.recieve()
+    }
+
+    fn print_data(data: DataResponse, color: bool) {
+        match data {
+            DataResponse::Info(i) => Self::print_info(*i, color),
+            DataResponse::SongList(songs) => Self::print_list(songs, color),
+        }
     }
 
     fn print_info(info: Info, color: bool) {
@@ -189,5 +205,42 @@ impl Instance {
 uamp{version: >76}{'_}",
             ' ',
         );
+    }
+
+    fn print_list(songs: Vec<Song>, color: bool) {
+        printmcln!(
+            color,
+            "{'bold y}{:<30} {'c}{:<20} {'m}{:28}{'_}",
+            "Title",
+            "Artist",
+            "Album"
+        );
+        for s in songs {
+            Self::print_song(&s, color);
+        }
+    }
+
+    fn print_song(s: &Song, color: bool) {
+        printmc!(color, "{'dy}");
+        Self::print_elipsised(s.title(), 30);
+        printmc!(color, " {'dc}");
+        Self::print_elipsised(s.artist(), 20);
+        printmc!(color, " {'dm}");
+        Self::print_elipsised(s.album(), 28);
+        printmcln!(color, "{'_}");
+    }
+
+    fn print_elipsised(s: &str, len: usize) {
+        let mut ind = s.char_indices();
+        let Some((i, _)) = ind.nth(len - 3) else {
+            print!("{s:<len$}");
+            return;
+        };
+
+        if ind.nth(3).is_some() {
+            print!("{}...", &s[..i]);
+        } else {
+            print!("{s:<len$}");
+        }
     }
 }
