@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.5.4
 - Add option to enable/disable color in terminal.
 - Add option to set default playlist end action.
 - Add option to set add policy as property of playlist.
