@@ -13,6 +13,7 @@
 - Add 1 to playlist position when displaying with `-Info` (so it starts from 1
   instead of 0)
 - Log playback errors.
+- Fix overflow in `-Info`
 
 ## v0.5.3
 - Add aliases for control messages.

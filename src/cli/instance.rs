@@ -169,8 +169,9 @@ impl Instance {
             }
         }
 
-        let blen =
-            (80 - artist.chars().count() - album.chars().count() - 9) / 2;
+        let blen = 80_usize.saturating_sub(
+            artist.chars().count() + album.chars().count() + 9,
+        ) / 2;
         let playlist = format!("{pos}/{plen}");
         let dt = format!("<{disc}-{track}>");
 
