@@ -14,6 +14,7 @@
   instead of 0)
 - Log playback errors.
 - Fix overflow in `-Info`
+- Fix bug where some audio files wouldn't play.
 
 ## v0.5.3
 - Add aliases for control messages.
