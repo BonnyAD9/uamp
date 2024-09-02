@@ -1,6 +1,6 @@
 use std::{fmt::Debug, fs::File, time::Duration};
 
-use log::error;
+use log::warn;
 use raplay::{
     source::{symph::SymphOptions, Source, Symph},
     CallbackInfo, Sink, Timestamp,
@@ -24,7 +24,7 @@ impl SinkWrapper {
     pub fn new() -> Self {
         let sink = Sink::default();
         _ = sink.on_err_callback(Some(|e| {
-            error!("Error in playback: {e}");
+            warn!("Error in playback: {e}");
         }));
         Self {
             sink,
