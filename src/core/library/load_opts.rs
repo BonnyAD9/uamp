@@ -1,4 +1,7 @@
-use std::{fmt::Debug, str::FromStr};
+use std::{
+    fmt::{Debug, Display},
+    str::FromStr,
+};
 
 use pareg::FromArgStr;
 use serde::{Deserialize, Serialize};
@@ -23,8 +26,8 @@ pub struct LoadOpts {
     pub add_to_playlist: Option<AddPolicy>,
 }
 
-impl ToString for LoadOpts {
-    fn to_string(&self) -> String {
+impl Display for LoadOpts {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut res = String::new();
 
         match self.remove_missing {
@@ -42,10 +45,9 @@ impl ToString for LoadOpts {
         }
 
         if res.is_empty() {
-            "load-songs".into()
+            f.write_str("load_songs")
         } else {
-            res.insert_str(0, "load_songs=");
-            res
+            write!(f, "load_songs={res}")
         }
     }
 }

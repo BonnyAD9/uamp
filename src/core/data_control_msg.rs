@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::env::AppCtrl;
 
 use super::{
-    control_msg_vec::ControlMsgVec, query::Filter, Error, Msg, UampApp,
+    control_msg_vec::ControlMsgVec, query::Query, Error, Msg, UampApp,
 };
 
 //===========================================================================//
@@ -24,16 +24,16 @@ pub enum DataControlMsg {
     /// Sets the current playlist end action.
     SetPlaylistEndAction(Option<String>),
     /// Sets the current playlist
-    SetPlaylist(Filter),
+    SetPlaylist(Query),
     /// Pushes new playlist.
-    PushPlaylist(Filter),
+    PushPlaylist(Query),
     /// Pushes new playlist and seamlessly moves the currently playing song
     /// from the current playlist to the start of the new playlist.
-    PushPlaylistAndCur(Filter),
+    PushPlaylistAndCur(Query),
     /// Add songs specified by the filter to the end of the playlist.
-    Queue(Filter),
+    Queue(Query),
     /// Add songs specified by the filter after the current song in playlist.
-    PlayNext(Filter),
+    PlayNext(Query),
 }
 
 impl UampApp {
@@ -55,32 +55,32 @@ impl UampApp {
             DataControlMsg::SetPlaylistEndAction(act) => {
                 self.player.playlist_mut().on_end = act;
             }
-            DataControlMsg::SetPlaylist(filter) => {
-                let songs = self.library.filter(&filter);
+            DataControlMsg::SetPlaylist(q) => {
+                let songs = self.library.query(&q);
                 self.player.play_playlist(
                     &mut self.library,
                     songs.into(),
                     false,
                 );
             }
-            DataControlMsg::PushPlaylist(filter) => {
-                let songs = self.library.filter(&filter);
+            DataControlMsg::PushPlaylist(q) => {
+                let songs = self.library.query(&q);
                 self.player.push_playlist(
                     &mut self.library,
                     songs.into(),
                     false,
                 );
             }
-            DataControlMsg::PushPlaylistAndCur(filter) => {
-                let songs = self.library.filter(&filter);
+            DataControlMsg::PushPlaylistAndCur(q) => {
+                let songs = self.library.query(&q);
                 self.player.push_with_cur(songs);
             }
-            DataControlMsg::Queue(filter) => {
-                let songs = self.library.filter(&filter);
+            DataControlMsg::Queue(q) => {
+                let songs = self.library.query(&q);
                 self.player.playlist_mut().extend(songs.iter().copied());
             }
-            DataControlMsg::PlayNext(filter) => {
-                let songs = self.library.filter(&filter);
+            DataControlMsg::PlayNext(q) => {
+                let songs = self.library.query(&q);
                 self.player.playlist_mut().play_next(songs.iter().copied());
             }
         }

@@ -9,7 +9,7 @@ use std::{
 use crate::{
     core::{
         messenger::{DataResponse, Error, ErrorKind},
-        query::Filter,
+        query::Query,
         FnDelegate, Msg, Result, UampApp,
     },
     env::AppCtrl,
@@ -134,7 +134,7 @@ impl UampApp {
 
     fn query_request(
         stream: &TcpStream,
-        filter: Filter,
+        query: Query,
     ) -> (Option<MsgMessage>, Option<Msg>) {
         let stream = match Self::clone_stream(stream) {
             Ok(s) => s,
@@ -143,7 +143,7 @@ impl UampApp {
 
         let delegate = Msg::delegate::<_, FnDelegate<_>>(
             move |app: &mut UampApp, _: &mut AppCtrl| {
-                app.query_response(&stream, &filter)
+                app.query_response(&stream, &query)
             },
         );
 
@@ -153,13 +153,13 @@ impl UampApp {
     fn query_response(
         &mut self,
         stream: &TcpStream,
-        filter: &Filter,
+        query: &Query,
     ) -> Vec<Msg> {
         let mut msg = Messenger::new(stream);
 
         let songs = self
             .library
-            .filter(filter)
+            .query(query)
             .iter()
             .map(|s| self.library[s].clone())
             .collect();

@@ -69,6 +69,10 @@ impl Filter {
     pub fn matches(&self, song: &Song, buf: &mut String) -> bool {
         self.typ.matches(song, self.cmp, buf)
     }
+
+    pub fn none() -> Self {
+        Self::new(FilterType::None, CmpType::Lenient)
+    }
 }
 
 impl FilterType {

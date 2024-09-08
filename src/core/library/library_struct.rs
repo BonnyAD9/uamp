@@ -7,7 +7,10 @@ use std::{
 };
 
 use crate::{
-    core::{query::Filter, Result},
+    core::{
+        query::{Filter, Query},
+        Result,
+    },
     ext::AlcVec,
     gen_struct,
 };
@@ -70,6 +73,17 @@ impl Library {
 
     /// Filters songs in the library
     pub fn filter(&self, filter: &Filter) -> AlcVec<SongId> {
+        let mut buf = String::new();
+        (0..self.songs().len())
+            .map(SongId)
+            .filter(|s| {
+                !self[s].is_deleted() && filter.matches(&self[s], &mut buf)
+            })
+            .collect()
+    }
+
+    /// Filters songs in the library
+    pub fn query(&self, filter: &Query) -> AlcVec<SongId> {
         let mut buf = String::new();
         (0..self.songs().len())
             .map(SongId)

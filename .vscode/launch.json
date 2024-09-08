@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["i", "nfo"],
+            "args": ["i", "l=an:4tet+an~twenty"],
             "cwd": "${workspaceFolder}"
         },
         {

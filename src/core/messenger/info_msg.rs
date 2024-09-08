@@ -1,7 +1,7 @@
 use raplay::Timestamp;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{library::Song, query::Filter};
+use crate::core::{library::Song, query::Query};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -13,7 +13,7 @@ pub enum Request {
     /// Request the current playback info.
     Info,
     /// Query for songs
-    Query(Filter),
+    Query(Query),
 }
 
 #[derive(Debug, Serialize, Deserialize)]

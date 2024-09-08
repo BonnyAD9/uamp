@@ -362,7 +362,7 @@ fn print_control_messages_help(color: bool) {
 
 {'g}Formats:
   {'w bold}filter:{'_}
-    Specifies how to filter songs. It is one of:
+    Specifies how to filter songs. These are the kinds of filters:
       {'r}any{'_}
         All songs pass this filter.
 
@@ -402,6 +402,20 @@ fn print_control_messages_help(color: bool) {
           must match.
       `{'i}~{'_}` The string converted to lowercase asci without whitespace
           must contain the pattern (also converted in the same way).
+
+    You can combine filters using:
+      `{'i}+{'_}`    Or - one of the filters must pass.
+      `{'i}.{'_}`    And - Both of the filters must pass.
+      `{'i}[  ]{'_}` Brackets to change the precedence.
+
+    `{'i}.{'_}` (And) is evaluated first so `{'i}an:a+an:b.an:c{'_}` is the
+    same as `{'i}an:a+[an:b.an:c]{'_}`.
+
+    You can use `{'i}/{'_}` to enclose string literals. Inside the string
+    literals you can use `{'i}//{'_}` to escape single /.
+
+    Example filters:
+      `{'i}alb:/smoke+mirrors/+alb:trench{'_}`
 ",
     )
 }

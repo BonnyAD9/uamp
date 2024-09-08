@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## future
+- Add new functionality to filters (and, or, brackets).
+
 ## v0.5.4
 - Add option to enable/disable color in terminal.
 - Add option to set default playlist end action.
