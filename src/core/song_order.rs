@@ -132,13 +132,13 @@ impl FromStr for SongOrder {
             "rev" | "reverse" => OrderField::Reverse,
             "rng" | "rand" | "random" | "randomize" => OrderField::Randomize,
             "path" => OrderField::Path,
-            "tit" | "title" | "name" => OrderField::Title,
-            "art" | "artist" | "performer" | "auth" | "author" => {
+            "n" | "tit" | "title" | "name" => OrderField::Title,
+            "p" | "art" | "artist" | "performer" | "auth" | "author" => {
                 OrderField::Artist
             }
-            "alb" | "album" => OrderField::Album,
-            "trk" | "track" | "track-number" => OrderField::Track,
-            "disc" => OrderField::Disc,
+            "a" | "alb" | "album" => OrderField::Album,
+            "t" | "trk" | "track" | "track-number" => OrderField::Track,
+            "d" | "disc" => OrderField::Disc,
             "y" | "year" | "date" => OrderField::Year,
             "len" | "length" => OrderField::Length,
             "g" | "genre" => OrderField::Genre,
@@ -169,14 +169,14 @@ impl Display for SongOrder {
             OrderField::Reverse => write!(f, "rev"),
             OrderField::Randomize => write!(f, "rng"),
             OrderField::Path => write!(f, "path"),
-            OrderField::Title => write!(f, "title"),
-            OrderField::Artist => write!(f, "artist"),
-            OrderField::Album => write!(f, "album"),
-            OrderField::Track => write!(f, "track"),
-            OrderField::Disc => write!(f, "disc"),
+            OrderField::Title => write!(f, "n"),
+            OrderField::Artist => write!(f, "p"),
+            OrderField::Album => write!(f, "a"),
+            OrderField::Track => write!(f, "t"),
+            OrderField::Disc => write!(f, "d"),
             OrderField::Year => write!(f, "date"),
             OrderField::Length => write!(f, "len"),
-            OrderField::Genre => write!(f, "genre"),
+            OrderField::Genre => write!(f, "g"),
         }
     }
 }

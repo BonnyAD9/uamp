@@ -169,12 +169,12 @@ impl Display for Filter {
         match &self.typ {
             FilterType::Any => f.write_str("any"),
             FilterType::None => f.write_str("none"),
-            FilterType::AnyName(n) => write!(f, "an{c}{n}"),
-            FilterType::Title(t) => write!(f, "tit{c}{t}"),
-            FilterType::Artist(a) => write!(f, "art{c}{a}"),
-            FilterType::Album(a) => write!(f, "alb{c}{a}"),
-            FilterType::Track(t) => write!(f, "trk{c}{t}"),
-            FilterType::Disc(d) => write!(f, "disc{c}{d}"),
+            FilterType::AnyName(n) => write!(f, "s{c}{n}"),
+            FilterType::Title(t) => write!(f, "n{c}{t}"),
+            FilterType::Artist(a) => write!(f, "p{c}{a}"),
+            FilterType::Album(a) => write!(f, "a{c}{a}"),
+            FilterType::Track(t) => write!(f, "t{c}{t}"),
+            FilterType::Disc(d) => write!(f, "d{c}{d}"),
             FilterType::Year(y) => write!(f, "y{c}{y}"),
             FilterType::Genre(g) => write!(f, "g{c}{g}"),
         }
@@ -207,22 +207,22 @@ impl FromStr for Filter {
         };
 
         match typ {
-            "an" | "any-name" => {
+            "s" | "an" | "any-name" => {
                 Ok(Self::new(FilterType::AnyName(val.to_owned()), cmp))
             }
-            "tit" | "title" | "name" => {
+            "n" | "tit" | "title" | "name" => {
                 Ok(Self::new(FilterType::Title(val.to_owned()), cmp))
             }
-            "art" | "artist" | "performer" | "auth" | "author" => {
+            "p" | "art" | "artist" | "performer" | "auth" | "author" => {
                 Ok(Self::new(FilterType::Artist(val.to_owned()), cmp))
             }
-            "alb" | "album" => {
+            "a" | "alb" | "album" => {
                 Ok(Self::new(FilterType::Album(val.to_owned()), cmp))
             }
-            "trk" | "track" | "track-number" => {
+            "t" | "trk" | "track" | "track-number" => {
                 Ok(Self::new(FilterType::Track(val.parse()?), cmp))
             }
-            "disc" => Ok(Self::new(FilterType::Disc(val.parse()?), cmp)),
+            "d" | "disc" => Ok(Self::new(FilterType::Disc(val.parse()?), cmp)),
             "y" | "year" => Ok(Self::new(FilterType::Year(val.parse()?), cmp)),
             "g" | "genre" => {
                 Ok(Self::new(FilterType::Genre(val.to_owned()), cmp))

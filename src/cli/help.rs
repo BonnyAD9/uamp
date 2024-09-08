@@ -274,18 +274,18 @@ fn print_control_messages_help(color: bool) {
 
   {'r}sort-playlist  sort{'w}={'gr}[<|>][+|-]{'w}<ord>{'_}
     Sorts the current playlist according to the value of {'w}ord{'_}:
-    - `{'i}rev  reverse{'_}`                         reverse the playlist.
-    - `{'i}rng  rand  random  randomize{'_}`         shuffle the playlist.
-    - `{'i}path{'_}`                                 sort by the path.
-    - `{'i}tit  title  name{'_}`                     sort by the song title.
-    - `{'i}art  artist  performer  auth  author{'_}` sort by the artist.
-    - `{'i}alb  album{'_}`                           sort by the album name.
-    - `{'i}trk  track  track-number{'_}`             sort by the track number.
-    - `{'i}disc{'_}`                                 sort by the disc number.
-    - `{'i}year  date{'_}`                           sort by the release date.
-    - `{'i}len  length{'_}`                          sort by the length of the
-                                             song.
-    - `{'i}genre{'_}`                                sort by the genre.
+    - `{'i}rev  reverse{'_}`                           reverse the playlist.
+    - `{'i}rng  rand  random  randomize{'_}`           shuffle the playlist.
+    - `{'i}path{'_}`                                   sort by the path.
+    - `{'i}n tit  title  name{'_}`                     sort by the song title.
+    - `{'i}p art  artist  performer  auth  author{'_}` sort by the artist.
+    - `{'i}a alb  album{'_}`                           sort by the album name.
+    - `{'i}t trk  track  track-number{'_}`             sort by the track number.
+    - `{'i}d disc{'_}`                                 sort by the disc number.
+    - `{'i}y year  date{'_}`                           sort by the release date.
+    - `{'i}len  length{'_}`                            sort by the length of
+                                             the song.
+    - `{'i}g genre{'_}`                                sort by the genre.
     You can alter the sorting with one of the following (some values of
     {'w}ord{'_} ignore some of this):
     - `{'i}<{'_}` sort in ascending order (this is the default).
@@ -369,22 +369,22 @@ fn print_control_messages_help(color: bool) {
       {'r}none{'_}
         No songs pass this filter.
 
-      {'r}an  any-name{'w}:<pattern>{'_}
+      {'r}s an  any-name{'w}:<pattern>{'_}
         Matches all songs where either title, artist or album matches.
 
-      {'r}tit  title  name{'w}:<pattern>{'_}
+      {'r}n tit  title  name{'w}:<pattern>{'_}
         Matches all songs where title matches.
 
-      {'r}art  artist  performer  auth  author{'w}:<pattern>{'_}
+      {'r}p art  artist  performer  auth  author{'w}:<pattern>{'_}
         Matches all songs where the performer name matches.
 
-      {'r}alb  album{'w}:<pattern>{'_}
+      {'r}a alb  album{'w}:<pattern>{'_}
         Matches all songs where the album name matches.
 
-      {'r}trk  track  track-number{'w}:<uint>{'_}
+      {'r}t trk  track  track-number{'w}:<uint>{'_}
         Matches all songs with the given track number.
 
-      {'r}disc{'w}:<uint>{'_}
+      {'r}d disc{'w}:<uint>{'_}
         Matches all songs with the given disc number. {'w}0{'_} means no disc
         number.
 

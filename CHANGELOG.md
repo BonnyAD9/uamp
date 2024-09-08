@@ -2,6 +2,7 @@
 
 ## future
 - Add new functionality to filters (and, or, brackets).
+- Add shorter aliases for sorting and filtering.
 
 ## v0.5.4
 - Add option to enable/disable color in terminal.
