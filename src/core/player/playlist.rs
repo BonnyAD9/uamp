@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     core::{
         library::{Library, SongId},
-        SongOrder,
+        query::SongOrder,
     },
     ext::AlcVec,
 };

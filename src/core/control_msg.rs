@@ -17,8 +17,8 @@ use crate::{
 };
 
 use super::{
-    library::LoadOpts, player::AddPolicy, Error, Msg, SongOrder, TaskType,
-    UampApp,
+    library::LoadOpts, player::AddPolicy, query::SongOrder, Error, Msg,
+    TaskType, UampApp,
 };
 
 //===========================================================================//

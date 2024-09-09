@@ -9,7 +9,7 @@ use pareg::{ArgError, FromArgStr};
 use rand::{seq::SliceRandom, thread_rng};
 use serde::{Deserialize, Serialize};
 
-use super::{
+use crate::core::{
     library::{Library, SongId},
     Error,
 };

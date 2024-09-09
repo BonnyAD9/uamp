@@ -56,7 +56,11 @@ impl UampApp {
                 self.player.playlist_mut().on_end = act;
             }
             DataControlMsg::SetPlaylist(q) => {
-                let songs = self.library.query(&q);
+                let songs = q.get_ids(
+                    &self.library,
+                    self.config.simple_sorting(),
+                    self.library.iter(),
+                );
                 self.player.play_playlist(
                     &mut self.library,
                     songs.into(),
@@ -64,7 +68,11 @@ impl UampApp {
                 );
             }
             DataControlMsg::PushPlaylist(q) => {
-                let songs = self.library.query(&q);
+                let songs = q.get_ids(
+                    &self.library,
+                    self.config.simple_sorting(),
+                    self.library.iter(),
+                );
                 self.player.push_playlist(
                     &mut self.library,
                     songs.into(),
@@ -72,16 +80,28 @@ impl UampApp {
                 );
             }
             DataControlMsg::PushPlaylistAndCur(q) => {
-                let songs = self.library.query(&q);
-                self.player.push_with_cur(songs);
+                let songs = q.get_ids(
+                    &self.library,
+                    self.config.simple_sorting(),
+                    self.library.iter(),
+                );
+                self.player.push_with_cur(songs.into());
             }
             DataControlMsg::Queue(q) => {
-                let songs = self.library.query(&q);
-                self.player.playlist_mut().extend(songs.iter().copied());
+                let songs = q.get_ids(
+                    &self.library,
+                    self.config.simple_sorting(),
+                    self.library.iter(),
+                );
+                self.player.playlist_mut().extend(songs);
             }
             DataControlMsg::PlayNext(q) => {
-                let songs = self.library.query(&q);
-                self.player.playlist_mut().play_next(songs.iter().copied());
+                let songs = q.get_ids(
+                    &self.library,
+                    self.config.simple_sorting(),
+                    self.library.iter(),
+                );
+                self.player.playlist_mut().play_next(songs);
             }
         }
 

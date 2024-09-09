@@ -1,31 +1,41 @@
-use std::fmt::Display;
+use std::fmt::{Display, Write};
 
 use pareg::ArgError;
 
 use crate::core::Result;
 
-use super::Filter;
+use super::{Filter, SongOrder};
 
+#[derive(Debug)]
 pub enum Token {
+    Order(SongOrder),
     Filter(Filter),
     And,   // .
     Or,    // +
     Open,  // [
     Close, // ]
+    At,    // @
+}
+
+pub enum LexerState {
+    Filter,
+    Order,
 }
 
 pub struct Lexer<'a> {
     data: &'a str,
+    pub state: LexerState,
     buf: String,
 }
 
 impl<'a> Lexer<'a> {
-    const SPECIAL: &'static str = "[].+/";
+    const SPECIAL: &'static str = "[].+/@";
 
     pub fn new(s: &'a str) -> Self {
         Self {
             data: s,
             buf: String::new(),
+            state: LexerState::Filter,
         }
     }
 
@@ -35,6 +45,31 @@ impl<'a> Lexer<'a> {
         }
         self.buf.clear();
 
+        match self.state {
+            LexerState::Filter => self.next_filter(),
+            LexerState::Order => self.next_order(),
+        }
+    }
+
+    fn next_order(&mut self) -> Result<Option<Token>> {
+        let Some((i, _)) = self.data.char_indices().find(|(_, c)| *c == '@')
+        else {
+            let res = Token::Order(self.data.parse()?);
+            self.consume(self.data.len());
+            return Ok(Some(res));
+        };
+
+        if i == 0 {
+            self.consume(1);
+            return Ok(Some(Token::At));
+        }
+
+        let res = Token::Order(self.data[..i].parse()?);
+        self.consume(i);
+        Ok(Some(res))
+    }
+
+    fn next_filter(&mut self) -> Result<Option<Token>> {
         let Some((i, c)) = self.find_special() else {
             let res = Token::Filter(self.data.parse()?);
             self.consume(self.data.len());
@@ -50,7 +85,8 @@ impl<'a> Lexer<'a> {
 
         if i != 0 {
             // Unqouted string and no quote
-            let res = Token::Filter(self.data[..i].parse()?);
+            let data = &self.data[..i];
+            let res = Token::Filter(data.parse()?);
             self.consume(i);
             return Ok(Some(res));
         }
@@ -62,6 +98,7 @@ impl<'a> Lexer<'a> {
             '+' => Token::Or,
             '[' => Token::Open,
             ']' => Token::Close,
+            '@' => Token::At,
             _ => unreachable!(),
         };
 
@@ -142,11 +179,13 @@ impl<'a> Lexer<'a> {
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Token::Filter(filter) => write!(f, "Filter({filter:?})"),
+            Token::Order(order) => write!(f, "Order({order})"),
+            Token::Filter(filter) => write!(f, "Filter({filter})"),
             Token::And => f.write_str("."),
             Token::Or => f.write_str("+"),
             Token::Open => f.write_str("["),
             Token::Close => f.write_str("]"),
+            Token::At => f.write_char('@'),
         }
     }
 }

@@ -6,14 +6,7 @@ use std::{
     path::Path,
 };
 
-use crate::{
-    core::{
-        query::{Filter, Query},
-        Result,
-    },
-    ext::AlcVec,
-    gen_struct,
-};
+use crate::{core::Result, ext::AlcVec, gen_struct};
 
 use super::{LibraryUpdate, Song, SongId};
 
@@ -72,7 +65,7 @@ impl Library {
     }
 
     /// Filters songs in the library
-    pub fn filter(&self, filter: &Filter) -> AlcVec<SongId> {
+    /*pub fn filter(&self, filter: &Filter) -> AlcVec<SongId> {
         let mut buf = String::new();
         (0..self.songs().len())
             .map(SongId)
@@ -80,17 +73,12 @@ impl Library {
                 !self[s].is_deleted() && filter.matches(&self[s], &mut buf)
             })
             .collect()
-    }
+    }*/
 
-    /// Filters songs in the library
-    pub fn query(&self, filter: &Query) -> AlcVec<SongId> {
-        let mut buf = String::new();
+    pub fn iter(&self) -> impl Iterator<Item = SongId> + '_ {
         (0..self.songs().len())
             .map(SongId)
-            .filter(|s| {
-                !self[s].is_deleted() && filter.matches(&self[s], &mut buf)
-            })
-            .collect()
+            .filter(|s| !self[s].is_deleted())
     }
 
     /// Creates clone of the library. (Works as lazily as possible)

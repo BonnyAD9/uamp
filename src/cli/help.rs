@@ -272,28 +272,9 @@ fn print_control_messages_help(color: bool) {
     Shuffle the current playlist. The difference from {'r}sort{'w}=rng{'_} is
     that {'r}shuffle{'_} will respect the setting shuffle current.
 
-  {'r}sort-playlist  sort{'w}={'gr}[<|>][+|-]{'w}<ord>{'_}
-    Sorts the current playlist according to the value of {'w}ord{'_}:
-    - `{'i}rev  reverse{'_}`                           reverse the playlist.
-    - `{'i}rng  rand  random  randomize{'_}`           shuffle the playlist.
-    - `{'i}path{'_}`                                   sort by the path.
-    - `{'i}n tit  title  name{'_}`                     sort by the song title.
-    - `{'i}p art  artist  performer  auth  author{'_}` sort by the artist.
-    - `{'i}a alb  album{'_}`                           sort by the album name.
-    - `{'i}t trk  track  track-number{'_}`             sort by the track number.
-    - `{'i}d disc{'_}`                                 sort by the disc number.
-    - `{'i}y year  date{'_}`                           sort by the release date.
-    - `{'i}len  length{'_}`                            sort by the length of
-                                             the song.
-    - `{'i}g genre{'_}`                                sort by the genre.
-    You can alter the sorting with one of the following (some values of
-    {'w}ord{'_} ignore some of this):
-    - `{'i}<{'_}` sort in ascending order (this is the default).
-    - `{'i}>{'_}` sort in descending order.
-    - `{'i}+{'_}` use complex sorting.
-    - `{'i}-{'_}` use simple sorting.
-    If the complexity of the sorting is not set, it will use the default from
-    settings.
+  {'r}sort-playlist  sort{'w}={'bold}<order>{'_bold}{'_}
+    Sorts the songs in the current playlist. See {'w bold}order{'_} in
+    {'g}formats{'_} for more info.
 
   {'r}exit  close  x{'_}
     Gracefully close the instance.
@@ -309,16 +290,16 @@ fn print_control_messages_help(color: bool) {
     Seek back by the given duration. Without artument seeks by the default
     duration.
 
-  {'r}set-playlist  sp{'gr}[={'bold}<filter>{'_bold}]{'_}
+  {'r}set-playlist  sp{'gr}[={'bold}<query>{'_bold}]{'_}
     Loads subset as the current playlist. Without value for {'w}filter{'_}
-    loads all songs. See {'w bold}filter{'_} in {'g}formats{'_} for more info.
+    loads all songs. See {'w bold}query{'_} in {'g}formats{'_} for more info.
 
-  {'r}push-playlist  push{'gr}[={'bold}<filter>{'_bold}]{'_}
+  {'r}push-playlist  push{'gr}[={'bold}<query>{'_bold}]{'_}
     Push new playlist on top of the current one. Without value for
-    {'w}filter{'_} pushes all songs. See {'w bold}filter{'_} in {'g}formats{'_}
+    {'w}filter{'_} pushes all songs. See {'w bold}query{'_} in {'g}formats{'_}
     for more info.
 
-  {'r}push-with-cur  push-cur  pc{'gr}[={'bold}<filter>{'_bold}]{'_}
+  {'r}push-with-cur  push-cur  pc{'gr}[={'bold}<query>{'_bold}]{'_}
     Seamlessly push new playlist on top of the current one by moving the
     currently playing song to the start of the new playlist. See
     {'w bold}filter{'_} in {'g}formats{'_} for more info.
@@ -331,12 +312,12 @@ fn print_control_messages_help(color: bool) {
     currently playing song doesn't change. Do this {'i}cnt{'_} times. The
     default value for {'i}cnt{'_} is 1. 0 means flatten the whole stack.
 
-  {'r}queue  q{'gr}[={'bold}<filter>{'_bold}]{'_}
+  {'r}queue  q{'gr}[={'bold}<query>{'_bold}]{'_}
     Adds songs to the end of the queue (current playlist). See {'w bold}filter
     {'_}in {'g}formats{'_} for more info about selecting songs to queue.
     Without value, queues all songs.
 
-  {'r}play-next  queue-next  qn{'gr}[={'bold}<filter>{'_bold}]{'_}
+  {'r}play-next  queue-next  qn{'gr}[={'bold}<query>{'_bold}]{'_}
     Adds songs after the currently playing in the current playlist. See
     {'w bold}filter{'_} in {'g}formats{'_} for more info. Without value, queues
     all songs.
@@ -361,6 +342,10 @@ fn print_control_messages_help(color: bool) {
     Without value it is the same as setting it to `{'i}none{'_}`.
 
 {'g}Formats:
+  {'w bold}query:{'_}
+    Query is just combination of filter and order. It has the form:
+      {'gr}[{'bold}<filter>{'_bold}][@[{'bold}<order>{'_bold}]]
+
   {'w bold}filter:{'_}
     Specifies how to filter songs. These are the kinds of filters:
       {'r}any{'_}
@@ -414,8 +399,60 @@ fn print_control_messages_help(color: bool) {
     You can use `{'i}/{'_}` to enclose string literals. Inside the string
     literals you can use `{'i}//{'_}` to escape single /.
 
+    @ is not allowed in filters so you need to use string literal to express
+    this character in the filter.
+
     Example filters:
       `{'i}alb:/smoke+mirrors/+alb:trench{'_}`
+
+  {'w bold}order:{'_}
+    Specifies how to sort songs. It has this form:
+      {'gr}[<|>][+|-]{'w}<ord>{'_}
+
+    The value of ord sets the parameter by which the songs are sorted. Possible
+    values are:
+      {'r}rev  reverse{'_}
+        Reverse the songs.
+
+      {'r}rng  rand  random  randomize{'_}
+        Shuffle the songs.
+
+      {'r}path{'_}
+        Sort by the song path.
+
+      {'r}n tit  title  name{'_}
+        Sort by the song title.
+
+      {'r}p art  artist  performer  auth  author{'_}
+        Sort by the artist.
+
+      {'r}a alb  album{'_}
+        Sort by the album name.
+
+      {'r}t trk  track  track-number{'_}
+        Sort by the track number.
+
+      {'r}d disc{'_}
+        Sort by the disc number.
+
+      {'r}y year  date{'_}
+        Sort by the release date.
+
+      {'r}len  length{'_}
+        Sort by the length of the song.
+
+      {'r}g genre{'_}
+        Sort by the genre.
+
+    You can alter the sorting with one of the following options (some
+    parameters ignore some of this):
+      `{'i}<{'_}` sort in ascending order (this is the default).
+      `{'i}>{'_}` sort in descending order.
+      `{'i}+{'_}` use complex sorting.
+      `{'i}-{'_}` use simple sorting.
+
+    If the complexity of the sorting is not set, it will use the default from
+    settings.
 ",
     )
 }

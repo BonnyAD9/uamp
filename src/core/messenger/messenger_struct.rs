@@ -157,12 +157,11 @@ impl UampApp {
     ) -> Vec<Msg> {
         let mut msg = Messenger::new(stream);
 
-        let songs = self
-            .library
-            .query(query)
-            .iter()
-            .map(|s| self.library[s].clone())
-            .collect();
+        let songs = query.clone_songs(
+            &self.library,
+            self.config.simple_sorting(),
+            self.library.iter(),
+        );
 
         if let Err(e) = msg.send(DataResponse::SongList(songs).into()) {
             error!("Failed to send message: {e}");
