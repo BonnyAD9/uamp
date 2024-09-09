@@ -112,11 +112,11 @@ impl FromStr for SongOrder {
         let mut chrs = s.chars();
         while let Some(c) = chrs.peeking_next(|c| "<>+-".contains(*c)) {
             match c {
-                '<' | '>' => {
+                '<' | '>' | '/' | '\\' | '~' => {
                     if reverse.is_some() {
                         return Err(Error::FailedToParse("SongOrder"));
                     }
-                    reverse = Some(c == '>');
+                    reverse = Some(matches!(c, '>' | '\\' | '~'));
                 }
                 '+' | '-' => {
                     if simple.is_some() {

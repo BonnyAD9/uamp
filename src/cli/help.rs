@@ -407,7 +407,7 @@ fn print_control_messages_help(color: bool) {
 
   {'w bold}order:{'_}
     Specifies how to sort songs. It has this form:
-      {'gr}[<|>][+|-]{'w}<ord>{'_}
+      {'gr}[<|>|/|\\|~][+|-]{'w}<ord>{'_}
 
     The value of ord sets the parameter by which the songs are sorted. Possible
     values are:
@@ -446,10 +446,10 @@ fn print_control_messages_help(color: bool) {
 
     You can alter the sorting with one of the following options (some
     parameters ignore some of this):
-      `{'i}<{'_}` sort in ascending order (this is the default).
-      `{'i}>{'_}` sort in descending order.
-      `{'i}+{'_}` use complex sorting.
-      `{'i}-{'_}` use simple sorting.
+      `{'i}<  /{'_}`    sort in ascending order (this is the default).
+      `{'i}>  \\  ~{'_}` sort in descending order.
+      `{'i}+{'_}`       use complex sorting.
+      `{'i}-{'_}`       use simple sorting.
 
     If the complexity of the sorting is not set, it will use the default from
     settings.
