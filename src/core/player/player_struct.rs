@@ -8,7 +8,7 @@ use crate::{
     core::{
         config::Config,
         library::{Library, SongId},
-        DataControlMsg, Msg,
+        Alias, DataControlMsg, Msg,
     },
     ext::AlcVec,
     gen_struct,
@@ -254,7 +254,7 @@ impl Player {
     /// trigger flag.
     pub fn get_playlist_action(
         &mut self,
-        default: Option<&String>,
+        default: Option<&Alias>,
     ) -> Option<Msg> {
         if self.playlist_ended {
             self.playlist_ended = false;

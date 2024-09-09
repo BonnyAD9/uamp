@@ -132,7 +132,7 @@
             "description": "Aliases for actions",
             "type": "object",
             "additionalProperties": {
-                "description": "Defines what this alias does.",
+                "description": "Defines what this alias does. Aliases can also have arguments, in that case use '\"alias-name\": \"[arg1, arg2]something:${arg1} ${arg2}'",
                 "type": "string"
             },
             "default": {

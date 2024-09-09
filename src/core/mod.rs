@@ -1,6 +1,7 @@
+mod alias;
 mod any_control_msg;
+mod control_function;
 mod control_msg;
-mod control_msg_vec;
 mod data_control_msg;
 mod err;
 mod message_delegate;
@@ -20,6 +21,7 @@ pub mod player;
 pub mod query;
 
 pub use self::{
-    any_control_msg::*, control_msg::*, data_control_msg::*, err::*,
-    message_delegate::*, msg::*, play_msg::*, task_msg::*, uamp_app::*,
+    alias::*, any_control_msg::*, control_function::*, control_msg::*,
+    data_control_msg::*, err::*, message_delegate::*, msg::*, play_msg::*,
+    task_msg::*, uamp_app::*,
 };

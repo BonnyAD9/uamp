@@ -5,6 +5,7 @@
 - Add shorter aliases for sorting and filtering.
 - Add option to sort songs as part of query
 - Add terminal friendly alternatives for descending order.
+- Aliases can have arguments.
 
 ## v0.5.4
 - Add option to enable/disable color in terminal.

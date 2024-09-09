@@ -1,5 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
+use log::error;
 use pareg::{
     has_any_key, mval_arg, starts_any, val_arg, ArgError, FromArgStr,
 };
@@ -7,9 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::env::AppCtrl;
 
-use super::{
-    control_msg_vec::ControlMsgVec, query::Query, Error, Msg, UampApp,
-};
+use super::{query::Query, Alias, Error, Msg, UampApp};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -20,9 +19,9 @@ use super::{
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum DataControlMsg {
     /// Invoke alias.
-    Alias(String),
+    Alias(Alias),
     /// Sets the current playlist end action.
-    SetPlaylistEndAction(Option<String>),
+    SetPlaylistEndAction(Option<Alias>),
     /// Sets the current playlist
     SetPlaylist(Query),
     /// Pushes new playlist.
@@ -44,14 +43,10 @@ impl UampApp {
         msg: DataControlMsg,
     ) -> Vec<Msg> {
         match msg {
-            DataControlMsg::Alias(name) => {
-                return self
-                    .config
-                    .control_aliases()
-                    .get(&name)
-                    .map(ControlMsgVec::get_msg_vec)
-                    .unwrap_or_default()
-            }
+            DataControlMsg::Alias(name) => match self.invoke_alias(&name) {
+                Ok(r) => return r,
+                Err(e) => error!("Failed to invoke alias: {e}"),
+            },
             DataControlMsg::SetPlaylistEndAction(act) => {
                 self.player.playlist_mut().on_end = act;
             }

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::{cell::Cell, collections::HashMap, path::PathBuf, time::Duration};
 
 use crate::{
-    core::{config::default_config_path_json, control_msg_vec::ControlMsgVec},
+    core::{config::default_config_path_json, Alias, ControlFunction},
     ext::Wrap,
     gen_struct,
 };
@@ -53,16 +53,14 @@ gen_struct! {
         },
 
         #[doc = "Aliases for groups of control actions."]
-        control_aliases: HashMap<String, ControlMsgVec> { pub, pub } =>
+        control_aliases: HashMap<String, ControlFunction> { pub, pub } =>
         pub(super) () {
-            let mut res = HashMap::new();
-            res.insert("nothing".to_owned(), vec![].into());
-            res
+            HashMap::new()
         },
 
         #[doc = "This will be used as playlist end action if the end action"]
         #[doc = "is not set."]
-        default_playlist_end_action: Option<String> { pub, pub } =>
+        default_playlist_end_action: Option<Alias> { pub, pub } =>
         pub(super) () {
             None
         },

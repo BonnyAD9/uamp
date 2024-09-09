@@ -325,8 +325,8 @@ fn print_control_messages_help(color: bool) {
   {'r}save{'_}
     Triggers save (but saves only if there is change).
 
-  {'r}alias  al{'w}=<alias name>{'_}
-    Runs the actions given by the alias.
+  {'r}alias  al{'w}=<alias name>{'gr}[`[`<arg1>,<arg2>,...`]`]{'_}
+    Runs the actions given by the alias. You can pass arguments to the alias.
 
   {'r}playlist-end-action  playlist-end  pl-end  spea{'gr}[=<alias name>]{'_}
     Sets the playlist end action of the current playlist to actions specified

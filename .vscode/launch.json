@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["i", "l=a:clancy@t"],
+            "args": [],
             "cwd": "${workspaceFolder}"
         },
         {

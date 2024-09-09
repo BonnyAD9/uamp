@@ -5,7 +5,7 @@ use log::{error, warn};
 use crate::{
     core::{
         messenger::{Messenger, MsgMessage},
-        Msg, Result, TaskType, UampApp,
+        Alias, Msg, Result, TaskType, UampApp,
     },
     env::AppCtrl,
 };
@@ -82,6 +82,15 @@ impl UampApp {
         {
             self.save_all(false, ctrl);
         }
+    }
+
+    pub fn invoke_alias(&mut self, alias: &Alias) -> Result<Vec<Msg>> {
+        self.config
+            .control_aliases()
+            .get(&alias.name)
+            .map(|a| a.get_msg_vec(&alias.args))
+            .transpose()
+            .map(Option::unwrap_or_default)
     }
 }
 

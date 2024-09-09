@@ -8,6 +8,7 @@ use crate::{
     core::{
         library::{Library, SongId},
         query::SongOrder,
+        Alias,
     },
     ext::AlcVec,
 };
@@ -29,7 +30,7 @@ pub struct Playlist {
     play_pos: Option<Duration>,
     /// Alias to run when the playlist ends.
     #[serde(default)]
-    pub on_end: Option<String>,
+    pub on_end: Option<Alias>,
     /// How songs should be added to the playlist.
     #[serde(default)]
     pub add_policy: Option<AddPolicy>,
