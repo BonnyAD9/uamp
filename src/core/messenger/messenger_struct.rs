@@ -88,12 +88,18 @@ impl UampApp {
         stream: &TcpStream,
     ) -> (Option<MsgMessage>, Option<Msg>) {
         match req {
-            Request::Info => Self::request_info(stream),
+            Request::Info(before, after) => {
+                Self::request_info(stream, before, after)
+            }
             Request::Query(f) => Self::query_request(stream, f),
         }
     }
 
-    fn request_info(stream: &TcpStream) -> (Option<MsgMessage>, Option<Msg>) {
+    fn request_info(
+        stream: &TcpStream,
+        before: usize,
+        after: usize,
+    ) -> (Option<MsgMessage>, Option<Msg>) {
         let stream = match Self::clone_stream(stream) {
             Ok(s) => s,
             Err(e) => return e,
@@ -101,15 +107,38 @@ impl UampApp {
 
         let delegate = Msg::delegate::<_, FnDelegate<_>>(
             move |app: &mut UampApp, _: &mut AppCtrl| {
-                app.info_response(&stream)
+                app.info_response(&stream, before, after)
             },
         );
 
         (None, Some(delegate))
     }
 
-    fn info_response(&mut self, stream: &TcpStream) -> Vec<Msg> {
+    fn info_response(
+        &mut self,
+        stream: &TcpStream,
+        before: usize,
+        after: usize,
+    ) -> Vec<Msg> {
         let mut msg = Messenger::new(stream);
+
+        let idx = self.player.playlist().current_idx();
+        let (before, after) = if let Some(idx) = idx {
+            let start = idx.saturating_sub(before);
+            let end = (idx + after + 1).min(self.player.playlist().len());
+            (
+                self.player.playlist()[start..idx]
+                    .iter()
+                    .map(|i| self.library[*i].clone())
+                    .collect(),
+                self.player.playlist()[idx + 1..end]
+                    .iter()
+                    .map(|i| self.library[*i].clone())
+                    .collect(),
+            )
+        } else {
+            (vec![], vec![])
+        };
 
         let info = Info {
             version: option_env!("CARGO_PKG_VERSION")
@@ -123,6 +152,8 @@ impl UampApp {
             playlist_pos: self.player.playlist().get_pos(),
             is_playing: self.player.is_playing(),
             timestamp: self.player.timestamp(),
+            before,
+            after,
         };
 
         if let Err(e) = msg.send(DataResponse::Info(Box::new(info)).into()) {

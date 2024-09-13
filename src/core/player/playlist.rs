@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{ops::Index, slice::SliceIndex, time::Duration};
 
 use log::error;
 use rand::{seq::SliceRandom, thread_rng};
@@ -256,6 +256,14 @@ impl<'a> IntoIterator for &'a Playlist {
 impl Extend<SongId> for Playlist {
     fn extend<T: IntoIterator<Item = SongId>>(&mut self, iter: T) {
         self.songs.extend(iter)
+    }
+}
+
+impl<I: SliceIndex<[SongId]>> Index<I> for Playlist {
+    type Output = I::Output;
+
+    fn index(&self, index: I) -> &Self::Output {
+        self.songs.index(index)
     }
 }
 

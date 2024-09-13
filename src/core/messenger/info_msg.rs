@@ -11,7 +11,7 @@ use crate::core::{library::Song, query::Query};
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Request {
     /// Request the current playback info.
-    Info,
+    Info(usize, usize),
     /// Query for songs
     Query(Query),
 }
@@ -37,4 +37,8 @@ pub struct Info {
     pub is_playing: bool,
     /// The timestamp of the current playback.
     pub timestamp: Option<Timestamp>,
+    /// Songs in the playlist before
+    pub before: Vec<Song>,
+    /// Songs in the playlist after
+    pub after: Vec<Song>,
 }

@@ -53,7 +53,9 @@ impl Instance {
     {
         while let Some(arg) = args.next() {
             match arg {
-                "info" | "nfo" => self.messages.push(Request::Info.into()),
+                "info" | "nfo" => {
+                    self.messages.push(Request::Info(1, 3).into())
+                }
                 v if has_any_key!(v, '=', "p", "play") => {
                     self.messages.push(
                         PlayMsg::TmpPath(
@@ -210,10 +212,83 @@ impl Instance {
     {'bold}[{'_ y}{before}{'w bold}{is}{'_ gr}{after}{'_ bold}]{'_}
 
 {'gr}{playlist: ^80}
-{dt: ^80}
-uamp{version: >76}{'_}",
+{dt: ^80}{'_}",
             ' ',
         );
+
+        if info.before.is_empty() && info.after.is_empty() {
+            printmcln!(color, "{'gr}uamp{version: >76}{'_}");
+            return;
+        }
+
+        printmcln!(color, "\n{'gr}{: ^80}{'_}", "----<< playlist >>----");
+        if info
+            .playlist_pos
+            .map(|p| p - info.before.len() != 0)
+            .unwrap_or(true)
+        {
+            printmcln!(color, "{'gr}{: ^80}", "...");
+        } else {
+            println!();
+        }
+
+        for (i, s) in info.before.iter().enumerate() {
+            if let Some(idx) = info.playlist_pos {
+                let idx = idx + i - before.len();
+                printmcln!(
+                    color,
+                    "  {'gr}{idx}. {'dc}{} {'gr}- {'dy}{}{'_}",
+                    s.artist(),
+                    s.title()
+                );
+            } else {
+                printmcln!(
+                    color,
+                    "  {'dc}{} {'gr}- {'dy}{}{'_}",
+                    s.artist(),
+                    s.title()
+                );
+            }
+        }
+        if let Some(idx) = info.playlist_pos {
+            printmcln!(
+                color,
+                "  {'_}{}. {'c}{artist} {'_}- {'y}{title}{'_}",
+                idx + 1
+            );
+        } else {
+            printmcln!(color, "  {'c}{artist} {'_}- {'y}{title}{'_}");
+        }
+        for (i, s) in info.after.iter().enumerate() {
+            if let Some(idx) = info.playlist_pos {
+                let idx = idx + i + 2;
+                printmcln!(
+                    color,
+                    "  {'gr}{idx}. {'dc}{} {'gr}- {'dy}{}{'_}",
+                    s.artist(),
+                    s.title()
+                );
+            } else {
+                printmcln!(
+                    color,
+                    "  {'dc}{} {'gr}- {'dy}{}{'_}",
+                    s.artist(),
+                    s.title()
+                );
+            }
+        }
+
+        if info
+            .playlist_pos
+            .map(|p| p + info.after.len() + 1 < info.playlist_len)
+            .unwrap_or(true)
+        {
+            printmcln!(color, "{'gr}{: ^80}", "...");
+        } else {
+            println!();
+        }
+
+        printmcln!(color, "{'gr}uamp{version: >76}{'_}");
     }
 
     fn print_list(songs: Vec<Song>, color: bool, send_time: Instant) {
