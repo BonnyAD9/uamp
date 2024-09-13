@@ -1,8 +1,14 @@
-use std::{borrow::Cow, mem, net::TcpStream, path::Path, time::Duration};
+use std::{
+    borrow::Cow,
+    mem,
+    net::TcpStream,
+    path::Path,
+    time::{Duration, Instant},
+};
 
 use log::error;
 use pareg::{has_any_key, ArgIterator, ByRef};
-use termal::{eprintacln, printmc, printmcln};
+use termal::{eprintacln, printcln, printmc, printmcln};
 
 use crate::{
     core::{
@@ -88,11 +94,12 @@ impl Instance {
             .or_else(|| Some(conf.server_address().to_owned()));
 
         for m in mem::take(&mut self.messages) {
+            let send_time = Instant::now();
             let res = self.send_message(m);
             match res {
                 Ok(MsgMessage::Success) => {}
                 Ok(MsgMessage::Data(i)) => {
-                    Self::print_data(i, color);
+                    Self::print_data(i, color, send_time);
                 }
                 Err(e) => eprintacln!("{'r}error: {'_}{e}"),
                 Ok(r) => {
@@ -130,10 +137,12 @@ impl Instance {
         msgr.recieve()
     }
 
-    fn print_data(data: DataResponse, color: bool) {
+    fn print_data(data: DataResponse, color: bool, send_time: Instant) {
         match data {
             DataResponse::Info(i) => Self::print_info(*i, color),
-            DataResponse::SongList(songs) => Self::print_list(songs, color),
+            DataResponse::SongList(songs) => {
+                Self::print_list(songs, color, send_time)
+            }
         }
     }
 
@@ -207,7 +216,7 @@ uamp{version: >76}{'_}",
         );
     }
 
-    fn print_list(songs: Vec<Song>, color: bool) {
+    fn print_list(songs: Vec<Song>, color: bool, send_time: Instant) {
         printmcln!(
             color,
             "{'bold y}{:<30} {'c}{:<20} {'m}{:28}{'_}",
@@ -215,9 +224,20 @@ uamp{version: >76}{'_}",
             "Artist",
             "Album"
         );
-        for s in songs {
-            Self::print_song(&s, color);
+        let mut total_dur = Duration::ZERO;
+        for s in &songs {
+            total_dur += s.length();
+            Self::print_song(s, color);
         }
+
+        let elapsed = Instant::now() - send_time;
+
+        printcln!(
+            "{'gr}{} songs ({}) in {:.4} s",
+            songs.len(),
+            duration_to_string(total_dur, true),
+            elapsed.as_secs_f32(),
+        );
     }
 
     fn print_song(s: &Song, color: bool) {

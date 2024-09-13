@@ -1,4 +1,8 @@
-use std::{fmt::Debug, str::FromStr, time::Duration};
+use std::{
+    fmt::{Debug, Display},
+    str::FromStr,
+    time::Duration,
+};
 
 use pareg::FromArgStr;
 use serde::{Deserialize, Serialize};
@@ -111,3 +115,9 @@ impl FromStr for Wrap<Duration> {
 }
 
 impl FromArgStr for Wrap<Duration> {}
+
+impl Display for Wrap<Duration> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&duration_to_string(self.0, false))
+    }
+}
