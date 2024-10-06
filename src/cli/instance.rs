@@ -1,27 +1,21 @@
 use std::{
-    borrow::Cow,
     mem,
     net::TcpStream,
     path::Path,
     time::{Duration, Instant},
 };
 
-use itertools::Itertools;
 use log::error;
 use pareg::{has_any_key, ArgIterator, ByRef};
-use termal::{eprintacln, printcln, printmc, printmcln};
+use termal::eprintacln;
 
-use crate::{
-    core::{
-        config::Config,
-        library::Song,
-        messenger::{DataResponse, Info, Messenger, MsgMessage, Request},
-        PlayMsg, Result,
-    },
-    ext::duration_to_string,
+use crate::core::{
+    config::Config,
+    messenger::{DataResponse, Info, Messenger, MsgMessage, Request},
+    PlayMsg, Result,
 };
 
-use super::help::help_instance;
+use super::{help::help_instance, printer};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -144,223 +138,19 @@ impl Instance {
         match data {
             DataResponse::Info(i) => Self::print_info(*i, color),
             DataResponse::SongList(songs) => {
-                Self::print_list(songs, color, send_time)
+                printer::song_list(songs, color, send_time)
             }
         }
     }
 
     fn print_info(info: Info, color: bool) {
-        let mut title: Cow<str> = "--".into();
-        let mut artist: Cow<str> = "--".into();
-        let mut album: Cow<str> = "--".into();
-        let state = if info.is_playing { "||" } else { "|>" };
-        let mut cur: Cow<str> = "--:--".into();
-        let mut pos: Cow<str> = "?".into();
-        let mut total: Cow<str> = "--:--".into();
-        let plen = info.playlist_len.to_string();
-        let mut disc: Cow<str> = "0".into();
-        let mut track: Cow<str> = "0".into();
-        let version = format!("v{}", info.version);
-        let mut before: Cow<str> = "".into();
-        let mut is = "";
-        let mut after: Cow<str> = format!("{:->70}", '-').into();
-
-        if let Some(s) = &info.now_playing {
-            title = s.title().into();
-            artist = s.artist().into();
-            album = s.album().into();
-            disc = s.disc_str().into();
-            track = s.track_str().into();
-        }
-
-        if let Some(p) = info.playlist_pos {
-            pos = (p + 1).to_string().into();
-        }
-
-        if let Some(t) = info.timestamp {
-            cur = duration_to_string(t.current, true).into();
-            total = duration_to_string(t.total, true).into();
-            let n = (t.current.as_secs_f32() / t.total.as_secs_f32() * 70.)
-                as usize;
-            before = format!("{:=>n$}", '=').into();
-            is = "#";
-            let m = 69 - n;
-            after = format!("{:->m$}", '-').into();
-            match n {
-                0 => before = "".into(),
-                70 => {
-                    after = "".into();
-                    is = "";
-                }
-                69 => after = "".into(),
-                _ => {}
-            }
-        }
-
-        let blen = 80_usize.saturating_sub(
-            artist.chars().count() + album.chars().count() + 9,
-        ) / 2;
-        let playlist = format!("{pos}/{plen}");
-        let dt = format!("<{disc}-{track}>");
-
-        printmcln!(
-            color,
-            "
-{'bold y}{title: ^80}{'_}
-{: >blen$}{'gr}by {'dc}{artist} {'gr}from {'dm}{album}{'_}
-
-     {'w}{cur: <27}{'_ bold}<||    {'y}{state}    {'_fg}||>{'_ w}{total: >27}{'_}
-    {'bold}[{'_ y}{before}{'w bold}{is}{'_ gr}{after}{'_ bold}]{'_}
-
-{'gr}{playlist: ^80}
-{dt: ^80}{'_}",
-            ' ',
-        );
+        printer::now_playing(&info, color);
 
         if !info.before.is_empty() || !info.after.is_empty() {
-            Self::print_playlist(&info, color, &artist, &title);
+            printer::playlist(&info, color);
         }
 
-        println!();
-        let mut playlist_stack = info
-            .playlist_stack
-            .iter()
-            .rev()
-            .map(|(idx, len)| {
-                let idx: Cow<str> =
-                    idx.map_or("?".into(), |i| i.to_string().into());
-                format!("{idx}/{len}")
-            })
-            .join(" > ");
-        if playlist_stack.is_empty() {
-            playlist_stack += "-/-";
-        }
-        printmcln!(color, "{'gr}{: ^79}{'_}", playlist_stack);
-
-        let end: Cow<str> = info
-            .playlist_end
-            .map_or("--".into(), |a| a.to_string().into());
-        let config =
-            format!("end: {} | add: {}", end, info.playlist_add_policy);
-        printmcln!(color, "{'gr}{: ^79}", config);
-
-        printmcln!(color, "{'gr}uamp{version: >76}{'_}");
-    }
-
-    fn print_playlist(info: &Info, color: bool, artist: &str, title: &str) {
-        printmcln!(color, "\n{'gr}{: ^80}{'_}", "----<< playlist >>----");
-        if info
-            .playlist_pos
-            .map(|p| p - info.before.len() != 0)
-            .unwrap_or(true)
-        {
-            printmcln!(color, "{'gr}{: ^80}", "...");
-        } else {
-            println!();
-        }
-
-        for (i, s) in info.before.iter().enumerate() {
-            if let Some(idx) = info.playlist_pos {
-                let idx = idx + i - info.before.len() + 1;
-                printmcln!(
-                    color,
-                    "  {'gr}{idx}. {'dc}{} {'gr}- {'dy}{}{'_}",
-                    s.artist(),
-                    s.title()
-                );
-            } else {
-                printmcln!(
-                    color,
-                    "  {'dc}{} {'gr}- {'dy}{}{'_}",
-                    s.artist(),
-                    s.title()
-                );
-            }
-        }
-        if let Some(idx) = info.playlist_pos {
-            printmcln!(
-                color,
-                "  {'_}{}. {'c}{artist} {'_}- {'y}{title}{'_}",
-                idx + 1
-            );
-        } else {
-            printmcln!(color, "  {'c}{artist} {'_}- {'y}{title}{'_}");
-        }
-        for (i, s) in info.after.iter().enumerate() {
-            if let Some(idx) = info.playlist_pos {
-                let idx = idx + i + 2;
-                printmcln!(
-                    color,
-                    "  {'gr}{idx}. {'dc}{} {'gr}- {'dy}{}{'_}",
-                    s.artist(),
-                    s.title()
-                );
-            } else {
-                printmcln!(
-                    color,
-                    "  {'dc}{} {'gr}- {'dy}{}{'_}",
-                    s.artist(),
-                    s.title()
-                );
-            }
-        }
-
-        if info
-            .playlist_pos
-            .map(|p| p + info.after.len() + 1 < info.playlist_len)
-            .unwrap_or(true)
-        {
-            printmcln!(color, "{'gr}{: ^80}", "...");
-        } else {
-            println!();
-        }
-    }
-
-    fn print_list(songs: Vec<Song>, color: bool, send_time: Instant) {
-        printmcln!(
-            color,
-            "{'bold y}{:<30} {'c}{:<20} {'m}{:28}{'_}",
-            "Title",
-            "Artist",
-            "Album"
-        );
-        let mut total_dur = Duration::ZERO;
-        for s in &songs {
-            total_dur += s.length();
-            Self::print_song(s, color);
-        }
-
-        let elapsed = Instant::now() - send_time;
-
-        printcln!(
-            "{'gr}{} songs ({}) in {:.4} s",
-            songs.len(),
-            duration_to_string(total_dur, true),
-            elapsed.as_secs_f32(),
-        );
-    }
-
-    fn print_song(s: &Song, color: bool) {
-        printmc!(color, "{'dy}");
-        Self::print_elipsised(s.title(), 30);
-        printmc!(color, " {'dc}");
-        Self::print_elipsised(s.artist(), 20);
-        printmc!(color, " {'dm}");
-        Self::print_elipsised(s.album(), 28);
-        printmcln!(color, "{'_}");
-    }
-
-    fn print_elipsised(s: &str, len: usize) {
-        let mut ind = s.char_indices();
-        let Some((i, _)) = ind.nth(len - 3) else {
-            print!("{s:<len$}");
-            return;
-        };
-
-        if ind.nth(3).is_some() {
-            print!("{}...", &s[..i]);
-        } else {
-            print!("{s:<len$}");
-        }
+        printer::playlist_config(&info, color);
+        printer::footer(&info, color);
     }
 }
