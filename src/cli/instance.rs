@@ -6,6 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use itertools::Itertools;
 use log::error;
 use pareg::{has_any_key, ArgIterator, ByRef};
 use termal::{eprintacln, printcln, printmc, printmcln};
@@ -216,11 +217,37 @@ impl Instance {
             ' ',
         );
 
-        if info.before.is_empty() && info.after.is_empty() {
-            printmcln!(color, "{'gr}uamp{version: >76}{'_}");
-            return;
+        if !info.before.is_empty() || !info.after.is_empty() {
+            Self::print_playlist(&info, color, &artist, &title);
         }
 
+        println!();
+        let mut playlist_stack = info
+            .playlist_stack
+            .iter()
+            .rev()
+            .map(|(idx, len)| {
+                let idx: Cow<str> =
+                    idx.map_or("?".into(), |i| i.to_string().into());
+                format!("{idx}/{len}")
+            })
+            .join(" > ");
+        if playlist_stack.is_empty() {
+            playlist_stack += "-/-";
+        }
+        printmcln!(color, "{'gr}{: ^79}{'_}", playlist_stack);
+
+        let end: Cow<str> = info
+            .playlist_end
+            .map_or("--".into(), |a| a.to_string().into());
+        let config =
+            format!("end: {} | add: {}", end, info.playlist_add_policy);
+        printmcln!(color, "{'gr}{: ^79}", config);
+
+        printmcln!(color, "{'gr}uamp{version: >76}{'_}");
+    }
+
+    fn print_playlist(info: &Info, color: bool, artist: &str, title: &str) {
         printmcln!(color, "\n{'gr}{: ^80}{'_}", "----<< playlist >>----");
         if info
             .playlist_pos
@@ -234,7 +261,7 @@ impl Instance {
 
         for (i, s) in info.before.iter().enumerate() {
             if let Some(idx) = info.playlist_pos {
-                let idx = idx + i - before.len();
+                let idx = idx + i - info.before.len() + 1;
                 printmcln!(
                     color,
                     "  {'gr}{idx}. {'dc}{} {'gr}- {'dy}{}{'_}",
@@ -287,8 +314,6 @@ impl Instance {
         } else {
             println!();
         }
-
-        printmcln!(color, "{'gr}uamp{version: >76}{'_}");
     }
 
     fn print_list(songs: Vec<Song>, color: bool, send_time: Instant) {

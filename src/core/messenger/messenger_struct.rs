@@ -154,6 +154,20 @@ impl UampApp {
             timestamp: self.player.timestamp(),
             before,
             after,
+            playlist_stack: self
+                .player
+                .playlist_stack()
+                .iter()
+                .map(|p| (p.current_idx(), p.len()))
+                .collect(),
+            playlist_end: self
+                .player
+                .playlist()
+                .on_end
+                .as_ref()
+                .or(self.config.default_playlist_end_action().as_ref())
+                .cloned(),
+            playlist_add_policy: self.player.playlist().add_policy,
         };
 
         if let Err(e) = msg.send(DataResponse::Info(Box::new(info)).into()) {

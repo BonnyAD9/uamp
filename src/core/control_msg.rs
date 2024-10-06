@@ -63,7 +63,7 @@ pub enum ControlMsg {
     /// Flatten the playlist `n` times. `0` means flatten all.
     Flatten(usize),
     /// Set the playlist add policy.
-    SetPlaylistAddPolicy(Option<AddPolicy>),
+    SetPlaylistAddPolicy(AddPolicy),
     /// Thriggers save
     Save,
 }
@@ -232,8 +232,10 @@ impl Display for ControlMsg {
             ControlMsg::PopPlaylist => f.write_str("pop"),
             ControlMsg::Flatten(1) => f.write_str("flat"),
             ControlMsg::Flatten(c) => write!(f, "flat={c}"),
-            ControlMsg::SetPlaylistAddPolicy(None) => f.write_str("pap"),
-            ControlMsg::SetPlaylistAddPolicy(Some(p)) => write!(f, "pap={p}"),
+            ControlMsg::SetPlaylistAddPolicy(AddPolicy::None) => {
+                f.write_str("pap")
+            }
+            ControlMsg::SetPlaylistAddPolicy(p) => write!(f, "pap={p}"),
             ControlMsg::Save => f.write_str("save"),
         }
     }
@@ -313,7 +315,9 @@ impl FromStr for ControlMsg {
                 "pap"
             ) =>
             {
-                Ok(ControlMsg::SetPlaylistAddPolicy(mval_arg(v, '=')?))
+                Ok(ControlMsg::SetPlaylistAddPolicy(
+                    mval_arg(v, '=')?.unwrap_or_default(),
+                ))
             }
             "save" => Ok(ControlMsg::Save),
             v => Err(Error::ArgParse(ArgError::UnknownArgument(

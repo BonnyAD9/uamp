@@ -1,7 +1,7 @@
 use raplay::Timestamp;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{library::Song, query::Query};
+use crate::core::{library::Song, player::AddPolicy, query::Query, Alias};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -41,4 +41,10 @@ pub struct Info {
     pub before: Vec<Song>,
     /// Songs in the playlist after
     pub after: Vec<Song>,
+    /// Playlist stack (position, length)
+    pub playlist_stack: Vec<(Option<usize>, usize)>,
+    /// Playlist end action
+    pub playlist_end: Option<Alias>,
+    /// Playlist add policy
+    pub playlist_add_policy: AddPolicy,
 }

@@ -33,7 +33,7 @@ pub struct Playlist {
     pub on_end: Option<Alias>,
     /// How songs should be added to the playlist.
     #[serde(default)]
-    pub add_policy: Option<AddPolicy>,
+    pub add_policy: AddPolicy,
 }
 
 impl Playlist {
@@ -51,7 +51,7 @@ impl Playlist {
             current,
             play_pos: None,
             on_end: None,
-            add_policy: None,
+            add_policy: AddPolicy::None,
         }
     }
 
@@ -103,9 +103,7 @@ impl Playlist {
     where
         I: IntoIterator<Item = SongId>,
     {
-        let Some(policy) = policy.or(self.add_policy) else {
-            return;
-        };
+        let policy = policy.unwrap_or(self.add_policy);
 
         let i = self.current + 1;
         match policy {
@@ -283,7 +281,7 @@ impl Playlist {
     fn locate_current_h(&mut self, cur: SongId, change: usize) {
         let start = self.current.saturating_sub(change);
         let end = self.songs.len().min(self.current + 1);
-        
+
         let songs = &self.songs[start..end];
         if let Some(cur) = songs.iter().position(|i| *i == cur) {
             self.current = cur + start;
