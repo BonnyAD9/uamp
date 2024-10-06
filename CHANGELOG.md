@@ -7,6 +7,7 @@
 - Add terminal friendly alternatives for descending order.
 - Aliases can have arguments.
 - Print portion of playlist with `i nfo`
+- Fix bug where playlist would panic when removing deleted songs.
 
 ## v0.5.4
 - Add option to enable/disable color in terminal.

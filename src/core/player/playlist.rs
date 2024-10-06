@@ -91,7 +91,7 @@ impl Playlist {
         self.songs.vec_mut().retain(|s| !lib[s].is_deleted());
         if let Some(cur) = cur {
             let len_diff = old_len - self.len();
-            self.locate_current_h(cur, self.current - len_diff, len_diff + 1);
+            self.locate_current_h(cur, len_diff);
         }
     }
 
@@ -280,8 +280,11 @@ impl Playlist {
         }
     }
 
-    fn locate_current_h(&mut self, cur: SongId, start: usize, count: usize) {
-        let songs = &self.songs[start..start + count];
+    fn locate_current_h(&mut self, cur: SongId, change: usize) {
+        let start = self.current.saturating_sub(change);
+        let end = self.songs.len().min(self.current + 1);
+        
+        let songs = &self.songs[start..end];
         if let Some(cur) = songs.iter().position(|i| *i == cur) {
             self.current = cur + start;
         } else {
