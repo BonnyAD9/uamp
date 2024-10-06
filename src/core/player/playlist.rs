@@ -172,7 +172,7 @@ impl Playlist {
 
     /// Moves current to the nth previous song and returns its id.
     ///
-    /// If thep position is outside of the playlist, move to the first song in
+    /// If the position is outside of the playlist, move to the first song in
     /// the playlist.
     ///
     /// # Returns
