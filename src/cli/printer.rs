@@ -345,6 +345,6 @@ impl Info {
     }
 
     fn playlist_pos(cur: Option<usize>, len: usize) -> String {
-        cur.map_or_else(|| format!("-/{len}"), |p| format!("{p}/{len}"))
+        cur.map_or_else(|| format!("-/{len}"), |p| format!("{}/{len}", p + 1))
     }
 }
