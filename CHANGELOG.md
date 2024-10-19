@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.5.5
 - Add new functionality to filters (and, or, brackets).
 - Add shorter aliases for sorting and filtering.
 - Add option to sort songs as part of query
