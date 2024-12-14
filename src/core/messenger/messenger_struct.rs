@@ -151,6 +151,8 @@ impl UampApp {
             playlist_len: self.player.playlist().len(),
             playlist_pos: self.player.playlist().get_pos(),
             is_playing: self.player.is_playing(),
+            volume: self.player.volume(),
+            mute: self.player.mute(),
             timestamp: self.player.timestamp(),
             before,
             after,

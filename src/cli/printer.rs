@@ -4,7 +4,7 @@ use std::{
 };
 
 use itertools::Itertools;
-use termal::{printmc, printmcln};
+use termal::{formatmc, printmc, printmcln};
 
 use crate::{
     core::{library::Song, messenger::Info},
@@ -32,6 +32,10 @@ pub fn now_playing(info: &Info, color: bool) {
         .saturating_sub(artist.chars().count() + album.chars().count() + 9)
         / 2;
 
+    let vtop = info.vtop();
+    let vbot = info.vbot();
+    let volume = info.volume(color);
+
     /*
                                   Out of Sight
                         by Smash Mouth from Smash Mouth
@@ -39,36 +43,36 @@ pub fn now_playing(info: &Info, color: bool) {
      01:07                      <||    |>    ||>                      02:56
     [==========================#-------------------------------------------]
 
-                                     1/3179
-                                      <6>
+                                     1/3179                             ▃
+                                      <6>                        v:  80 █
      */
 
     printmcln!(
         color,
         "
 {'bold y}{title: ^80}{'_}
-{: >by_from_off$}{'gr}by {'dc}{artist} {'gr}from {'dm}{album}
+{n: >by_from_off$}{'gr}by {'dc}{artist} {'gr}from {'dm}{album}
 
      {'w}{cur: <27}{'_ bold}<||{'y}{state: ^10}{'_fg}||>{'_ w}{total: >27}{'_}
     {'bold}[{'_ y}{before}{'w bold}{thumb}{'_ gr}{after}{'_ bold}]{'_}
-
-{'gr}{playlist: ^80}
-{disc_track: ^80}{'_}",
-        ' '
+{n: >72}{'u} {'_}
+               {'gr}{playlist: ^50}       {'_}{vtop}{'_}
+               {'gr}{disc_track: ^50}{volume} {'_ u}{vbot}{'_}",
+        n = ""
     )
 }
 
 pub fn playlist(info: &Info, color: bool) {
     /*
-                             ----<< playlist >>----
+                               ----<< playlist >>----
 
-  1. Coldplay - Champion Of The World
-  2. Smash Mouth - Out of Sight
-  3. Alle Farben - Only Thing We Know
-  4. X Ambassadors - Eye Of The Storm
-  5. Imagine Dragons - Shots
-                                      ...
-     */
+    1. Coldplay - Champion Of The World
+    2. Smash Mouth - Out of Sight
+    3. Alle Farben - Only Thing We Know
+    4. X Ambassadors - Eye Of The Storm
+    5. Imagine Dragons - Shots
+                                        ...
+       */
 
     printmcln!(color, "\n{'gr}{: ^80}{'_}", "----<< playlist >>----");
 
@@ -101,9 +105,9 @@ pub fn playlist(info: &Info, color: bool) {
 
 pub fn playlist_config(info: &Info, color: bool) {
     /*
-                                   4/13 > -/0
-                          end: reset-playlist | add: m
-     */
+                                  4/13 > -/0
+                         end: reset-playlist | add: m
+    */
 
     let playlist_stack = info.playlist_stack();
     let config = format!(
@@ -122,8 +126,8 @@ pub fn playlist_config(info: &Info, color: bool) {
 
 pub fn footer(info: &Info, color: bool) {
     /*
-uamp                                                                      v0.5.4
-     */
+    uamp                                                                      v0.5.4
+         */
     printmcln!(color, "{'gr}uamp{: >76}{'_}", info.version());
 }
 
@@ -194,6 +198,10 @@ fn print_playlist_song(song: &Song, idx: Option<usize>, color: bool) {
         song.artist(),
         song.title(),
     );
+}
+
+fn vblock(n: usize) -> char {
+    [' ', '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'][n]
 }
 
 impl Info {
@@ -346,5 +354,26 @@ impl Info {
 
     fn playlist_pos(cur: Option<usize>, len: usize) -> String {
         cur.map_or_else(|| format!("-/{len}"), |p| format!("{}/{len}", p + 1))
+    }
+
+    fn vtop(&self) -> char {
+        vblock(((self.volume * 16.) as usize).saturating_sub(8))
+    }
+
+    fn vbot(&self) -> char {
+        vblock(((self.volume * 16.) as usize).min(8))
+    }
+
+    fn volume(&self, color: bool) -> String {
+        let vol = (self.volume * 100.) as u32;
+        if self.mute {
+            match vol {
+                100.. => formatmc!(color, "m: {'strike}{vol}{'_strike}"),
+                10.. => formatmc!(color, "m:  {'strike}{vol}{'_strike}"),
+                _ => formatmc!(color, "m:   {'strike}{vol}{'_strike}"),
+            }
+        } else {
+            format!("v: {vol: >3}")
+        }
     }
 }

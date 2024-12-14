@@ -35,6 +35,10 @@ pub struct Info {
     pub playlist_pos: Option<usize>,
     /// True if is currently playing.
     pub is_playing: bool,
+    /// The current volume
+    pub volume: f32,
+    /// If uamp is muted
+    pub mute: bool,
     /// The timestamp of the current playback.
     pub timestamp: Option<Timestamp>,
     /// Songs in the playlist before

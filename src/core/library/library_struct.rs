@@ -64,8 +64,8 @@ impl Library {
         }
     }
 
-    /// Filters songs in the library
-    /*pub fn filter(&self, filter: &Filter) -> AlcVec<SongId> {
+    /*/// Filters songs in the library
+    pub fn filter(&self, filter: &Filter) -> AlcVec<SongId> {
         let mut buf = String::new();
         (0..self.songs().len())
             .map(SongId)

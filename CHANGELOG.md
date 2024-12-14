@@ -1,6 +1,7 @@
 # CHANGELOG
 
 ## future
+- Show volume in `i nfo`
 - Fix displaying of playlist position (should start from 1, not 0)
 
 ## v0.5.5
