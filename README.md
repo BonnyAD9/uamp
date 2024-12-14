@@ -63,18 +63,7 @@ uamp i play='path/to/file.flac'
 ## How it looks
 Currently uamp has no GUI or TUI. The closest thing to gui that uamp has is the
 output of `uamp -Info`:
-```
-
-                                  Radio Ga Ga
-                            by Queen from The Works
-
-     05:34                      <||    ||    ||>                      05:48
-    [===================================================================#--]
-
-                                   1911/3718
-                                     <0-1>
-uamp                                                                      v0.5.3
-```
+![image](https://github.com/user-attachments/assets/3404a1f8-7463-4823-8cbe-888fb2b383fb)
 
 ## Possible uamp setup
 This is the way that I have confugred and use uamp:
