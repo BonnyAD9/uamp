@@ -1,8 +1,12 @@
-use std::time::SystemTimeError;
+use std::{borrow::Cow, time::SystemTimeError};
 
 use flexi_logger::FlexiLoggerError;
 use log::error;
 use thiserror::Error;
+
+mod err_ctx;
+
+pub use self::err_ctx::*;
 
 //===========================================================================//
 //                                   Public                                  //
@@ -15,8 +19,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Error, Debug)]
 pub enum Error {
     /// Cannot get my own name.
-    #[error("Cannot get my own name. :(")]
-    NoProgramName,
+    #[error("{0}")]
+    NoProgramName(Box<ErrCtx<&'static str>>),
     /// Invalid value.
     #[error("{0}")]
     InvalidValue(&'static str),
@@ -34,7 +38,7 @@ pub enum Error {
     IntParse(#[from] std::num::ParseIntError),
     /// Failed to parse arguments.
     #[error(transparent)]
-    ArgParse(#[from] pareg::ArgError),
+    Pareg(#[from] pareg::ArgError),
     /// the audiotags library error.
     #[error(transparent)]
     AudioTag(#[from] audiotags::Error),
@@ -65,6 +69,30 @@ pub enum Error {
     /// Any other error.
     #[error(transparent)]
     Other(anyhow::Error),
+}
+
+macro_rules! map_ctx {
+    ($s:ident, |$ctx:ident| $f:expr) => {
+        match $s {
+            Error::NoProgramName(mut $ctx) => {
+                *$ctx = $f;
+                Error::NoProgramName($ctx)
+            }
+            e => e,
+        }
+    };
+}
+
+impl Error {
+    pub fn no_program_name() -> Self {
+        Self::NoProgramName(Box::new(ErrCtx::new(
+            "Cannot get path to uamp binary.",
+        )))
+    }
+
+    pub fn msg(self, msg: impl Into<Cow<'static, str>>) -> Self {
+        map_ctx!(self, |c| c.msg(msg))
+    }
 }
 
 impl From<anyhow::Error> for Error {

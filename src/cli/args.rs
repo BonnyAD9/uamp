@@ -136,7 +136,7 @@ impl Args {
                 "--" => {}
                 a => {
                     if let Some(i) = a.strip_prefix("-I") {
-                        if let Err(Error::ArgParse(e)) =
+                        if let Err(Error::Pareg(e)) =
                             self.instance(&mut opt_iter(i))
                         {
                             args.map_err(Err(e))?;
