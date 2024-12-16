@@ -7,7 +7,8 @@ use std::{
 
 use log::{error, info};
 use pareg::{
-    has_any_key, mval_arg, starts_any, val_arg, ArgError, FromArg, FromArgStr,
+    has_any_key, mval_arg, starts_any, val_arg, ArgErrCtx, ArgError, FromArg,
+    FromArgStr,
 };
 use serde::{Deserialize, Serialize};
 
@@ -242,7 +243,7 @@ impl Display for ControlMsg {
 }
 
 impl FromStr for ControlMsg {
-    type Err = Error;
+    type Err = ArgError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -269,13 +270,17 @@ impl FromStr for ControlMsg {
                 ))
             }
             v if starts_any!(v, "volume=", "vol=", "v=") => {
-                let v = val_arg(v, '=')?;
-                if !(0.0..=1.).contains(&v) {
-                    return Err(Error::InvalidValue(
-                        "volume must be in range from 0 to 1",
-                    ));
+                let vol = val_arg(v, '=')?;
+                if !(0.0..=1.).contains(&vol) {
+                    return ArgError::parse_msg(
+                        "Invalid volume.",
+                        v.to_string(),
+                    )
+                    .inline_msg("Value must be in range from 0 to 1.")
+                    .spanned(v.find('=').unwrap_or_default()..v.len())
+                    .err();
                 }
-                Ok(ControlMsg::SetVolume(v))
+                Ok(ControlMsg::SetVolume(vol))
             }
             v if has_any_key!(v, '=', "mute") => {
                 Ok(ControlMsg::Mute(mval_arg(v, '=')?))
@@ -320,9 +325,11 @@ impl FromStr for ControlMsg {
                 ))
             }
             "save" => Ok(ControlMsg::Save),
-            v => Err(Error::ArgParse(ArgError::UnknownArgument(
-                v.to_owned().into(),
-            ))),
+            v => ArgError::UnknownArgument(Box::new(ArgErrCtx::from_msg(
+                "Unknown control message.",
+                v.to_string(),
+            )))
+            .err(),
         }
     }
 }

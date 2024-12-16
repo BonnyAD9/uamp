@@ -3,10 +3,10 @@ use std::{
     str::FromStr,
 };
 
-use pareg::FromArgStr;
+use pareg::{ArgError, FromArgStr};
 use serde::{Deserialize, Serialize};
 
-use crate::core::{player::AddPolicy, Error};
+use crate::core::player::AddPolicy;
 
 //===========================================================================//
 //                                   Public                                  //
@@ -53,39 +53,57 @@ impl Display for LoadOpts {
 }
 
 impl FromStr for LoadOpts {
-    type Err = Error;
+    type Err = ArgError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut res = LoadOpts::default();
 
-        fn set_rm(res: &mut LoadOpts, v: bool) -> Result<(), Error> {
+        let set_rm = |res: &mut LoadOpts, v: bool, i: usize| {
             if res.remove_missing.is_some() {
-                Err(Error::FailedToParse("LoadOpts"))
+                ArgError::parse_msg(
+                    "Remove missing is set more than once.",
+                    s.to_string(),
+                )
+                .hint("`r` and `l` are mutualy exclusive.")
+                .spanned(i..i + 1)
+                .err()
             } else {
                 res.remove_missing = Some(v);
                 Ok(())
             }
-        }
+        };
 
-        fn set_atp(res: &mut LoadOpts, v: AddPolicy) -> Result<(), Error> {
+        let set_atp = |res: &mut LoadOpts, v: AddPolicy, i: usize| {
             if res.add_to_playlist.is_some() {
-                Err(Error::FailedToParse("LoadOpts"))
+                ArgError::parse_msg(
+                    "Add policy is set more than once.",
+                    s.to_string(),
+                )
+                .hint("`-`, `e`, `n` and `m` are mutualy exclusive.")
+                .spanned(i..i + 1)
+                .err()
             } else {
                 res.add_to_playlist = Some(v);
                 Ok(())
             }
-        }
+        };
 
-        for c in s.chars() {
+        for (i, c) in s.char_indices() {
             match c {
-                'r' => set_rm(&mut res, true)?,
-                'l' => set_rm(&mut res, false)?,
-                '-' => set_atp(&mut res, AddPolicy::None)?,
-                'e' => set_atp(&mut res, AddPolicy::End)?,
-                'n' => set_atp(&mut res, AddPolicy::Next)?,
-                'm' => set_atp(&mut res, AddPolicy::MixIn)?,
-                _ => {
-                    return Err(Error::FailedToParse("LoadOpts"));
+                'r' => set_rm(&mut res, true, i)?,
+                'l' => set_rm(&mut res, false, i)?,
+                '-' => set_atp(&mut res, AddPolicy::None, i)?,
+                'e' => set_atp(&mut res, AddPolicy::End, i)?,
+                'n' => set_atp(&mut res, AddPolicy::Next, i)?,
+                'm' => set_atp(&mut res, AddPolicy::MixIn, i)?,
+                c => {
+                    return ArgError::parse_msg(
+                        format!("Invalid option for loading songs: `{c}`"),
+                        s.to_string(),
+                    )
+                    .hint("Valid options are `r`, `l`, `-`, `e`, `n` and `m`")
+                    .spanned(i..c.len_utf8())
+                    .err();
                 }
             }
         }

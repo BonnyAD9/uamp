@@ -1,8 +1,11 @@
-use std::fmt::{Display, Write};
+use std::{
+    fmt::{Display, Write},
+    ops::Range,
+};
 
 use pareg::ArgError;
 
-use crate::core::Result;
+use pareg::Result;
 
 use super::{Filter, SongOrder};
 
@@ -23,6 +26,8 @@ pub enum LexerState {
 }
 
 pub struct Lexer<'a> {
+    original: &'a str,
+    last_span: Range<usize>,
     data: &'a str,
     pub state: LexerState,
     buf: String,
@@ -33,6 +38,8 @@ impl<'a> Lexer<'a> {
 
     pub fn new(s: &'a str) -> Self {
         Self {
+            original: s,
+            last_span: 0..0,
             data: s,
             buf: String::new(),
             state: LexerState::Filter,
@@ -41,14 +48,34 @@ impl<'a> Lexer<'a> {
 
     pub fn next(&mut self) -> Result<Option<Token>> {
         if self.data.is_empty() {
+            self.last_span = self.original.len()..self.original.len();
             return Ok(None);
         }
         self.buf.clear();
 
-        match self.state {
+        self.last_span.start = self.original.len() - self.data.len();
+        let res = match self.state {
             LexerState::Filter => self.next_filter(),
             LexerState::Order => self.next_order(),
-        }
+        };
+        self.last_span.end = self.original.len() - self.data.len();
+        res
+    }
+
+    pub fn last_span(&self) -> Range<usize> {
+        self.last_span.clone()
+    }
+
+    pub fn remaining_span(&self) -> Range<usize> {
+        self.original.len() - self.data.len()..self.original.len()
+    }
+
+    pub fn last_rem_span(&self) -> Range<usize> {
+        self.last_span.start..self.original.len()
+    }
+
+    pub fn original(&self) -> &'a str {
+        self.original
     }
 
     fn next_order(&mut self) -> Result<Option<Token>> {
@@ -111,11 +138,12 @@ impl<'a> Lexer<'a> {
         loop {
             // Find the end of string
             let Some(i) = self.find_char('/') else {
-                Err(ArgError::FailedToParse {
-                    typ: "Query",
-                    value: self.data.to_owned().into(),
-                    msg: Some("Expected ending `/`".into()),
-                })?
+                return ArgError::parse_msg(
+                    "Expected ending `/`.",
+                    self.original.to_string(),
+                )
+                .spanned(self.remaining_span())
+                .err();
             };
 
             // Read what was until the end of string

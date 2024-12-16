@@ -1,10 +1,10 @@
 use std::{fmt::Display, str::FromStr};
 
 use itertools::Itertools;
-use pareg::FromArgStr;
+use pareg::{ArgError, FromArgStr};
 use serde::{Deserialize, Serialize};
 
-use crate::core::{library::Song, Error, Result};
+use crate::core::library::Song;
 
 use super::{parser::Parser, Filter};
 
@@ -41,9 +41,9 @@ impl ComposedFilter {
 }
 
 impl FromStr for ComposedFilter {
-    type Err = Error;
+    type Err = ArgError;
 
-    fn from_str(s: &str) -> Result<Self> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         Parser::parse_composed_filter(s)
     }
 }

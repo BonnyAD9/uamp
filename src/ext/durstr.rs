@@ -1,8 +1,7 @@
 use std::{iter, time::Duration};
 
 use itertools::Itertools;
-
-use crate::core::{Error, Result};
+use pareg::{ArgError, FromArg, Result};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -59,14 +58,28 @@ pub fn str_to_duration(s: &str) -> Result<Duration> {
     const DAY: u64 = 24 * HOUR;
 
     if s.is_empty() {
-        return Err(Error::FailedToParse("Duration: String is empty."));
+        return ArgError::parse_msg(
+            "Empty duration is invalid.",
+            s.to_string(),
+        )
+        .hint("Use `0` for zero length duration.")
+        .err();
     }
 
     let r = s.split('d').collect_vec();
     let (d, hmsn) = match r.len() {
         1 => ("", r[0]),
         2 => (r[0], r[1]),
-        _ => return Err(Error::InvalidValue("Duration: Too many 'd'.")),
+        _ => {
+            let pos = r[0].len() + r[1].len() + 1;
+            return ArgError::parse_msg(
+                "Too many day specifiers in duration.",
+                s.to_string(),
+            )
+            .inline_msg("Second day specifier here.")
+            .spanned(pos..pos + 1)
+            .err();
+        }
     };
 
     let r = hmsn.split(':').collect_vec();
@@ -74,7 +87,24 @@ pub fn str_to_duration(s: &str) -> Result<Duration> {
         1 => ("", "", r[0]),
         2 => ("", r[0], r[1]),
         3 => (r[0], r[1], r[2]),
-        _ => return Err(Error::InvalidValue("Duration: Too many ':'.")),
+        _ => {
+            let pos = r[0].len() + r[1].len() + r[2].len() + 2;
+            return ArgError::parse_msg(
+                "Too many `:` in duration.",
+                s.to_string(),
+            )
+            .inline_msg("Third `:` here.")
+            .spanned(pos..pos + 1)
+            .err();
+        }
+    };
+
+    let parse = |v: &str, t: &str| {
+        u64::from_arg(v).map_err(|e| {
+            e.part_of(s.to_string()).main_msg(format!(
+                "Failed to parse {t} in duration from value `{v}`."
+            ))
+        })
     };
 
     let r = sn.split('.').collect_vec();
@@ -83,34 +113,43 @@ pub fn str_to_duration(s: &str) -> Result<Duration> {
         (1, Some('.')) => ("", r[0]),
         (1, _) => (r[0], ""),
         (0, _) => ("", ""),
-        _ => return Err(Error::InvalidValue("Duration: Too many '.'.")),
+        _ => {
+            let pos = r[0].len() + r[1].len() + 1;
+            return ArgError::parse_msg(
+                "Too many `.` in duration.",
+                s.to_string(),
+            )
+            .inline_msg("Second `.` here.")
+            .spanned(pos..pos + 1)
+            .err();
+        }
     };
 
     let mut res = Duration::ZERO;
 
     if !d.is_empty() {
-        res += Duration::from_secs(d.parse::<u64>()? * DAY);
+        res += Duration::from_secs(parse(d, "days")? * DAY);
     }
     if !h.is_empty() {
-        res += Duration::from_secs(h.parse::<u64>()? * HOUR);
+        res += Duration::from_secs(parse(h, "hours")? * HOUR);
     }
     if !m.is_empty() {
-        res += Duration::from_secs(m.parse::<u64>()? * MIN);
+        res += Duration::from_secs(parse(m, "minutes")? * MIN);
     }
     if !s.is_empty() {
-        res += Duration::from_secs(s.parse::<u64>()?);
+        res += Duration::from_secs(parse(s, "seconds")?);
     }
     if !n.is_empty() {
         let mut of = 0;
         if n.len() > 9 {
             let c = &n[9..10];
-            if c.parse::<u64>()? >= 5 {
+            if parse(c, "digit")? >= 5 {
                 of += 1;
             }
             n = &n[..9];
         }
         let p = 10u64.pow(9u32.saturating_sub(n.len() as u32));
-        res += Duration::from_nanos(n.parse::<u64>()? * p + of)
+        res += Duration::from_nanos(parse(n, "nanoseconds")? * p + of)
     }
 
     Ok(res)

@@ -1,9 +1,9 @@
 use std::{fmt::Display, str::FromStr};
 
-use pareg::FromArgStr;
+use pareg::{ArgError, FromArgStr};
 use serde::{Deserialize, Serialize};
 
-use super::{ControlMsg, DataControlMsg, Error};
+use super::{ControlMsg, DataControlMsg};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -19,12 +19,16 @@ pub enum AnyControlMsg {
 }
 
 impl FromStr for AnyControlMsg {
-    type Err = Error;
+    type Err = ArgError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        ControlMsg::from_str(s)
-            .map(AnyControlMsg::Control)
-            .or_else(|_| DataControlMsg::from_str(s).map(AnyControlMsg::Data))
+        match ControlMsg::from_str(s) {
+            Ok(r) => Ok(AnyControlMsg::Control(r)),
+            Err(ArgError::UnknownArgument(_)) => {
+                DataControlMsg::from_str(s).map(AnyControlMsg::Data)
+            }
+            Err(e) => Err(e),
+        }
     }
 }
 

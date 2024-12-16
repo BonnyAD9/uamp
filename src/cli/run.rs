@@ -4,7 +4,7 @@ use std::{
 };
 
 use log::{info, warn};
-use pareg::{ArgIterator, ByRef};
+use pareg::Pareg;
 
 use crate::{
     background_app::run_background_app,
@@ -40,15 +40,11 @@ impl Run {
     ///
     /// # Errors
     /// - The arguments are invalid.
-    pub(super) fn parse<'a, I>(
+    pub(super) fn parse(
         &mut self,
-        args: &mut ArgIterator<'a, I>,
+        args: &mut Pareg,
         color: bool,
-    ) -> Result<()>
-    where
-        I: Iterator,
-        I::Item: ByRef<&'a str>,
-    {
+    ) -> Result<()> {
         while let Some(arg) = args.next() {
             match arg {
                 "-h" | "-?" | "--help" => help_run(color),

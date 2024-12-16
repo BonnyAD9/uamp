@@ -11,16 +11,13 @@ mod parser;
 use std::{fmt::Display, str::FromStr};
 
 use itertools::Itertools;
-use pareg::FromArgStr;
+use pareg::{ArgError, FromArgStr};
 use parser::Parser;
 use serde::{Deserialize, Serialize};
 
 pub use self::{composed_filter::*, filter::*, order::*};
 
-use super::{
-    library::{Library, Song, SongId},
-    Error,
-};
+use super::library::{Library, Song, SongId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Query {
@@ -65,7 +62,7 @@ impl Query {
 }
 
 impl FromStr for Query {
-    type Err = Error;
+    type Err = ArgError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Parser::parse_query(s)

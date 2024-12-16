@@ -1,9 +1,7 @@
 use std::{fmt::Display, str::FromStr};
 
-use pareg::{ArgError, FromArgStr};
+use pareg::{ArgError, FromArgStr, Result};
 use serde::{Deserialize, Serialize};
-
-use super::{Error, Result};
 
 #[derive(Clone, Debug)]
 pub struct Alias {
@@ -12,9 +10,10 @@ pub struct Alias {
 }
 
 impl FromStr for Alias {
-    type Err = Error;
+    type Err = ArgError;
 
     fn from_str(mut s: &str) -> Result<Self> {
+        let s0 = s;
         let Some((i, _)) = s.char_indices().find(|(_, c)| *c == '[') else {
             return Ok(Self {
                 name: s.to_string(),
@@ -28,7 +27,9 @@ impl FromStr for Alias {
         let mut args = vec![];
 
         while !s.is_empty() {
-            args.push(read_arg(&mut s)?);
+            args.push(read_arg(&mut s).map_err(|e| {
+                e.shift_span(s0.len() - s.len(), s0.to_string())
+            })?);
         }
 
         Ok(Alias { name, args })
@@ -40,9 +41,9 @@ impl FromArgStr for Alias {}
 fn read_arg(s: &mut &str) -> Result<String> {
     let mut res = String::new();
     let mut depth: usize = 0;
-    let mut chrs = s.chars();
+    let mut chrs = s.char_indices();
 
-    while let Some(c) = chrs.next() {
+    while let Some((i, c)) = chrs.next() {
         match c {
             '[' => {
                 depth += 1;
@@ -53,19 +54,23 @@ fn read_arg(s: &mut &str) -> Result<String> {
                     if chrs.as_str().is_empty() {
                         break;
                     }
-                    Err(ArgError::FailedToParse {
-                        typ: "Alias",
-                        value: chrs.as_str().to_owned().into(),
-                        msg: Some("Additional data after ']'".into()),
-                    })?;
+                    return ArgError::parse_msg(
+                        "Additional data after `]`",
+                        s.to_string(),
+                    )
+                    .spanned(i + 1..s.len())
+                    .err();
                 }
             }
             ',' => {
-                break;
+                if depth == 0 {
+                    break;
+                }
+                res.push(',');
             }
             '/' => {
                 res.push('/');
-                for c in &mut chrs {
+                for (_, c) in &mut chrs {
                     res.push(c);
                     if c == '/' {
                         break;

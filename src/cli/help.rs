@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use pareg::Pareg;
 use termal::{eprintacln, gradient, printmcln};
 
 use super::Args;
@@ -9,23 +10,19 @@ use super::Args;
 //===========================================================================//
 
 /// Parses help arguments.
-pub fn help<'a>(args: &mut impl Iterator<Item = &'a str>, res: &mut Args) {
+pub fn help(args: &mut Pareg, res: &mut Args) {
     res.should_exit = true;
 
-    let arg = match args.next() {
-        Some(a) => a,
-        None => {
-            help_all(res.stdout_color);
-            return;
-        }
-    };
+    if args.remaining().is_empty() {
+        help_all(res.stdout_color);
+    }
 
     help_version(res.stdout_color);
 
     let mut show_cmsg = false;
     let mut cmsg_shown = false;
 
-    for arg in Some(arg).into_iter().chain(args) {
+    while let Some(arg) = args.next() {
         match arg {
             "basic" => print_basic_help(res.stdout_color),
             "i" | "instance" => {

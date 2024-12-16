@@ -1,10 +1,10 @@
 use std::io::{self, IsTerminal};
 
-use pareg::{starts_any, ArgError, ArgIterator, ByRef, FromArg};
+use pareg::{has_any_key, FromArg, Pareg};
 
 use crate::{
     cli::help::help_version,
-    core::{config::Config, Result},
+    core::{config::Config, Error, Result},
 };
 
 use super::{
@@ -44,14 +44,8 @@ impl Args {
     ///
     /// # Errors
     /// - The arguments are invalid.
-    pub fn parse<'a, I>(mut args: ArgIterator<'a, I>) -> Result<Self>
-    where
-        I: Iterator,
-        I::Item: ByRef<&'a str>,
-    {
+    pub fn parse(mut args: Pareg) -> Result<Self> {
         let mut res = Args::default();
-
-        args.next();
 
         res.top_level(&mut args)?;
 
@@ -107,16 +101,12 @@ enum EnableColor {
 }
 
 impl Args {
-    fn top_level<'a, I>(&mut self, args: &mut ArgIterator<'a, I>) -> Result<()>
-    where
-        I: Iterator,
-        I::Item: ByRef<&'a str>,
-    {
-        fn opt_iter(arg: &str) -> impl Iterator<Item = &str> {
+    fn top_level(&mut self, args: &mut Pareg) -> Result<()> {
+        fn opt_iter(arg: &str) -> Pareg {
             if arg.is_empty() {
-                None.into_iter()
+                vec![].into()
             } else {
-                Some(arg).into_iter()
+                vec![arg.to_string()].into()
             }
         }
 
@@ -139,22 +129,23 @@ impl Args {
                 "-a" | "--address" => {
                     self.server_address = args.next_arg()?;
                 }
-                "--color" | "--colour" => {
-                    self.stdout_color = args.next_arg::<EnableColor>()?.into();
-                }
-                v if starts_any!(v, "--color=", "--colour") => {
+                v if has_any_key!(v, '=', "--color", "--colour") => {
                     self.stdout_color =
-                        args.cur_val::<EnableColor>('=')?.into();
+                        args.cur_val_or_next::<EnableColor>('=')?.into();
                 }
                 "--" => {}
                 a => {
                     if let Some(i) = a.strip_prefix("-I") {
-                        self.instance(&mut opt_iter(i).into())?;
+                        if let Err(Error::ArgParse(e)) =
+                            self.instance(&mut opt_iter(i))
+                        {
+                            args.map_err(Err(e))?;
+                        }
                         continue;
                     }
 
                     if let Some(i) = a.strip_prefix("-R") {
-                        self.run(&mut opt_iter(i).into())?;
+                        self.run(&mut opt_iter(i))?;
                         continue;
                     }
 
@@ -163,7 +154,7 @@ impl Args {
                         continue;
                     }
 
-                    Err(ArgError::UnknownArgument(a.to_owned().into()))?
+                    return args.err_unknown_argument().err()?;
                 }
             }
         }
@@ -171,11 +162,7 @@ impl Args {
         Ok(())
     }
 
-    fn instance<'a, I>(&mut self, args: &mut ArgIterator<'a, I>) -> Result<()>
-    where
-        I: Iterator,
-        I::Item: ByRef<&'a str>,
-    {
+    fn instance(&mut self, args: &mut Pareg) -> Result<()> {
         self.should_exit = true;
 
         let mut instance = Instance::default();
@@ -188,11 +175,7 @@ impl Args {
         Ok(())
     }
 
-    fn run<'a, I>(&mut self, args: &mut ArgIterator<'a, I>) -> Result<()>
-    where
-        I: Iterator,
-        I::Item: ByRef<&'a str>,
-    {
+    fn run(&mut self, args: &mut Pareg) -> Result<()> {
         let mut info = Run::default();
         info.parse(args, self.stdout_color)?;
 

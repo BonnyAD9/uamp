@@ -1,10 +1,10 @@
 use std::{fmt::Display, str::FromStr};
 
-use pareg::{ArgError, FromArgStr};
+use pareg::{ArgError, ArgInto, FromArgStr};
 use serde::{Deserialize, Serialize};
 use unidecode::unidecode_char;
 
-use crate::core::{library::Song, Error};
+use crate::core::library::Song;
 
 //===========================================================================//
 //                                   Public                                  //
@@ -181,7 +181,7 @@ impl Display for Filter {
     }
 }
 impl FromStr for Filter {
-    type Err = Error;
+    type Err = ArgError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let Some((p, c)) = s
@@ -191,8 +191,22 @@ impl FromStr for Filter {
             return match s {
                 "any" => Ok(Self::new(FilterType::Any, CmpType::default())),
                 "none" => Ok(Self::new(FilterType::None, CmpType::default())),
-                v => {
-                    Err(ArgError::UnknownArgument(v.to_owned().into()).into())
+                "s" | "an" | "any-name" | "n" | "tit" | "title" | "name"
+                | "p" | "art" | "artist" | "performer" | "auth" | "author"
+                | "a" | "alb" | "album" | "t" | "trk" | "track"
+                | "track-number" | "d" | "disc" | "y" | "year" | "g"
+                | "genre" => ArgError::parse_msg(
+                    "Missing argument for filter.",
+                    s.to_string(),
+                )
+                .spanned(s.len()..s.len())
+                .hint(
+                    "Use `=`, `+`, `:` or `~` and add argument to the filter.",
+                )
+                .err(),
+                _ => {
+                    ArgError::parse_msg("Unknown filter type.", s.to_string())
+                        .err()
                 }
             };
         };
@@ -205,6 +219,9 @@ impl FromStr for Filter {
             '~' => CmpType::LenientContains,
             _ => unreachable!(),
         };
+
+        let em =
+            |e: ArgError| e.shift_span(s.len() - val.len(), s.to_string());
 
         match typ {
             "s" | "an" | "any-name" => {
@@ -219,15 +236,24 @@ impl FromStr for Filter {
             "a" | "alb" | "album" => {
                 Ok(Self::new(FilterType::Album(val.to_owned()), cmp))
             }
-            "t" | "trk" | "track" | "track-number" => {
-                Ok(Self::new(FilterType::Track(val.parse()?), cmp))
-            }
-            "d" | "disc" => Ok(Self::new(FilterType::Disc(val.parse()?), cmp)),
-            "y" | "year" => Ok(Self::new(FilterType::Year(val.parse()?), cmp)),
+            "t" | "trk" | "track" | "track-number" => Ok(Self::new(
+                FilterType::Track(val.arg_into().map_err(em)?),
+                cmp,
+            )),
+            "d" | "disc" => Ok(Self::new(
+                FilterType::Disc(val.arg_into().map_err(em)?),
+                cmp,
+            )),
+            "y" | "year" => Ok(Self::new(
+                FilterType::Year(val.arg_into().map_err(em)?),
+                cmp,
+            )),
             "g" | "genre" => {
                 Ok(Self::new(FilterType::Genre(val.to_owned()), cmp))
             }
-            v => Err(ArgError::UnknownArgument(v.to_owned().into()).into()),
+            _ => ArgError::parse_msg("Unknown filter type.", s.to_string())
+                .spanned(0..p)
+                .err(),
         }
     }
 }

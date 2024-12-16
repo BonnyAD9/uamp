@@ -3,10 +3,8 @@ use std::{
     str::FromStr,
 };
 
-use pareg::FromArgStr;
+use pareg::{ArgError, FromArgStr};
 use serde::{Deserialize, Serialize};
-
-use crate::core::Error;
 
 //===========================================================================//
 //                                   Public                                  //
@@ -37,7 +35,7 @@ impl Display for AddPolicy {
 }
 
 impl FromStr for AddPolicy {
-    type Err = Error;
+    type Err = ArgError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -45,7 +43,12 @@ impl FromStr for AddPolicy {
             "e" | "end" => Ok(Self::End),
             "n" | "next" => Ok(Self::Next),
             "m" | "mix" | "mix-in" => Ok(Self::MixIn),
-            _ => Err(Error::FailedToParse("AddPolicy")),
+            c => ArgError::parse_msg(
+                format!("Unknown add policy `{c}`"),
+                s.to_string(),
+            )
+            .hint("Valid options are: `-`, `e`, `n` or `m`.")
+            .err(),
         }
     }
 }

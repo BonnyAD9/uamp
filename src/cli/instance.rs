@@ -6,7 +6,7 @@ use std::{
 };
 
 use log::error;
-use pareg::{has_any_key, ArgIterator, ByRef};
+use pareg::{has_any_key, Pareg};
 use termal::eprintacln;
 
 use crate::core::{
@@ -37,15 +37,11 @@ impl Instance {
     ///
     /// # Errors
     /// - The arguments are invalid.
-    pub(super) fn parse<'a, I>(
+    pub(super) fn parse(
         &mut self,
-        args: &mut ArgIterator<'a, I>,
+        args: &mut Pareg,
         color: bool,
-    ) -> Result<()>
-    where
-        I: Iterator,
-        I::Item: ByRef<&'a str>,
-    {
+    ) -> Result<()> {
         while let Some(arg) = args.next() {
             match arg {
                 "info" | "nfo" => {

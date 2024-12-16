@@ -1,7 +1,7 @@
 use std::{fmt::Display, str::FromStr};
 
 use itertools::Itertools;
-use pareg::ArgError;
+use pareg::{ArgErrCtx, ArgError};
 use serde::{Deserialize, Serialize};
 
 use super::{AnyControlMsg, Error, Msg, Result};
@@ -60,7 +60,7 @@ impl ControlUnit {
             }
         }
 
-        res.parse()
+        Ok(res.parse()?)
     }
 }
 
@@ -90,6 +90,8 @@ impl FromStr for ControlFunction {
     type Err = Error;
 
     fn from_str(mut s: &str) -> std::result::Result<Self, Self::Err> {
+        let s0 = s;
+
         if !s.starts_with('[') {
             let body: Vec<_> = shell_words::split(s)?
                 .iter()
@@ -100,12 +102,9 @@ impl FromStr for ControlFunction {
 
         s = &s[1..];
         let Some((i, _)) = s.char_indices().find(|(_, c)| *c == ']') else {
-            return Err(ArgError::FailedToParse {
-                typ: "ControlFunction",
-                value: s.to_owned().into(),
-                msg: Some("Missing closing ']'".into()),
-            }
-            .into());
+            return ArgError::parse_msg("Missing closing `]`", s0.to_string())
+                .spanned(s0.len() - s.len()..s0.len())
+                .err()?;
         };
 
         let args =
@@ -140,23 +139,27 @@ impl FromStr for ControlFunction {
                     let Some((i, _)) =
                         s.char_indices().find(|(_, c)| *c == '}')
                     else {
-                        return Err(ArgError::FailedToParse {
-                            typ: "ControlFunction",
-                            value: s.to_owned().into(),
-                            msg: Some("Missing closing '}'".into()),
-                        }
-                        .into());
+                        return ArgError::parse_msg(
+                            "Missing closing `}`",
+                            s0.to_string(),
+                        )
+                        .spanned(s0.len() - s.len()..s0.len())
+                        .err()?;
                     };
 
                     let v = &s[..i];
                     s = &s[i + 1..];
                     let Some(p) = args.iter().position(|a| a == v) else {
-                        return Err(ArgError::FailedToParse {
-                            typ: "ControlFunction",
-                            value: v.to_owned().into(),
-                            msg: Some("Unknown variable name".into()),
-                        }
-                        .into());
+                        return Err(ArgError::FailedToParse(Box::new(
+                            ArgErrCtx::from_msg(
+                                "Unknown variable name",
+                                s.to_string(),
+                            )
+                            .spanned(
+                                s0.len() - v.len() - s.len()
+                                    ..s0.len() - s.len(),
+                            ),
+                        )))?;
                     };
 
                     comps.push(FunctionComponenet::Variable(p));

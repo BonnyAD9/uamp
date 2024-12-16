@@ -1,11 +1,9 @@
 use core::config;
-use std::{
-    env::args,
-    io::{self, IsTerminal},
-};
+use std::io::{self, IsTerminal};
 
 use cli::Run;
 use log::info;
+use pareg::Pareg;
 use termal::{eprintacln, eprintmcln};
 
 use crate::{
@@ -36,8 +34,7 @@ fn start() -> Result<()> {
 
     info!("started");
 
-    let args: Vec<_> = args().collect();
-    let args = Args::parse(args.iter().into())?;
+    let args = Args::parse(Pareg::args())?;
 
     let conf = args.make_config();
 

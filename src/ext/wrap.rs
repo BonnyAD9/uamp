@@ -4,10 +4,8 @@ use std::{
     time::Duration,
 };
 
-use pareg::FromArgStr;
+use pareg::{ArgError, FromArgStr};
 use serde::{Deserialize, Serialize};
-
-use crate::core::Error;
 
 use super::{duration_to_string, str_to_duration};
 
@@ -107,7 +105,7 @@ impl<'de> Deserialize<'de> for Wrap<Duration> {
 }
 
 impl FromStr for Wrap<Duration> {
-    type Err = Error;
+    type Err = ArgError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         str_to_duration(s).map(|a| a.into())

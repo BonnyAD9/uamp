@@ -5,14 +5,11 @@ use std::{
 };
 
 use itertools::PeekingNext;
-use pareg::{ArgError, FromArgStr};
+use pareg::{ArgError, FromArg, FromArgStr};
 use rand::{seq::SliceRandom, thread_rng};
 use serde::{Deserialize, Serialize};
 
-use crate::core::{
-    library::{Library, SongId},
-    Error,
-};
+use crate::core::library::{Library, SongId};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -33,29 +30,41 @@ pub struct SongOrder {
 }
 
 /// Describes the main ordering field.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, FromArg,
+)]
 pub enum OrderField {
     /// Just reverse.
+    #[arg("rev")]
     Reverse,
     /// Randomly shuffle.
+    #[arg("rng" | "rand" | "random")]
     Randomize,
     /// Order by file path.
     Path,
     /// Order by song title.
+    #[arg("n" | "tit" | "name")]
     Title,
     /// Order by song artist.
+    #[arg("p" | "art" | "performer" | "auth" | "author")]
     Artist,
     /// Order by song album.
+    #[arg("a" | "alb")]
     Album,
     /// Order by the track number.
+    #[arg("t" | "trk" | "track-number")]
     Track,
     /// Order by the disc number.
+    #[arg("d")]
     Disc,
     /// Order by the release date.
+    #[arg("y" | "data")]
     Year,
     /// Order by total track length.
+    #[arg("len")]
     Length,
     /// Order by the genre.
+    #[arg("g")]
     Genre,
 }
 
@@ -103,24 +112,35 @@ impl SongOrder {
 }
 
 impl FromStr for SongOrder {
-    type Err = Error;
+    type Err = ArgError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut reverse = None;
         let mut simple = None;
 
-        let mut chrs = s.chars();
-        while let Some(c) = chrs.peeking_next(|c| "<>+-".contains(*c)) {
+        let mut chrs = s.char_indices();
+        while let Some((i, c)) =
+            chrs.peeking_next(|(_, c)| "<>/\\~+-".contains(*c))
+        {
             match c {
                 '<' | '>' | '/' | '\\' | '~' => {
                     if reverse.is_some() {
-                        return Err(Error::FailedToParse("SongOrder"));
+                        return ArgError::parse_msg("Reverse is already set.", s.to_string())
+                                .hint("Only one of `<`, `>`, `/`, `\\` or `~` may be specified.")
+                                .spanned(i..i + 1)
+                                .err();
                     }
                     reverse = Some(matches!(c, '>' | '\\' | '~'));
                 }
                 '+' | '-' => {
                     if simple.is_some() {
-                        return Err(Error::FailedToParse("SongOrder"));
+                        return ArgError::parse_msg(
+                            "Sort type is already set.",
+                            s.to_string(),
+                        )
+                        .hint("Only one of `+` and `-` are mutualy exclusive.")
+                        .spanned(i..i + 1)
+                        .err();
                     }
                     simple = Some(c == '-');
                 }
@@ -128,28 +148,9 @@ impl FromStr for SongOrder {
             }
         }
 
-        let field = match chrs.as_str() {
-            "rev" | "reverse" => OrderField::Reverse,
-            "rng" | "rand" | "random" | "randomize" => OrderField::Randomize,
-            "path" => OrderField::Path,
-            "n" | "tit" | "title" | "name" => OrderField::Title,
-            "p" | "art" | "artist" | "performer" | "auth" | "author" => {
-                OrderField::Artist
-            }
-            "a" | "alb" | "album" => OrderField::Album,
-            "t" | "trk" | "track" | "track-number" => OrderField::Track,
-            "d" | "disc" => OrderField::Disc,
-            "y" | "year" | "date" => OrderField::Year,
-            "len" | "length" => OrderField::Length,
-            "g" | "genre" => OrderField::Genre,
-            _ => {
-                return Err(Error::ArgParse(ArgError::FailedToParse {
-                    typ: "SongOrder",
-                    value: s.to_owned().into(),
-                    msg: Some("Invalid enum value.".into()),
-                }))
-            }
-        };
+        let field = chrs.as_str();
+        let field = OrderField::from_arg(field)
+            .map_err(|e| e.shift_span(s.len() - field.len(), s.to_string()))?;
 
         Ok(Self {
             simple,

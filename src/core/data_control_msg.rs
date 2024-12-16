@@ -2,13 +2,14 @@ use std::{fmt::Display, str::FromStr};
 
 use log::error;
 use pareg::{
-    has_any_key, mval_arg, starts_any, val_arg, ArgError, FromArgStr,
+    has_any_key, mval_arg, starts_any, val_arg, ArgErrCtx, ArgError,
+    FromArgStr,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::env::AppCtrl;
 
-use super::{query::Query, Alias, Error, Msg, UampApp};
+use super::{query::Query, Alias, Msg, UampApp};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -105,7 +106,7 @@ impl UampApp {
 }
 
 impl FromStr for DataControlMsg {
-    type Err = Error;
+    type Err = ArgError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -146,9 +147,11 @@ impl FromStr for DataControlMsg {
                     mval_arg(v, '=')?.unwrap_or_default(),
                 ))
             }
-            v => Err(Error::ArgParse(ArgError::UnknownArgument(
-                v.to_owned().into(),
-            ))),
+            v => ArgError::UnknownArgument(Box::new(ArgErrCtx::from_msg(
+                "Unknown control msg.",
+                v.to_string(),
+            )))
+            .err(),
         }
     }
 }
