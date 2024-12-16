@@ -204,10 +204,11 @@ impl FromStr for Filter {
                     "Use `=`, `+`, `:` or `~` and add argument to the filter.",
                 )
                 .err(),
-                _ => {
-                    ArgError::parse_msg("Unknown filter type.", s.to_string())
-                        .err()
-                }
+                v => ArgError::parse_msg(
+                    format!("Unknown filter type `{v}`."),
+                    s.to_string(),
+                )
+                .err(),
             };
         };
         let typ = &s[..p];
@@ -251,9 +252,12 @@ impl FromStr for Filter {
             "g" | "genre" => {
                 Ok(Self::new(FilterType::Genre(val.to_owned()), cmp))
             }
-            _ => ArgError::parse_msg("Unknown filter type.", s.to_string())
-                .spanned(0..p)
-                .err(),
+            v => ArgError::parse_msg(
+                format!("Unknown filter type `{v}`."),
+                s.to_string(),
+            )
+            .spanned(0..p)
+            .err(),
         }
     }
 }

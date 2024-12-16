@@ -81,7 +81,7 @@ impl<'a> Lexer<'a> {
     fn next_order(&mut self) -> Result<Option<Token>> {
         let Some((i, _)) = self.data.char_indices().find(|(_, c)| *c == '@')
         else {
-            let res = Token::Order(self.data.parse()?);
+            let res = Token::Order(self.map_err(self.data.parse())?);
             self.consume(self.data.len());
             return Ok(Some(res));
         };
@@ -91,14 +91,14 @@ impl<'a> Lexer<'a> {
             return Ok(Some(Token::At));
         }
 
-        let res = Token::Order(self.data[..i].parse()?);
+        let res = Token::Order(self.map_err(self.data[..i].parse())?);
         self.consume(i);
         Ok(Some(res))
     }
 
     fn next_filter(&mut self) -> Result<Option<Token>> {
         let Some((i, c)) = self.find_special() else {
-            let res = Token::Filter(self.data.parse()?);
+            let res = Token::Filter(self.map_err(self.data.parse())?);
             self.consume(self.data.len());
             return Ok(Some(res));
         };
@@ -113,7 +113,12 @@ impl<'a> Lexer<'a> {
         if i != 0 {
             // Unqouted string and no quote
             let data = &self.data[..i];
-            let res = Token::Filter(data.parse()?);
+            let res = Token::Filter(data.parse().map_err(|e: ArgError| {
+                e.shift_span(
+                    self.last_span.start + data.len(),
+                    self.original.to_string(),
+                )
+            })?);
             self.consume(i);
             return Ok(Some(res));
         }
@@ -133,7 +138,9 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_quoted(&mut self) -> Result<Option<Token>> {
+        let mut err_idxs = vec![];
         self.consume(1);
+        err_idxs.push(self.buf.len());
 
         loop {
             // Find the end of string
@@ -150,6 +157,7 @@ impl<'a> Lexer<'a> {
             self.read(i);
             // Consume the ending '/'
             self.consume(1);
+            err_idxs.push(self.buf.len());
 
             // Read outside of the string
             let Some((i, c)) = self.find_special() else {
@@ -172,11 +180,29 @@ impl<'a> Lexer<'a> {
                 self.read(i);
                 // New string begins
                 self.consume(1);
+                err_idxs.push(self.buf.len());
                 // Read the inside of the string
             }
         }
 
-        Ok(Some(Token::Filter(self.buf.parse()?)))
+        let span_adj = |p: usize| {
+            self.last_span.start
+                + err_idxs
+                    .iter()
+                    .position(|n| *n >= p)
+                    .unwrap_or(err_idxs.len())
+        };
+
+        Ok(Some(Token::Filter(self.buf.parse().map_err(
+            |e: ArgError| {
+                e.map_ctx(|mut c| {
+                    c.error_span.start += span_adj(c.error_span.start);
+                    c.error_span.end += span_adj(c.error_span.end);
+                    c.args[c.error_idx] = self.original.to_string();
+                    c
+                })
+            },
+        )?)))
     }
 
     fn find_special(&self) -> Option<(usize, char)> {
@@ -201,6 +227,12 @@ impl<'a> Lexer<'a> {
     #[inline(always)]
     fn consume(&mut self, i: usize) {
         self.data = &self.data[i..];
+    }
+
+    fn map_err<T>(&self, e: Result<T>) -> Result<T> {
+        e.map_err(|e| {
+            e.shift_span(self.last_span.start, self.original.to_string())
+        })
     }
 }
 
