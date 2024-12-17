@@ -213,7 +213,7 @@ impl UampApp {
             return Error::invalid_operation()
                 .msg("Failed to start signals thread.")
                 .reason("Signals thread is already running.")
-                .err()
+                .err();
         }
 
         let signals = signal_hook::iterator::Signals::new(

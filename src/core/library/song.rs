@@ -81,9 +81,7 @@ impl Song {
         let res = || -> Result<Duration> {
             let f = File::open(&path)?;
             let s = Symph::try_new(f, &Default::default())?;
-            Ok(s.get_time()
-                .ok_or(Error::unsupported())?
-                .total)
+            Ok(s.get_time().ok_or(Error::unsupported())?.total)
         };
 
         match res() {

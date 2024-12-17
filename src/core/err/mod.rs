@@ -1,4 +1,4 @@
-use std::{borrow::Cow, time::SystemTimeError};
+use std::{any::Any, borrow::Cow, time::SystemTimeError};
 
 use flexi_logger::FlexiLoggerError;
 use log::error;
@@ -26,8 +26,8 @@ pub enum Error {
     #[error("{0}")]
     InvalidOperation(Box<ErrCtx<&'static str>>),
     /// A secondary thread panicked.
-    #[error("A spawned thread panicked")]
-    ThreadPanicked,
+    #[error("{0}")]
+    ThreadPanicked(Box<ErrCtx<&'static str>>),
     /// Failed to parse integer from string.
     #[error(transparent)]
     IntParse(#[from] std::num::ParseIntError),
@@ -93,6 +93,23 @@ impl Error {
 
     pub fn unsupported() -> Self {
         Self::InvalidOperation("Not supported.".into())
+    }
+
+    pub fn thread_panicked(e: Option<Box<dyn Any + Send + 'static>>) -> Self {
+        let res = Self::ThreadPanicked("A spawned thread panicked.".into());
+
+        let reason: Option<Cow<'static, str>> = e.and_then(|e| {
+            e.downcast::<&'static str>()
+                .map(|s| (*s).into())
+                .or_else(|e| e.downcast::<String>().map(|s| (*s).into()))
+                .ok()
+        });
+
+        if let Some(reason) = reason {
+            res.reason(reason)
+        } else {
+            res
+        }
     }
 
     pub fn no_color(self) -> Self {

@@ -1,4 +1,4 @@
-use std::net::TcpListener;
+use std::{any::Any, net::TcpListener};
 
 use log::{error, warn};
 
@@ -45,16 +45,20 @@ pub enum TaskMsg {
 impl TaskType {
     /// Creates [`TaskMsg`] of the same task type with information that the
     /// thread has panicked.
-    pub fn panicked(&self) -> TaskMsg {
+    pub fn panicked(&self, e: Box<dyn Any + Send + 'static>) -> TaskMsg {
         match self {
             Self::LibraryLoad => {
-                TaskMsg::LibraryLoad(Err(Error::ThreadPanicked))
+                TaskMsg::LibraryLoad(Err(Error::thread_panicked(Some(e))))
             }
             Self::LibrarySave => {
-                TaskMsg::LibrarySave(Err(Error::ThreadPanicked))
+                TaskMsg::LibrarySave(Err(Error::thread_panicked(Some(e))))
             }
-            Self::Server => TaskMsg::Server(Err(Error::ThreadPanicked)),
-            Self::Signals => TaskMsg::Signals(Err(Error::ThreadPanicked)),
+            Self::Server => {
+                TaskMsg::Server(Err(Error::thread_panicked(Some(e))))
+            }
+            Self::Signals => {
+                TaskMsg::Signals(Err(Error::thread_panicked(Some(e))))
+            }
         }
     }
 }

@@ -54,7 +54,7 @@ impl UniqueTasks {
             .collect();
         keys.iter()
             .flat_map(|k| self.tasks.remove(k).map(|t| (k, t)))
-            .map(|(k, t)| t.join().unwrap_or(k.panicked()))
+            .map(|(k, t)| t.join().unwrap_or_else(|e| k.panicked(e)))
             .collect()
     }
 
@@ -67,7 +67,7 @@ impl UniqueTasks {
         match ent {
             Entry::Occupied(_) => Error::invalid_operation()
                 .msg(format!("Failed to start task of type `{typ:?}`."))
-                .reason(format!("The task is already running."))
+                .reason("The task is already running.")
                 .err(),
             Entry::Vacant(e) => {
                 let sender = self.sender.clone();

@@ -377,7 +377,11 @@ impl Player {
                 true
             }
             Err(e) => {
-                error!("Failed to load song {:?}: {}", lib[id].path(), e.log());
+                error!(
+                    "Failed to load song {:?}: {}",
+                    lib[id].path(),
+                    e.log()
+                );
                 let next = self.playlist.nth_next(1);
                 if next.is_none() {
                     self.playlist_ended = true;

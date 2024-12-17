@@ -26,10 +26,7 @@ fn main() {
 /// Main wraps this function, this is the entry point of the application
 fn start() -> Result<()> {
     if let Err(e) = start_logger() {
-        eprintmcln!(
-            io::stderr().is_terminal(),
-            "{e}"
-        );
+        eprintmcln!(io::stderr().is_terminal(), "{e}");
     }
 
     info!("started");

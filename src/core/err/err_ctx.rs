@@ -89,7 +89,10 @@ where
     }
 }
 
-impl<T> From<T> for Box<ErrCtx<T>> where T: Display {
+impl<T> From<T> for Box<ErrCtx<T>>
+where
+    T: Display,
+{
     fn from(value: T) -> Self {
         Self::new(ErrCtx::new(value))
     }

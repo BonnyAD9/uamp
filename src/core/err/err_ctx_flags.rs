@@ -1,4 +1,3 @@
-
 use std::io::{self, IsTerminal};
 
 use bitflags::bitflags;
