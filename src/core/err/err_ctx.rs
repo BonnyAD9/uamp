@@ -93,7 +93,7 @@ where
         }
 
         if let Some(hint) = &self.hint {
-            writemcln!(f, color, "{'c}reason:{'_} {hint}")?;
+            writemcln!(f, color, "{'c}hint:{'_} {hint}")?;
         }
 
         Ok(())
