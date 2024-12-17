@@ -13,6 +13,7 @@ where
     flags: ErrCtxFlags,
     msg: Option<Cow<'static, str>>,
     reason: Option<Cow<'static, str>>,
+    hint: Option<Cow<'static, str>>,
 }
 
 impl<T> ErrCtx<T>
@@ -25,6 +26,7 @@ where
             flags: ErrCtxFlags::default(),
             msg: None,
             reason: None,
+            hint: None,
         }
     }
 
@@ -49,6 +51,11 @@ where
 
     pub fn reason(mut self, reason: impl Into<Cow<'static, str>>) -> Self {
         self.reason = Some(reason.into());
+        self
+    }
+
+    pub fn hint(mut self, hint: impl Into<Cow<'static, str>>) -> Self {
+        self.hint = Some(hint.into());
         self
     }
 
@@ -83,6 +90,10 @@ where
 
         if let Some(reason) = &self.reason {
             writemcln!(f, color, "{'y}reason:{'_} {reason}")?;
+        }
+
+        if let Some(hint) = &self.hint {
+            writemcln!(f, color, "{'c}reason:{'_} {hint}")?;
         }
 
         Ok(())

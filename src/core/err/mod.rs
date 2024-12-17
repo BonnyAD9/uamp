@@ -33,39 +33,42 @@ pub enum Error {
     #[error(transparent)]
     Pareg(#[from] pareg::ArgError),
     /// the audiotags library error.
-    #[error(transparent)]
-    AudioTag(#[from] audiotags::Error),
+    #[error("{0}")]
+    AudioTag(Box<ErrCtx<audiotags::Error>>),
     /// The raplay library returned error.
-    #[error(transparent)]
-    Raplay(#[from] raplay::Error),
-    /// The serde library returned error.
-    #[error(transparent)]
-    Serde(#[from] SerdeError),
+    #[error("{0}")]
+    Raplay(Box<ErrCtx<raplay::Error>>),
+    /// Serde json error
+    #[error("{0}")]
+    SerdeJson(Box<ErrCtx<serde_json::Error>>),
+    /// Rmp error while encoding
+    #[error("{0}")]
+    SerdeRmpEncode(Box<ErrCtx<rmp_serde::encode::Error>>),
+    /// Rmp error while decoding
+    #[error("{0}")]
+    SerdeRmpDecode(Box<ErrCtx<rmp_serde::decode::Error>>),
     /// The logger returned error (oops :|| ).
-    #[error(transparent)]
-    Logger(#[from] FlexiLoggerError),
+    #[error("{0}")]
+    Logger(Box<ErrCtx<FlexiLoggerError>>),
     /// Some standard library io error.
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
-    /// Time dowsn't work :||
-    #[error(transparent)]
-    Time(#[from] SystemTimeError),
-    /// Synchronization error :|| Shouldn't happen.
-    #[error("Failed to lock: {0}")]
-    Poison(String),
+    #[error("{0}")]
+    Io(Box<ErrCtx<std::io::Error>>),
+    /// Time doesn't work :||
+    #[error("{0}")]
+    Time(Box<ErrCtx<SystemTimeError>>),
     /// Errors from the notify library.
-    #[error(transparent)]
-    Notify(#[from] notify::Error),
+    #[error("{0}")]
+    Notify(Box<ErrCtx<notify::Error>>),
     /// Errors from the library shell_words.
-    #[error(transparent)]
-    ShellWords(#[from] shell_words::ParseError),
+    #[error("{0}")]
+    ShellWords(Box<ErrCtx<shell_words::ParseError>>),
     /// Any other error.
-    #[error(transparent)]
-    Other(anyhow::Error),
+    #[error("{0}")]
+    Other(Box<ErrCtx<anyhow::Error>>),
 }
 
 macro_rules! map_ctx {
-    ($s:ident, |$ctx:ident| $f:expr $(,$($p:pat => $pb:expr),* $(,)?)?) => {
+    ($s:ident, |$ctx:ident| $f:expr $(, $($p:pat => $pb:expr),* $(,)?)?) => {
         match $s {
             Error::NoProgramName(mut $ctx) => {
                 *$ctx = $f;
@@ -74,6 +77,42 @@ macro_rules! map_ctx {
             Error::InvalidOperation(mut $ctx) => {
                 *$ctx = $f;
                 Error::InvalidOperation($ctx)
+            }
+            Error::AudioTag(mut $ctx) => {
+                *$ctx = $f;
+                Error::AudioTag($ctx)
+            }
+            Error::SerdeJson(mut $ctx) => {
+                *$ctx = $f;
+                Error::SerdeJson($ctx)
+            }
+            Error::SerdeRmpDecode(mut $ctx) => {
+                *$ctx = $f;
+                Error::SerdeRmpDecode($ctx)
+            }
+            Error::SerdeRmpEncode(mut $ctx) => {
+                *$ctx = $f;
+                Error::SerdeRmpEncode($ctx)
+            }
+            Error::Logger(mut $ctx) => {
+                *$ctx = $f;
+                Error::Logger($ctx)
+            }
+            Error::Io(mut $ctx) => {
+                *$ctx = $f;
+                Error::Io($ctx)
+            }
+            Error::Time(mut $ctx) => {
+                *$ctx = $f;
+                Error::Time($ctx)
+            }
+            Error::Notify(mut $ctx) => {
+                *$ctx = $f;
+                Error::Notify($ctx)
+            }
+            Error::ShellWords(mut $ctx) => {
+                *$ctx = $f;
+                Error::ShellWords($ctx)
             }
             $($($p => $pb,)*)?
             e => e,
@@ -111,12 +150,16 @@ impl Error {
         }
     }
 
+    pub fn io(e: std::io::Error) -> Self {
+        Self::Io(e.into())
+    }
+
     pub fn no_color(self) -> Self {
         map_ctx!(self, |c| c.no_color(),
             Self::Pareg(p) => Self::Pareg(p.map_ctx(|mut c| {
                 c.color = ColorMode::Never;
                 c
-            }))
+            })),
         )
     }
 
@@ -128,28 +171,16 @@ impl Error {
         map_ctx!(self, |c| c.reason(reason))
     }
 
+    pub fn hint(self, hint: impl Into<Cow<'static, str>>) -> Self {
+        map_ctx!(self, |c| c.hint(hint))
+    }
+
     pub fn err<T>(self) -> Result<T> {
         Err(self)
     }
 
     pub fn log(self) -> Self {
         self.no_color()
-    }
-}
-
-impl From<anyhow::Error> for Error {
-    fn from(value: anyhow::Error) -> Self {
-        if value.is::<Self>() {
-            value.downcast().unwrap()
-        } else {
-            Self::Other(value)
-        }
-    }
-}
-
-impl<T> From<std::sync::PoisonError<T>> for Error {
-    fn from(value: std::sync::PoisonError<T>) -> Self {
-        Self::Poison(value.to_string())
     }
 }
 
@@ -166,21 +197,14 @@ macro_rules! impl_from {
 }
 
 impl_from!(
-    serde_json::Error => Serde,
-    rmp_serde::encode::Error => Serde,
-    rmp_serde::decode::Error => Serde,
+    audiotags::Error => AudioTag,
+    raplay::Error => Raplay,
+    serde_json::Error => SerdeJson,
+    // rmp_serde::encode::Error => SerdeRmpEncode,
+    // rmp_serde::decode::Error => SerdeRmpDecode,
+    std::io::Error => Io,
+    SystemTimeError => Time,
+    notify::Error => Notify,
+    shell_words::ParseError => ShellWords,
+    anyhow::Error => Other,
 );
-
-/// Collections of errors while serializing
-#[derive(Error, Debug)]
-pub enum SerdeError {
-    /// Serde json error
-    #[error(transparent)]
-    Json(#[from] serde_json::Error),
-    /// Rmp error while encoding
-    #[error(transparent)]
-    RmpEncode(#[from] rmp_serde::encode::Error),
-    /// Rmp error while decoding
-    #[error(transparent)]
-    RmpDecode(#[from] rmp_serde::decode::Error),
-}

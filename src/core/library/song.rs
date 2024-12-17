@@ -51,6 +51,14 @@ impl Song {
             Err(audiotags::Error::UnsupportedFormat(_)) => {
                 Box::new(audiotags::FlacTag::new())
             }
+            Err(audiotags::Error::IOError(e)) => {
+                return Error::io(e)
+                    .msg(format!(
+                        "Failed to read metadata from file `{}`.",
+                        path.as_ref().to_string_lossy()
+                    ))
+                    .err();
+            }
             Err(e) => Err(e)?,
         };
 

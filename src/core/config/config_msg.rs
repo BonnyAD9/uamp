@@ -5,7 +5,7 @@ use log::{error, warn};
 use crate::{
     core::{
         messenger::{Messenger, MsgMessage},
-        Alias, Msg, Result, TaskType, UampApp,
+        Alias, Error, Msg, Result, TaskType, UampApp,
     },
     env::AppCtrl,
 };
@@ -106,7 +106,12 @@ impl UampApp {
         old_port: u16,
     ) -> Result<()> {
         if ctrl.any_task(|t| t == TaskType::Server) {
-            let stream = TcpStream::connect(format!("{old_adr}:{old_port}"))?;
+            let stream = TcpStream::connect(format!("{old_adr}:{old_port}"))
+                .map_err(|e| {
+                Error::io(e)
+                    .msg("Failed to reload server.")
+                    .reason("Couldn't connect to the server.")
+            })?;
             let mut msgr = Messenger::new(&stream);
             msgr.send(MsgMessage::Stop)?;
         } else if self.config.enable_server() || self.config.force_server {

@@ -99,7 +99,9 @@ impl Run {
 
         cmd.args(self.init.into_iter().map(|a| a.to_string()));
 
-        let child = cmd.spawn()?;
+        let child = cmd
+            .spawn()
+            .map_err(|e| Error::io(e).msg("Failed to spawn detached uamp."))?;
         let id = child.id();
         println!("Spawned detached process with id {id}");
         info!("Spawned detached process with id {id}");

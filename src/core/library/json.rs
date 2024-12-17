@@ -149,7 +149,7 @@ impl Library {
         let free = self.get_free_tmp_songs(used);
         self.remove_free_tmp_songs(&free);
 
-        serde_json::to_writer(File::create(path)?, self)?;
+        serde_json::to_writer(File::create(&path)?, self)?;
         Ok(free)
     }
 

@@ -6,7 +6,7 @@ use std::{
 use log::{error, info};
 use serde::Serialize;
 
-use crate::core::Result;
+use crate::core::{Error, Result};
 
 use super::{default_config_path, Config};
 
@@ -52,7 +52,9 @@ impl Config {
             }
         };
 
-        let mut conf: Self = serde_json::from_reader(file)?;
+        let mut conf: Self = serde_json::from_reader(file).map_err(|e| {
+            Error::SerdeJson(e.into()).msg("Failed to load config from json.")
+        })?;
         conf.config_path = Some(path.as_ref().to_owned());
         Ok(conf)
     }
@@ -86,7 +88,7 @@ impl Config {
 
         let formatter = serde_json::ser::PrettyFormatter::with_indent(b"    ");
         let mut ser = serde_json::Serializer::with_formatter(
-            File::create(path)?,
+            File::create(&path)?,
             formatter,
         );
         self.serialize(&mut ser)?;

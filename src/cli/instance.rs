@@ -12,7 +12,7 @@ use termal::eprintacln;
 use crate::core::{
     config::Config,
     messenger::{DataResponse, Info, Messenger, MsgMessage, Request},
-    PlayMsg, Result,
+    Error, PlayMsg, Result,
 };
 
 use super::{help::help_instance, printer};
@@ -50,7 +50,15 @@ impl Instance {
                 v if has_any_key!(v, '=', "p", "play") => {
                     self.messages.push(
                         PlayMsg::TmpPath(
-                            args.cur_val::<&Path>('=')?.canonicalize()?.into(),
+                            args.cur_val::<&Path>('=')?
+                                .canonicalize()
+                                .map_err(|e| {
+                                    Error::io(e).msg(format!(
+                                        "Cannot find the file `{}`",
+                                        args.cur().unwrap()
+                                    ))
+                                })?
+                                .into(),
                         )
                         .into(),
                     );
@@ -118,9 +126,15 @@ impl Instance {
             "{}:{}",
             self.server.as_ref().unwrap(),
             self.port.unwrap(),
-        ))?;
+        ))
+        .map_err(|e| {
+            Error::io(e)
+                .msg("Failed to connect to uamp.")
+                .hint("Is uamp server running?")
+        })?;
         if let Err(e) = stream.set_read_timeout(Some(Duration::from_secs(5))) {
-            error!("failed to send message: {e}");
+            eprintln!("Failed to send message: {e}");
+            error!("Failed to send message: {e}");
         }
 
         let mut msgr = Messenger::new(&stream);

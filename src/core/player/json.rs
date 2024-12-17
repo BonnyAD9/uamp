@@ -8,7 +8,8 @@ use log::{error, info};
 use serde::{Deserialize, Serialize};
 
 use crate::core::{
-    config::Config, library::Library, player::default_volume, Msg, Result,
+    config::Config, library::Library, player::default_volume, Error, Msg,
+    Result,
 };
 
 use super::{playback::Playback, sink_wrapper::SinkWrapper, Player, Playlist};
@@ -166,7 +167,11 @@ impl Player {
                 mute: self.mute(),
                 intercept: self.playlist_stack(),
             },
-        )?;
+        )
+        .map_err(|e| {
+            Error::SerdeJson(e.into())
+                .msg("Failed to save player state to json.")
+        })?;
 
         self.playlist_mut().pop_play_pos();
         Ok(())

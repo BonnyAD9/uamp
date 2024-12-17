@@ -1,4 +1,4 @@
-use core::config;
+use core::{config, Error};
 use std::io::{self, IsTerminal};
 
 use cli::Run;
@@ -64,15 +64,16 @@ fn start() -> Result<()> {
 /// - cannot load from env
 /// - cannot start the logger
 fn start_logger() -> Result<()> {
-    match flexi_logger::Logger::try_with_env_or_str("warn") {
-        Ok(l) => l,
-        Err(_) => flexi_logger::Logger::try_with_str("warn")?,
-    }
-    .log_to_file(
-        flexi_logger::FileSpec::default()
-            .directory(config::default_config_path().join("log")),
-    )
-    .write_mode(flexi_logger::WriteMode::Direct)
-    .start()?;
-    Ok(())
+    flexi_logger::Logger::try_with_env_or_str("warn")
+        .map_err(|e| {
+            Error::Logger(e.into()).msg("Failed to initialize logger.")
+        })?
+        .log_to_file(
+            flexi_logger::FileSpec::default()
+                .directory(config::default_config_path().join("log")),
+        )
+        .write_mode(flexi_logger::WriteMode::Direct)
+        .start()
+        .map_err(|e| Error::Logger(e.into()).msg("Failed to start logger."))
+        .map(|_| ())
 }

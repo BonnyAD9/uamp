@@ -43,7 +43,10 @@ impl<'a> Messenger<'a> {
     /// - Failed to serialize
     pub fn send(&mut self, msg: MsgMessage) -> Result<()> {
         let mut ser = Serializer::new(&mut self.writer);
-        msg.serialize(&mut ser)?;
+        msg.serialize(&mut ser).map_err(|e| {
+            crate::core::Error::SerdeRmpEncode(e.into())
+                .msg("Failed to encode message for TCP.")
+        })?;
         if let Err(e) = self.writer.flush() {
             warn!("Failed to flush message: {}", e);
         }
@@ -55,7 +58,10 @@ impl<'a> Messenger<'a> {
     /// # Errors
     /// - Failed to deserialize
     pub fn recieve(&mut self) -> Result<MsgMessage> {
-        Ok(rmp_serde::from_read(&mut self.reader)?)
+        rmp_serde::from_read(&mut self.reader).map_err(|e| {
+            crate::core::Error::SerdeRmpDecode(e.into())
+                .msg("Failed to decode message from TCP.")
+        })
     }
 }
 
