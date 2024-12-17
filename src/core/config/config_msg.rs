@@ -1,7 +1,5 @@
 use std::{net::TcpStream, time::Instant};
 
-use log::{error, warn};
-
 use crate::{
     core::{
         messenger::{Messenger, MsgMessage},
@@ -32,21 +30,19 @@ impl UampApp {
         &mut self,
         ctrl: &mut AppCtrl,
         msg: ConfigMsg,
-    ) -> Vec<Msg> {
+    ) -> Result<Vec<Msg>> {
         match msg {
             ConfigMsg::Reload => {
-                let Some(path) = self.config.config_path.as_ref() else {
-                    warn!("Cannot reaload config because the path is unknwn");
-                    return vec![];
-                };
+                let path =
+                    self.config.config_path.as_ref().ok_or_else(|| {
+                        Error::invalid_operation()
+                            .msg("Cannot reload config.")
+                            .reason("Config save is disabled.")
+                            .warn()
+                    })?;
 
-                let mut conf = match Config::from_json(path) {
-                    Ok(c) => c,
-                    Err(e) => {
-                        warn!("Failed to reload config: {}", e.log());
-                        return vec![];
-                    }
-                };
+                let mut conf = Config::from_json(path)
+                    .map_err(|e| e.prepend("Failed to reload config."))?;
 
                 let reload_server = (conf.server_address()
                     != self.config.server_address()
@@ -59,38 +55,41 @@ impl UampApp {
                 conf.force_server = self.config.force_server;
                 self.config = conf;
                 if let Some((adr, port)) = reload_server {
-                    if let Err(e) = self.reload_server(ctrl, adr, port) {
-                        error!("Failed to reload server: {}", e.log());
-                    }
+                    self.reload_server(ctrl, adr, port)
+                        .map_err(|e| e.prepend("Failed to reload server."))?;
                 }
             }
         }
 
-        vec![]
+        Ok(vec![])
     }
 
     pub(in crate::core) fn config_update(
         &mut self,
         ctrl: &mut AppCtrl,
         now: Instant,
-    ) {
+    ) -> Result<Vec<Error>> {
         if self
             .config
             .save_timeout()
             .map(|t| now - self.last_save >= t.0)
             .unwrap_or_default()
         {
-            self.save_all(false, ctrl);
+            self.save_all(false, ctrl).map(|_| vec![])
+        } else {
+            Ok(vec![])
         }
     }
 
     pub fn invoke_alias(&mut self, alias: &Alias) -> Result<Vec<Msg>> {
-        self.config
-            .control_aliases()
-            .get(&alias.name)
-            .map(|a| a.get_msg_vec(&alias.args))
-            .transpose()
-            .map(Option::unwrap_or_default)
+        let al = self.config.control_aliases().get(&alias.name).ok_or_else(
+            || {
+                Error::invalid_operation()
+                    .msg("Cannot invoke alias.")
+                    .reason(format!("Unknown alias name `{}`.", alias.name))
+            },
+        )?;
+        al.get_msg_vec(&alias.args)
     }
 }
 

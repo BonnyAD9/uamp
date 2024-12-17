@@ -66,37 +66,37 @@ impl TaskType {
 impl UampApp {
     /// Performes the correct action after a task has finished.
     pub fn task_end(&mut self, ctrl: &mut AppCtrl, task_res: TaskMsg) {
+        if let Err(e) = self.task_end_err(ctrl, task_res) {
+            error!("{}", e.log())
+        }
+    }
+
+    pub fn task_end_err(
+        &mut self,
+        ctrl: &mut AppCtrl,
+        task_res: TaskMsg,
+    ) -> Result<()> {
         match task_res {
             TaskMsg::Server(Err(e)) => {
-                error!("Server unexpectedly ended: {}", e.log());
+                e.prepend("Server unexpectedly ended.").err()
             }
             TaskMsg::Server(Ok(_)) => {
                 if self.config.enable_server() || self.config.force_server {
-                    if let Err(e) = Self::start_server(
-                        &self.config,
-                        ctrl,
-                        self.sender.clone(),
-                    ) {
-                        error!("Failed to restart server: {}", e.log());
-                    }
+                    Self::start_server(&self.config, ctrl, self.sender.clone())
+                        .map_err(|e| e.prepend("Failed to restart server."))
+                } else {
+                    Ok(())
                 }
             }
-            TaskMsg::LibraryLoad(res) => {
-                self.finish_library_load(ctrl, res);
-            }
-            TaskMsg::LibrarySave(res) => {
-                self.finish_library_save_songs(res);
-            }
+            TaskMsg::LibraryLoad(res) => self.finish_library_load(ctrl, res?),
+            TaskMsg::LibrarySave(res) => self.finish_library_save_songs(res),
             TaskMsg::Signals(Err(e)) => {
-                error!("Signals task has unexpectedly ended: {}", e.log());
+                e.prepend("Signals task has unexpectedly ended.").err()
             }
             TaskMsg::Signals(Ok(_)) => {
                 warn!("Signals task has unexpectedly ended, restarting.");
-                if let Err(e) =
-                    Self::start_signal_thread(ctrl, self.sender.clone())
-                {
-                    error!("Failed to start signals thread: {}", e.log());
-                }
+                Self::start_signal_thread(ctrl, self.sender.clone())
+                    .map_err(|e| e.prepend("Failed to start signals thread."))
             }
         }
     }

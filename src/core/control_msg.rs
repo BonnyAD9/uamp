@@ -5,7 +5,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use log::{error, info};
+use log::info;
 use pareg::{
     has_any_key, mval_arg, starts_any, val_arg, ArgErrCtx, ArgError, FromArg,
     FromArgStr,
@@ -19,7 +19,7 @@ use crate::{
 
 use super::{
     library::LoadOpts, player::AddPolicy, query::SongOrder, Error, Msg,
-    TaskType, UampApp,
+    Result, TaskType, UampApp,
 };
 
 //===========================================================================//
@@ -75,14 +75,14 @@ impl UampApp {
         &mut self,
         ctrl: &mut AppCtrl,
         msg: ControlMsg,
-    ) -> Vec<Msg> {
+    ) -> Result<Vec<Msg>> {
         match msg {
             ControlMsg::PlayPause(p) => {
                 let pp = p.unwrap_or(!self.player.is_playing());
                 if pp {
                     self.hard_pause_at = None;
                 }
-                self.player.play(&mut self.library, pp);
+                self.player.play(&mut self.library, pp)?;
             }
             ControlMsg::NextSong(n) => {
                 self.player.play_next(&mut self.library, n);
@@ -93,27 +93,27 @@ impl UampApp {
                         let now = Instant::now();
                         if now - mem::replace(&mut self.last_prev, now) >= t.0
                         {
-                            return vec![Msg::Control(ControlMsg::SeekTo(
-                                Duration::ZERO,
-                            ))];
+                            return Ok(vec![Msg::Control(
+                                ControlMsg::SeekTo(Duration::ZERO),
+                            )]);
                         }
                     }
                 }
 
                 self.player.play_prev(&mut self.library, n.unwrap_or(1));
-                if let Err(e) = self.delete_old_logs() {
-                    error!("Failed to remove logs: {}", e.log());
-                }
+                self.delete_old_logs()
+                    .map_err(|e| e.prepend("Failed to remove logs."))?;
             }
             ControlMsg::Close => {
-                self.save_all(true, ctrl);
+                let r = self.save_all(true, ctrl).map(|_| vec![]);
                 if ctrl.any_task(|t| {
                     t != TaskType::Server && t != TaskType::Signals
                 }) {
                     self.pending_close = true;
-                    return vec![];
+                    return r;
                 }
                 ctrl.exit();
+                return r;
             }
             ControlMsg::Shuffle => {
                 self.player
@@ -148,20 +148,26 @@ impl UampApp {
                     Err(e) if matches!(e, Error::InvalidOperation(_)) => {
                         info!("Cannot load new songs: {}", e.log())
                     }
-                    Err(e) => error!("Cannot load new songs: {}", e.log()),
+                    Err(e) => {
+                        return e.prepend("Cannot load new songs.").err()
+                    }
                     _ => {}
                 }
             }
             ControlMsg::SeekTo(d) => {
-                self.player.seek_to(d);
+                self.player.seek_to(d)?;
             }
             ControlMsg::FastForward(d) => {
                 let t = d.unwrap_or(self.config.seek_jump().0);
-                self.player.seek_by(t, true);
+                self.player
+                    .seek_by(t, true)
+                    .map_err(|e| e.prepend("Failed to fast forward."))?;
             }
             ControlMsg::Rewind(d) => {
                 let t = d.unwrap_or(self.config.seek_jump().0);
-                self.player.seek_by(t, false);
+                self.player
+                    .seek_by(t, false)
+                    .map_err(|e| e.prepend("Failed to rewind."))?;
             }
             ControlMsg::SortPlaylist(ord) => {
                 self.player.playlist_mut().sort(
@@ -179,10 +185,10 @@ impl UampApp {
             ControlMsg::SetPlaylistAddPolicy(policy) => {
                 self.player.playlist_mut().add_policy = policy;
             }
-            ControlMsg::Save => self.save_all(false, ctrl),
+            ControlMsg::Save => self.save_all(false, ctrl)?,
         };
 
-        vec![]
+        Ok(vec![])
     }
 }
 
@@ -245,7 +251,7 @@ impl Display for ControlMsg {
 impl FromStr for ControlMsg {
     type Err = ArgError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s {
             v if has_any_key!(v, '=', "play-pause", "pp") => {
                 Ok(ControlMsg::PlayPause(

@@ -1,14 +1,14 @@
 use std::{cell::Cell, mem, time::Duration};
 
 use futures::channel::mpsc::UnboundedSender;
-use log::{error, warn};
+use log::{error, info, warn};
 use raplay::{CallbackInfo, Timestamp};
 
 use crate::{
     core::{
         config::Config,
         library::{Library, SongId},
-        Alias, DataControlMsg, Msg,
+        Alias, DataControlMsg, Error, Msg, Result,
     },
     ext::AlcVec,
     gen_struct,
@@ -42,18 +42,22 @@ impl Player {
     /// Play/Pause.
     ///
     /// - `play`: play when `true`, otherwise pause.
-    pub fn play(&mut self, lib: &mut Library, play: bool) {
+    pub fn play(&mut self, lib: &mut Library, play: bool) -> Result<()> {
         if !self.state.is_stopped() {
             self.inner.play(play);
             self.state = Playback::play(play);
-            return;
+            return Ok(());
         }
 
         if let Some(id) = self.playlist().current() {
             self.load(lib, id, play);
+            Ok(())
         } else {
             self.inner.play(false);
-            error!("Cannot play/pause, the playlist is empty.");
+            Error::invalid_operation()
+                .msg("Cannot play/pause.")
+                .reason("The playlist is empty.")
+                .err()
         }
     }
 
@@ -198,14 +202,10 @@ impl Player {
     }
 
     /// Seeks to the given position
-    pub fn seek_to(&mut self, t: Duration) -> Option<Timestamp> {
-        match self.inner.seek_to(t) {
-            Err(e) => {
-                error!("Failed to seek: {}", e.log());
-                None
-            }
-            Ok(ts) => Some(ts),
-        }
+    pub fn seek_to(&mut self, t: Duration) -> Result<Timestamp> {
+        self.inner
+            .seek_to(t)
+            .map_err(|e| e.prepend("Failed to seek."))
     }
 
     /// Seeks by the given amount.
@@ -217,14 +217,8 @@ impl Player {
         &mut self,
         t: Duration,
         forward: bool,
-    ) -> Option<Timestamp> {
-        match self.inner.seek_by(t, forward) {
-            Err(e) => {
-                error!("Failed to seek by: {}", e.log());
-                None
-            }
-            Ok(ts) => Some(ts),
-        }
+    ) -> Result<Timestamp> {
+        self.inner.seek_by(t, forward)
     }
 
     /// Does hard pause without the fading (if configured).
@@ -382,6 +376,7 @@ impl Player {
                     lib[id].path(),
                     e.log()
                 );
+                info!("Moving to the next song.");
                 let next = self.playlist.nth_next(1);
                 if next.is_none() {
                     self.playlist_ended = true;
@@ -404,7 +399,7 @@ impl Player {
         };
 
         if let Err(e) = sender.unbounded_send(message) {
-            error!("Failed to sink callback message: {e}");
+            error!("Failed to set callback message: {e}");
         }
     }
 }

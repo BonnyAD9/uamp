@@ -1,7 +1,5 @@
 use std::mem;
 
-use log::error;
-
 use crate::core::{Result, UampApp};
 
 use super::{LibraryUpdate, SongId};
@@ -12,12 +10,15 @@ impl UampApp {
     pub(in crate::core) fn finish_library_save_songs(
         &mut self,
         res: Result<Vec<SongId>>,
-    ) {
+    ) -> Result<()> {
         match res {
-            Ok(free) => self.library.remove_free_tmp_songs(&free),
+            Ok(free) => {
+                self.library.remove_free_tmp_songs(&free);
+                Ok(())
+            }
             Err(e) => {
-                error!("Failed to save library: {}", e.log());
                 self.library.set_change(true);
+                e.prepend("Failed to save library.").err()
             }
         }
     }

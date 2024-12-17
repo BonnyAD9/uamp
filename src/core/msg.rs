@@ -5,7 +5,7 @@ use crate::{core::UampApp, env::AppCtrl};
 
 use super::{
     config::ConfigMsg, player::PlayerMsg, AnyControlMsg, ControlMsg,
-    DataControlMsg, MessageDelegate, PlayMsg,
+    DataControlMsg, MessageDelegate, PlayMsg, Result,
 };
 
 //===========================================================================//
@@ -39,14 +39,14 @@ impl UampApp {
         &mut self,
         ctrl: &mut AppCtrl,
         msg: Msg,
-    ) -> Vec<Msg> {
+    ) -> Result<Vec<Msg>> {
         let mut res = match msg {
-            Msg::PlaySong(msg) => self.play_event(msg),
-            Msg::Control(msg) => self.control_event(ctrl, msg),
-            Msg::DataControl(msg) => self.data_control_event(ctrl, msg),
+            Msg::PlaySong(msg) => self.play_event(msg)?,
+            Msg::Control(msg) => self.control_event(ctrl, msg)?,
+            Msg::DataControl(msg) => self.data_control_event(ctrl, msg)?,
             Msg::Player(msg) => self.player_event(msg),
-            Msg::Delegate(d) => d.update(self, ctrl),
-            Msg::Config(msg) => self.config_event(ctrl, msg),
+            Msg::Delegate(d) => d.update(self, ctrl)?,
+            Msg::Config(msg) => self.config_event(ctrl, msg)?,
             Msg::None => vec![],
         };
 
@@ -56,7 +56,7 @@ impl UampApp {
                 self.config.default_playlist_end_action().as_ref(),
             ),
         );
-        res
+        Ok(res)
     }
 }
 

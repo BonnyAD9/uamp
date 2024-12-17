@@ -3,10 +3,9 @@ use std::{
     sync::Arc,
 };
 
-use log::error;
 use serde::{Deserialize, Serialize};
 
-use super::{library::SongId, player::Playlist, Msg, UampApp};
+use super::{library::SongId, player::Playlist, Msg, Result, UampApp};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -23,7 +22,10 @@ pub enum PlayMsg {
 
 impl UampApp {
     /// Handle play events.
-    pub(in crate::core) fn play_event(&mut self, msg: PlayMsg) -> Vec<Msg> {
+    pub(in crate::core) fn play_event(
+        &mut self,
+        msg: PlayMsg,
+    ) -> Result<Vec<Msg>> {
         match msg {
             PlayMsg::Playlist(index, songs) => {
                 self.player.play_playlist(
@@ -33,13 +35,13 @@ impl UampApp {
                 );
             }
             PlayMsg::TmpPath(path) => {
-                let id = match self.library.add_tmp_path(path.as_ref()) {
-                    Err(e) => {
-                        error!("Failed to load song {path:?}: {}", e.log());
-                        return vec![];
-                    }
-                    Ok(id) => id,
-                };
+                let id =
+                    self.library.add_tmp_path(path.as_ref()).map_err(|e| {
+                        e.prepend(format!(
+                            "Failed to load song `{:?}`.",
+                            path.to_string_lossy()
+                        ))
+                    })?;
 
                 self.player.push_playlist(
                     &mut self.library,
@@ -49,12 +51,15 @@ impl UampApp {
             }
         }
 
-        vec![]
+        Ok(vec![])
     }
 }
 
 impl Serialize for PlayMsg {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> std::result::Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
@@ -63,7 +68,7 @@ impl Serialize for PlayMsg {
 }
 
 impl<'de> Deserialize<'de> for PlayMsg {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {

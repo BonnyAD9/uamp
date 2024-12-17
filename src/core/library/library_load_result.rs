@@ -1,7 +1,5 @@
 use std::{fmt::Debug, mem};
 
-use log::error;
-
 use crate::{
     core::{player::AddPolicy, Error, Result, UampApp},
     env::AppCtrl,
@@ -57,15 +55,10 @@ impl UampApp {
     pub(in crate::core) fn finish_library_load(
         &mut self,
         ctrl: &mut AppCtrl,
-        res: Result<Option<LibraryLoadResult>>,
-    ) {
-        let mut res = match res {
-            Ok(Some(res)) => res,
-            Ok(None) => return,
-            Err(e) => {
-                error!("Failed to load new songs: {}", e.log());
-                return;
-            }
+        res: Option<LibraryLoadResult>,
+    ) -> Result<()> {
+        let Some(mut res) = res else {
+            return Ok(());
         };
 
         *self.library.songs_mut() = mem::take(&mut res.songs).into();
@@ -87,9 +80,11 @@ impl UampApp {
             ctrl,
             &mut self.player,
         ) {
-            Err(Error::InvalidOperation(_)) => {}
-            Err(e) => error!("Failed to start library save: {}", e.log()),
-            _ => {}
+            Err(Error::InvalidOperation(_)) => Ok(()),
+            Err(e) => e
+                .prepend("Failed to start library save after library load.")
+                .err(),
+            _ => Ok(()),
         }
     }
 }

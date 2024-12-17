@@ -89,8 +89,9 @@ impl Player {
 
         res.init_inner(sender);
         if let Some(p) = play_pos {
-            res.play(lib, false);
-            res.seek_to(p);
+            if let Err(e) = res.play(lib, false).and_then(|_| res.seek_to(p)) {
+                error!("{}", e.log());
+            }
         }
         res
     }

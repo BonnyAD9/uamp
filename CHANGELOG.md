@@ -4,6 +4,7 @@
 - Show volume in `i nfo`
 - Fix displaying of playlist position (should start from 1, not 0)
 - Better errors
+- Propagate errors much further
 
 ## v0.5.5
 - Add new functionality to filters (and, or, brackets).

@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::core::ErrCtx;
+
 //===========================================================================//
 //                                   Public                                  //
 //===========================================================================//
@@ -8,9 +10,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Error {
     /// Describes the kind of the error.
-    kind: ErrorKind,
+    pub kind: ErrorKind,
     /// Message suitable for the user.
-    message: String,
+    pub ctx: ErrCtx<String>,
 }
 
 /// Describes the kind of the error
@@ -36,7 +38,7 @@ pub enum ErrorKind {
 
 impl Error {
     /// Creates a new error with the given type and message.
-    pub fn new(kind: ErrorKind, message: String) -> Self {
-        Error { kind, message }
+    pub fn new(kind: ErrorKind, ctx: ErrCtx<String>) -> Self {
+        Error { kind, ctx }
     }
 }

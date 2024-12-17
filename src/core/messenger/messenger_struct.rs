@@ -76,16 +76,53 @@ impl UampApp {
     ) -> (Option<MsgMessage>, Option<Msg>) {
         match msg {
             MsgMessage::Request(r) => Self::handle_request(r, stream),
-            MsgMessage::Control(msg) => {
-                (Some(MsgMessage::Success), Some(msg.into()))
-            }
-            MsgMessage::Play(msg) => {
-                (Some(MsgMessage::Success), Some(Msg::PlaySong(msg)))
-            }
+            MsgMessage::Control(msg) => Self::handle_msg(msg.into(), stream),
+            MsgMessage::Play(msg) => Self::handle_msg(msg.into(), stream),
             _ => (
                 Some(MsgMessage::new_error(ErrorKind::ExpectedControl)),
                 None,
             ),
+        }
+    }
+
+    fn handle_msg(
+        msg: Msg,
+        stream: &TcpStream,
+    ) -> (Option<MsgMessage>, Option<Msg>) {
+        let stream = match Self::clone_stream(stream) {
+            Ok(s) => s,
+            // Fallback to simple control message without feedback.
+            Err(_) => return (Some(MsgMessage::Success), Some(msg)),
+        };
+
+        let delegate = Msg::delegate::<_, FnDelegate<_>>(
+            move |app: &mut UampApp, ctrl: &mut AppCtrl| {
+                Self::control_response(
+                    app.update_err(ctrl, msg.clone()),
+                    &stream,
+                )
+                .map(|_| vec![])
+            },
+        );
+
+        (None, Some(delegate))
+    }
+
+    fn control_response(r: Result<()>, stream: &TcpStream) -> Result<()> {
+        let mut msg = Messenger::new(stream);
+
+        match r {
+            Err(e) => {
+                if let Err(e2) = msg.send(MsgMessage::Error(Error::new(
+                    ErrorKind::InternalError,
+                    e.clone_universal(),
+                ))) {
+                    crate::core::Error::multiple([e, e2].into())
+                } else {
+                    Err(e)
+                }
+            }
+            Ok(_) => msg.send(MsgMessage::Success),
         }
     }
 
@@ -125,7 +162,7 @@ impl UampApp {
         stream: &TcpStream,
         before: usize,
         after: usize,
-    ) -> Vec<Msg> {
+    ) -> Result<Vec<Msg>> {
         let mut msg = Messenger::new(stream);
 
         let idx = self.player.playlist().current_idx();
@@ -178,11 +215,9 @@ impl UampApp {
             playlist_add_policy: self.player.playlist().add_policy,
         };
 
-        if let Err(e) = msg.send(DataResponse::Info(Box::new(info)).into()) {
-            error!("Failed to send message: {}", e.log());
-        };
-
-        vec![]
+        msg.send(DataResponse::Info(Box::new(info)).into())
+            .map_err(|e| e.prepend("Failed to send message."))
+            .map(|_| vec![])
     }
 
     fn query_request(
@@ -207,7 +242,7 @@ impl UampApp {
         &mut self,
         stream: &TcpStream,
         query: &Query,
-    ) -> Vec<Msg> {
+    ) -> Result<Vec<Msg>> {
         let mut msg = Messenger::new(stream);
 
         let songs = query.clone_songs(
@@ -216,11 +251,9 @@ impl UampApp {
             self.library.iter(),
         );
 
-        if let Err(e) = msg.send(DataResponse::SongList(songs).into()) {
-            error!("Failed to send message: {}", e.log());
-        }
-
-        vec![]
+        msg.send(DataResponse::SongList(songs).into())
+            .map_err(|e| e.prepend("Failed to send message."))
+            .map(|_| vec![])
     }
 
     fn clone_stream(
@@ -234,9 +267,9 @@ impl UampApp {
                     Error::new(
                         ErrorKind::InternalError,
                         format!(
-                            "Error occured when trying to fulfill request\
-                    : {e}"
-                        ),
+                            "Error occured when trying to fulfill request: {e}"
+                        )
+                        .into(),
                     )
                     .into(),
                 ),

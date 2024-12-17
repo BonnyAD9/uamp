@@ -1,6 +1,5 @@
 use std::{fmt::Display, str::FromStr};
 
-use log::error;
 use pareg::{
     has_any_key, mval_arg, starts_any, val_arg, ArgErrCtx, ArgError,
     FromArgStr,
@@ -9,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::env::AppCtrl;
 
-use super::{query::Query, Alias, Msg, UampApp};
+use super::{query::Query, Alias, Msg, Result, UampApp};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -42,12 +41,9 @@ impl UampApp {
         &mut self,
         _ctrl: &mut AppCtrl,
         msg: DataControlMsg,
-    ) -> Vec<Msg> {
+    ) -> Result<Vec<Msg>> {
         match msg {
-            DataControlMsg::Alias(name) => match self.invoke_alias(&name) {
-                Ok(r) => return r,
-                Err(e) => error!("Failed to invoke alias: {}", e.log()),
-            },
+            DataControlMsg::Alias(name) => return self.invoke_alias(&name),
             DataControlMsg::SetPlaylistEndAction(act) => {
                 self.player.playlist_mut().on_end = act;
             }
@@ -101,14 +97,14 @@ impl UampApp {
             }
         }
 
-        vec![]
+        Ok(vec![])
     }
 }
 
 impl FromStr for DataControlMsg {
     type Err = ArgError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s {
             v if starts_any!(v, "al", "alias") => {
                 Ok(DataControlMsg::Alias(val_arg(v, '=')?))

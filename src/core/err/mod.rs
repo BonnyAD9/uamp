@@ -1,6 +1,7 @@
-use std::{any::Any, borrow::Cow, time::SystemTimeError};
+use std::{any::Any, borrow::Cow, mem, time::SystemTimeError};
 
 use flexi_logger::FlexiLoggerError;
+use itertools::Itertools;
 use log::error;
 use pareg::ColorMode;
 use thiserror::Error;
@@ -65,6 +66,8 @@ pub enum Error {
     /// Any other error.
     #[error("{0}")]
     Other(Box<ErrCtx<anyhow::Error>>),
+    #[error("{}", .0.iter().map(|a| a.to_string()).join(""))]
+    Multiple(Vec<Error>),
 }
 
 macro_rules! map_ctx {
@@ -154,13 +157,44 @@ impl Error {
         Self::Io(e.into())
     }
 
+    pub fn multiple(mut e: Vec<Error>) -> Result<()> {
+        match e.len() {
+            0 => Ok(()),
+            1 => Err(e.pop().unwrap()),
+            _ => Err(Error::Multiple(
+                e.into_iter().fold(vec![], |a, e| e.add_to(a)),
+            )),
+        }
+    }
+
+    fn add_to(self, mut r: Vec<Error>) -> Vec<Error> {
+        if let Self::Multiple(m) = self {
+            for e in m {
+                r = e.add_to(r);
+            }
+        } else {
+            r.push(self);
+        }
+        r
+    }
+
     pub fn no_color(self) -> Self {
         map_ctx!(self, |c| c.no_color(),
             Self::Pareg(p) => Self::Pareg(p.map_ctx(|mut c| {
                 c.color = ColorMode::Never;
                 c
             })),
+            Self::Multiple(mut m) => {
+                for e in &mut m {
+                    *e = mem::replace(e, Self::Multiple(vec![])).no_color();
+                }
+                Self::Multiple(m)
+            }
         )
+    }
+
+    pub fn warn(self) -> Self {
+        map_ctx!(self, |c| c.warn())
     }
 
     pub fn msg(self, msg: impl Into<Cow<'static, str>>) -> Self {
@@ -175,12 +209,37 @@ impl Error {
         map_ctx!(self, |c| c.hint(hint))
     }
 
+    pub fn prepend(self, msg: impl Into<Cow<'static, str>>) -> Self {
+        map_ctx!(self, |c| c.prepend(msg))
+    }
+
     pub fn err<T>(self) -> Result<T> {
         Err(self)
     }
 
     pub fn log(self) -> Self {
         self.no_color()
+    }
+
+    pub fn clone_universal(&self) -> ErrCtx<String> {
+        match self {
+            Error::NoProgramName(err_ctx) => err_ctx.clone_universal(),
+            Error::InvalidOperation(err_ctx) => err_ctx.clone_universal(),
+            Error::ThreadPanicked(err_ctx) => err_ctx.clone_universal(),
+            Error::AudioTag(err_ctx) => err_ctx.clone_universal(),
+            Error::Raplay(err_ctx) => err_ctx.clone_universal(),
+            Error::SerdeJson(err_ctx) => err_ctx.clone_universal(),
+            Error::SerdeRmpEncode(err_ctx) => err_ctx.clone_universal(),
+            Error::SerdeRmpDecode(err_ctx) => err_ctx.clone_universal(),
+            Error::Logger(err_ctx) => err_ctx.clone_universal(),
+            Error::Io(err_ctx) => err_ctx.clone_universal(),
+            Error::Time(err_ctx) => err_ctx.clone_universal(),
+            Error::Notify(err_ctx) => err_ctx.clone_universal(),
+            Error::ShellWords(err_ctx) => err_ctx.clone_universal(),
+            Error::Other(err_ctx) => err_ctx.clone_universal(),
+            Error::Multiple(v) if v.len() == 1 => v[0].clone_universal(),
+            e => e.to_string().into(),
+        }
     }
 }
 

@@ -103,6 +103,9 @@ impl Instance {
                     Self::print_data(i, color, send_time);
                 }
                 Err(e) => eprintacln!("{'r}error: {'_}{e}"),
+                Ok(MsgMessage::Error(e)) => {
+                    eprintln!("{}", e.ctx);
+                }
                 Ok(r) => {
                     eprintacln!("{'r}error: {'_}Unexpected response: {r:?}");
                 }

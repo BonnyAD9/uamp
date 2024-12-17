@@ -118,48 +118,72 @@ impl UampApp {
 
     /// Handles the message sent to uamp.
     pub fn update(&mut self, ctrl: &mut AppCtrl, message: Msg) {
-        let mut msgs = self.msg_event(ctrl, message);
+        if let Err(e) = self.update_err(ctrl, message) {
+            error!("{}", e.log());
+        }
+    }
+
+    /// Handles the message sent to uamp, propagates errors.
+    pub fn update_err(
+        &mut self,
+        ctrl: &mut AppCtrl,
+        message: Msg,
+    ) -> Result<()> {
+        let mut msgs = self.msg_event(ctrl, message)?;
         if msgs.len() == 1 {
-            return self.update(ctrl, msgs.pop().unwrap());
+            return self.update_err(ctrl, msgs.pop().unwrap());
         }
 
         msgs.reverse();
+        let mut errs = vec![];
+
         while let Some(msg) = msgs.pop() {
-            msgs.extend(self.msg_event(ctrl, msg).into_iter().rev());
+            match self.msg_event(ctrl, msg) {
+                Ok(r) => msgs.extend(r.into_iter().rev()),
+                Err(e) => errs.push(e),
+            }
         }
 
         if self.pending_close && !ctrl.any_task(|t| t != TaskType::Server) {
             self.pending_close = false;
-            return self.update(ctrl, Msg::Control(ControlMsg::Close));
+            return self.update_err(ctrl, Msg::Control(ControlMsg::Close));
         }
 
         let now = Instant::now();
 
         let up = self.library_update();
         self.player_update(now, up);
-        self.config_update(ctrl, now);
+        errs.extend(self.config_update(ctrl, now).err());
+
+        Error::multiple(errs)
     }
 
     /// Saves all the data that is saved by uamp.
-    pub(super) fn save_all(&mut self, closing: bool, ctrl: &mut AppCtrl) {
+    pub(super) fn save_all(
+        &mut self,
+        closing: bool,
+        ctrl: &mut AppCtrl,
+    ) -> Result<()> {
+        let mut res = vec![];
         match self.library.start_to_default_json(
             &self.config,
             ctrl,
             &mut self.player,
         ) {
             Err(Error::InvalidOperation(_)) => {}
-            Err(e) => error!("Failed to start library save: {}", e.log()),
+            Err(e) => res.push(e.prepend("Failed to start library save.")),
             _ => {}
         }
         if let Err(e) = self.player.save_to_default_json(closing, &self.config)
         {
-            error!("Failed to save play state: {}", e.log());
+            res.push(e.prepend("Failed to save play state."));
         }
         if let Err(e) = self.config.to_default_json() {
-            error!("Failed to save config: {}", e.log());
+            res.push(e.prepend("Failed to save config."));
         }
 
         self.last_save = Instant::now();
+        Error::multiple(res)
     }
 
     /// Deletes old logs.
@@ -320,7 +344,7 @@ impl UampApp {
                     if let Err(e) =
                         msgr.send(MsgMessage::Error(messenger::Error::new(
                             messenger::ErrorKind::DeserializeFailed,
-                            e.to_string(),
+                            e.clone_universal(),
                         )))
                     {
                         warn!("Failed to send error message: {}", e.log());
