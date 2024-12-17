@@ -201,7 +201,7 @@ impl Player {
     pub fn seek_to(&mut self, t: Duration) -> Option<Timestamp> {
         match self.inner.seek_to(t) {
             Err(e) => {
-                error!("Failed to seek: {e}");
+                error!("Failed to seek: {}", e.log());
                 None
             }
             Ok(ts) => Some(ts),
@@ -220,7 +220,7 @@ impl Player {
     ) -> Option<Timestamp> {
         match self.inner.seek_by(t, forward) {
             Err(e) => {
-                error!("Failed to seek by: {e}");
+                error!("Failed to seek by: {}", e.log());
                 None
             }
             Ok(ts) => Some(ts),
@@ -230,7 +230,7 @@ impl Player {
     /// Does hard pause without the fading (if configured).
     pub fn hard_pause(&mut self) {
         if let Err(e) = self.inner.hard_pause() {
-            warn!("Failed to hard pause: {e}");
+            warn!("Failed to hard pause: {}", e.log());
         }
     }
 
@@ -377,7 +377,7 @@ impl Player {
                 true
             }
             Err(e) => {
-                error!("Failed to load song {:?}: {e}", lib[id].path());
+                error!("Failed to load song {:?}: {}", lib[id].path(), e.log());
                 let next = self.playlist.nth_next(1);
                 if next.is_none() {
                     self.playlist_ended = true;

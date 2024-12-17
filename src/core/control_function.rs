@@ -27,9 +27,10 @@ pub struct ControlFunction {
 impl ControlFunction {
     pub fn get_msg_vec(&self, args: &[impl AsRef<str>]) -> Result<Vec<Msg>> {
         if args.len() != self.args.len() {
-            Err(Error::InvalidOperation(
-                "Invalid number of arguments to alias.",
-            ))
+            Error::invalid_operation()
+                .msg("Failed to run alias.")
+                .reason("Invalid number of arguments to alias.")
+                .err()
         } else {
             self.body
                 .iter()

@@ -21,7 +21,7 @@ impl Config {
         match Config::from_json(default_config_path().join("config.json")) {
             Ok(c) => c,
             Err(e) => {
-                error!("Failed to load config: {e}");
+                error!("Failed to load config: {}", e.log());
                 Config::default()
             }
         }
@@ -43,8 +43,9 @@ impl Config {
                 let conf = Config::new(Some(path.as_ref()));
                 if let Err(e) = conf.to_default_json() {
                     error!(
-                        "failed to save config to file {:?}: {e}",
-                        path.as_ref()
+                        "failed to save config to file {:?}: {}",
+                        path.as_ref(),
+                        e.log()
                     );
                 }
                 return Ok(conf);

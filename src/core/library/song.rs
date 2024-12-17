@@ -82,15 +82,16 @@ impl Song {
             let f = File::open(&path)?;
             let s = Symph::try_new(f, &Default::default())?;
             Ok(s.get_time()
-                .ok_or(Error::InvalidOperation("Not supported"))?
+                .ok_or(Error::unsupported())?
                 .total)
         };
 
         match res() {
             Ok(d) => s.length = d,
             Err(e) => warn!(
-                "Failed to get true duration of {:?}: {e}",
-                path.as_ref()
+                "Failed to get true duration of {:?}: {}",
+                path.as_ref(),
+                e.log()
             ),
         }
 

@@ -102,7 +102,7 @@ impl UampApp {
 
                 self.player.play_prev(&mut self.library, n.unwrap_or(1));
                 if let Err(e) = self.delete_old_logs() {
-                    error!("Failed to remove logs: {e}");
+                    error!("Failed to remove logs: {}", e.log());
                 }
             }
             ControlMsg::Close => {
@@ -146,9 +146,9 @@ impl UampApp {
                     opts,
                 ) {
                     Err(e) if matches!(e, Error::InvalidOperation(_)) => {
-                        info!("Cannot load new songs: {e}")
+                        info!("Cannot load new songs: {}", e.log())
                     }
-                    Err(e) => error!("Cannot load new songs: {e}"),
+                    Err(e) => error!("Cannot load new songs: {}", e.log()),
                     _ => {}
                 }
             }

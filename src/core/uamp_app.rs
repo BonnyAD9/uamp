@@ -90,7 +90,7 @@ impl UampApp {
             match Self::watch_config_task(sender.clone(), path.as_path()) {
                 Ok(r) => Some(r),
                 Err(e) => {
-                    error!("Failed to watch config file: {e}");
+                    error!("Failed to watch config file: {}", e.log());
                     None
                 }
             }
@@ -148,15 +148,15 @@ impl UampApp {
             &mut self.player,
         ) {
             Err(Error::InvalidOperation(_)) => {}
-            Err(e) => error!("Failed to start library save: {e}"),
+            Err(e) => error!("Failed to start library save: {}", e.log()),
             _ => {}
         }
         if let Err(e) = self.player.save_to_default_json(closing, &self.config)
         {
-            error!("Failed to save play state: {e}");
+            error!("Failed to save play state: {}", e.log());
         }
         if let Err(e) = self.config.to_default_json() {
-            error!("Failed to save config: {e}");
+            error!("Failed to save config: {}", e.log());
         }
 
         self.last_save = Instant::now();
@@ -184,7 +184,10 @@ impl UampApp {
         sender: UnboundedSender<Msg>,
     ) -> Result<()> {
         if ctrl.is_task_running(TaskType::Server) {
-            return Err(Error::InvalidOperation("Server is already running"));
+            return Error::invalid_operation()
+                .msg("Failed to start server.")
+                .reason("Server is already running.")
+                .err();
         }
 
         let listener = TcpListener::bind(format!(
@@ -207,9 +210,10 @@ impl UampApp {
         sender: UnboundedSender<Msg>,
     ) -> Result<()> {
         if ctrl.is_task_running(TaskType::Signals) {
-            return Err(Error::InvalidOperation(
-                "Signals thread is already running.",
-            ));
+            return Error::invalid_operation()
+                .msg("Failed to start signals thread.")
+                .reason("Signals thread is already running.")
+                .err()
         }
 
         let signals = signal_hook::iterator::Signals::new(
@@ -305,12 +309,13 @@ impl UampApp {
                 }
                 Ok(MsgMessage::Ping) => {
                     if let Err(e) = msgr.send(MsgMessage::Success) {
-                        error!("Failed to respond to ping: {e}");
+                        error!("Failed to respond to ping: {}", e.log());
                     }
                     continue;
                 }
                 Ok(m) => m,
-                Err(e) => {
+                Err(mut e) => {
+                    e = e.log();
                     warn!("Failed to recieve message: {e}");
                     if let Err(e) =
                         msgr.send(MsgMessage::Error(messenger::Error::new(
@@ -318,7 +323,7 @@ impl UampApp {
                             e.to_string(),
                         )))
                     {
-                        warn!("Failed to send error message: {e}");
+                        warn!("Failed to send error message: {}", e.log());
                     }
                     continue;
                 }
@@ -327,7 +332,7 @@ impl UampApp {
             let (response, msg) = Self::message_event(rec, &stream.0);
             if let Some(r) = response {
                 if let Err(e) = msgr.send(r) {
-                    warn!("Failed to send response {e}");
+                    warn!("Failed to send response {}", e.log());
                 }
             }
 

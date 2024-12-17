@@ -63,7 +63,7 @@ impl UampApp {
             Ok(Some(res)) => res,
             Ok(None) => return,
             Err(e) => {
-                error!("Failed to load new songs: {e}");
+                error!("Failed to load new songs: {}", e.log());
                 return;
             }
         };
@@ -88,7 +88,7 @@ impl UampApp {
             &mut self.player,
         ) {
             Err(Error::InvalidOperation(_)) => {}
-            Err(e) => error!("Failed to start library save: {e}"),
+            Err(e) => error!("Failed to start library save: {}", e.log()),
             _ => {}
         }
     }

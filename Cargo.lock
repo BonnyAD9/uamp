@@ -149,9 +149,9 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitflags"
-version = "2.5.0"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf4b9d6a944f767f8e5e0db018570623c85f3d925ac718db4e06d0187adb21c1"
+checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 
 [[package]]
 name = "bumpalo"
@@ -645,7 +645,7 @@ version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9389dd9c8c4671b1e4b2878a6329bccb573f9c24a75bc91c641c451ce5436501"
 dependencies = [
- "bitflags 2.5.0",
+ "bitflags 2.6.0",
  "byteorder",
  "flate2",
 ]
@@ -983,7 +983,7 @@ version = "6.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6205bd8bb1e454ad2e27422015fb5e4f2bcc7e08fa8f27058670d208324a4d2d"
 dependencies = [
- "bitflags 2.5.0",
+ "bitflags 2.6.0",
  "crossbeam-channel",
  "filetime",
  "fsevent-sys",
@@ -1150,9 +1150,9 @@ checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
 name = "pareg"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a9f395c66068de272ba6cf28ab7bef9e1c3ac0b02e5048fd01e74fdc791a281"
+checksum = "6904baadef8d6dafe05d2b3a79bfa853f3707d208464fc165de9e470f90f66ff"
 dependencies = [
  "pareg_core",
  "pareg_proc",
@@ -1160,9 +1160,9 @@ dependencies = [
 
 [[package]]
 name = "pareg_core"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7cfc1e9a23ff500fdc3933943aed35974879540eb50e09ac5a422b98cbf08420"
+checksum = "d3373424358f40511d36330a783375d83427c9b0cfcbb9d4aecfac32c6ee8863"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1173,9 +1173,9 @@ dependencies = [
 
 [[package]]
 name = "pareg_proc"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f0c3dad17dd1fb807f86af56098605522f90711ef58b6031548dc663b58875c"
+checksum = "1429dc3e79ac8f4517a9862780bf599163ce799e38d7bb65266fe0ed4cce62a7"
 dependencies = [
  "pareg_core",
 ]
@@ -1814,7 +1814,7 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3628d8021a4510166b52ea1d1124891516a078a214444d30806c1afc9234bda0"
 dependencies = [
- "bitflags 2.5.0",
+ "bitflags 2.6.0",
  "libc",
  "litrs",
  "place_macro 1.0.0",
@@ -1874,6 +1874,7 @@ version = "0.5.5"
 dependencies = [
  "anyhow",
  "audiotags",
+ "bitflags 2.6.0",
  "count-macro",
  "dirs",
  "flexi_logger",

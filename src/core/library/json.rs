@@ -37,7 +37,7 @@ impl Library {
             match serde_json::from_reader(file) {
                 Ok(l) => l,
                 Err(e) => {
-                    error!("Failed to load library: {e}");
+                    error!("Failed to parse library: {e}");
                     Library::default()
                 }
             }
@@ -65,9 +65,10 @@ impl Library {
         }
 
         if ctrl.is_task_running(TaskType::LibrarySave) {
-            return Err(Error::InvalidOperation(
-                "Library load is already in progress",
-            ));
+            return Error::invalid_operation()
+                .msg("Cannot save library.")
+                .reason("Library save is already in progress.")
+                .err();
         }
 
         if let Some(p) = conf.library_path() {
@@ -97,9 +98,10 @@ impl Library {
         opts: LoadOpts,
     ) -> Result<()> {
         if ctrl.is_task_running(TaskType::LibraryLoad) {
-            return Err(Error::InvalidOperation(
-                "Library load is already in progress",
-            ));
+            return Error::invalid_operation()
+                .msg("Cannot load library.")
+                .reason("Library load is already in progress.")
+                .err();
         }
 
         let conf = conf.clone();

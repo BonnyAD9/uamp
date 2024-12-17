@@ -19,7 +19,7 @@ mod ext;
 
 fn main() {
     if let Err(e) = start() {
-        eprintacln!("{'r}error: {'_}{e}");
+        eprintacln!("{e}");
     }
 }
 
@@ -28,7 +28,7 @@ fn start() -> Result<()> {
     if let Err(e) = start_logger() {
         eprintmcln!(
             io::stderr().is_terminal(),
-            "{'r}error: {'_}failed to start logger: {e}"
+            "{e}"
         );
     }
 

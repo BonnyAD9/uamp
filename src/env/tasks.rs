@@ -65,9 +65,10 @@ impl UniqueTasks {
     {
         let ent = self.tasks.entry(typ);
         match ent {
-            Entry::Occupied(_) => Err(Error::InvalidOperation(
-                "The task of the type {typ} is already running",
-            )),
+            Entry::Occupied(_) => Error::invalid_operation()
+                .msg(format!("Failed to start task of type `{typ:?}`."))
+                .reason(format!("The task is already running."))
+                .err(),
             Entry::Vacant(e) => {
                 let sender = self.sender.clone();
                 e.insert(thread::spawn(move || {

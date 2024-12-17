@@ -120,7 +120,7 @@ impl Instance {
             self.port.unwrap(),
         ))?;
         if let Err(e) = stream.set_read_timeout(Some(Duration::from_secs(5))) {
-            error!("failed to send message: {}", e);
+            error!("failed to send message: {e}");
         }
 
         let mut msgr = Messenger::new(&stream);

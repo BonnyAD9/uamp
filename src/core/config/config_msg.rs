@@ -43,7 +43,7 @@ impl UampApp {
                 let mut conf = match Config::from_json(path) {
                     Ok(c) => c,
                     Err(e) => {
-                        warn!("Failed to reload config: {e}");
+                        warn!("Failed to reload config: {}", e.log());
                         return vec![];
                     }
                 };
@@ -60,7 +60,7 @@ impl UampApp {
                 self.config = conf;
                 if let Some((adr, port)) = reload_server {
                     if let Err(e) = self.reload_server(ctrl, adr, port) {
-                        error!("Failed to reload server: {e}");
+                        error!("Failed to reload server: {}", e.log());
                     }
                 }
             }

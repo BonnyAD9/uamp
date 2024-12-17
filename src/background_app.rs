@@ -47,7 +47,7 @@ pub fn run_background_app(
                 Command::_AddStream(stream) => streams.add(stream),
                 Command::AddTask(typ, task) => {
                     if let Err(e) = tasks.add(typ, task) {
-                        error!("Failed to start task: {e}");
+                        error!("Failed to start task: {}", e.log());
                     }
                 }
             }

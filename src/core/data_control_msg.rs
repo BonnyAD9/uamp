@@ -46,7 +46,7 @@ impl UampApp {
         match msg {
             DataControlMsg::Alias(name) => match self.invoke_alias(&name) {
                 Ok(r) => return r,
-                Err(e) => error!("Failed to invoke alias: {e}"),
+                Err(e) => error!("Failed to invoke alias: {}", e.log()),
             },
             DataControlMsg::SetPlaylistEndAction(act) => {
                 self.player.playlist_mut().on_end = act;

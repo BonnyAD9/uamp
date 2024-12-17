@@ -16,7 +16,7 @@ impl UampApp {
         match res {
             Ok(free) => self.library.remove_free_tmp_songs(&free),
             Err(e) => {
-                error!("Failed to save library: {e}");
+                error!("Failed to save library: {}", e.log());
                 self.library.set_change(true);
             }
         }

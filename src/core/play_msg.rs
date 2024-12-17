@@ -35,7 +35,7 @@ impl UampApp {
             PlayMsg::TmpPath(path) => {
                 let id = match self.library.add_tmp_path(path.as_ref()) {
                     Err(e) => {
-                        error!("Failed to load song {path:?}: {e}");
+                        error!("Failed to load song {path:?}: {}", e.log());
                         return vec![];
                     }
                     Ok(id) => id,

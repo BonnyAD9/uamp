@@ -5,8 +5,9 @@ use log::error;
 use thiserror::Error;
 
 mod err_ctx;
+mod err_ctx_flags;
 
-pub use self::err_ctx::*;
+pub use self::{err_ctx::*, err_ctx_flags::*};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -21,15 +22,9 @@ pub enum Error {
     /// Cannot get my own name.
     #[error("{0}")]
     NoProgramName(Box<ErrCtx<&'static str>>),
-    /// Invalid value.
-    #[error("{0}")]
-    InvalidValue(&'static str),
-    /// Falied to parse to type.
-    #[error("Failed to parse to type {0}")]
-    FailedToParse(&'static str),
     /// The requested operatoin was invalid at the time.
-    #[error("Operation is invalid: {0}")]
-    InvalidOperation(&'static str),
+    #[error("{0}")]
+    InvalidOperation(Box<ErrCtx<&'static str>>),
     /// A secondary thread panicked.
     #[error("A spawned thread panicked")]
     ThreadPanicked,
@@ -78,6 +73,10 @@ macro_rules! map_ctx {
                 *$ctx = $f;
                 Error::NoProgramName($ctx)
             }
+            Error::InvalidOperation(mut $ctx) => {
+                *$ctx = $f;
+                Error::InvalidOperation($ctx)
+            }
             e => e,
         }
     };
@@ -85,13 +84,35 @@ macro_rules! map_ctx {
 
 impl Error {
     pub fn no_program_name() -> Self {
-        Self::NoProgramName(Box::new(ErrCtx::new(
-            "Cannot get path to uamp binary.",
-        )))
+        Self::NoProgramName("Cannot get path to uamp binary.".into())
+    }
+
+    pub fn invalid_operation() -> Self {
+        Self::InvalidOperation("Invalid operation.".into())
+    }
+
+    pub fn unsupported() -> Self {
+        Self::InvalidOperation("Not supported.".into())
+    }
+
+    pub fn no_color(self) -> Self {
+        map_ctx!(self, |c| c.no_color())
     }
 
     pub fn msg(self, msg: impl Into<Cow<'static, str>>) -> Self {
         map_ctx!(self, |c| c.msg(msg))
+    }
+
+    pub fn reason(self, reason: impl Into<Cow<'static, str>>) -> Self {
+        map_ctx!(self, |c| c.reason(reason))
+    }
+
+    pub fn err<T>(self) -> Result<T> {
+        Err(self)
+    }
+
+    pub fn log(self) -> Self {
+        self.no_color()
     }
 }
 

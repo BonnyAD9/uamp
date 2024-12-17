@@ -64,7 +64,7 @@ impl UampApp {
     pub fn task_end(&mut self, ctrl: &mut AppCtrl, task_res: TaskMsg) {
         match task_res {
             TaskMsg::Server(Err(e)) => {
-                error!("Server unexpectedly ended: {e}");
+                error!("Server unexpectedly ended: {}", e.log());
             }
             TaskMsg::Server(Ok(_)) => {
                 if self.config.enable_server() || self.config.force_server {
@@ -73,7 +73,7 @@ impl UampApp {
                         ctrl,
                         self.sender.clone(),
                     ) {
-                        error!("Failed to restart server: {e}");
+                        error!("Failed to restart server: {}", e.log());
                     }
                 }
             }
@@ -84,14 +84,14 @@ impl UampApp {
                 self.finish_library_save_songs(res);
             }
             TaskMsg::Signals(Err(e)) => {
-                error!("Signals task has unexpectedly ended: {e}");
+                error!("Signals task has unexpectedly ended: {}", e.log());
             }
             TaskMsg::Signals(Ok(_)) => {
                 warn!("Signals task has unexpectedly ended, restarting.");
                 if let Err(e) =
                     Self::start_signal_thread(ctrl, self.sender.clone())
                 {
-                    error!("Failed to start signals thread: {e}");
+                    error!("Failed to start signals thread: {}", e.log());
                 }
             }
         }

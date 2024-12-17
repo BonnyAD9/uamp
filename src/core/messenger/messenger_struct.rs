@@ -173,7 +173,7 @@ impl UampApp {
         };
 
         if let Err(e) = msg.send(DataResponse::Info(Box::new(info)).into()) {
-            error!("Failed to send message: {e}");
+            error!("Failed to send message: {}", e.log());
         };
 
         vec![]
@@ -211,7 +211,7 @@ impl UampApp {
         );
 
         if let Err(e) = msg.send(DataResponse::SongList(songs).into()) {
-            error!("Failed to send message: {e}");
+            error!("Failed to send message: {}", e.log());
         }
 
         vec![]
