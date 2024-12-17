@@ -2,6 +2,7 @@ use std::{any::Any, borrow::Cow, time::SystemTimeError};
 
 use flexi_logger::FlexiLoggerError;
 use log::error;
+use pareg::ColorMode;
 use thiserror::Error;
 
 mod err_ctx;
@@ -28,9 +29,6 @@ pub enum Error {
     /// A secondary thread panicked.
     #[error("{0}")]
     ThreadPanicked(Box<ErrCtx<&'static str>>),
-    /// Failed to parse integer from string.
-    #[error(transparent)]
-    IntParse(#[from] std::num::ParseIntError),
     /// Failed to parse arguments.
     #[error(transparent)]
     Pareg(#[from] pareg::ArgError),
@@ -67,7 +65,7 @@ pub enum Error {
 }
 
 macro_rules! map_ctx {
-    ($s:ident, |$ctx:ident| $f:expr) => {
+    ($s:ident, |$ctx:ident| $f:expr $(,$($p:pat => $pb:expr),* $(,)?)?) => {
         match $s {
             Error::NoProgramName(mut $ctx) => {
                 *$ctx = $f;
@@ -77,6 +75,7 @@ macro_rules! map_ctx {
                 *$ctx = $f;
                 Error::InvalidOperation($ctx)
             }
+            $($($p => $pb,)*)?
             e => e,
         }
     };
@@ -113,7 +112,12 @@ impl Error {
     }
 
     pub fn no_color(self) -> Self {
-        map_ctx!(self, |c| c.no_color())
+        map_ctx!(self, |c| c.no_color(),
+            Self::Pareg(p) => Self::Pareg(p.map_ctx(|mut c| {
+                c.color = ColorMode::Never;
+                c
+            }))
+        )
     }
 
     pub fn msg(self, msg: impl Into<Cow<'static, str>>) -> Self {
