@@ -381,9 +381,9 @@ fn print_formats_header(color: bool) {
 
 fn print_formats_help(color: bool, header: bool) {
     print_port_help(color, header);
-    print_query_help(color, false);
-    print_filter_help(color, false);
-    print_order_help(color, false);
+    print_query_help(color, true);
+    print_filter_help(color, true);
+    print_order_help(color, true);
 }
 
 fn print_port_help(color: bool, header: bool) {
@@ -402,7 +402,8 @@ fn print_port_help(color: bool, header: bool) {
         Use the debug port: 33284.
 
       {'r}release  uamp{'_}
-        Use the release port: 8267."
+        Use the release port: 8267.
+"
     );
 }
 
