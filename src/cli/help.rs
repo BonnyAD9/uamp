@@ -169,7 +169,7 @@ fn print_basic_help(color: bool) {
     Runs new instance of uamp. See `{'c}uamp {'b}h {'b}run{'_}` for more info.
 
   {'b}h  help {'gr}[help aguments] [--]{'_}
-    Shows help. With no arguments whole help, with arguments only help specific
+    Shows help. With no arguments basic help, with arguments only help specific
     to the given arguments. Possible arguments are:
     - `{'r}all  elp{'_}`                           print whole help.
     - `{'r}basic{'_}`                              print the basic help.
