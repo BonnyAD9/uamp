@@ -13,60 +13,80 @@ use super::Args;
 pub fn help(args: &mut Pareg, res: &mut Args) {
     res.should_exit = true;
 
-    if args.remaining().is_empty() {
-        help_all(res.stdout_color);
+    // TODO: Fix when updating to fixed version of pareg
+    if args.cur_remaining().is_empty() {
+        help_short(res.stdout_color);
         return;
     }
 
     help_version(res.stdout_color);
 
-    let mut show_cmsg = false;
-    let mut cmsg_shown = false;
+    let mut formats_header = false;
 
     while let Some(arg) = args.next() {
         match arg {
-            "basic" => print_basic_help(res.stdout_color),
+            "basic" => {
+                print_basic_help(res.stdout_color);
+                formats_header = false;
+            }
             "i" | "instance" => {
                 print_instance_help(res.stdout_color);
-                show_cmsg = true;
+                formats_header = false;
             }
             "run" => {
                 print_run_help(res.stdout_color);
-                show_cmsg = true;
+                formats_header = false;
             }
-            "all" | "elp" => print_help(res.stdout_color),
+            "all" | "elp" => {
+                print_help(res.stdout_color);
+                formats_header = true;
+            }
             "control-message" | "control-msg" | "cmsg" => {
                 print_control_messages_help(res.stdout_color);
-                cmsg_shown = true;
+                formats_header = false;
+            }
+            "format" | "formats" => {
+                print_formats_help(res.stdout_color, formats_header);
+                formats_header = true;
+            }
+            "port" => {
+                print_port_help(res.stdout_color, formats_header);
+                formats_header = true;
+            }
+            "query" => {
+                print_query_help(res.stdout_color, formats_header);
+                formats_header = true;
+            }
+            "filter" => {
+                print_filter_help(res.stdout_color, formats_header);
+                formats_header = true;
+            }
+            "order" => {
+                print_order_help(res.stdout_color, formats_header);
+                formats_header = true;
             }
             "--" => break,
             a => eprintacln!("{'m}warning: {'_}Invalid help option {a}"),
         }
     }
-
-    if show_cmsg && !cmsg_shown {
-        print_control_messages_help(res.stdout_color);
-    }
 }
 
-/// Prints the whole help.
-pub fn help_all(color: bool) {
+/// Prints the short help.
+pub fn help_short(color: bool) {
     help_version(color);
-    print_help(color);
+    print_basic_help(color);
 }
 
 /// Prints the help for the instance action.
 pub fn help_instance(color: bool) {
     help_version(color);
     print_instance_help(color);
-    print_control_messages_help(color);
 }
 
 /// Prints help for the run action.
 pub fn help_run(color: bool) {
     help_version(color);
     print_run_help(color);
-    print_control_messages_help(color);
 }
 
 /// Prints the help header and version.
@@ -95,6 +115,7 @@ fn print_help(color: bool) {
     print_instance_help(color);
     print_run_help(color);
     print_control_messages_help(color);
+    print_formats_help(color, false);
 }
 
 /// Prints the basic usage help
@@ -116,7 +137,7 @@ fn print_basic_help(color: bool) {
   {'y}-p  --port {'w}<port>{'_}
     Sets the port for the server comunication. If used when starting instance,
     it will disable config saves. Value may be port number or port name. See
-    {'w bold}port{'_} in {'g}formats{'_} for more info.
+    `{'c}uamp {'b}h {'w bold}port{'_}` for more info.
 
   {'y}-a  --address {'w}<address>{'_}
     Sets the server address for the comunication. If used when starting
@@ -141,21 +162,32 @@ fn print_basic_help(color: bool) {
 
 {'g}Actions:{'_}
   {'b}i  instance {'gr}[instance arguments] [--]{'_}
-    Operates on a running instance of uamp.
+    Operates on a running instance of uamp. See `{'c}uamp {'b}h {'b}i{'_}` for
+    more info.
 
   {'b}run {'gr}[run arguments] [--]{'_}
-    Runs new instance of uamp.
+    Runs new instance of uamp. See `{'c}uamp {'b}h {'b}run{'_}` for more info.
 
   {'b}h  help {'gr}[help aguments] [--]{'_}
     Shows help. With no arguments whole help, with arguments only help specific
     to the given arguments. Possible arguments are:
     - `{'r}all  elp{'_}`                           print whole help.
     - `{'r}basic{'_}`                              print the basic help.
-    - `{'r}i  instance{'_}`                        print help for
+    - `{'r}i  instance{'_}`                        print help for \
                                            {'b}instance{'_}.
     - `{'r}run{'_}`                                print help for {'b}run{'_}.
-    - `{'r}control-message  control-msg  cmsg{'_}` print help for control
-                                           messages.
+    - `{'r}control-message  control-msg  cmsg{'_}` print help for {'g}control
+                                           messages{'_}.
+    - `{'r}format  formats{'_}`                    print help for all \
+                                           {'g}formats{'_}.
+    - `{'r}port{'_}`                               print help for \
+                                           {'w bold}port{'_} format.
+    - `{'r}query{'_}`                              print help for \
+                                           {'w bold}query{'_} format.
+    - `{'r}filter{'_}`                             print help for \
+                                           {'w bold}filter{'_} format.
+    - `{'r}order{'_}`                              print help for \
+                                           {'w bold}order{'_} format.
     Note that using {'w}--{'_} without any of the help arguments will not print
     the whole help but only the help header.
 ",
@@ -176,20 +208,20 @@ fn print_instance_help(color: bool) {
 
   {'y}-p  --port {'w}<port>{'_}
     Sets the port on which is server of the instance. It may be port number or
-    port name. See {'w bold}port{'_} in {'g}formats{'_} for more info.
+    port name. See `{'c}uamp {'b}h {'w bold}port{'_}` for more info.
 
   {'y}-a  --address {'w}<address>{'_}
     Sets address of the server of the instance.
 
 {'g}Instance messages:{'_}
-  Any {'g}control message{'_} or:
+  Any {'g}control message{'_} (See `{'c}uamp {'b}h {'g}cmsg{'_}`) or:
 
   {'r}info nfo{'_}
     Shows the info about the playback of the currently runing instance.
 
   {'r}query  list  l{'gr}[={'bold}<filter>{'_bold}]{'_}
-    Print all songs that pass the filter. See {'w bold}filter{'_} in
-    {'g}formats{'_} for more info. Without value, lists all songs.
+    Print all songs that pass the filter. Without value, lists all songs. See
+    `{'c}uamp {'b}h {'w bold}filter{'_}` for more info.
 
   {'r}play p{'w}=<file path>{'_}
     Play the given file in the secondary playlist.
@@ -215,14 +247,14 @@ fn print_run_help(color: bool) {
   {'y}-p  --port {'w}<port>{'_}
     Sets the port number of server for the new instance. This will disable
     config saves for the new instance. It may be port number or port name. See
-    {'w bold}port{'_} in {'g}formats{'_} for more info.
+    `{'c}uamp {'b}h {'w bold}port{'_}` for more info.
 
   {'y}-a  --address {'w}<address>{'_}
     Sets the server address of for the new instance. Thiss will disable config
     saves for the new instance.
 
 {'g}Run messages:{'_}
-  Any {'g}control message{'_}.
+  Any {'g}control message{'_}. See `{'c}uamp {'b}h {'g}cmsg{'_}` for more info.
 ",
     )
 }
@@ -274,8 +306,8 @@ fn print_control_messages_help(color: bool) {
     that {'r}shuffle{'_} will respect the setting shuffle current.
 
   {'r}sort-playlist  sort{'w}={'bold}<order>{'_bold}{'_}
-    Sorts the songs in the current playlist. See {'w bold}order{'_} in
-    {'g}formats{'_} for more info.
+    Sorts the songs in the current playlist. See
+    `{'c}uamp {'b}h {'w bold}order{'_}` for more info.
 
   {'r}exit  close  x{'_}
     Gracefully close the instance.
@@ -293,17 +325,17 @@ fn print_control_messages_help(color: bool) {
 
   {'r}set-playlist  sp{'gr}[={'bold}<query>{'_bold}]{'_}
     Loads subset as the current playlist. Without value for {'w}filter{'_}
-    loads all songs. See {'w bold}query{'_} in {'g}formats{'_} for more info.
+    loads all songs. See `{'c}uamp {'b}h {'w bold}query{'_}` for more info.
 
   {'r}push-playlist  push{'gr}[={'bold}<query>{'_bold}]{'_}
     Push new playlist on top of the current one. Without value for
-    {'w}filter{'_} pushes all songs. See {'w bold}query{'_} in {'g}formats{'_}
+    {'w}filter{'_} pushes all songs. See `{'c}uamp {'b}h {'w bold}query{'_}`
     for more info.
 
   {'r}push-with-cur  push-cur  pc{'gr}[={'bold}<query>{'_bold}]{'_}
     Seamlessly push new playlist on top of the current one by moving the
     currently playing song to the start of the new playlist. See
-    {'w bold}filter{'_} in {'g}formats{'_} for more info.
+    `{'c}uamp {'b}h {'w bold}query{'_}` for more info.
 
   {'r}pop-playlist  pop{'_}
     Remove the secondary playlist and restore the primary playlist.
@@ -314,14 +346,12 @@ fn print_control_messages_help(color: bool) {
     default value for {'i}cnt{'_} is 1. 0 means flatten the whole stack.
 
   {'r}queue  q{'gr}[={'bold}<query>{'_bold}]{'_}
-    Adds songs to the end of the queue (current playlist). See {'w bold}filter
-    {'_}in {'g}formats{'_} for more info about selecting songs to queue.
-    Without value, queues all songs.
+    Adds songs to the end of the queue (current playlist). Without value, queues
+    all songs. See `{'c}uamp {'b}h {'w bold}port{'_}` for more info.
 
   {'r}play-next  queue-next  qn{'gr}[={'bold}<query>{'_bold}]{'_}
-    Adds songs after the currently playing in the current playlist. See
-    {'w bold}filter{'_} in {'g}formats{'_} for more info. Without value, queues
-    all songs.
+    Adds songs after the currently playing in the current playlist. Without
+    value, queues all songs. See `{'c}uamp {'b}h {'w bold}port{'_}` for more info.
 
   {'r}save{'_}
     Triggers save (but saves only if there is change).
@@ -341,9 +371,29 @@ fn print_control_messages_help(color: bool) {
     - `{'i}m  mix  mix-in{'_}` randomly mix the the songs after the currently
                        playing song.
     Without value it is the same as setting it to `{'i}none{'_}`.
+",
+    )
+}
 
-{'g}Formats:
-  {'w bold}port:{'_}
+fn print_formats_header(color: bool) {
+    printmcln!(color, "{'g}Formats:{'_}");
+}
+
+fn print_formats_help(color: bool, header: bool) {
+    print_port_help(color, header);
+    print_query_help(color, false);
+    print_filter_help(color, false);
+    print_order_help(color, false);
+}
+
+fn print_port_help(color: bool, header: bool) {
+    if !header {
+        print_formats_header(color);
+    }
+
+    printmcln!(
+        color,
+        "  {'w bold}port:{'_}
     May be port number or one of:
       {'r}-  default{'_}
         The default port for uamp (either release or debug).
@@ -352,13 +402,34 @@ fn print_control_messages_help(color: bool) {
         Use the debug port: 33284.
 
       {'r}release  uamp{'_}
-        Use the release port: 8267.
+        Use the release port: 8267."
+    );
+}
 
-  {'w bold}query:{'_}
+fn print_query_help(color: bool, header: bool) {
+    if !header {
+        print_formats_header(color);
+    }
+
+    printmcln!(
+        color,
+        "  {'w bold}query:{'_}
     Query is just combination of filter and order. It has the form:
-      {'gr}[{'bold}<filter>{'_bold}][@[{'bold}<order>{'_bold}]]
+      {'gr}[{'bold}<filter>{'_bold}][@[{'bold}<order>{'_bold}]]{'_}
 
-  {'w bold}filter:{'_}
+    See `{'c}uamp {'b}h {'w bold}filter order{'_}` for more info.
+"
+    );
+}
+
+fn print_filter_help(color: bool, header: bool) {
+    if !header {
+        print_formats_header(color);
+    }
+
+    printmcln!(
+        color,
+        "  {'w bold}filter:{'_}
     Specifies how to filter songs. These are the kinds of filters:
       {'r}any{'_}
         All songs pass this filter.
@@ -416,8 +487,18 @@ fn print_control_messages_help(color: bool) {
 
     Example filters:
       `{'i}alb:/smoke+mirrors/+alb:trench{'_}`
+"
+    );
+}
 
-  {'w bold}order:{'_}
+fn print_order_help(color: bool, header: bool) {
+    if !header {
+        print_formats_header(color);
+    }
+
+    printmcln!(
+        color,
+        "  {'w bold}order:{'_}
     Specifies how to sort songs. It has this form:
       {'gr}[<|>|/|\\|~][+|-]{'w}<ord>{'_}
 
@@ -468,6 +549,6 @@ fn print_control_messages_help(color: bool) {
 
     If the complexity of the sorting is not set, it will use the default from
     settings.
-",
-    )
+"
+    );
 }

@@ -8,6 +8,8 @@
 - Propagate errors much further.
 - Allow to reverse reverse ordering.
 - Allow empty ordering in query.
+- Split help to more categories. Don't automatically show help for related
+  categories.
 + Fix displaying of playlist position (should start from 1, not 0).
 
 ## v0.5.5

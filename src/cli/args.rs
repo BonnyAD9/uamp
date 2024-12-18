@@ -3,14 +3,14 @@ use std::io::{self, IsTerminal};
 use pareg::{has_any_key, FromArg, Pareg};
 
 use crate::{
-    cli::{help::help_version, port::Port},
+    cli::{
+        help::{help_short, help_version},
+        port::Port,
+    },
     core::{config::Config, Error, Result},
 };
 
-use super::{
-    help::{help, help_all},
-    Action, Instance, Run,
-};
+use super::{help::help, Action, Instance, Run};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -117,7 +117,7 @@ impl Args {
                 "run" => self.run(args)?,
                 "-h" | "--help" | "-?" => {
                     self.should_exit = true;
-                    help_all(self.stdout_color);
+                    help_short(self.stdout_color);
                 }
                 "--version" => {
                     self.should_exit = true;
