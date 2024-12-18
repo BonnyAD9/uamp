@@ -1,5 +1,9 @@
 # Roadmap
+- List playlist
+- TUI
+- Tag editor
 
+<!--
 ## v0.5.0
 - Artists
 - Albums
@@ -48,3 +52,4 @@
 - Languages
 - Skins (with dynamic link)
 - Templates (xml based skins)
+-->
