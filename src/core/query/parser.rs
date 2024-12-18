@@ -58,7 +58,7 @@ impl<'a> Parser<'a> {
         self.lex.state = LexerState::Order;
         self.next()?;
 
-        if matches!(self.cur()?, Some(Token::At)) {
+        if matches!(self.cur()?, Some(Token::At) | None) {
             return Ok(Query::new(filter, None));
         }
 

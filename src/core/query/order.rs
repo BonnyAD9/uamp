@@ -34,6 +34,8 @@ pub struct SongOrder {
     Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, FromArg,
 )]
 pub enum OrderField {
+    /// Don't change the order
+    Same,
     /// Just reverse.
     #[arg("rev")]
     Reverse,
@@ -90,6 +92,7 @@ impl SongOrder {
         };
 
         match self.field {
+            OrderField::Same => self.same(songs),
             OrderField::Reverse => self.reverse(songs),
             OrderField::Randomize => self.randomize(songs),
             OrderField::Path => self.path(lib, songs),
@@ -167,6 +170,7 @@ impl Display for SongOrder {
         }
 
         match self.field {
+            OrderField::Same => write!(f, "same"),
             OrderField::Reverse => write!(f, "rev"),
             OrderField::Randomize => write!(f, "rng"),
             OrderField::Path => write!(f, "path"),
@@ -201,8 +205,16 @@ impl SongOrder {
         }
     }
 
+    fn same(&self, songs: &mut [SongId]) {
+        if self.reverse {
+            songs.reverse();
+        }
+    }
+
     fn reverse(&self, songs: &mut [SongId]) {
-        songs.reverse();
+        if !self.reverse {
+            songs.reverse();
+        }
     }
 
     fn randomize(&self, songs: &mut [SongId]) {

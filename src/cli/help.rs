@@ -408,6 +408,9 @@ fn print_control_messages_help(color: bool) {
 
     The value of ord sets the parameter by which the songs are sorted. Possible
     values are:
+      {'r}same{'_}
+        Don't change the order.
+
       {'r}rev  reverse{'_}
         Reverse the songs.
 

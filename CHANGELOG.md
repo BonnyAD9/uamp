@@ -1,10 +1,13 @@
 # CHANGELOG
 
 ## future
-- Show volume in `i nfo`
-- Better errors
-- Propagate errors much further
-+ Fix displaying of playlist position (should start from 1, not 0)
++ Add ordering `same` for no ordering.
+- Show volume in `i nfo`.
+- Better errors.
+- Propagate errors much further.
+- Allow to reverse reverse ordering.
+- Allow empty ordering in query.
++ Fix displaying of playlist position (should start from 1, not 0).
 
 ## v0.5.5
 - Add new functionality to filters (and, or, brackets).
