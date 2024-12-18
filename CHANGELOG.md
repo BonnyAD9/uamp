@@ -2,6 +2,7 @@
 
 ## future
 + Add ordering `same` for no ordering.
++ Add port aliases `default`, `debug` and `release`.
 - Show volume in `i nfo`.
 - Better errors.
 - Propagate errors much further.

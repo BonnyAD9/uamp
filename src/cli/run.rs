@@ -11,7 +11,7 @@ use crate::{
     core::{config::Config, AnyControlMsg, Error, Result},
 };
 
-use super::help::help_run;
+use super::{help::help_run, port::Port};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -49,8 +49,12 @@ impl Run {
             match arg {
                 "-h" | "-?" | "--help" => help_run(color),
                 "-d" | "--detach" => self.detach = true,
-                "-p" | "--port" => self.port = args.next_arg()?,
-                "-a" | "--address" => self.server_address = args.next_arg()?,
+                "-p" | "--port" => {
+                    self.port = Some(args.next_arg::<Port>()?.0)
+                }
+                "-a" | "--address" => {
+                    self.server_address = Some(args.next_arg()?)
+                }
                 _ => self.init.push(args.cur_arg()?),
             }
         }

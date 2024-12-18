@@ -3,7 +3,7 @@ use std::io::{self, IsTerminal};
 use pareg::{has_any_key, FromArg, Pareg};
 
 use crate::{
-    cli::help::help_version,
+    cli::{help::help_version, port::Port},
     core::{config::Config, Error, Result},
 };
 
@@ -124,10 +124,10 @@ impl Args {
                     help_version(self.stdout_color);
                 }
                 "-p" | "--port" => {
-                    self.port = args.next_arg()?;
+                    self.port = Some(args.next_arg::<Port>()?.0);
                 }
                 "-a" | "--address" => {
-                    self.server_address = args.next_arg()?;
+                    self.server_address = Some(args.next_arg()?);
                 }
                 v if has_any_key!(v, '=', "--color", "--colour") => {
                     self.stdout_color =

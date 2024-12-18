@@ -40,3 +40,10 @@ pub fn default_config_path() -> PathBuf {
         PathBuf::from(".")
     }
 }
+
+pub const RELEASE_PORT: u16 = 8267;
+pub const DEBUG_PORT: u16 = 33284;
+#[cfg(not(debug_assertions))]
+pub const DEFAULT_PORT: u16 = RELEASE_PORT;
+#[cfg(debug_assertions)]
+pub const DEFAULT_PORT: u16 = DEBUG_PORT;

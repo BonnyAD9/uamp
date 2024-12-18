@@ -61,6 +61,7 @@ impl<'a> Messenger<'a> {
         rmp_serde::from_read(&mut self.reader).map_err(|e| {
             crate::core::Error::SerdeRmpDecode(e.into())
                 .msg("Failed to decode message from TCP.")
+                .hint("Are you using the same uamp version?")
         })
     }
 }

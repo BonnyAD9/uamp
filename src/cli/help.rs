@@ -15,6 +15,7 @@ pub fn help(args: &mut Pareg, res: &mut Args) {
 
     if args.remaining().is_empty() {
         help_all(res.stdout_color);
+        return;
     }
 
     help_version(res.stdout_color);
@@ -113,12 +114,13 @@ fn print_basic_help(color: bool) {
     Prints all of the help.
 
   {'y}-p  --port {'w}<port>{'_}
-    Sets the port for the server comunication. If used when starting gui, it
-    will disable config saves.
+    Sets the port for the server comunication. If used when starting instance,
+    it will disable config saves. Value may be port number or port name. See
+    {'w bold}port{'_} in {'g}formats{'_} for more info.
 
   {'y}-a  --address {'w}<address>{'_}
-    Sets the server address for the comunication. If used when starting gui, it
-    will disable config saves.
+    Sets the server address for the comunication. If used when starting
+    instance, it will disable config saves.
 
   {'y}--version{'_}
     Print the version.
@@ -173,7 +175,8 @@ fn print_instance_help(color: bool) {
     Prints the instance help.
 
   {'y}-p  --port {'w}<port>{'_}
-    Sets the port on which is server of the instance.
+    Sets the port on which is server of the instance. It may be port number or
+    port name. See {'w bold}port{'_} in {'g}formats{'_} for more info.
 
   {'y}-a  --address {'w}<address>{'_}
     Sets address of the server of the instance.
@@ -211,7 +214,8 @@ fn print_run_help(color: bool) {
 
   {'y}-p  --port {'w}<port>{'_}
     Sets the port number of server for the new instance. This will disable
-    config saves for the new instance.
+    config saves for the new instance. It may be port number or port name. See
+    {'w bold}port{'_} in {'g}formats{'_} for more info.
 
   {'y}-a  --address {'w}<address>{'_}
     Sets the server address of for the new instance. Thiss will disable config
@@ -339,6 +343,17 @@ fn print_control_messages_help(color: bool) {
     Without value it is the same as setting it to `{'i}none{'_}`.
 
 {'g}Formats:
+  {'w bold}port:{'_}
+    May be port number or one of:
+      {'r}-  default{'_}
+        The default port for uamp (either release or debug).
+
+      {'r}debug{'_}
+        Use the debug port: 33284.
+
+      {'r}release  uamp{'_}
+        Use the release port: 8267.
+
   {'w bold}query:{'_}
     Query is just combination of filter and order. It has the form:
       {'gr}[{'bold}<filter>{'_bold}][@[{'bold}<order>{'_bold}]]

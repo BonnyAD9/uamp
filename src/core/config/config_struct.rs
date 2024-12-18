@@ -7,7 +7,7 @@ use crate::{
     gen_struct,
 };
 
-use super::{default_config_path, song_pos_save::SongPosSave};
+use super::{default_config_path, song_pos_save::SongPosSave, DEFAULT_PORT};
 
 gen_struct! {
     #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -118,16 +118,7 @@ gen_struct! {
         },
 
         #[doc = "The port of the server that is used to control uamp."]
-        port: u16 { pub, pub } => pub(super) () {
-            #[cfg(not(debug_assertions))]
-            {
-                8267
-            }
-            #[cfg(debug_assertions)]
-            {
-                33284
-            }
-        },
+        port: u16 { pub, pub } => pub(super) () DEFAULT_PORT,
 
         #[doc = "Determines how old must logs be so that they are"]
         #[doc = "automatically deleted."]

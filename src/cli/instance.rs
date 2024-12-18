@@ -15,7 +15,7 @@ use crate::core::{
     Error, PlayMsg, Result,
 };
 
-use super::{help::help_instance, printer};
+use super::{help::help_instance, port::Port, printer};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -72,7 +72,9 @@ impl Instance {
                     );
                 }
                 "-h" | "-?" | "--help" => help_instance(color),
-                "-p" | "--port" => self.port = Some(args.next_arg()?),
+                "-p" | "--port" => {
+                    self.port = Some(args.next_arg::<Port>()?.0)
+                }
                 "-a" | "--address" => self.server = Some(args.next_arg()?),
                 "--" => break,
                 _ => self.messages.push(MsgMessage::Control(args.cur_arg()?)),
@@ -102,7 +104,7 @@ impl Instance {
                 Ok(MsgMessage::Data(i)) => {
                     Self::print_data(i, color, send_time);
                 }
-                Err(e) => eprintacln!("{'r}error: {'_}{e}"),
+                Err(e) => eprintacln!("{e}"),
                 Ok(MsgMessage::Error(e)) => {
                     eprintln!("{}", e.ctx);
                 }
@@ -136,8 +138,8 @@ impl Instance {
                 .hint("Is uamp server running?")
         })?;
         if let Err(e) = stream.set_read_timeout(Some(Duration::from_secs(5))) {
-            eprintln!("Failed to send message: {e}");
-            error!("Failed to send message: {e}");
+            eprintln!("Failed to set TCP timeout: {e}");
+            error!("Failed to set TCP timeout: {e}");
         }
 
         let mut msgr = Messenger::new(&stream);
