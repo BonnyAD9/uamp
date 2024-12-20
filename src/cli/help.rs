@@ -105,6 +105,14 @@ pub fn help_config(color: bool) {
     print_config_help(color);
 }
 
+pub fn help_shell(_color: bool) {
+    // TODO
+}
+
+pub fn help_internal(_color: bool) {
+    // TODO
+}
+
 /// Prints the help header and version.
 pub fn help_version(color: bool) {
     let signature: Cow<str> = if color {

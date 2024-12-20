@@ -1,4 +1,4 @@
-use super::{Instance, Run};
+use super::{internal::Internal, Instance, Run, Shell};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -13,4 +13,8 @@ pub enum Action {
     RunDetached(Run),
     /// Configuration of uamp.
     Config(super::Config),
+    /// Shell features.
+    Shell(Shell),
+    /// Internal special features.
+    Internal(Internal),
 }

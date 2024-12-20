@@ -47,6 +47,8 @@ fn start() -> Result<()> {
                 i.run_detached()?;
             }
             Action::Config(c) => c.act()?,
+            Action::Shell(s) => s.act(),
+            Action::Internal(i) => i.act()?,
         }
     }
 

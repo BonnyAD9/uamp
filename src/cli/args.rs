@@ -10,7 +10,7 @@ use crate::{
     },
 };
 
-use super::{help::help, Action, Instance, Run};
+use super::{help::help, internal::Internal, Action, Instance, Run, Shell};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -116,6 +116,8 @@ impl Args {
                 "h" | "help" => help(args, self),
                 "run" => self.run(args)?,
                 "cfg" | "conf" | "config" => self.config(args)?,
+                "sh" | "shell" => self.shell(args)?,
+                "internal" => self.internal(args)?,
                 "-h" | "--help" | "-?" => {
                     self.should_exit = true;
                     help_short(self.stdout_color);
@@ -205,6 +207,23 @@ impl Args {
             self.actions.push(Action::Config(cfg));
         }
 
+        Ok(())
+    }
+
+    fn shell(&mut self, args: &mut Pareg) -> Result<()> {
+        self.should_exit = true;
+
+        let mut sh = Shell::default();
+        sh.parse(args, self.stdout_color)?;
+        self.actions.push(Action::Shell(sh));
+        Ok(())
+    }
+
+    fn internal(&mut self, args: &mut Pareg) -> Result<()> {
+        let i = Internal::new(args, self.stdout_color)?;
+        if !matches!(i, Internal::None) {
+            self.actions.push(Action::Internal(i));
+        }
         Ok(())
     }
 }
