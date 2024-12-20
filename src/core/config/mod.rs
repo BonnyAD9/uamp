@@ -7,25 +7,29 @@ mod song_pos_save;
 //                                   Public                                  //
 //===========================================================================//
 
-use self::json::*;
 use std::path::PathBuf;
 
 pub use self::{config_msg::*, config_struct::*};
 
-/// Gets the unique app identifier, it is different when debugging.
-pub fn _app_id() -> String {
-    #[cfg(not(debug_assertions))]
-    {
-        "uamp".to_owned()
+/// Unique app identifier, it is different when debugging.
+#[cfg(not(debug_assertions))]
+pub const APP_ID: &str = "uamp";
+/// Unique app identifier, it is different when debugging.
+#[cfg(debug_assertions)]
+pub const APP_ID: &str = "uamp_debug";
+
+/// Version of uamp as string.
+pub const VERSION_STR: &str = {
+    let v = option_env!("CARGO_PKG_VERSION");
+    if let Some(v) = v {
+        v
+    } else {
+        "unknown"
     }
-    #[cfg(debug_assertions)]
-    {
-        "uamp_debug".to_owned()
-    }
-}
+};
 
 /// Gets the default path for configuration, it is different when debugging.
-pub fn default_config_path() -> PathBuf {
+pub fn default_config_dir() -> PathBuf {
     if let Some(dir) = dirs::config_dir() {
         // use different path when debugging to not ruin existing config
         #[cfg(not(debug_assertions))]
@@ -39,6 +43,11 @@ pub fn default_config_path() -> PathBuf {
     } else {
         PathBuf::from(".")
     }
+}
+
+/// Gets the default path to json configuration, it is different when debugging
+pub fn default_config_path() -> PathBuf {
+    default_config_dir().join("config.json")
 }
 
 pub const RELEASE_PORT: u16 = 8267;

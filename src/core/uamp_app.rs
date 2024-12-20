@@ -15,7 +15,7 @@ use crate::{
 };
 
 use super::{
-    config::{default_config_path, Config, ConfigMsg},
+    config::{default_config_dir, Config, ConfigMsg},
     library::Library,
     player::Player,
     ControlMsg, TaskMsg, TaskType,
@@ -188,7 +188,7 @@ impl UampApp {
 
     /// Deletes old logs.
     pub(super) fn delete_old_logs(&self) -> Result<()> {
-        let dir = fs::read_dir(default_config_path().join("log"))?;
+        let dir = fs::read_dir(default_config_dir().join("log"))?;
 
         for d in dir {
             let d = d?;

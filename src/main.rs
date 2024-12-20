@@ -46,6 +46,7 @@ fn start() -> Result<()> {
                     .or_else(|| args.server_address.to_owned());
                 i.run_detached()?;
             }
+            Action::Config(c) => c.act()?,
         }
     }
 
@@ -70,7 +71,7 @@ fn start_logger() -> Result<()> {
         })?
         .log_to_file(
             flexi_logger::FileSpec::default()
-                .directory(config::default_config_path().join("log")),
+                .directory(config::default_config_dir().join("log")),
         )
         .write_mode(flexi_logger::WriteMode::Direct)
         .start()

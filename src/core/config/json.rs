@@ -1,6 +1,7 @@
 use std::{
     fs::{self, File},
-    path::{Path, PathBuf},
+    io::Write,
+    path::Path,
 };
 
 use log::{error, info};
@@ -8,7 +9,7 @@ use serde::Serialize;
 
 use crate::core::{Error, Result};
 
-use super::{default_config_path, Config};
+use super::{default_config_dir, Config};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -18,7 +19,7 @@ impl Config {
     /// Loads config from the default json file. If the loading fails, creates
     /// default config.
     pub fn from_default_json() -> Self {
-        match Config::from_json(default_config_path().join("config.json")) {
+        match Config::from_json(default_config_dir().join("config.json")) {
             Ok(c) => c,
             Err(e) => {
                 error!("Failed to load config: {}", e.log());
@@ -68,7 +69,7 @@ impl Config {
     pub fn to_default_json(&self) -> Result<()> {
         if self.changed() {
             if let Some(p) = &self.config_path {
-                self.to_json(p)?;
+                self.to_json_file(p)?;
             }
             self.set_change(false);
         }
@@ -81,27 +82,18 @@ impl Config {
     /// - Fails to create parent directory
     /// - Fails to write to file
     /// - Fails to serialize
-    pub fn to_json(&self, path: impl AsRef<Path>) -> Result<()> {
+    pub fn to_json_file(&self, path: impl AsRef<Path>) -> Result<()> {
         if let Some(par) = path.as_ref().parent() {
             fs::create_dir_all(par)?;
         }
 
-        let formatter = serde_json::ser::PrettyFormatter::with_indent(b"    ");
-        let mut ser = serde_json::Serializer::with_formatter(
-            File::create(&path)?,
-            formatter,
-        );
-        self.serialize(&mut ser)?;
+        self.to_json(File::create(&path)?)
+    }
 
+    pub fn to_json(&self, w: impl Write) -> Result<()> {
+        let formatter = serde_json::ser::PrettyFormatter::with_indent(b"    ");
+        let mut ser = serde_json::Serializer::with_formatter(w, formatter);
+        self.serialize(&mut ser)?;
         Ok(())
     }
-}
-
-//===========================================================================//
-//                                  Private                                  //
-//===========================================================================//
-
-/// Gets the default path to json configuration, it is different when debugging
-pub(super) fn default_config_path_json() -> Option<PathBuf> {
-    Some(default_config_path().join("config.json"))
 }

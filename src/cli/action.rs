@@ -11,4 +11,6 @@ pub enum Action {
     Instance(Instance),
     /// Runs uamp as detached process.
     RunDetached(Run),
+    /// Configuration of uamp.
+    Config(super::Config),
 }

@@ -3,6 +3,8 @@ use std::borrow::Cow;
 use pareg::Pareg;
 use termal::{eprintacln, gradient, printmcln};
 
+use crate::core::config::{APP_ID, VERSION_STR};
+
 use super::Args;
 
 //===========================================================================//
@@ -35,6 +37,14 @@ pub fn help(args: &mut Pareg, res: &mut Args) {
             }
             "run" => {
                 print_run_help(res.stdout_color);
+                formats_header = false;
+            }
+            "cfg" | "conf" | "config" => {
+                print_config_help(res.stdout_color);
+                formats_header = false;
+            }
+            "h" | "help" | "-h" | "-?" | "--help" => {
+                print_help_help(res.stdout_color);
                 formats_header = false;
             }
             "all" | "elp" => {
@@ -89,9 +99,14 @@ pub fn help_run(color: bool) {
     print_run_help(color);
 }
 
+/// Print help for configuration.
+pub fn help_config(color: bool) {
+    help_version(color);
+    print_config_help(color);
+}
+
 /// Prints the help header and version.
 pub fn help_version(color: bool) {
-    let v = option_env!("CARGO_PKG_VERSION").unwrap_or("unknown");
     let signature: Cow<str> = if color {
         gradient("BonnyAD9", (250, 50, 170), (180, 50, 240)).into()
     } else {
@@ -100,9 +115,9 @@ pub fn help_version(color: bool) {
 
     printmcln!(
         color,
-        "Welcome in {'i g}uamp{'_} by {signature}{'_}
-Version {v}
-",
+        "Welcome in {'i g}{APP_ID}{'_} by {signature}{'_}
+Version {VERSION_STR}
+"
     )
 }
 
@@ -114,6 +129,8 @@ fn print_help(color: bool) {
     print_basic_help(color);
     print_instance_help(color);
     print_run_help(color);
+    print_config_help(color);
+    print_help_help(color);
     print_control_messages_help(color);
     print_formats_help(color, false);
 }
@@ -168,30 +185,61 @@ fn print_basic_help(color: bool) {
   {'b}run {'gr}[run arguments] [--]{'_}
     Runs new instance of uamp. See `{'c}uamp {'b}h {'b}run{'_}` for more info.
 
+  {'b}cfg  conf  config {'gr}[config arguments] [--]{'_}
+    Edit/show configuration.
+
   {'b}h  help {'gr}[help aguments] [--]{'_}
-    Shows help. With no arguments basic help, with arguments only help specific
-    to the given arguments. Possible arguments are:
-    - `{'r}all  elp{'_}`                           print whole help.
-    - `{'r}basic{'_}`                              print the basic help.
-    - `{'r}i  instance{'_}`                        print help for \
-                                           {'b}instance{'_}.
-    - `{'r}run{'_}`                                print help for {'b}run{'_}.
-    - `{'r}control-message  control-msg  cmsg{'_}` print help for {'g}control
-                                           messages{'_}.
-    - `{'r}format  formats{'_}`                    print help for all \
-                                           {'g}formats{'_}.
-    - `{'r}port{'_}`                               print help for \
-                                           {'w bold}port{'_} format.
-    - `{'r}query{'_}`                              print help for \
-                                           {'w bold}query{'_} format.
-    - `{'r}filter{'_}`                             print help for \
-                                           {'w bold}filter{'_} format.
-    - `{'r}order{'_}`                              print help for \
-                                           {'w bold}order{'_} format.
-    Note that using {'w}--{'_} without any of the help arguments will not print
-    the whole help but only the help header.
+    Shows help. With no arguments basic help. With arguments help for the given
+    categories. Use `{'c}uamp {'b}h h{'_}` to get more info about help \
+    categories.
 ",
     )
+}
+
+fn print_help_help(color: bool) {
+    printmcln!(
+        color,
+        "{'g}Help usage:
+  {'c}uamp {'b}h {'gr}[{'dr}categories{'gr}] [--]{'_}
+    Print help for all the given categories.
+
+  {'g}Help categories:
+    {'r}all  elp{'_}
+      Whole help.
+
+    {'r}basic{'_}
+      Basic help for general usage.
+
+    {'r}i  instance{'_}
+      Help for {'b}instance{'_} action.
+
+    {'r}run{'_}
+      Help for {'b}run{'_} action.
+
+    {'r}cfg  conf  config{'_}
+      Help for {'b}config{'_} action.
+
+    {'r}h  help  -h  -?  --help{'_}
+      Show all help categories and usage.
+
+    {'r}control-message  control-msg  cmsg{'_}
+      Help for all {'g}control messages{'_}.
+
+    {'r}format  formats{'_}
+      Help for all {'g}formats{'_}.
+
+    {'r}port{'_}
+      Help for {'w bold}port{'_} format.
+
+    {'r}query{'_}
+      Help for {'w bold}query{'_} format.
+
+    {'r}filter{'_}
+      Help for {'w bold}filter{'_} format.
+    {'r}order{'_}
+      Help for {'w bold}order{'_} format.
+",
+    );
 }
 
 /// Prints the instance help
@@ -255,6 +303,33 @@ fn print_run_help(color: bool) {
 
 {'g}Run messages:{'_}
   Any {'g}control message{'_}. See `{'c}uamp {'b}h {'g}cmsg{'_}` for more info.
+",
+    )
+}
+
+fn print_config_help(color: bool) {
+    printmcln!(
+        color,
+        "{'g}Config usage:
+  {'c}uamp {'b}conf {'gr}[--]{'_}
+    Open configuration in the default editor.
+
+  {'c}uamp {'b}conf {'gr}[{'dy}flags{'gr}] [--]{'_}
+    Runs new instance of uamp. The given messages are executed on the new
+    instance.
+
+{'g}Config flags:
+  {'y}-h  -?  --help{'_}
+    Prints the config help.
+
+  {'y}-e  --edit  --edit-file{'_}
+    Open configuration in the default editor.
+
+  {'y}-p  --print-path{'_}
+    Print path to the default config file location.
+
+  {'y}--default{'_}
+    Print the default configuration to stdout.
 ",
     )
 }

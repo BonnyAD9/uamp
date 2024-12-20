@@ -3,11 +3,11 @@ use std::io::{self, IsTerminal};
 use pareg::{has_any_key, FromArg, Pareg};
 
 use crate::{
-    cli::{
-        help::{help_short, help_version},
-        port::Port,
+    cli::{help::help_short, port::Port},
+    core::{
+        config::{Config, APP_ID, VERSION_STR},
+        Error, Result,
     },
-    core::{config::Config, Error, Result},
 };
 
 use super::{help::help, Action, Instance, Run};
@@ -115,13 +115,14 @@ impl Args {
                 "i" | "instance" => self.instance(args)?,
                 "h" | "help" => help(args, self),
                 "run" => self.run(args)?,
+                "cfg" | "conf" | "config" => self.config(args)?,
                 "-h" | "--help" | "-?" => {
                     self.should_exit = true;
                     help_short(self.stdout_color);
                 }
                 "--version" => {
                     self.should_exit = true;
-                    help_version(self.stdout_color);
+                    println!("{APP_ID} {VERSION_STR}")
                 }
                 "-p" | "--port" => {
                     self.port = Some(args.next_arg::<Port>()?.0);
@@ -146,6 +147,11 @@ impl Args {
 
                     if let Some(i) = a.strip_prefix("-R") {
                         self.run(&mut opt_iter(i))?;
+                        continue;
+                    }
+
+                    if let Some(i) = a.strip_prefix("-C") {
+                        self.config(&mut opt_iter(i))?;
                         continue;
                     }
 
@@ -184,6 +190,19 @@ impl Args {
             self.actions.push(Action::RunDetached(info));
         } else {
             self.run = Some(info)
+        }
+
+        Ok(())
+    }
+
+    fn config(&mut self, args: &mut Pareg) -> Result<()> {
+        self.should_exit = true;
+
+        let mut cfg = super::Config::default();
+        cfg.parse(args, self.stdout_color)?;
+
+        if !cfg.actions.is_empty() {
+            self.actions.push(Action::Config(cfg));
         }
 
         Ok(())

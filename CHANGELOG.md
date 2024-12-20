@@ -3,6 +3,7 @@
 ## future
 + Add ordering `same` for no ordering.
 + Add port aliases `default`, `debug` and `release`.
++ Add new actoin `config` to show and edit configuration.
 - Show volume in `i nfo`.
 - Better errors.
 - Propagate errors much further.
@@ -10,6 +11,8 @@
 - Allow empty ordering in query.
 - Split help to more categories. Don't automatically show help for related
   categories.
+- `uamp --version` now prints only the app id and version.
+- Help now prints the app id instead of just `uamp` in the welcome.
 + Fix displaying of playlist position (should start from 1, not 0).
 
 ## v0.5.5

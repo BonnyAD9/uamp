@@ -2,12 +2,12 @@ use serde::{Deserialize, Serialize};
 use std::{cell::Cell, collections::HashMap, path::PathBuf, time::Duration};
 
 use crate::{
-    core::{config::default_config_path_json, Alias, ControlFunction},
+    core::{Alias, ControlFunction},
     ext::Wrap,
     gen_struct,
 };
 
-use super::{default_config_path, song_pos_save::SongPosSave, DEFAULT_PORT};
+use super::{default_config_dir, song_pos_save::SongPosSave, DEFAULT_PORT};
 
 gen_struct! {
     #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -29,12 +29,12 @@ gen_struct! {
 
         #[doc = "Path to library data file."]
         library_path: Option<PathBuf> { pub, pub } => pub(super) () {
-            Some(default_config_path().join("library.json"))
+            Some(default_config_dir().join("library.json"))
         },
 
         #[doc = "Path to player data file."]
         player_path: Option<PathBuf> { pub, pub } => pub(super) () {
-            Some(default_config_path().join("player.json"))
+            Some(default_config_dir().join("player.json"))
         },
 
         #[doc = "File extensions that will be used to recognize audio files."]
@@ -202,6 +202,10 @@ impl Config {
 
 impl Default for Config {
     fn default() -> Self {
-        Config::new(Some(default_config_path()))
+        Config::new(Some(default_config_dir()))
     }
+}
+
+fn default_config_path_json() -> Option<PathBuf> {
+    Some(default_config_dir().join("config.json"))
 }

@@ -11,6 +11,7 @@ audiotags = "0.4.1"
 bitflags = { version = "2.6.0", features = [ "serde" ]}
 count-macro = "0.2.2"
 dirs = "5.0.1"
+edit = { version = "0.1.5", features = [ "quoted-env" ]}
 flexi_logger = "0.28.0"
 futures = "0.3.30"
 itertools = "0.11.0"
