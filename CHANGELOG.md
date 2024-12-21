@@ -3,7 +3,9 @@
 ## future
 + Add ordering `same` for no ordering.
 + Add port aliases `default`, `debug` and `release`.
-+ Add new actoin `config` to show and edit configuration.
++ Add new action `config` to show and edit configuration.
++ Add new actions for shell features.
++ Add tab completion. Can be enabled with `` `uamp sh tab` ``.
 - Show volume in `i nfo`.
 - Better errors.
 - Propagate errors much further.
