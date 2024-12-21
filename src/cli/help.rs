@@ -43,6 +43,14 @@ pub fn help(args: &mut Pareg, res: &mut Args) {
                 print_config_help(res.stdout_color);
                 formats_header = false;
             }
+            "sh" | "shell" => {
+                print_shell_help(res.stdout_color);
+                formats_header = false;
+            }
+            "internal" => {
+                print_internal_help(res.stdout_color);
+                formats_header = false;
+            }
             "h" | "help" | "-h" | "-?" | "--help" => {
                 print_help_help(res.stdout_color);
                 formats_header = false;
@@ -105,12 +113,14 @@ pub fn help_config(color: bool) {
     print_config_help(color);
 }
 
-pub fn help_shell(_color: bool) {
-    // TODO
+pub fn help_shell(color: bool) {
+    help_version(color);
+    print_shell_help(color);
 }
 
-pub fn help_internal(_color: bool) {
-    // TODO
+pub fn help_internal(color: bool) {
+    help_version(color);
+    print_internal_help(color);
 }
 
 /// Prints the help header and version.
@@ -138,6 +148,8 @@ fn print_help(color: bool) {
     print_instance_help(color);
     print_run_help(color);
     print_config_help(color);
+    print_shell_help(color);
+    print_internal_help(color);
     print_help_help(color);
     print_control_messages_help(color);
     print_formats_help(color, false);
@@ -196,6 +208,12 @@ fn print_basic_help(color: bool) {
   {'b}cfg  conf  config {'gr}[config arguments] [--]{'_}
     Edit/show configuration.
 
+  {'b}sh  shell {'gr}[shell arguments] [--]{'_}
+    Uamp integration with shell (e.g. custom tab completion).
+
+  {'b}internal {'gr}[internal arguments]{'_}
+    Used internally by uamp, but nothing will stop you from using it.
+
   {'b}h  help {'gr}[help aguments] [--]{'_}
     Shows help. With no arguments basic help. With arguments help for the given
     categories. Use `{'c}uamp {'b}h h{'_}` to get more info about help \
@@ -226,6 +244,12 @@ fn print_help_help(color: bool) {
 
     {'r}cfg  conf  config{'_}
       Help for {'b}config{'_} action.
+
+    {'r}sh  shell{'_}
+      Help for {'b}shell{'_} action.
+
+    {'r}internal{'_}
+      Help for internal actions.
 
     {'r}h  help  -h  -?  --help{'_}
       Show all help categories and usage.
@@ -338,6 +362,41 @@ fn print_config_help(color: bool) {
 
   {'y}--default{'_}
     Print the default configuration to stdout.
+",
+    )
+}
+
+fn print_shell_help(color: bool) {
+    printmcln!(
+        color,
+        "{'g}Shell usage:
+  {'c}uamp {'b}sh {'gr}[{'dy}flags{'gr}] [{'dr}integrations{'gr}] [--]{'_}
+    Get shell integrations.
+
+{'g}Shell flags:
+  {'y}-h  -?  --help{'_}
+    Prints the shell help.
+
+  {'y}-s  --script{'_}
+    Print the long script instead of short script runner.
+
+{'g}Shell integrations:
+  {'r}tab  tab-completion{'_}
+    Custom tab completion for uamp.
+",
+    )
+}
+
+fn print_internal_help(color: bool) {
+    printmcln!(
+        color,
+        "{'g}Internal usage:
+  {'c}uamp {'b}internal {'w}({'y}-h{'_}|{'y}-?{'_}|{'y}--help{'w}){'_}
+    Show internal help.
+
+  {'c}uamp {'b}internal {'r}tab-complete {'w}<arg-idx> <uamp-bin> \
+           {'gr}[uamp args]{'_}
+    Get uamp tab completion for the given arguments.
 ",
     )
 }

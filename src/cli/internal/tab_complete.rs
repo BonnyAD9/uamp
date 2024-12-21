@@ -36,6 +36,8 @@ impl TabComplete {
         while let Some(arg) = args.next() {
             if i == idx {
                 cur = arg.into();
+                // TODO: Fix when updating pareg
+                while args.next().is_some() {}
                 break;
             }
 
@@ -150,6 +152,8 @@ const HELP_ARG: &[&[&str]] = &[
     &["instance", "i"],
     &["run"],
     &["conf", "config", "cfg"],
+    &["sh", "shell"],
+    &["internal"],
     &["help", "h", "-h", "-?", "--help"],
     &["all", "elp"],
     &["control-msg", "control-message", "cmsg"],
