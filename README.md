@@ -104,6 +104,14 @@ the playlist ends it will reshuffle the playlist and start from the start.
 When you will load new songs, they will also be automatically mixed in the
 playlist after the currently playing song.
 
+### Custom tab complete
+Uamp can also provide custom tab completion for any bash like shell (works in
+zsh). To do that add this to your `.bashrc`/`.zshrc`/...:
+```sh
+`uamp sh tab`
+```
+And that is it. Uamp will now have custom tab completion.
+
 ## How to get it
 To use the player you have to compile it yourself, but that shouldn't be any
 problem because all you need is `cargo`:
