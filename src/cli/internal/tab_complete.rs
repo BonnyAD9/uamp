@@ -29,14 +29,14 @@ impl TabComplete {
 
         let mut i = 0;
         let mut mode = TabMode::None;
-        // TODO: Fix when updating pareg
+        // FIXME: Fix when updating pareg
         let mut cur = String::new();
         args.next();
 
         while let Some(arg) = args.next() {
             if i == idx {
                 cur = arg.into();
-                // TODO: Fix when updating pareg
+                // FIXME: Fix when updating pareg
                 while args.next().is_some() {}
                 break;
             }

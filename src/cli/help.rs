@@ -15,7 +15,7 @@ use super::Args;
 pub fn help(args: &mut Pareg, res: &mut Args) {
     res.should_exit = true;
 
-    // TODO: Fix when updating to fixed version of pareg
+    // FIXME: Fix when updating to fixed version of pareg
     if args.cur_remaining().is_empty() {
         help_short(res.stdout_color);
         return;
