@@ -60,10 +60,10 @@ impl Shell {
             .unwrap_or_else(|| "uamp".to_owned());
 
         if self.script {
-            println!("uamp='{uamp_path}'");
-            println!("{SCRIPT}");
+            println!("__uamp_path='{uamp_path}'");
+            print!("{SCRIPT}");
         } else {
-            println!("eval '{uamp_path}' sh -s tab | . /dev/stdin");
+            print!("eval __uamp_path='{uamp_path}'; {SCRIPT}");
         }
     }
 }
