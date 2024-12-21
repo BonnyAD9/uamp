@@ -1,9 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
-use pareg::{
-    has_any_key, mval_arg, starts_any, val_arg, ArgErrCtx, ArgError,
-    FromArgStr,
-};
+use pareg::{has_any_key, mval_arg, val_arg, ArgErrCtx, ArgError, FromArgStr};
 use serde::{Deserialize, Serialize};
 
 use crate::env::AppCtrl;
@@ -106,7 +103,7 @@ impl FromStr for DataControlMsg {
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s {
-            v if starts_any!(v, "al", "alias") => {
+            v if has_any_key!(v, '=', "al", "alias") => {
                 Ok(DataControlMsg::Alias(val_arg(v, '=')?))
             }
             v if has_any_key!(

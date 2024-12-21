@@ -25,7 +25,7 @@ impl Internal {
                 help_internal(color);
                 Ok(Self::None)
             }
-            "tab-complete" => Ok(Self::TabComplete(TabComplete::new()?)),
+            "tab-complete" => Ok(Self::TabComplete(TabComplete::new(args)?)),
             _ => args.err_unknown_argument().err()?,
         }
     }

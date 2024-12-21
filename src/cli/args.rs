@@ -220,6 +220,8 @@ impl Args {
     }
 
     fn internal(&mut self, args: &mut Pareg) -> Result<()> {
+        self.should_exit = true;
+
         let i = Internal::new(args, self.stdout_color)?;
         if !matches!(i, Internal::None) {
             self.actions.push(Action::Internal(i));

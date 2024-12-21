@@ -7,8 +7,7 @@ use std::{
 
 use log::info;
 use pareg::{
-    has_any_key, mval_arg, starts_any, val_arg, ArgErrCtx, ArgError, FromArg,
-    FromArgStr,
+    has_any_key, mval_arg, val_arg, ArgErrCtx, ArgError, FromArg, FromArgStr,
 };
 use serde::{Deserialize, Serialize};
 
@@ -275,7 +274,7 @@ impl FromStr for ControlMsg {
                     mval_arg(v, '=')?.unwrap_or_default(),
                 ))
             }
-            v if starts_any!(v, "volume=", "vol=", "v=") => {
+            v if has_any_key!(v, '=', "volume", "vol", "v") => {
                 let vol = val_arg(v, '=')?;
                 if !(0.0..=1.).contains(&vol) {
                     return ArgError::parse_msg(
@@ -298,7 +297,7 @@ impl FromStr for ControlMsg {
             }
             "shuffle-playlist" | "shuffle" => Ok(ControlMsg::Shuffle),
             "exit" | "close" | "x" => Ok(ControlMsg::Close),
-            v if starts_any!(v, "seek-to=", "seek=") => {
+            v if has_any_key!(v, '=', "seek-to", "seek") => {
                 Ok(ControlMsg::SeekTo(val_arg::<Wrap<Duration>>(v, '=')?.0))
             }
             v if has_any_key!(v, '=', "fast-forward", "ff") => {
@@ -311,7 +310,7 @@ impl FromStr for ControlMsg {
                     mval_arg::<Wrap<Duration>>(v, '=')?.map(|a| a.0),
                 ))
             }
-            v if starts_any!(v, "sort-playlist", "sort") => {
+            v if has_any_key!(v, '=', "sort-playlist", "sort") => {
                 Ok(ControlMsg::SortPlaylist(val_arg(v, '=')?))
             }
             "pop" | "pop-playlist" => Ok(ControlMsg::PopPlaylist),
