@@ -296,8 +296,11 @@ fn print_instance_help(color: bool) {
 {'g}Instance messages:{'_}
   Any {'g}control message{'_} (See `{'c}uamp {'b}h {'g}cmsg{'_}`) or:
 
-  {'r}info nfo{'_}
+  {'r}info nfo{'gr}[=[-<before>]..[<after>]]{'_}
     Shows the info about the playback of the currently runing instance.
+    {'w}before{'_} and {'w}after{'_} tells the number of songs to show in the
+    current playlist before the current song and after the current song
+    respectively. This is by default `{'i w}-1..3{'_}`.
 
   {'r}query  list  l{'gr}[={'bold}<filter>{'_bold}]{'_}
     Print all songs that pass the filter. Without value, lists all songs. See

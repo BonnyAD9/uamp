@@ -4,6 +4,7 @@ mod config;
 mod help;
 mod instance;
 mod internal;
+mod playlist_range;
 mod port;
 mod printer;
 mod run;

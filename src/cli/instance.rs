@@ -15,7 +15,9 @@ use crate::core::{
     Error, PlayMsg, Result,
 };
 
-use super::{help::help_instance, port::Port, printer};
+use super::{
+    help::help_instance, playlist_range::PlaylistRange, port::Port, printer,
+};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -44,8 +46,11 @@ impl Instance {
     ) -> Result<()> {
         while let Some(arg) = args.next() {
             match arg {
-                "info" | "nfo" => {
-                    self.messages.push(Request::Info(1, 3).into())
+                v if has_any_key!(v, '=', "info", "nfo") => {
+                    let s = args
+                        .cur_mval::<PlaylistRange>('=')?
+                        .unwrap_or(PlaylistRange(1, 3));
+                    self.messages.push(Request::Info(s.0, s.1).into())
                 }
                 v if has_any_key!(v, '=', "p", "play") => {
                     self.messages.push(
