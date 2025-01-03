@@ -3,6 +3,9 @@
 - TUI
 - Tag editor
 
+# Known issues
+- First temporary song never plays.
+
 <!--
 ## v0.5.0
 - Artists
