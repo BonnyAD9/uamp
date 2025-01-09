@@ -218,6 +218,8 @@ fn print_basic_help(color: bool) {
     Shows help. With no arguments basic help. With arguments help for the given
     categories. Use `{'c}uamp {'b}h h{'_}` to get more info about help \
     categories.
+
+    Use `{'c}uamp {'b}h {'r}all{'_}` to show the whole help.
 ",
     )
 }

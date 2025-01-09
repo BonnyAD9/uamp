@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## future
+- Hint showing whole help.
+
 ## v0.5.6
 + Add ordering `same` for no ordering.
 + Add port aliases `default`, `debug` and `release`.
