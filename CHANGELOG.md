@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.5.6
 + Add ordering `same` for no ordering.
 + Add port aliases `default`, `debug` and `release`.
 + Add new action `config` to show and edit configuration.
