@@ -61,6 +61,11 @@ impl TaskType {
             }
         }
     }
+
+    /// Checks if uamp should wait for the task to finish before exiting.
+    pub fn wait_before_exit(&self) -> bool {
+        !matches!(self, Self::Server | Self::Signals)
+    }
 }
 
 impl UampApp {

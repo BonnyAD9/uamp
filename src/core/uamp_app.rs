@@ -1,7 +1,7 @@
 use std::{fs, net::TcpListener, path::Path, process, time::Instant};
 
 use futures::{channel::mpsc::UnboundedSender, StreamExt};
-use log::{error, warn};
+use log::{error, trace, warn};
 use notify::{INotifyWatcher, Watcher};
 use signal_hook_async_std::Signals;
 
@@ -129,6 +129,10 @@ impl UampApp {
         ctrl: &mut AppCtrl,
         message: Msg,
     ) -> Result<()> {
+        trace!("{message:?}");
+        #[cfg(debug_assertions)]
+        dbg!(&message);
+
         let mut msgs = self.msg_event(ctrl, message)?;
         if msgs.len() == 1 {
             return self.update_err(ctrl, msgs.pop().unwrap());
@@ -144,7 +148,7 @@ impl UampApp {
             }
         }
 
-        if self.pending_close && !ctrl.any_task(|t| t != TaskType::Server) {
+        if self.pending_close && !ctrl.any_task(|t| t.wait_before_exit()) {
             self.pending_close = false;
             return self.update_err(ctrl, Msg::Control(ControlMsg::Close));
         }

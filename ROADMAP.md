@@ -11,3 +11,4 @@
 
 # Known issues
 - First temporary song never plays.
+- Library requests save when temporary song is added.

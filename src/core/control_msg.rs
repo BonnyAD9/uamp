@@ -18,7 +18,7 @@ use crate::{
 
 use super::{
     library::LoadOpts, player::AddPolicy, query::SongOrder, Error, Msg,
-    Result, TaskType, UampApp,
+    Result, UampApp,
 };
 
 //===========================================================================//
@@ -105,9 +105,7 @@ impl UampApp {
             }
             ControlMsg::Close => {
                 let r = self.save_all(true, ctrl).map(|_| vec![]);
-                if ctrl.any_task(|t| {
-                    t != TaskType::Server && t != TaskType::Signals
-                }) {
+                if ctrl.any_task(|t| t.wait_before_exit()) {
                     self.pending_close = true;
                     return r;
                 }

@@ -41,7 +41,7 @@ pub fn run_background_app(
         for cmd in cmd_queue.drain(..) {
             trace!("{cmd:?}");
             #[cfg(debug_assertions)]
-            println!("{cmd:?}");
+            dbg!(&cmd);
             match cmd {
                 Command::Exit => break 'mainloop Ok(()),
                 Command::_AddStream(stream) => streams.add(stream),
@@ -55,14 +55,10 @@ pub fn run_background_app(
 
         let msg = streams.wait_one();
 
-        trace!("{msg:?}");
-        #[cfg(debug_assertions)]
-        println!("{msg:?}");
-
         for res in tasks.check() {
             trace!("{res:?}");
             #[cfg(debug_assertions)]
-            println!("{res:?}");
+            dbg!(&res);
             app.task_end(&mut AppCtrl::new(&mut cmd_queue, &tasks), res);
         }
 

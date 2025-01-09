@@ -18,6 +18,7 @@
 - Allow to specify length of playlist to show for `i nfo`.
 + Fix displaying of playlist position (should start from 1, not 0).
 + Fix occasional panic when mixing new songs to playlist.
++ Fix issue when uamp wouldn't exit when save is due.
 
 ## v0.5.5
 - Add new functionality to filters (and, or, brackets).
