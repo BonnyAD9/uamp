@@ -1,47 +1,62 @@
+use std::io::{self, IsTerminal};
+
+use pareg::{has_any_key, FromArg, Pareg};
+
 use crate::{
-    config::Config,
-    core::messenger::{msg::Request, MsgMessage},
-    next,
+    cli::{help::help_short, port::Port},
+    core::{
+        config::{Config, APP_ID, VERSION_STR},
+        Error, Result,
+    },
 };
 
-use super::{
-    err::{Error, Result},
-    help::help,
-    parsers::parse_control_message,
-    Action,
-};
-
-/// Contains the CLI arguments values
-#[derive(Default)]
-pub struct Args {
-    /// Actions to do
-    pub actions: Vec<Action>,
-
-    pub port: Option<u16>,
-    pub server_address: Option<String>,
-
-    /// The gui should not run, unless `must_run` is set to `true`
-    pub should_exit: bool,
-    /// The gui should run in all cases if this is `true`
-    pub must_run: bool,
-}
+use super::{help::help, internal::Internal, Action, Instance, Run, Shell};
 
 //===========================================================================//
 //                                   Public                                  //
 //===========================================================================//
 
-impl Args {
-    /// Parses the CLI arguments and returns the parsed arguments
-    pub fn parse<'a>(args: impl Iterator<Item = &'a str>) -> Result<Self> {
-        let mut res = Args::default();
+/// Contains the CLI arguments values.
+#[derive(Debug)]
+pub struct Args {
+    /// Actions to do.
+    pub actions: Vec<Action>,
 
-        let mut args = args.skip(1);
+    /// Port for the server.
+    pub port: Option<u16>,
+    /// Address of the server.
+    pub server_address: Option<String>,
+
+    /// The mailoop should not run, unless `must_run` is set to `true`.
+    pub should_exit: bool,
+    /// The mainloop should run in all cases if this is `true`.
+    pub run: Option<Run>,
+
+    /// Determines whether color should be used in standard output.
+    pub stdout_color: bool,
+}
+
+impl Args {
+    /// Parses the arguments.
+    ///
+    /// # Returns
+    /// The parsed arguments.
+    ///
+    /// # Errors
+    /// - The arguments are invalid.
+    pub fn parse(mut args: Pareg) -> Result<Self> {
+        let mut res = Args::default();
 
         res.top_level(&mut args)?;
 
         Ok(res)
     }
 
+    /// Loads config based on the arguments.
+    ///
+    /// # Returns
+    /// New configuration readed from the default file and modified by the
+    /// values in the arguments.
     pub fn make_config(&self) -> Config {
         let mut res = Config::from_default_json();
 
@@ -60,53 +75,167 @@ impl Args {
     }
 }
 
+impl Default for Args {
+    fn default() -> Self {
+        Self {
+            actions: vec![],
+            port: None,
+            server_address: None,
+            should_exit: false,
+            run: None,
+            stdout_color: io::stdout().is_terminal(),
+        }
+    }
+}
+
 //===========================================================================//
 //                                  Private                                  //
 //===========================================================================//
 
-impl Args {
-    /// Parses the instance action arguments
-    fn instance<'a>(
-        &mut self,
-        args: &mut impl Iterator<Item = &'a str>,
-    ) -> Result<()> {
-        self.should_exit = true;
-        let a = next!(args);
+#[derive(Copy, Clone, Eq, PartialEq, FromArg, Default)]
+enum EnableColor {
+    #[default]
+    Auto,
+    Always,
+    Never,
+}
 
-        match a {
-            "info" => self
-                .actions
-                .push(Action::Message(MsgMessage::Request(Request::Info))),
-            "--" => {
-                return Err(Error::UnexpectedEnd(Some("instance".to_owned())))
+impl Args {
+    fn top_level(&mut self, args: &mut Pareg) -> Result<()> {
+        fn opt_iter(arg: &str) -> Pareg {
+            if arg.is_empty() {
+                vec![].into()
+            } else {
+                vec![arg.to_string()].into()
             }
-            _ => {
-                let msg = parse_control_message(a)?;
-                self.actions.push(Action::control(msg));
+        }
+
+        while let Some(a) = args.next() {
+            match a {
+                "i" | "instance" => self.instance(args)?,
+                "h" | "help" => help(args, self),
+                "run" => self.run(args)?,
+                "cfg" | "conf" | "config" => self.config(args)?,
+                "sh" | "shell" => self.shell(args)?,
+                "internal" => self.internal(args)?,
+                "-h" | "--help" | "-?" => {
+                    self.should_exit = true;
+                    help_short(self.stdout_color);
+                }
+                "--version" => {
+                    self.should_exit = true;
+                    println!("{APP_ID} {VERSION_STR}")
+                }
+                "-p" | "--port" => {
+                    self.port = Some(args.next_arg::<Port>()?.0);
+                }
+                "-a" | "--address" => {
+                    self.server_address = Some(args.next_arg()?);
+                }
+                v if has_any_key!(v, '=', "--color", "--colour") => {
+                    self.stdout_color =
+                        args.cur_val_or_next::<EnableColor>('=')?.into();
+                }
+                "--" => {}
+                a => {
+                    if let Some(i) = a.strip_prefix("-I") {
+                        if let Err(Error::Pareg(e)) =
+                            self.instance(&mut opt_iter(i))
+                        {
+                            args.map_err(Err(e))?;
+                        }
+                        continue;
+                    }
+
+                    if let Some(i) = a.strip_prefix("-R") {
+                        self.run(&mut opt_iter(i))?;
+                        continue;
+                    }
+
+                    if let Some(i) = a.strip_prefix("-C") {
+                        self.config(&mut opt_iter(i))?;
+                        continue;
+                    }
+
+                    if let Some(i) = a.strip_prefix("-H") {
+                        help(&mut opt_iter(i), self);
+                        continue;
+                    }
+
+                    return args.err_unknown_argument().err()?;
+                }
             }
         }
 
         Ok(())
     }
 
-    fn top_level<'a>(
-        &mut self,
-        args: &mut impl Iterator<Item = &'a str>,
-    ) -> Result<()> {
-        while let Some(a) = args.next() {
-            match a {
-                "i" | "instance" => self.instance(args)?,
-                "h" | "help" | "-h" | "--help" | "-?" => help(args, self)?,
-                "-p" | "--port" => {
-                    self.port = Some(next!(u16, args, Some(a.to_owned())))
-                }
-                "-a" | "--address" => {
-                    self.server_address = Some(next!(args).to_owned())
-                }
-                a => return Err(Error::UnknownArgument(Some(a.to_owned()))),
-            }
+    fn instance(&mut self, args: &mut Pareg) -> Result<()> {
+        self.should_exit = true;
+
+        let mut instance = Instance::default();
+        instance.parse(args, self.stdout_color)?;
+
+        if !instance.messages.is_empty() {
+            self.actions.push(Action::Instance(instance));
         }
 
         Ok(())
+    }
+
+    fn run(&mut self, args: &mut Pareg) -> Result<()> {
+        let mut info = Run::default();
+        info.parse(args, self.stdout_color)?;
+
+        if info.detach {
+            self.should_exit = true;
+            self.actions.push(Action::RunDetached(info));
+        } else {
+            self.run = Some(info)
+        }
+
+        Ok(())
+    }
+
+    fn config(&mut self, args: &mut Pareg) -> Result<()> {
+        self.should_exit = true;
+
+        let mut cfg = super::Config::default();
+        cfg.parse(args, self.stdout_color)?;
+
+        if !cfg.actions.is_empty() {
+            self.actions.push(Action::Config(cfg));
+        }
+
+        Ok(())
+    }
+
+    fn shell(&mut self, args: &mut Pareg) -> Result<()> {
+        self.should_exit = true;
+
+        let mut sh = Shell::default();
+        sh.parse(args, self.stdout_color)?;
+        self.actions.push(Action::Shell(sh));
+        Ok(())
+    }
+
+    fn internal(&mut self, args: &mut Pareg) -> Result<()> {
+        self.should_exit = true;
+
+        let i = Internal::new(args, self.stdout_color)?;
+        if !matches!(i, Internal::None) {
+            self.actions.push(Action::Internal(i));
+        }
+        Ok(())
+    }
+}
+
+impl From<EnableColor> for bool {
+    fn from(value: EnableColor) -> Self {
+        match value {
+            EnableColor::Auto => io::stdout().is_terminal(),
+            EnableColor::Always => true,
+            EnableColor::Never => false,
+        }
     }
 }

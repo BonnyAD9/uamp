@@ -1,22 +1,17 @@
 mod action;
 mod args;
-mod err;
+mod config;
 mod help;
-mod macros;
-mod parsers;
+mod instance;
+mod internal;
+mod playlist_range;
+mod port;
+mod printer;
+mod run;
+mod shell;
 
-pub use self::{
-    action::*,
-    args::*,
-    err::{Error as CliError, Result as CliResult},
-};
-pub use args::*;
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
 
-///! Contains tools for the cli, mostly parsing
-
-/// Contains auto generated parsing functions
-pub mod parse {
-    /// Parses single argument to control message (e.g. if the arguments were
-    /// `uamp i pp=play`, this would be able to parse only the `pp=play`)
-    pub use super::parsers::parse_control_message;
-}
+pub use self::{action::*, args::*, config::*, instance::*, run::*, shell::*};

@@ -1,6 +1,6 @@
 [package]
 name = "uamp"
-version = "0.4.0"
+version = "0.5.5"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -8,23 +8,28 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.75"
 audiotags = "0.4.1"
+bitflags = { version = "2.6.0", features = [ "serde" ]}
 count-macro = "0.2.2"
 dirs = "5.0.1"
-flexi_logger = "0.25.5"
-global-hotkey = "0.2.3"
-iced = { version = "0.10.0", features = [ "svg", "image" ] }
-iced_core = "0.10"
-image = "0.24.7"
+edit = { version = "0.1.5", features = [ "quoted-env" ]}
+flexi_logger = "0.28.0"
+futures = "0.3.30"
 itertools = "0.11.0"
 log = "0.4.19"
+notify = "6.1.1"
+pareg ="0.6.1"
+# pareg = { path = "../pareg" }
 place_macro = "0.2.0"
 rand = "0.8.5"
-raplay = "0.3.4"
+raplay = "0.3.5"
 # raplay = { path = "../raplay" }
 rmp-serde = "1.1.2"
 serde = "1.0.163"
 serde_derive = "1.0.163"
 serde_json = "1.0.96"
-termal = "0.1.0"
+shell-words = "1.1.0"
+signal-hook = "0.3.17"
+signal-hook-async-std = "0.2.2"
+termal = "1.1.0"
 thiserror = "1.0.47"
-tokio = { version = "1.29.1", features = ["sync"]}
+unidecode = "0.3.0"

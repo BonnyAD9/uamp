@@ -1,14 +1,20 @@
-use crate::core::{messenger::msg, msg::ControlMsg};
+use super::{internal::Internal, Instance, Run, Shell};
 
-/// Action that can be done with cli
+//===========================================================================//
+//                                   Public                                  //
+//===========================================================================//
+
+#[derive(Debug)]
+/// Action that can be done with cli.
 pub enum Action {
-    /// Sends the given message
-    Message(msg::Message),
-}
-
-impl Action {
-    /// Creates control message
-    pub fn control(msg: ControlMsg) -> Self {
-        Self::Message(msg::Message::Control(msg))
-    }
+    /// Sends the given messages to a running instance.
+    Instance(Instance),
+    /// Runs uamp as detached process.
+    RunDetached(Run),
+    /// Configuration of uamp.
+    Config(super::Config),
+    /// Shell features.
+    Shell(Shell),
+    /// Internal special features.
+    Internal(Internal),
 }

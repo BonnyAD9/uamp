@@ -1,5 +1,84 @@
 # CHANGELOG
 
+## future
++ Add ordering `same` for no ordering.
++ Add port aliases `default`, `debug` and `release`.
++ Add new action `config` to show and edit configuration.
++ Add new actions for shell features.
++ Add tab completion. Can be enabled with `` `uamp sh tab` ``.
+- Show volume in `i nfo`.
+- Better errors.
+- Propagate errors much further.
+- Allow to reverse reverse ordering.
+- Allow empty ordering in query.
+- Split help to more categories. Don't automatically show help for related
+  categories.
+- `uamp --version` now prints only the app id and version.
+- Help now prints the app id instead of just `uamp` in the welcome.
+- Allow to specify length of playlist to show for `i nfo`.
++ Fix displaying of playlist position (should start from 1, not 0).
++ Fix occasional panic when mixing new songs to playlist.
++ Fix issue when uamp wouldn't exit when save is due.
++ Fix issue when some temporary songs might not play.
+
+## v0.5.5
+- Add new functionality to filters (and, or, brackets).
+- Add shorter aliases for sorting and filtering.
+- Add option to sort songs as part of query
+- Add terminal friendly alternatives for descending order.
+- Aliases can have arguments.
+- Print portion of playlist with `i nfo`
+- Print more information about playlist with `i nfo`
+- Fix bug where playlist would panic when removing deleted songs.
+
+## v0.5.4
+- Add option to enable/disable color in terminal.
+- Add option to set default playlist end action.
+- Add option to set add policy as property of playlist.
+- Add new add policy: `none`/`-` - explicit *don't add to playlist*.
+- Add option to select the sorting complexity from cli.
+- Allow unlimited playlist stack.
+- Add new filtering options.
+- Add new options to edit the current playlist (`queue`, `play-next`,
+  `push-with-cur`, `flatten`)
+- Add option to list songs (`list`)
+- Add 1 to playlist position when displaying with `-Info` (so it starts from 1
+  instead of 0)
+- Log playback errors.
+- Fix overflow in `-Info`
+- Fix bug where some audio files wouldn't play.
+
+## v0.5.3
+- Add aliases for control messages.
+- Add playlist end actions.
+
+## v0.5.2
+- Add option to save position within song (`save_playback_pos`).
+- Add secondary playlist.
+- Support temorary songs that can exist only in playlist.
+- Add option to directly play file.
+- Add option to sort the playlist.
+- Watch the config file for changes and automatically reload the configuration.
+
+## v0.5.1
+- Speed up searching for new songs.
+- Support multiple arguments at once after instance.
+- Add option to start the app in detached mode (`run -d`).
+- Add option to send messages to multiple instances at once.
+- Add alternative ways to use actions (`-I`, `-R`, ...).
+- Add option to print version (`--version`).
+- Handle exit signals.
+- Improve info print.
+
+## v0.5.0
+- Option to start playing on start
+- Remove gui and related features.
+- Add non gui mode for running in background.
+- Add options to add newly loaded songs to the current playlist.
+- Add option for playlist jump from console.
+- Add option to remove songs with non existing paths from library on library
+  load, this is enabled by default.
+
 ## v0.4.0
 - Add all options to settings including help
 - Fancy volume icon
