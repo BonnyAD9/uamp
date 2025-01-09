@@ -19,6 +19,7 @@
 + Fix displaying of playlist position (should start from 1, not 0).
 + Fix occasional panic when mixing new songs to playlist.
 + Fix issue when uamp wouldn't exit when save is due.
++ Fix issue when some temporary songs might not play.
 
 ## v0.5.5
 - Add new functionality to filters (and, or, brackets).

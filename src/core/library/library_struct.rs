@@ -133,7 +133,8 @@ impl Index<SongId> for Library {
     fn index(&self, index: SongId) -> &Self::Output {
         if index.0 >= self.songs().len() {
             let idx = index.as_tmp();
-            if idx >= self.tmp_songs().len() || self.songs()[idx].is_deleted()
+            if idx >= self.tmp_songs().len()
+                || self.tmp_songs()[idx].is_deleted()
             {
                 &self.ghost
             } else {
