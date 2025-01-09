@@ -1,9 +1,9 @@
 # uamp
 Universal Advanced Music Player written in Rust.
 
-Uamp currently works as playback server controled with CLI.
-
 (May not be as advanced yet)
+
+Uamp currently works as playback server controled with CLI.
 
 ## Configuration
 The configuration is saved in the efault configuration folder on your
