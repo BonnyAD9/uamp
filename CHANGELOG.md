@@ -17,6 +17,7 @@
 - Help now prints the app id instead of just `uamp` in the welcome.
 - Allow to specify length of playlist to show for `i nfo`.
 + Fix displaying of playlist position (should start from 1, not 0).
++ Fix occasional panic when mixing new songs to playlist.
 
 ## v0.5.5
 - Add new functionality to filters (and, or, brackets).

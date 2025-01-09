@@ -121,8 +121,12 @@ where
         let mut rng = rand::thread_rng();
         for s in i.into_iter().chain(it) {
             let idx = rng.gen_range(after + 1..=v.len());
-            let itm = mem::replace(&mut v[idx], s);
-            v.push(itm);
+            if idx == v.len() {
+                v.push(s);
+            } else {
+                let itm = mem::replace(&mut v[idx], s);
+                v.push(itm);
+            }
         }
     }
 }
