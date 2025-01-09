@@ -1,4 +1,4 @@
-use std::{fmt::Display, str::FromStr};
+use std::{borrow::Cow, fmt::Display, str::FromStr};
 
 use itertools::Itertools;
 use pareg::{ArgErrCtx, ArgError};
@@ -67,23 +67,37 @@ impl ControlUnit {
 
 impl Display for ControlFunction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "[{}]:{}",
-            self.args.join(","),
-            shell_words::join(self.body.iter().map(|a| {
-                match a {
-                    ControlUnit::Simple(s) => s.to_string(),
-                    ControlUnit::Composed(c) => c
-                        .iter()
-                        .map(|a| match a {
-                            FunctionComponenet::Literal(l) => l,
-                            FunctionComponenet::Variable(v) => &self.args[*v],
-                        })
-                        .join(""),
-                }
-            }))
-        )
+        if !self.args.is_empty() {
+            write!(f, "[{}]:", self.args.join(","))?;
+        }
+
+        let body = shell_words::join(self.body.iter().map(|a| {
+            match a {
+                ControlUnit::Simple(s) => s.to_string(),
+                ControlUnit::Composed(c) => c
+                    .iter()
+                    .map(|a| -> Cow<str> {
+                        match a {
+                            FunctionComponenet::Literal(l) => l.into(),
+                            FunctionComponenet::Variable(v) => {
+                                format!("${{{}}}", self.args[*v]).into()
+                            }
+                        }
+                    })
+                    .join(""),
+            }
+        }));
+
+        write!(f, "{}", body)
+    }
+}
+
+impl<T: IntoIterator<Item = AnyControlMsg>> From<T> for ControlFunction {
+    fn from(value: T) -> Self {
+        Self {
+            args: vec![],
+            body: value.into_iter().map(ControlUnit::Simple).collect(),
+        }
     }
 }
 

@@ -2,6 +2,8 @@
 
 ## future
 - Hint showing whole help.
+- Add some default aliases.
++ Fix saving of function aliases.
 
 ## v0.5.6
 + Add ordering `same` for no ordering.

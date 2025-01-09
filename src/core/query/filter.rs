@@ -73,6 +73,10 @@ impl Filter {
     pub fn none() -> Self {
         Self::new(FilterType::None, CmpType::Lenient)
     }
+
+    pub fn any() -> Self {
+        Self::new(FilterType::Any, CmpType::Lenient)
+    }
 }
 
 impl FilterType {

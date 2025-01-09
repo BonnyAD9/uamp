@@ -136,7 +136,11 @@
                 "type": "string"
             },
             "default": {
-                "nothing": ""
+                "repeat": "pj pp=play spea=repeat",
+                "repeat-once": "pj pp=play spea",
+                "endless-mix": "sp=@rng pap=m spea=endless-mix",
+                "pcont": "pop pp=play",
+                "palb": "[name]:push=a:name@t pp=play"
             }
         },
         "default_playlist_end_action": {

@@ -9,6 +9,12 @@ pub struct Alias {
     pub args: Vec<String>,
 }
 
+impl Alias {
+    pub fn new(name: String) -> Self {
+        Self { name, args: vec![] }
+    }
+}
+
 impl FromStr for Alias {
     type Err = ArgError;
 

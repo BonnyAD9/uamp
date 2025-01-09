@@ -30,6 +30,13 @@ impl Query {
         Self { filter, sort }
     }
 
+    pub fn all_rng() -> Self {
+        Self::new(
+            ComposedFilter::Filter(Filter::any()),
+            Some(SongOrder::rng()),
+        )
+    }
+
     pub fn get_ids(
         &self,
         lib: &Library,

@@ -71,6 +71,14 @@ pub enum OrderField {
 }
 
 impl SongOrder {
+    pub fn rng() -> Self {
+        Self {
+            simple: None,
+            field: OrderField::Randomize,
+            reverse: false,
+        }
+    }
+
     /// Sorts the songs and updates the position of cur if set.
     ///
     /// - `songs`: Songs to order.

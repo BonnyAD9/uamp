@@ -2,7 +2,10 @@ use serde::{Deserialize, Serialize};
 use std::{cell::Cell, collections::HashMap, path::PathBuf, time::Duration};
 
 use crate::{
-    core::{Alias, ControlFunction},
+    core::{
+        player::AddPolicy, query::Query, Alias, AnyControlMsg,
+        ControlFunction, ControlMsg, DataControlMsg,
+    },
     ext::Wrap,
     gen_struct,
 };
@@ -55,7 +58,33 @@ gen_struct! {
         #[doc = "Aliases for groups of control actions."]
         control_aliases: HashMap<String, ControlFunction> { pub, pub } =>
         pub(super) () {
-            HashMap::new()
+            fn end_action(s: &str) -> AnyControlMsg {
+                DataControlMsg::SetPlaylistEndAction(Some(Alias::new(s.into()))).into()
+            }
+
+            [
+                ("repeat".into(), [
+                    ControlMsg::PlaylistJump(0).into(),
+                    ControlMsg::PlayPause(Some(true)).into(),
+                    end_action("repeat"),
+                ].into()),
+                ("repeat-once".into(), [
+                    ControlMsg::PlaylistJump(0).into(),
+                    ControlMsg::PlayPause(Some(true)).into(),
+                    DataControlMsg::SetPlaylistEndAction(None).into(),
+                ].into()),
+                ("endless-mix".into(), [
+                    DataControlMsg::SetPlaylist(Query::all_rng()).into(),
+                    ControlMsg::PlayPause(Some(true)).into(),
+                    ControlMsg::SetPlaylistAddPolicy(AddPolicy::MixIn).into(),
+                    end_action("endless-mix"),
+                ].into()),
+                ("pcont".into(), [
+                    ControlMsg::PopPlaylist.into(),
+                    ControlMsg::PlayPause(Some(true)).into(),
+                ].into()),
+                ("palb".into(), "[name]push=a:${name}@t pp=play spea=pcont".parse().unwrap()),
+            ].into()
         },
 
         #[doc = "This will be used as playlist end action if the end action"]
