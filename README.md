@@ -1,16 +1,17 @@
 # uamp
-Universal Advanced Music Player written in Rust using Iced.
+Universal Advanced Music Player written in Rust.
+
+Uamp currently works as playback server controled with CLI.
 
 (May not be as advanced yet)
 
 ## Configuration
 The configuration is saved in the efault configuration folder on your
-platform, on linux that is `~/.config/uamp`.
-
-The only file that should be edited by the user is `config.json`.
+platform. You can use `uamp config` to open the config file with your default
+editor.
 
 ## CLI
-See help of uamp to see all the possibilities:
+See short help of uamp:
 ```sh
 uamp -h
 ```
@@ -19,7 +20,7 @@ uamp -h
 
 Show help with all the options (shortest version):
 ```sh
-uamp h
+uamp h all
 ```
 
 To play/pause you can use the command:
