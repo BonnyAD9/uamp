@@ -3,7 +3,8 @@
 ## future
 + Log panics.
 - Hint showing whole help.
-- Add some default aliases.
+- Add some default aliases (`repeat`, `repeat-once`, `pcont`, `endless-mix` and
+  `palb`).
 + Properly exit with failure on errors.
 + Fix saving of function aliases.
 + Properly keep logger alive.
