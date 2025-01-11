@@ -1,9 +1,12 @@
 # CHANGELOG
 
 ## future
++ Log panics.
 - Hint showing whole help.
 - Add some default aliases.
++ Properly exit with failure on errors.
 + Fix saving of function aliases.
++ Properly keep logger alive.
 
 ## v0.5.6
 + Add ordering `same` for no ordering.

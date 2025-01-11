@@ -1,8 +1,14 @@
 use core::{config, Error};
-use std::io::{self, IsTerminal};
+use std::{
+    backtrace::Backtrace,
+    io::{self, IsTerminal},
+    panic::{self, PanicHookInfo},
+    process::ExitCode,
+};
 
 use cli::Run;
-use log::info;
+use flexi_logger::LoggerHandle;
+use log::{error, info};
 use pareg::Pareg;
 use termal::{eprintacln, eprintmcln};
 
@@ -17,18 +23,29 @@ mod core;
 mod env;
 mod ext;
 
-fn main() {
-    if let Err(e) = start() {
-        eprintacln!("{e}");
+fn main() -> ExitCode {
+    let _ = match start_logger() {
+        Err(e) => {
+            eprintmcln!(io::stderr().is_terminal(), "{e}");
+            None
+        }
+        Ok(l) => Some(l),
+    };
+    register_panic_hook();
+
+    match start() {
+        Ok(_) => ExitCode::SUCCESS,
+        Err(e) => {
+            eprintacln!("{e}");
+            // Don't log errors that are clearly displayed to user.
+            // error!("main returns error:\n{}", e.log());
+            ExitCode::FAILURE
+        }
     }
 }
 
 /// Main wraps this function, this is the entry point of the application
 fn start() -> Result<()> {
-    if let Err(e) = start_logger() {
-        eprintmcln!(io::stderr().is_terminal(), "{e}");
-    }
-
     info!("started");
 
     let args = Args::parse(Pareg::args())?;
@@ -66,7 +83,7 @@ fn start() -> Result<()> {
 /// # Errors
 /// - cannot load from env
 /// - cannot start the logger
-fn start_logger() -> Result<()> {
+fn start_logger() -> Result<LoggerHandle> {
     flexi_logger::Logger::try_with_env_or_str("warn")
         .map_err(|e| {
             Error::Logger(e.into()).msg("Failed to initialize logger.")
@@ -78,5 +95,32 @@ fn start_logger() -> Result<()> {
         .write_mode(flexi_logger::WriteMode::Direct)
         .start()
         .map_err(|e| Error::Logger(e.into()).msg("Failed to start logger."))
-        .map(|_| ())
+}
+
+fn register_panic_hook() {
+    let hook = panic::take_hook();
+    let hook = move |phi: &PanicHookInfo| {
+        let payload = phi.payload();
+        let loc = phi
+            .location()
+            .map(|l| format!(" at {l}"))
+            .unwrap_or_default();
+
+        // Panicking is not something that should ever happen. We can afford to
+        // capture the full backtrace if it will help resolve the panic.
+        let bt = Backtrace::force_capture();
+
+        if let Some(s) = payload.downcast_ref::<String>() {
+            error!("panicking{loc}: {s}\nbacktrace:\n{bt}");
+        } else if let Some(s) = payload.downcast_ref::<&'static str>() {
+            error!("panicking{loc}: {s}\nbacktrace:\n{bt}");
+        } else {
+            error!("panicking with unknown message{loc}.\nbacktrace:\n{bt}");
+        }
+
+        // Chain the original hook.
+        hook(phi)
+    };
+
+    panic::set_hook(Box::new(hook));
 }
