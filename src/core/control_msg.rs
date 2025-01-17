@@ -100,8 +100,6 @@ impl UampApp {
                 }
 
                 self.player.play_prev(&mut self.library, n.unwrap_or(1));
-                self.delete_old_logs()
-                    .map_err(|e| e.prepend("Failed to remove logs."))?;
             }
             ControlMsg::Close => {
                 let r = self.save_all(true, ctrl).map(|_| vec![]);

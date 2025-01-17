@@ -25,7 +25,7 @@ impl UampApp {
 
     /// Updates references to songs in the scope of the library with the given
     /// change and returns the change.
-    pub(in crate::core) fn library_update(&mut self) -> LibraryUpdate {
+    pub(in crate::core) fn library_routine(&mut self) -> LibraryUpdate {
         mem::replace(&mut self.library.lib_update, LibraryUpdate::None)
     }
 }

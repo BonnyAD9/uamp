@@ -33,7 +33,7 @@ impl UampApp {
     }
 
     /// Updates the stored song metadata based on the update level.
-    pub(in crate::core) fn player_update(
+    pub(in crate::core) fn player_routine(
         &mut self,
         now: Instant,
         up: LibraryUpdate,

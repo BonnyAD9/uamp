@@ -9,6 +9,7 @@
 + Fix saving of function aliases.
 + Properly keep logger alive.
 + Fix incorrect elipsed printing.
++ Properly delete old logs.
 
 ## v0.5.6
 + Add ordering `same` for no ordering.

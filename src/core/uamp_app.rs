@@ -1,4 +1,10 @@
-use std::{fs, net::TcpListener, path::Path, process, time::Instant};
+use std::{
+    fs::{self, DirEntry},
+    net::TcpListener,
+    path::Path,
+    process,
+    time::{Duration, Instant},
+};
 
 use futures::{channel::mpsc::UnboundedSender, StreamExt};
 use log::{error, trace, warn};
@@ -98,6 +104,10 @@ impl UampApp {
             None
         };
 
+        if let Err(e) = delete_old_logs(conf.delete_logs_after().0) {
+            error!("Failed to delete old logs: {}", e.log());
+        }
+
         Ok(UampApp {
             config: conf,
             library: lib,
@@ -153,13 +163,15 @@ impl UampApp {
             return self.update_err(ctrl, Msg::Control(ControlMsg::Close));
         }
 
-        let now = Instant::now();
-
-        let up = self.library_update();
-        self.player_update(now, up);
-        errs.extend(self.config_update(ctrl, now).err());
+        self.routine(&mut errs, ctrl);
 
         Error::multiple(errs)
+    }
+
+    pub fn on_exit(&mut self) {
+        if let Err(e) = delete_old_logs(self.config.delete_logs_after().0) {
+            error!("Failed to delete old logs: {}", e.log());
+        }
     }
 
     /// Saves all the data that is saved by uamp.
@@ -188,21 +200,6 @@ impl UampApp {
 
         self.last_save = Instant::now();
         Error::multiple(res)
-    }
-
-    /// Deletes old logs.
-    pub(super) fn delete_old_logs(&self) -> Result<()> {
-        let dir = fs::read_dir(default_config_dir().join("log"))?;
-
-        for d in dir {
-            let d = d?;
-            let mt = d.metadata()?.modified()?;
-            if mt.elapsed()? > self.config.delete_logs_after().0 {
-                fs::remove_file(d.path())?;
-            }
-        }
-
-        Ok(())
     }
 
     /// Starts the tcp server.
@@ -289,6 +286,14 @@ impl UampApp {
         ctrl._add_stream(stream);
 
         Ok(())
+    }
+
+    fn routine(&mut self, errs: &mut Vec<Error>, ctrl: &mut AppCtrl) {
+        let now = Instant::now();
+
+        let up = self.library_routine();
+        self.player_routine(now, up);
+        errs.extend(self.config_routine(ctrl, now).err());
     }
 
     fn watch_config_task(
@@ -399,4 +404,26 @@ impl UampApp {
             }
         }
     }
+}
+
+/// Deletes old logs.
+fn delete_old_logs(timeout: Duration) -> Result<()> {
+    let dir = fs::read_dir(default_config_dir().join("log"))?;
+
+    for d in dir {
+        let d = d?;
+        if let Err(e) = delete_old_log(&d, timeout) {
+            error!("Failed to delete log file {:?}: {}", d.path(), e.log());
+        }
+    }
+
+    Ok(())
+}
+
+fn delete_old_log(file: &DirEntry, timeout: Duration) -> Result<()> {
+    let mt = file.metadata()?.modified()?;
+    if mt.elapsed()? > timeout {
+        fs::remove_file(file.path())?;
+    }
+    Ok(())
 }

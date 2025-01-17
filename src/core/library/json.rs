@@ -170,7 +170,7 @@ impl Library {
         for s in free {
             songs[usize::MAX - s.0].delete();
         }
-        while songs.last().map_or(false, Song::is_deleted) {
+        while songs.last().is_some_and(Song::is_deleted) {
             songs.pop();
         }
     }

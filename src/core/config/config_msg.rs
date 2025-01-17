@@ -64,20 +64,20 @@ impl UampApp {
         Ok(vec![])
     }
 
-    pub(in crate::core) fn config_update(
+    pub(in crate::core) fn config_routine(
         &mut self,
         ctrl: &mut AppCtrl,
         now: Instant,
-    ) -> Result<Vec<Error>> {
+    ) -> Result<()> {
         if self
             .config
             .save_timeout()
             .map(|t| now - self.last_save >= t.0)
             .unwrap_or_default()
         {
-            self.save_all(false, ctrl).map(|_| vec![])
+            self.save_all(false, ctrl)
         } else {
-            Ok(vec![])
+            Ok(())
         }
     }
 

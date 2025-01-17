@@ -11,5 +11,4 @@
 
 # known issues
 - Album complex sort not working (couldn't reproduce)
-- Delete logs not working properly
 - Loading library doesn't properly mix in/remove songs from playlist.
