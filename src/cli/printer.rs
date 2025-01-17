@@ -173,7 +173,7 @@ fn print_elipsised(s: &str, len: usize) {
         return;
     };
 
-    if ind.nth(3).is_some() {
+    if ind.nth(2).is_some() {
         print!("{}...", &s[..i]);
     } else {
         print!("{s:<len$}");

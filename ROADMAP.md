@@ -10,6 +10,6 @@
 - Grououping by albums and artists
 
 # known issues
-- Album complex sort not working
+- Album complex sort not working (couldn't reproduce)
 - Delete logs not working properly
-- Loading library doesn't properly mix in/remove songs from playlist
+- Loading library doesn't properly mix in/remove songs from playlist.

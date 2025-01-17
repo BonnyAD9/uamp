@@ -8,6 +8,7 @@
 + Properly exit with failure on errors.
 + Fix saving of function aliases.
 + Properly keep logger alive.
++ Fix incorrect elipsed printing.
 
 ## v0.5.6
 + Add ordering `same` for no ordering.
