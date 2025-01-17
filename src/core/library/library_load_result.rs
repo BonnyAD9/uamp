@@ -1,4 +1,4 @@
-use std::{fmt::Debug, mem};
+use std::{collections::HashSet, fmt::Debug, mem};
 
 use crate::{
     core::{player::AddPolicy, Error, Result, UampApp},
@@ -61,9 +61,21 @@ impl UampApp {
             return Ok(());
         };
 
+        let old_cnt = self.library.songs().len();
+
         *self.library.songs_mut() = mem::take(&mut res.songs).into();
         if res.removed {
-            self.library.update(LibraryUpdate::RemoveData);
+            if res.first_new < old_cnt || !res.sparse_new.is_empty() {
+                // New songs ids replaced old song ids.
+                self.library.update(LibraryUpdate::ReplaceData);
+                let new_ids: HashSet<_> = res.sparse_new.iter().collect();
+                self.id_replace(|s, lib| {
+                    !lib.is_tmp(s)
+                        && (s.0 >= res.first_new || new_ids.contains(&s))
+                });
+            } else {
+                self.library.update(LibraryUpdate::RemoveData);
+            }
         } else {
             self.library.update(LibraryUpdate::NewData);
         }

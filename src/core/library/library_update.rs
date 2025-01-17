@@ -14,4 +14,8 @@ pub enum LibraryUpdate {
     NewData = 2,
     /// Some data were removed (songs).
     RemoveData = 3,
+    /// Some data was replaced. New data ids are same as old data ids. If you
+    /// set library change to this state **DONT FORGET TO CALL**
+    /// [`crate::core::UampApp::id_replace`].
+    ReplaceData = 4,
 }

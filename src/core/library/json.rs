@@ -174,8 +174,4 @@ impl Library {
             songs.pop();
         }
     }
-
-    fn is_tmp(&self, id: SongId) -> bool {
-        id.0 >= self.songs.len() && usize::MAX - id.0 <= self.tmp_songs.len()
-    }
 }

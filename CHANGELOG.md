@@ -10,6 +10,8 @@
 + Properly keep logger alive.
 + Fix incorrect elipsed printing.
 + Properly delete old logs.
++ Fix id aliasing when adding new songs at the same time as removing with
+  library load.
 
 ## v0.5.6
 + Add ordering `same` for no ordering.

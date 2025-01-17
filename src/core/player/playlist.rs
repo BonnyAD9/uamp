@@ -84,11 +84,11 @@ impl Playlist {
         }
     }
 
-    /// Removes all deleted songs.
-    pub fn remove_deleted(&mut self, lib: &Library) {
+    /// Retain only songs that match the predicate.
+    pub fn retain(&mut self, f: impl FnMut(&SongId) -> bool) {
         let cur = self.current();
         let old_len = self.len();
-        self.songs.vec_mut().retain(|s| !lib[s].is_deleted());
+        self.songs.vec_mut().retain(f);
         if let Some(cur) = cur {
             let len_diff = old_len - self.len();
             self.locate_current_h(cur, len_diff);

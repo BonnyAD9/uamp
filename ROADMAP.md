@@ -11,4 +11,3 @@
 
 # known issues
 - Album complex sort not working (couldn't reproduce)
-- Loading library doesn't properly mix in/remove songs from playlist.

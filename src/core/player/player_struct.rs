@@ -236,11 +236,11 @@ impl Player {
             .collect()
     }
 
-    /// Removes all deleted songs from the playlists.
-    pub fn remove_deleted(&mut self, lib: &Library) {
-        self.playlist_mut().remove_deleted(lib);
+    /// Retain only songs that match the predicate.
+    pub fn retain(&mut self, mut f: impl FnMut(&SongId) -> bool) {
+        self.playlist_mut().retain(&mut f);
         for p in self.playlist_stack_mut() {
-            p.remove_deleted(lib)
+            p.retain(&mut f)
         }
     }
 

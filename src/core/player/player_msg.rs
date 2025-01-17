@@ -1,6 +1,9 @@
 use std::time::Instant;
 
-use crate::core::{library::LibraryUpdate, Msg, UampApp};
+use crate::core::{
+    library::{Library, LibraryUpdate, SongId},
+    Msg, UampApp,
+};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -38,9 +41,10 @@ impl UampApp {
         now: Instant,
         up: LibraryUpdate,
     ) {
-        // TODO move logic here
-        if up >= LibraryUpdate::RemoveData {
-            self.player.remove_deleted(&self.library);
+        // ReplaceData is handled separately in `player_id_replace`
+        if up >= LibraryUpdate::RemoveData && up != LibraryUpdate::ReplaceData
+        {
+            self.player.retain(|s| !self.library[s].is_deleted());
         }
 
         if let Some(t) = self.hard_pause_at {
@@ -49,5 +53,15 @@ impl UampApp {
                 self.hard_pause_at = None;
             }
         }
+    }
+
+    /// Old song ids were replaced with new valid song ids.
+    pub(in crate::core) fn player_id_replace(
+        &mut self,
+        n: impl Fn(SongId, &Library) -> bool,
+    ) {
+        self.player.retain(|s| {
+            !self.library[s].is_deleted() && !n(*s, &self.library)
+        });
     }
 }

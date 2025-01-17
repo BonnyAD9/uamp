@@ -115,6 +115,11 @@ impl Library {
         Ok(self.add_tmp_song(Song::from_path(path)?))
     }
 
+    /// Checks if song is temporary or not
+    pub fn is_tmp(&self, s: SongId) -> bool {
+        s.0 >= self.songs().len() && s.as_tmp() < self.tmp_songs().len()
+    }
+
     /// Gets the change value indicating whether the library was changed since
     /// the last save.
     pub(super) fn get_change(&self) -> bool {

@@ -22,7 +22,7 @@ use crate::{
 
 use super::{
     config::{default_config_dir, Config, ConfigMsg},
-    library::Library,
+    library::{Library, SongId},
     player::Player,
     ControlMsg, TaskMsg, TaskType,
 };
@@ -74,7 +74,7 @@ impl UampApp {
 
         let mut player = Player::from_config(&mut lib, sender.clone(), &conf);
         player.load_config(&conf);
-        player.remove_deleted(&lib);
+        player.retain(|s| !lib[s].is_deleted());
 
         if conf.enable_server() || conf.force_server {
             Self::start_server(&conf, ctrl, sender.clone())?;
@@ -168,10 +168,16 @@ impl UampApp {
         Error::multiple(errs)
     }
 
+    /// Runs when uamp is about to exit.
     pub fn on_exit(&mut self) {
         if let Err(e) = delete_old_logs(self.config.delete_logs_after().0) {
             error!("Failed to delete old logs: {}", e.log());
         }
+    }
+
+    /// Old song ids were replaced with new valid song ids.
+    pub(super) fn id_replace(&mut self, n: impl Fn(SongId, &Library) -> bool) {
+        self.player_id_replace(n);
     }
 
     /// Saves all the data that is saved by uamp.
