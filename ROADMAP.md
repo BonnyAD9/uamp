@@ -8,3 +8,7 @@
 - GUI
 - Images
 - Grououping by albums and artists
+
+# known issues
+- Album complex sort not working
+- Delete logs not working properly
