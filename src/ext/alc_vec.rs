@@ -118,9 +118,9 @@ where
         }
 
         let v = self.make_dynamic();
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         for s in i.into_iter().chain(it) {
-            let idx = rng.gen_range(after + 1..=v.len());
+            let idx = rng.random_range(after + 1..=v.len());
             if idx == v.len() {
                 v.push(s);
             } else {

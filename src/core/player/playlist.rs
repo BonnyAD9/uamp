@@ -1,7 +1,7 @@
 use std::{ops::Index, slice::SliceIndex, time::Duration};
 
 use log::error;
-use rand::{seq::SliceRandom, thread_rng};
+use rand::{rng, seq::SliceRandom};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -73,7 +73,7 @@ impl Playlist {
     ///   the first position.
     pub fn shuffle(&mut self, shuffle_current: bool) {
         let id = self.current();
-        self.songs[..].shuffle(&mut thread_rng());
+        self.songs[..].shuffle(&mut rng());
         // find the currently playing in the shuffled playlist
         if let Some(id) = id {
             self.locate_current(id);

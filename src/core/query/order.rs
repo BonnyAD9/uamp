@@ -6,7 +6,7 @@ use std::{
 
 use itertools::PeekingNext;
 use pareg::{ArgError, FromArg, FromArgStr};
-use rand::{seq::SliceRandom, thread_rng};
+use rand::{rng, seq::SliceRandom};
 use serde::{Deserialize, Serialize};
 
 use crate::core::library::{Library, SongId};
@@ -226,7 +226,7 @@ impl SongOrder {
     }
 
     fn randomize(&self, songs: &mut [SongId]) {
-        songs.shuffle(&mut thread_rng());
+        songs.shuffle(&mut rng());
     }
 
     fn path(&self, lib: &Library, songs: &mut [SongId]) {
