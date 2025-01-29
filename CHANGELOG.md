@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.5.7
 ### New features
 + Log panics.
 + Add `i show` that will also clear the screen just before printing.
