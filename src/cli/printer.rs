@@ -36,8 +36,7 @@ pub fn now_playing(info: &Info, conf: &Config, color: bool, lmc: bool) {
     let vtop = info.vtop();
     let vbot = info.vbot();
     let volume = info.volume(color);
-    let img = conf
-        .client_image_lookup()
+    let img = (color && conf.client_image_lookup())
         .then(|| info.image())
         .unwrap_or_default();
     let clear = lmc
