@@ -398,6 +398,8 @@ impl Info {
             return res;
         };
 
+        res.push('\n');
+
         let w = 60;
         let h = (img.height() as f32 * w as f32 / img.width() as f32
             * (8. / 15.)) as usize;

@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## future
+### Changes
+- Print additional newline before image.
+
 ## v0.5.7
 ### New features
 + Log panics.
