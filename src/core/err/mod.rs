@@ -63,6 +63,9 @@ pub enum Error {
     /// Errors from the library shell_words.
     #[error("{0}")]
     ShellWords(Box<ErrCtx<shell_words::ParseError>>),
+    /// Error from reading image.
+    #[error("{0}")]
+    Image(Box<ErrCtx<image::ImageError>>),
     /// Any other error.
     #[error("{0}")]
     Other(Box<ErrCtx<anyhow::Error>>),
@@ -116,6 +119,10 @@ macro_rules! map_ctx {
             Error::ShellWords(mut $ctx) => {
                 *$ctx = $f;
                 Error::ShellWords($ctx)
+            }
+            Error::Image(mut $ctx) => {
+                *$ctx = $f;
+                Error::Image($ctx)
             }
             $($($p => $pb,)*)?
             e => e,
@@ -266,4 +273,5 @@ impl_from!(
     notify::Error => Notify,
     shell_words::ParseError => ShellWords,
     anyhow::Error => Other,
+    image::ImageError => Image,
 );

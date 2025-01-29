@@ -3,15 +3,16 @@ use std::{
     time::{Duration, Instant},
 };
 
+use image::imageops::FilterType;
 use itertools::Itertools;
-use termal::{formatmc, printmc, printmcln};
+use termal::{codes, formatmc, printmc, printmcln};
 
 use crate::{
-    core::{library::Song, messenger::Info},
+    core::{config::Config, library::Song, messenger::Info},
     ext::duration_to_string,
 };
 
-pub fn now_playing(info: &Info, color: bool) {
+pub fn now_playing(info: &Info, conf: &Config, color: bool, lmc: bool) {
     let title = info.title();
 
     let artist = info.artist();
@@ -35,6 +36,17 @@ pub fn now_playing(info: &Info, color: bool) {
     let vtop = info.vtop();
     let vbot = info.vbot();
     let volume = info.volume(color);
+    let img = conf
+        .client_image_lookup()
+        .then(|| info.image())
+        .unwrap_or_default();
+    let clear = lmc
+        .then(|| {
+            codes::ERASE_ALL.to_string()
+                + codes::ERASE_SCREEN
+                + codes::move_to!(0, 0)
+        })
+        .unwrap_or_default();
 
     /*
                                   Out of Sight
@@ -49,7 +61,7 @@ pub fn now_playing(info: &Info, color: bool) {
 
     printmcln!(
         color,
-        "
+        "{clear}{img}
 {'bold y}{title: ^80}{'_}
 {n: >by_from_off$}{'gr}by {'dc}{artist} {'gr}from {'dm}{album}
 
@@ -375,5 +387,41 @@ impl Info {
         } else {
             format!("v: {vol: >3}")
         }
+    }
+
+    fn image(&self) -> String {
+        // dbg!("Lookup");
+        let mut res = String::new();
+        let Some(s) = &self.now_playing else {
+            return res;
+        };
+        let Ok(img) = s.lookup_image() else {
+            return res;
+        };
+
+        let w = 60;
+        let h = (img.height() as f32 * w as f32 / img.width() as f32
+            * (8. / 15.)) as usize;
+
+        // dbg!("Resize");
+        let img = image::imageops::resize(
+            &img,
+            w as u32 * 2,
+            h as u32 * 2,
+            FilterType::Triangle,
+        );
+
+        res += "          ";
+
+        // dbg!("Texelize");
+        termal::image::push_texel_quater(
+            &img,
+            &mut res,
+            "\n          ",
+            Some(w),
+            Some(h),
+        );
+
+        res + codes::RESET + "\n"
     }
 }

@@ -273,6 +273,7 @@ const BASIC_ARG: &[&[&str]] = &[
 
 const INSTANCE_ARG: &[&[&str]] = &[
     &["info", "nfo"],
+    &["show"],
     &["play", "p"],
     &["list", "query", "l"],
     &["-h", "-?", "--help"],

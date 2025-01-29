@@ -1,11 +1,14 @@
 use std::{
+    borrow::Cow,
     fmt::Debug,
     fs::File,
+    io::{Cursor, ErrorKind},
     path::{Path, PathBuf},
     time::Duration,
 };
 
 use audiotags::Tag;
+use image::{DynamicImage, ImageReader};
 use log::warn;
 use raplay::source::{Source, Symph};
 use serde_derive::{Deserialize, Serialize};
@@ -102,6 +105,43 @@ impl Song {
         }
 
         Ok(s)
+    }
+
+    pub fn lookup_image(&self) -> Result<DynamicImage> {
+        if let Ok(tag) = Tag::new().read_from_path(&self.path) {
+            if let Some(img) = tag.album_cover() {
+                return Ok(ImageReader::new(Cursor::new(img.data))
+                    .with_guessed_format()?
+                    .decode()?);
+            }
+        }
+
+        let Some(p) = self.path.parent() else {
+            return Err(Error::io(std::io::Error::new(
+                ErrorKind::NotFound,
+                format!("Couldn't find parent directory of {:?}", self.path),
+            )));
+        };
+
+        let lookup_names: &[Cow<'static, str>] = &[
+            format!("{} - {}", self.artist(), self.album()).into(),
+            "cover".into(),
+        ];
+        let extensions = ["jpg", "jpeg", "png"];
+        let path = lookup_names
+            .iter()
+            .flat_map(|n| extensions.iter().map(|e| n.to_string() + "." + e))
+            .map(|n| p.join(n))
+            .find(|p| p.exists());
+
+        let Some(img) = path else {
+            return Err(Error::io(std::io::Error::new(
+                ErrorKind::NotFound,
+                format!("Couldn't find image for song {:?}", self.path),
+            )));
+        };
+
+        Ok(ImageReader::open(img)?.decode()?)
     }
 
     /// Constructs invalid "ghost" song.

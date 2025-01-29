@@ -166,6 +166,9 @@ gen_struct! {
         previous_timeout: Option<Wrap<Duration>> { pub, pub }
             => pub(super) () None,
 
+        #[doc = "If this is true, clients will try to lookup images."]
+        client_image_lookup: bool { pub, pub } => pub(super) () false,
+
         ; // fields that aren't serialized
 
         #[serde(skip_serializing, default = "default_config_path_json")]
@@ -218,6 +221,7 @@ impl Config {
             previous_timeout: default_previous_timeout(),
             play_on_start: default_play_on_start(),
             simple_sorting: default_simple_sorting(),
+            client_image_lookup: default_client_image_lookup(),
             force_server: false,
             change: Cell::new(true),
         }

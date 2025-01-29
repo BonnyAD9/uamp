@@ -1,10 +1,16 @@
 # CHANGELOG
 
 ## future
+### New features
 + Log panics.
++ Add `i show` that will also clear the screen just before printing.
++ Add client side image lookup. Show images in `i nfo` and `i show`. (disabled
+  by default)
+### Changes
 - Hint showing whole help.
 - Add some default aliases (`repeat`, `repeat-once`, `pcont`, `endless-mix` and
   `palb`).
+### Fixes
 + Properly exit with failure on errors.
 + Fix saving of function aliases.
 + Properly keep logger alive.

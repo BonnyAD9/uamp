@@ -303,6 +303,9 @@ fn print_instance_help(color: bool) {
     current playlist before the current song and after the current song
     respectively. This is by default `{'i w}-1..3{'_}`.
 
+  {'r}show{'gr}[=[-<before>]..[<after>]]{'_}
+    Same as {'r}info{'_} but will also clear the screen before printing.
+
   {'r}query  list  l{'gr}[={'bold}<filter>{'_bold}]{'_}
     Print all songs that pass the filter. Without value, lists all songs. See
     `{'c}uamp {'b}h {'w bold}filter{'_}` for more info.

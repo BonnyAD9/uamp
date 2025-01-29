@@ -147,6 +147,11 @@
             "description": "This will be used as playlist end action if the end action is not set.",
             "type": ["string", null],
             "default": null
+        },
+        "client_image_lookup": {
+            "description": "If true, clients will try to lookup song images.",
+            "type": "boolean",
+            "default": false
         }
     }
 }

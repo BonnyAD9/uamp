@@ -27,11 +27,18 @@ use super::{
 #[derive(Default, Debug)]
 pub struct Instance {
     /// Messages to send to a running instance.
-    pub messages: Vec<MsgMessage>,
+    pub messages: Vec<(MsgMessage, Intention)>,
     /// Port number of the server of the running instance.
     pub port: Option<u16>,
     /// Server address of the running instance.
     pub server: Option<String>,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
+pub enum Intention {
+    #[default]
+    Default,
+    Clear,
 }
 
 impl Instance {
@@ -50,10 +57,22 @@ impl Instance {
                     let s = args
                         .cur_mval::<PlaylistRange>('=')?
                         .unwrap_or(PlaylistRange(1, 3));
-                    self.messages.push(Request::Info(s.0, s.1).into())
+                    self.messages.push((
+                        Request::Info(s.0, s.1).into(),
+                        Intention::Default,
+                    ))
+                }
+                v if has_any_key!(v, '=', "show") => {
+                    let s = args
+                        .cur_mval::<PlaylistRange>('=')?
+                        .unwrap_or(PlaylistRange(1, 3));
+                    self.messages.push((
+                        Request::Info(s.0, s.1).into(),
+                        Intention::Clear,
+                    ))
                 }
                 v if has_any_key!(v, '=', "p", "play") => {
-                    self.messages.push(
+                    self.messages.push((
                         PlayMsg::TmpPath(
                             args.cur_val::<&Path>('=')?
                                 .canonicalize()
@@ -66,15 +85,17 @@ impl Instance {
                                 .into(),
                         )
                         .into(),
-                    );
+                        Intention::Default,
+                    ));
                 }
                 v if has_any_key!(v, '=', "query", "list", "l") => {
-                    self.messages.push(
+                    self.messages.push((
                         Request::Query(
                             args.cur_mval('=')?.unwrap_or_default(),
                         )
                         .into(),
-                    );
+                        Intention::Default,
+                    ));
                 }
                 "-h" | "-?" | "--help" => help_instance(color),
                 "-p" | "--port" => {
@@ -82,7 +103,10 @@ impl Instance {
                 }
                 "-a" | "--address" => self.server = Some(args.next_arg()?),
                 "--" => break,
-                _ => self.messages.push(MsgMessage::Control(args.cur_arg()?)),
+                _ => self.messages.push((
+                    MsgMessage::Control(args.cur_arg()?),
+                    Intention::Default,
+                )),
             }
         }
 
@@ -101,13 +125,13 @@ impl Instance {
             .take()
             .or_else(|| Some(conf.server_address().to_owned()));
 
-        for m in mem::take(&mut self.messages) {
+        for (m, i) in mem::take(&mut self.messages) {
             let send_time = Instant::now();
             let res = self.send_message(m);
             match res {
                 Ok(MsgMessage::Success) => {}
-                Ok(MsgMessage::Data(i)) => {
-                    Self::print_data(i, color, send_time);
+                Ok(MsgMessage::Data(d)) => {
+                    Self::print_data(d, conf, color, send_time, i);
                 }
                 Err(e) => eprintacln!("{e}"),
                 Ok(MsgMessage::Error(e)) => {
@@ -154,17 +178,35 @@ impl Instance {
         msgr.recieve()
     }
 
-    fn print_data(data: DataResponse, color: bool, send_time: Instant) {
+    fn print_data(
+        data: DataResponse,
+        conf: &Config,
+        color: bool,
+        send_time: Instant,
+        intention: Intention,
+    ) {
         match data {
-            DataResponse::Info(i) => Self::print_info(*i, color),
+            DataResponse::Info(i) => {
+                Self::print_info(*i, conf, color, intention)
+            }
             DataResponse::SongList(songs) => {
                 printer::song_list(songs, color, send_time)
             }
         }
     }
 
-    fn print_info(info: Info, color: bool) {
-        printer::now_playing(&info, color);
+    fn print_info(
+        info: Info,
+        conf: &Config,
+        color: bool,
+        intention: Intention,
+    ) {
+        printer::now_playing(
+            &info,
+            conf,
+            color,
+            intention == Intention::Clear,
+        );
 
         if !info.before.is_empty() || !info.after.is_empty() {
             printer::playlist(&info, color);
