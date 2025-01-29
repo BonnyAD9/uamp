@@ -64,7 +64,8 @@ uamp i play='path/to/file.flac'
 ## How it looks
 Currently uamp has no GUI or TUI. The closest thing to gui that uamp has is the
 output of `uamp -Info`:
-![image](https://github.com/user-attachments/assets/3404a1f8-7463-4823-8cbe-888fb2b383fb)
+
+![image](https://github.com/user-attachments/assets/9fa6cb61-853c-425b-8f81-48908a4ea196)
 
 ## Possible uamp setup
 This is the way that I have confugred and use uamp:
