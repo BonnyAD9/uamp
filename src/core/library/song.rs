@@ -11,7 +11,7 @@ use audiotags::Tag;
 use image::{DynamicImage, ImageReader};
 use log::warn;
 use raplay::source::{Source, Symph};
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::core::{Error, Result};
 

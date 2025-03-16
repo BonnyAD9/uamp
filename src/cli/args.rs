@@ -142,7 +142,7 @@ impl Args {
                         if let Err(Error::Pareg(e)) =
                             self.instance(&mut opt_iter(i))
                         {
-                            args.map_err(Err(e))?;
+                            return Err(args.map_err(e).into());
                         }
                         continue;
                     }
