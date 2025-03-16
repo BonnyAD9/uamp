@@ -8,7 +8,7 @@ use pareg::Pareg;
 
 use crate::{
     background_app::run_background_app,
-    core::{config::Config, AnyControlMsg, Error, Result},
+    core::{AnyControlMsg, Error, Result, config::Config},
 };
 
 use super::{help::help_run, port::Port};

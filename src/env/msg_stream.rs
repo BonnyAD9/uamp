@@ -1,9 +1,9 @@
 use std::{fmt::Debug, mem};
 
 use futures::{
-    executor::block_on,
-    future::{select_all, BoxFuture},
     Future,
+    executor::block_on,
+    future::{BoxFuture, select_all},
 };
 
 //===========================================================================//
@@ -86,10 +86,10 @@ impl<Msg> Streams<Msg> {
     pub fn wait_one(&mut self) -> Msg {
         let res = block_on(select_all(mem::take(&mut self.futures)));
         self.futures = res.2;
-        if let Some(task) = res.0 .0 {
+        if let Some(task) = res.0.0 {
             self.futures.push(task.next_future());
         }
-        res.0 .1
+        res.0.1
     }
 
     /// Add asynchronous task to the streams.

@@ -5,7 +5,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use super::{library::SongId, player::Playlist, Msg, Result, UampApp};
+use super::{Msg, Result, UampApp, library::SongId, player::Playlist};
 
 //===========================================================================//
 //                                   Public                                  //

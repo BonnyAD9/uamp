@@ -5,8 +5,8 @@ use log::{error, warn};
 use crate::env::AppCtrl;
 
 use super::{
-    library::{LibraryLoadResult, SongId},
     Error, Result, UampApp,
+    library::{LibraryLoadResult, SongId},
 };
 
 //===========================================================================//

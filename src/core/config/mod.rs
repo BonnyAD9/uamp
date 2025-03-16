@@ -21,11 +21,7 @@ pub const APP_ID: &str = "uamp_debug";
 /// Version of uamp as string.
 pub const VERSION_STR: &str = {
     let v = option_env!("CARGO_PKG_VERSION");
-    if let Some(v) = v {
-        v
-    } else {
-        "unknown"
-    }
+    if let Some(v) = v { v } else { "unknown" }
 };
 
 /// Gets the default path for configuration, it is different when debugging.

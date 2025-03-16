@@ -6,25 +6,25 @@ use std::{
     time::{Duration, Instant},
 };
 
-use futures::{channel::mpsc::UnboundedSender, StreamExt};
+use futures::{StreamExt, channel::mpsc::UnboundedSender};
 use log::{error, trace, warn};
 use notify::{INotifyWatcher, Watcher};
 use signal_hook_async_std::Signals;
 
 use crate::{
     core::{
+        Error, Result,
         messenger::{self, Messenger, MsgMessage},
         msg::Msg,
-        Error, Result,
     },
     env::{AppCtrl, MsgGen},
 };
 
 use super::{
-    config::{default_config_dir, Config, ConfigMsg},
+    ControlMsg, TaskMsg, TaskType,
+    config::{Config, ConfigMsg, default_config_dir},
     library::{Library, SongId},
     player::Player,
-    ControlMsg, TaskMsg, TaskType,
 };
 
 //===========================================================================//

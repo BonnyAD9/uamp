@@ -8,11 +8,11 @@ use log::{error, info};
 use serde::{Deserialize, Serialize};
 
 use crate::core::{
-    config::Config, library::Library, player::default_volume, Error, Msg,
-    Result,
+    Error, Msg, Result, config::Config, library::Library,
+    player::default_volume,
 };
 
-use super::{playback::Playback, sink_wrapper::SinkWrapper, Player, Playlist};
+use super::{Player, Playlist, playback::Playback, sink_wrapper::SinkWrapper};
 
 //===========================================================================//
 //                                   Public                                  //

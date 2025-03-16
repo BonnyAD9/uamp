@@ -229,11 +229,7 @@ impl Info {
     }
 
     fn state_btn(&self) -> &'static str {
-        if self.is_playing {
-            "||"
-        } else {
-            "|>"
-        }
+        if self.is_playing { "||" } else { "|>" }
     }
 
     fn cur_time(&self) -> Cow<'static, str> {
@@ -261,11 +257,7 @@ impl Info {
             return "";
         };
 
-        if n == len {
-            ""
-        } else {
-            "#"
-        }
+        if n == len { "" } else { "#" }
     }
 
     fn seek_after(&self, len: usize) -> Cow<'static, str> {

@@ -1,4 +1,4 @@
-use core::{config, Error};
+use core::{Error, config};
 use std::{
     backtrace::Backtrace,
     io::{self, IsTerminal},

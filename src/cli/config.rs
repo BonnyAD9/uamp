@@ -2,7 +2,7 @@ use std::io;
 
 use pareg::Pareg;
 
-use crate::core::{self, config::default_config_path, Error, Result};
+use crate::core::{self, Error, Result, config::default_config_path};
 
 use super::help::help_config;
 

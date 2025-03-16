@@ -1,7 +1,7 @@
 use raplay::Timestamp;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{library::Song, player::AddPolicy, query::Query, Alias};
+use crate::core::{Alias, library::Song, player::AddPolicy, query::Query};
 
 //===========================================================================//
 //                                   Public                                  //

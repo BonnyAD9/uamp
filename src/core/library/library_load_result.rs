@@ -1,7 +1,7 @@
 use std::{collections::HashSet, fmt::Debug, mem};
 
 use crate::{
-    core::{player::AddPolicy, Error, Result, UampApp},
+    core::{Error, Result, UampApp, player::AddPolicy},
     env::AppCtrl,
 };
 

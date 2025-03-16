@@ -6,13 +6,13 @@ use std::{
 };
 
 use log::error;
-use pareg::{has_any_key, Pareg};
+use pareg::{Pareg, has_any_key};
 use termal::eprintacln;
 
 use crate::core::{
+    Error, PlayMsg, Result,
     config::Config,
     messenger::{DataResponse, Info, Messenger, MsgMessage, Request},
-    Error, PlayMsg, Result,
 };
 
 use super::{

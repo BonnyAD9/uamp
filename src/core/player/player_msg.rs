@@ -1,8 +1,8 @@
 use std::time::Instant;
 
 use crate::core::{
-    library::{Library, LibraryUpdate, SongId},
     Msg, UampApp,
+    library::{Library, LibraryUpdate, SongId},
 };
 
 //===========================================================================//

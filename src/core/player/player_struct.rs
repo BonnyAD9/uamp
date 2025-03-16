@@ -6,16 +6,16 @@ use raplay::{CallbackInfo, Timestamp};
 
 use crate::{
     core::{
+        Alias, DataControlMsg, Error, Msg, Result,
         config::Config,
         library::{Library, SongId},
-        Alias, DataControlMsg, Error, Msg, Result,
     },
     ext::AlcVec,
     gen_struct,
 };
 
 use super::{
-    playback::Playback, sink_wrapper::SinkWrapper, PlayerMsg, Playlist,
+    PlayerMsg, Playlist, playback::Playback, sink_wrapper::SinkWrapper,
 };
 
 //===========================================================================//

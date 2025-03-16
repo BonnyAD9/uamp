@@ -8,9 +8,9 @@ use std::{
 
 use crate::{
     core::{
+        FnDelegate, Msg, Result, UampApp,
         messenger::{DataResponse, Error, ErrorKind},
         query::Query,
-        FnDelegate, Msg, Result, UampApp,
     },
     env::AppCtrl,
 };

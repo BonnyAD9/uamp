@@ -3,8 +3,8 @@ use std::mem;
 use pareg::ArgError;
 
 use super::{
-    lexer::{Lexer, LexerState, Token},
     ComposedFilter, Query, SongOrder,
+    lexer::{Lexer, LexerState, Token},
 };
 
 pub struct Parser<'a> {
@@ -111,7 +111,7 @@ impl<'a> Parser<'a> {
                     return self
                         .err_unexpected_token()
                         .inline_msg("Expected filter or `[`.")
-                        .err()
+                        .err();
                 }
             }
 
@@ -126,7 +126,7 @@ impl<'a> Parser<'a> {
                     return self
                         .err_unexpected_token()
                         .inline_msg("Expected `+` or `]`.")
-                        .err()
+                        .err();
                 }
             }
         }
@@ -164,7 +164,7 @@ impl<'a> Parser<'a> {
                     return self
                         .err_unexpected_token()
                         .inline_msg("Expected filter or `[`.")
-                        .err()
+                        .err();
                 }
             }
 
@@ -179,7 +179,7 @@ impl<'a> Parser<'a> {
                     return self
                         .err_unexpected_token()
                         .inline_msg("Expected `.`, `]`, `+` or `@`.")
-                        .err()
+                        .err();
                 }
             }
         }
@@ -199,7 +199,7 @@ impl<'a> Parser<'a> {
                 return self
                     .err_unexpected_token()
                     .inline_msg("Expected filter.")
-                    .err()
+                    .err();
             }
         };
 

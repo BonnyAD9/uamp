@@ -7,13 +7,13 @@ use std::{
 use log::{error, info};
 
 use crate::{
-    core::{config::Config, player::Player, Error, Result, TaskMsg, TaskType},
+    core::{Error, Result, TaskMsg, TaskType, config::Config, player::Player},
     env::AppCtrl,
 };
 
 use super::{
-    add_new_songs::add_new_songs, Library, LibraryLoadResult, LoadOpts, Song,
-    SongId,
+    Library, LibraryLoadResult, LoadOpts, Song, SongId,
+    add_new_songs::add_new_songs,
 };
 
 //===========================================================================//

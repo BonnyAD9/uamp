@@ -6,7 +6,7 @@ use std::{
 
 use log::error;
 
-use crate::core::{config::Config, Result};
+use crate::core::{Result, config::Config};
 
 use super::{LibraryLoadResult, Song, SongId};
 

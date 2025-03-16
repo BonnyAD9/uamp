@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::library::Song;
 
-use super::{parser::Parser, Filter};
+use super::{Filter, parser::Parser};
 
 // [name~/mix/+auth:imaginedragons].
 #[derive(Debug, Clone, Serialize, Deserialize)]

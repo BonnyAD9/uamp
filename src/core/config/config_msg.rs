@@ -2,8 +2,8 @@ use std::{net::TcpStream, time::Instant};
 
 use crate::{
     core::{
-        messenger::{Messenger, MsgMessage},
         Alias, Error, Msg, Result, TaskType, UampApp,
+        messenger::{Messenger, MsgMessage},
     },
     env::AppCtrl,
 };

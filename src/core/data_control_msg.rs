@@ -1,11 +1,11 @@
 use std::{fmt::Display, str::FromStr};
 
-use pareg::{has_any_key, mval_arg, val_arg, ArgErrCtx, ArgError, FromArgStr};
+use pareg::{ArgErrCtx, ArgError, FromArgStr, has_any_key, mval_arg, val_arg};
 use serde::{Deserialize, Serialize};
 
 use crate::env::AppCtrl;
 
-use super::{query::Query, Alias, Msg, Result, UampApp};
+use super::{Alias, Msg, Result, UampApp, query::Query};
 
 //===========================================================================//
 //                                   Public                                  //

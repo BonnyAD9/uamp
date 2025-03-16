@@ -9,7 +9,7 @@ use serde::Serialize;
 
 use crate::core::{Error, Result};
 
-use super::{default_config_dir, Config};
+use super::{Config, default_config_dir};
 
 //===========================================================================//
 //                                   Public                                  //

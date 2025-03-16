@@ -2,13 +2,13 @@ use std::{fmt::Debug, fs::File, time::Duration};
 
 use log::warn;
 use raplay::{
-    source::{symph::SymphOptions, Source, Symph},
     CallbackInfo, Sink, Timestamp,
+    source::{Source, Symph, symph::SymphOptions},
 };
 
 use crate::core::{
-    library::{Library, LibraryUpdate, SongId},
     Result,
+    library::{Library, LibraryUpdate, SongId},
 };
 
 /// Wrapps the sink

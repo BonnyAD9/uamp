@@ -3,14 +3,14 @@ use std::{cell::Cell, collections::HashMap, path::PathBuf, time::Duration};
 
 use crate::{
     core::{
-        player::AddPolicy, query::Query, Alias, AnyControlMsg,
-        ControlFunction, ControlMsg, DataControlMsg,
+        Alias, AnyControlMsg, ControlFunction, ControlMsg, DataControlMsg,
+        player::AddPolicy, query::Query,
     },
     ext::Wrap,
     gen_struct,
 };
 
-use super::{default_config_dir, song_pos_save::SongPosSave, DEFAULT_PORT};
+use super::{DEFAULT_PORT, default_config_dir, song_pos_save::SongPosSave};
 
 gen_struct! {
     #[derive(Debug, Clone, Serialize, Deserialize)]

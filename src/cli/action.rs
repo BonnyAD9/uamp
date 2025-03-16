@@ -1,4 +1,4 @@
-use super::{internal::Internal, Instance, Run, Shell};
+use super::{Instance, Run, Shell, internal::Internal};
 
 //===========================================================================//
 //                                   Public                                  //

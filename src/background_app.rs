@@ -1,8 +1,8 @@
-use futures::{channel::mpsc, StreamExt};
+use futures::{StreamExt, channel::mpsc};
 use log::{error, trace};
 
 use crate::{
-    core::{config::Config, AnyControlMsg, Msg, Result, UampApp},
+    core::{AnyControlMsg, Msg, Result, UampApp, config::Config},
     env::{AppCtrl, Command, MsgGen, Streams, UniqueTasks},
 };
 

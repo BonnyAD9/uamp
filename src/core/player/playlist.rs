@@ -6,9 +6,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::{
+        Alias,
         library::{Library, SongId},
         query::SongOrder,
-        Alias,
     },
     ext::AlcVec,
 };

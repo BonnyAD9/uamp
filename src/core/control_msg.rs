@@ -7,18 +7,18 @@ use std::{
 
 use log::info;
 use pareg::{
-    has_any_key, mval_arg, val_arg, ArgErrCtx, ArgError, FromArg, FromArgStr,
+    ArgErrCtx, ArgError, FromArg, FromArgStr, has_any_key, mval_arg, val_arg,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::{
     env::AppCtrl,
-    ext::{duration_to_string, Wrap},
+    ext::{Wrap, duration_to_string},
 };
 
 use super::{
-    library::LoadOpts, player::AddPolicy, query::SongOrder, Error, Msg,
-    Result, UampApp,
+    Error, Msg, Result, UampApp, library::LoadOpts, player::AddPolicy,
+    query::SongOrder,
 };
 
 //===========================================================================//
@@ -144,7 +144,7 @@ impl UampApp {
                         info!("Cannot load new songs: {}", e.log())
                     }
                     Err(e) => {
-                        return e.prepend("Cannot load new songs.").err()
+                        return e.prepend("Cannot load new songs.").err();
                     }
                     _ => {}
                 }

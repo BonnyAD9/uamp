@@ -1,16 +1,16 @@
 use std::io::{self, IsTerminal};
 
-use pareg::{has_any_key, FromArg, Pareg};
+use pareg::{FromArg, Pareg, has_any_key};
 
 use crate::{
     cli::{help::help_short, port::Port},
     core::{
-        config::{Config, APP_ID, VERSION_STR},
         Error, Result,
+        config::{APP_ID, Config, VERSION_STR},
     },
 };
 
-use super::{help::help, internal::Internal, Action, Instance, Run, Shell};
+use super::{Action, Instance, Run, Shell, help::help, internal::Internal};
 
 //===========================================================================//
 //                                   Public                                  //

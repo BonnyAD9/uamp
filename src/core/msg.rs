@@ -4,8 +4,8 @@ use std::sync::Arc;
 use crate::{core::UampApp, env::AppCtrl};
 
 use super::{
-    config::ConfigMsg, player::PlayerMsg, AnyControlMsg, ControlMsg,
-    DataControlMsg, MessageDelegate, PlayMsg, Result,
+    AnyControlMsg, ControlMsg, DataControlMsg, MessageDelegate, PlayMsg,
+    Result, config::ConfigMsg, player::PlayerMsg,
 };
 
 //===========================================================================//
