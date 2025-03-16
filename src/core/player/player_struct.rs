@@ -391,7 +391,7 @@ impl Player {
         sender: &UnboundedSender<Msg>,
     ) {
         let message = match msg {
-            CallbackInfo::SourceEnded => Msg::Player(PlayerMsg::SongEnd),
+            CallbackInfo::SourceEnded(_) => Msg::Player(PlayerMsg::SongEnd),
             CallbackInfo::PauseEnds(i) => {
                 Msg::Player(PlayerMsg::HardPauseAt(i))
             }

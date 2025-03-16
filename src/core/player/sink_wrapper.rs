@@ -3,7 +3,7 @@ use std::{fmt::Debug, fs::File, time::Duration};
 use log::warn;
 use raplay::{
     CallbackInfo, Sink, Timestamp,
-    source::{Source, Symph, symph::SymphOptions},
+    source::{Source, Symph, symph},
 };
 
 use crate::core::{
@@ -16,19 +16,18 @@ pub struct SinkWrapper {
     /// The inner player
     sink: Sink,
     /// Configuration for symph sources
-    symph: SymphOptions,
+    symph: symph::Options,
 }
 
 impl SinkWrapper {
     /// Create new [`SinkWrapper`]
     pub fn new() -> Self {
         let sink = Sink::default();
-        _ = sink.on_err_callback(Some(|e| {
-            warn!("Error in playback: {e}");
-        }));
+        sink.on_err_callback(Box::new(|e| warn!("Error in playback: {e}")))
+            .expect("Failed to set sink error callback: ");
         Self {
             sink,
-            symph: SymphOptions::default(),
+            symph: symph::Options::default(),
         }
     }
 
@@ -57,7 +56,7 @@ impl SinkWrapper {
             }
         }
 
-        self.sink.load(src, play)?;
+        self.sink.load(Box::new(src), play)?;
         Ok(())
     }
 
@@ -79,7 +78,7 @@ impl SinkWrapper {
         &'static F: std::marker::Send,
     {
         self.sink
-            .on_callback(Some(f))
+            .on_callback(Box::new(f))
             .expect("Failed to set sink callback: ");
     }
 
