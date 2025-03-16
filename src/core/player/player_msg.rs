@@ -1,5 +1,7 @@
 use std::time::Instant;
 
+use raplay::PrefetchState;
+
 use crate::core::{
     Msg, UampApp,
     library::{Library, LibraryUpdate, SongId},
@@ -14,7 +16,8 @@ use crate::core::{
 pub enum PlayerMsg {
     /// The song has ended. You can play the next in the playlist. Internal
     /// message DO NOT SEND outside of player.
-    SongEnd,
+    SongEnd(PrefetchState),
+    Prefetch,
     /// The smooth pause will end at the given moment. You can hard pause when
     /// it passes. Internal message DO NOT SEND outside of player.
     HardPauseAt(Instant),
@@ -27,8 +30,16 @@ impl UampApp {
         msg: PlayerMsg,
     ) -> Vec<Msg> {
         match msg {
-            PlayerMsg::SongEnd => {
+            PlayerMsg::SongEnd(
+                PrefetchState::NoPrefetch | PrefetchState::PrefetchFailed,
+            ) => {
                 self.player.play_next(&mut self.library, 1);
+            }
+            PlayerMsg::SongEnd(PrefetchState::PrefetchSuccessful) => {
+                self.player.prefetch_success();
+            }
+            PlayerMsg::Prefetch => {
+                self.player.prefetch(&mut self.library);
             }
             PlayerMsg::HardPauseAt(i) => self.hard_pause_at = Some(i),
         }

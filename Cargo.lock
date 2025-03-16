@@ -1693,6 +1693,8 @@ dependencies = [
 [[package]]
 name = "raplay"
 version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b987a77675f80610ceee106895a778fb6b63d35d8d554b8983722205f36d94c3"
 dependencies = [
  "anyhow",
  "cpal",

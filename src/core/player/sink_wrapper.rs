@@ -25,6 +25,11 @@ impl SinkWrapper {
         let sink = Sink::default();
         sink.on_err_callback(Box::new(|e| warn!("Error in playback: {e}")))
             .expect("Failed to set sink error callback: ");
+
+        // XXX: Make this configurable?
+        sink.prefetch_notify(Duration::from_secs(1))
+            .expect("Failed to set prefetch time on sink.");
+
         Self {
             sink,
             symph: symph::Options::default(),
@@ -42,22 +47,52 @@ impl SinkWrapper {
         id: SongId,
         play: bool,
     ) -> Result<()> {
-        let file = File::open(lib[id].path())?;
-        let src = Symph::try_new(file, &self.symph)?;
-
-        const SMALL_TIME: f64 = 0.1;
-
-        if let Some(Timestamp { total, .. }) = src.get_time() {
-            if (lib[id].length().as_secs_f64() - total.as_secs_f64()).abs()
-                > SMALL_TIME
-            {
-                lib[id].set_length(total);
-                lib.update(LibraryUpdate::Metadata);
-            }
-        }
-
+        let src = self.load_symph(lib, id)?;
+        self.unprefetch();
         self.sink.load(Box::new(src), play)?;
         Ok(())
+    }
+
+    /// Prefetch the given song.
+    pub fn prefetch(&mut self, lib: &mut Library, id: SongId) -> Result<()> {
+        let src = self.load_symph(lib, id)?;
+        self.sink.prefetch(Some(Box::new(src)))?;
+        Ok(())
+    }
+
+    /// true - Send prefetch notification even if it has already been sent.
+    ///
+    /// false - Don't sent prefetch notification for the current source.
+    pub fn do_prefetch_notify(&self, val: bool) {
+        self.sink.do_prefetch_notify(val);
+    }
+
+    /// If there is prefetched song, load it, otherwise load the given song.
+    pub fn load_or_prefetched(
+        &mut self,
+        lib: &mut Library,
+        id: SongId,
+        play: bool,
+    ) -> Result<()> {
+        let src = self
+            .sink
+            .prefetch(None)
+            .expect("Failed to retrieve prefetched source.");
+
+        let src = if let Some(src) = src {
+            src
+        } else {
+            Box::new(self.load_symph(lib, id)?)
+        };
+
+        self.sink.load(src, play)?;
+        Ok(())
+    }
+
+    pub fn unprefetch(&self) {
+        self.sink
+            .prefetch(None)
+            .expect("Failed to remove prefetched song");
     }
 
     /// Sets the play state.
@@ -149,6 +184,24 @@ impl SinkWrapper {
     pub fn hard_pause(&mut self) -> Result<()> {
         self.sink.hard_pause()?;
         Ok(())
+    }
+
+    fn load_symph(&mut self, lib: &mut Library, id: SongId) -> Result<Symph> {
+        let file = File::open(lib[id].path())?;
+        let src = Symph::try_new(file, &self.symph)?;
+
+        const SMALL_TIME: f64 = 0.1;
+
+        if let Some(Timestamp { total, .. }) = src.get_time() {
+            if (lib[id].length().as_secs_f64() - total.as_secs_f64()).abs()
+                > SMALL_TIME
+            {
+                lib[id].set_length(total);
+                lib.update(LibraryUpdate::Metadata);
+            }
+        }
+
+        Ok(src)
     }
 }
 

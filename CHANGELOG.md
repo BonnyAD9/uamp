@@ -1,6 +1,9 @@
 # CHANGELOG
 
 ## future
+### New features
+- Properly support gapless playback by prefetching next song.
+
 ### Changes
 - Print additional newline before image.
 

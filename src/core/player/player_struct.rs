@@ -50,7 +50,7 @@ impl Player {
         }
 
         if let Some(id) = self.playlist().current() {
-            self.load(lib, id, play);
+            self.load(lib, id, play, false);
             Ok(())
         } else {
             self.inner.play(false);
@@ -88,7 +88,7 @@ impl Player {
         play: bool,
     ) {
         *self.playlist_mut() = playlist;
-        self.try_load(lib, self.playlist().current(), play);
+        self.try_load(lib, self.playlist().current(), play, false);
     }
 
     /// Returns true if the state is [`Playback::Playing`]
@@ -107,19 +107,24 @@ impl Player {
         if id.is_none() {
             self.playlist_ended = true;
         }
-        self.try_load_state(lib, id);
+        self.try_load_state(lib, id, n == 1);
     }
 
     /// Plays the `n`th previous song in the playlist
     pub fn play_prev(&mut self, lib: &mut Library, n: usize) {
         let id = self.playlist_mut().nth_prev(n);
-        self.try_load_state(lib, id);
+        self.try_load_state(lib, id, false);
     }
 
     /// Jumps to the given index in the playlist if set.
     pub fn jump_to(&mut self, lib: &mut Library, index: usize) {
+        let pf = self
+            .playlist()
+            .current_idx()
+            .map(|i| i + 1 == index)
+            .unwrap_or_default();
         let id = self.playlist_mut().jump_to(index);
-        self.try_load_state(lib, id);
+        self.try_load_state(lib, id, pf);
     }
 
     /// Changes the state to [`Playback::Stopped`]
@@ -143,7 +148,7 @@ impl Player {
 
         let old = mem::replace(self.playlist_mut(), playlist);
         self.playlist_stack_mut().push(old);
-        self.try_load(lib, self.playlist.current(), play);
+        self.try_load(lib, self.playlist.current(), play, false);
     }
 
     /// Pushes new playlist to the stack without changing the play staty by
@@ -152,6 +157,8 @@ impl Player {
         songs.splice(0..0, self.playlist_mut().pop_current());
         let old = mem::replace(self.playlist_mut(), songs.into());
         self.playlist_stack_mut().push(old);
+        self.inner.unprefetch();
+        self.inner.do_prefetch_notify(true);
     }
 
     /// If there are more playlists in the stack, end the top one.
@@ -160,7 +167,7 @@ impl Player {
             return;
         };
         *self.playlist_mut() = playlist;
-        if self.try_load_state(lib, self.playlist.current()) {
+        if self.try_load_state(lib, self.playlist.current(), false) {
             self.playlist_mut().pop_play_pos().map(|p| self.seek_to(p));
         }
     }
@@ -169,6 +176,14 @@ impl Player {
     /// This is seamless because the currently playing song stays the same.
     pub fn flatten(&mut self, cnt: usize) {
         let cnt = if cnt == 0 { usize::MAX } else { cnt };
+        let reprefetch = self
+            .playlist()
+            .current_idx()
+            .map(|i| {
+                i + 1 == self.playlist().len()
+                    && !self.playlist_stack().is_empty()
+            })
+            .unwrap();
         for _ in 0..cnt {
             let Some(mut p) = self.playlist_stack.pop() else {
                 break;
@@ -177,6 +192,10 @@ impl Player {
             let pl = mem::take(self.playlist_mut());
             p.flatten(pl);
             *self.playlist_mut() = p;
+        }
+
+        if reprefetch {
+            self.inner.do_prefetch_notify(true);
         }
     }
 
@@ -242,6 +261,8 @@ impl Player {
         for p in self.playlist_stack_mut() {
             p.retain(&mut f)
         }
+        self.inner.unprefetch();
+        self.inner.do_prefetch_notify(true);
     }
 
     /// If any playlist action is triggered, return its messages and clear the
@@ -324,6 +345,27 @@ impl Player {
     pub(super) fn set_change(&self, val: bool) {
         self.change.set(val);
     }
+
+    /// Move to the next song without loading it because it was successfully
+    /// prefetched.
+    pub(super) fn prefetch_success(&mut self) {
+        self.playlist_mut().nth_next(1);
+    }
+
+    /// Prefetch the next song if available.
+    pub(super) fn prefetch(&mut self, lib: &mut Library) {
+        let Some(id) = self.playlist().peek() else {
+            return;
+        };
+
+        if let Err(e) = self.inner.prefetch(lib, id) {
+            error!(
+                "Failed to prefetch song {:?}: {}",
+                lib[id].path(),
+                e.log()
+            );
+        }
+    }
 }
 
 //===========================================================================//
@@ -335,6 +377,7 @@ impl Player {
         &mut self,
         lib: &mut Library,
         id: Option<SongId>,
+        pf: bool,
     ) -> bool {
         let Some(id) = id else {
             if !self.state.is_stopped() {
@@ -346,7 +389,7 @@ impl Player {
 
         match self.state {
             Playback::Stopped => true,
-            _ => self.load(lib, id, self.is_playing()),
+            _ => self.load(lib, id, self.is_playing(), pf),
         }
     }
 
@@ -355,17 +398,30 @@ impl Player {
         lib: &mut Library,
         id: Option<SongId>,
         play: bool,
+        pf: bool,
     ) -> bool {
         if let Some(id) = id {
-            self.load(lib, id, play)
+            self.load(lib, id, play, pf)
         } else {
             self.stop();
             false
         }
     }
 
-    fn load(&mut self, lib: &mut Library, id: SongId, play: bool) -> bool {
-        match self.inner.load(lib, id, play) {
+    fn load(
+        &mut self,
+        lib: &mut Library,
+        id: SongId,
+        play: bool,
+        pf: bool,
+    ) -> bool {
+        let err = if pf {
+            self.inner.load_or_prefetched(lib, id, play)
+        } else {
+            self.inner.load(lib, id, play)
+        };
+
+        match err {
             Ok(_) => {
                 self.state = Playback::play(play);
                 true
@@ -381,7 +437,7 @@ impl Player {
                 if next.is_none() {
                     self.playlist_ended = true;
                 }
-                self.try_load(lib, next, play)
+                self.try_load(lib, next, play, pf)
             }
         }
     }
@@ -391,11 +447,12 @@ impl Player {
         sender: &UnboundedSender<Msg>,
     ) {
         let message = match msg {
-            CallbackInfo::SourceEnded(_) => Msg::Player(PlayerMsg::SongEnd),
+            CallbackInfo::SourceEnded(s) => Msg::Player(PlayerMsg::SongEnd(s)),
+            CallbackInfo::PrefetchTime(_) => Msg::Player(PlayerMsg::Prefetch),
             CallbackInfo::PauseEnds(i) => {
                 Msg::Player(PlayerMsg::HardPauseAt(i))
             }
-            _ => todo!("Fix me at {}:{}::", file!(), line!()),
+            _ => return,
         };
 
         if let Err(e) = sender.unbounded_send(message) {

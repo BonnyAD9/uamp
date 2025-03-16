@@ -151,6 +151,16 @@ impl Playlist {
         self.songs.splice(c..c, iter)
     }
 
+    /// Get the next song.
+    pub fn peek(&self) -> Option<SongId> {
+        let idx = self.current + 1;
+        if idx < self.len() {
+            Some(self[idx])
+        } else {
+            None
+        }
+    }
+
     /// Moves current to the nth next song and returns its id.
     ///
     /// If the nth next song is outside of the playlist, jump to the first song
