@@ -90,7 +90,7 @@ fn start_logger() -> Result<LoggerHandle> {
         })?
         .log_to_file(
             flexi_logger::FileSpec::default()
-                .directory(config::default_config_dir().join("log")),
+                .directory(config::default_log_dir()),
         )
         .write_mode(flexi_logger::WriteMode::Direct)
         .start()

@@ -27,18 +27,19 @@ pub const VERSION_STR: &str = {
 /// Gets the default path for configuration, it is different when debugging.
 pub fn default_config_dir() -> PathBuf {
     if let Some(dir) = dirs::config_dir() {
-        // use different path when debugging to not ruin existing config
-        #[cfg(not(debug_assertions))]
-        {
-            dir.join("uamp")
-        }
-        #[cfg(debug_assertions)]
-        {
-            dir.join("uamp_debug")
-        }
+        dir.join(APP_ID)
     } else {
         PathBuf::from(".")
     }
+}
+
+/// Gets the default path for logs.
+pub fn default_log_dir() -> PathBuf {
+    let mut d = dirs::data_local_dir()
+        .map(|a| a.join(APP_ID))
+        .unwrap_or_else(|| ".".into());
+    d.push("log");
+    d
 }
 
 /// Gets the default path to json configuration, it is different when debugging

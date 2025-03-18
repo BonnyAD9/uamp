@@ -22,7 +22,7 @@ use crate::{
 
 use super::{
     ControlMsg, TaskMsg, TaskType,
-    config::{Config, ConfigMsg, default_config_dir},
+    config::{Config, ConfigMsg, default_log_dir},
     library::{Library, SongId},
     player::Player,
 };
@@ -414,7 +414,7 @@ impl UampApp {
 
 /// Deletes old logs.
 fn delete_old_logs(timeout: Duration) -> Result<()> {
-    let dir = fs::read_dir(default_config_dir().join("log"))?;
+    let dir = fs::read_dir(default_log_dir())?;
 
     for d in dir {
         let d = d?;
