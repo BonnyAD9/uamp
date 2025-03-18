@@ -2,7 +2,8 @@ use std::{fmt::Debug, fs::File, time::Duration};
 
 use log::warn;
 use raplay::{
-    CallbackInfo, Sink, Timestamp,
+    CallbackInfo, CpalError, Sink, Timestamp,
+    reexp::BuildStreamError,
     source::{Source, Symph, symph},
 };
 
@@ -49,7 +50,7 @@ impl SinkWrapper {
     ) -> Result<()> {
         let src = self.load_symph(lib, id)?;
         self.unprefetch();
-        self.sink.load(Box::new(src), play)?;
+        self.load_inner(Box::new(src), play)?;
         Ok(())
     }
 
@@ -85,7 +86,7 @@ impl SinkWrapper {
             Box::new(self.load_symph(lib, id)?)
         };
 
-        self.sink.load(src, play)?;
+        self.load_inner(src, play)?;
         Ok(())
     }
 
@@ -202,6 +203,24 @@ impl SinkWrapper {
         }
 
         Ok(src)
+    }
+
+    fn load_inner(&mut self, src: Box<dyn Source>, play: bool) -> Result<()> {
+        let mut src = Some(src);
+        match self.sink.try_load(&mut src, play) {
+            e @ Err(raplay::Error::Cpal(CpalError::BuildStream(
+                BuildStreamError::DeviceNotAvailable,
+            ))) => {
+                self.sink.restart_device(None)?;
+                if src.is_some() {
+                    self.sink.try_load(&mut src, play)
+                } else {
+                    e
+                }
+            }
+            r => r,
+        }?;
+        Ok(())
     }
 }
 

@@ -5,6 +5,9 @@
 - Print additional newline before image.
 - Properly support gapless playback by prefetching next song.
 
+### Fixes
+- Uamp will reselect new output device if the old is unavailable.
+
 ## v0.5.7
 ### New features
 + Log panics.
