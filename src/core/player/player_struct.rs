@@ -167,7 +167,12 @@ impl Player {
             return;
         };
         *self.playlist_mut() = playlist;
-        if self.try_load_state(lib, self.playlist.current(), false) {
+        if self.try_load(
+            lib,
+            self.playlist.current(),
+            self.is_playing(),
+            false,
+        ) {
             self.playlist_mut().pop_play_pos().map(|p| self.seek_to(p));
         }
     }

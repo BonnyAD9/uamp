@@ -9,6 +9,7 @@
 
 ### Fixes
 - Uamp will reselect new output device if the old is unavailable.
+- Don't discard track position of next playlist when popping stopped playlist.
 
 ## v0.5.7
 ### New features
