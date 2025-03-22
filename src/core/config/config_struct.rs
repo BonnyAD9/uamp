@@ -10,7 +10,10 @@ use crate::{
     gen_struct,
 };
 
-use super::{DEFAULT_PORT, default_config_dir, song_pos_save::SongPosSave};
+use super::{
+    CacheSize, DEFAULT_PORT, default_cache_dir, default_config_dir,
+    song_pos_save::SongPosSave,
+};
 
 gen_struct! {
     #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,6 +41,11 @@ gen_struct! {
         #[doc = "Path to player data file."]
         player_path: Option<PathBuf> { pub, pub } => pub(super) () {
             Some(default_config_dir().join("player.json"))
+        },
+
+        #[doc = "Path to uamp cache folder"]
+        cache_path: PathBuf { pub, pub } => pub(super) () {
+            default_cache_dir()
         },
 
         #[doc = "File extensions that will be used to recognize audio files."]
@@ -202,6 +210,7 @@ impl Config {
             recursive_search: default_recursive_search(),
             library_path: default_library_path(),
             player_path: default_player_path(),
+            cache_path: default_cache_path(),
             audio_extensions: default_audio_extensions(),
             update_library_on_start: default_update_library_on_start(),
             remove_missing_on_load: default_remove_missing_on_load(),
@@ -230,6 +239,10 @@ impl Config {
     /// Sets the change to the given value. Use with caution.
     pub(super) fn set_change(&self, value: bool) {
         self.change.set(value);
+    }
+
+    pub fn get_cache_cover_path(&self, size: CacheSize) -> PathBuf {
+        self.cache_path().join(format!("cover{size}"))
     }
 }
 

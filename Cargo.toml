@@ -8,9 +8,10 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.97"
 audiotags = "0.5.0"
-bitflags = { version = "2.9.0", features = [ "serde" ]}
+bitflags = { version = "2.9.0", features = [ "serde" ] }
 dirs = "6.0.0"
-edit = { version = "0.1.5", features = [ "quoted-env" ]}
+edit = { version = "0.1.5", features = [ "quoted-env" ] }
+filesan = "0.1.0"
 flexi_logger = "0.29.8"
 futures = "0.3.31"
 image = "0.25.5"
@@ -29,6 +30,6 @@ serde_json = "1.0.140"
 shell-words = "1.1.0"
 signal-hook = "0.3.17"
 signal-hook-async-std = "0.2.2"
-termal = { version =  "2.0.0", features = ["image"]}
+termal = { version =  "2.0.0", features = ["image", "raw"] }
 thiserror = "2.0.12"
 unidecode = "0.3.0"

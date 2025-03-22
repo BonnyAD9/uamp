@@ -5,6 +5,7 @@
 - Print additional newline before image.
 - Properly support gapless playback by prefetching next song.
 - Change the log directory.
+- Cache images.
 
 ### Fixes
 - Uamp will reselect new output device if the old is unavailable.

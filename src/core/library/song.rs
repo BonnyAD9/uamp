@@ -1,19 +1,22 @@
 use std::{
     borrow::Cow,
     fmt::Debug,
-    fs::File,
+    fs::{self, File, create_dir_all},
     io::{Cursor, ErrorKind},
     path::{Path, PathBuf},
     time::Duration,
 };
 
 use audiotags::Tag;
-use image::{DynamicImage, ImageReader};
+use image::{DynamicImage, ImageReader, imageops::FilterType};
 use log::warn;
 use raplay::source::{Source, Symph};
 use serde::{Deserialize, Serialize};
 
-use crate::core::{Error, Result};
+use crate::core::{
+    Error, Result,
+    config::{CacheSize, Config},
+};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -142,6 +145,45 @@ impl Song {
         };
 
         Ok(ImageReader::open(img)?.decode()?)
+    }
+
+    pub fn lookup_cached_cover(
+        &self,
+        conf: &Config,
+        size: CacheSize,
+    ) -> Result<DynamicImage> {
+        let mut cached = conf.get_cache_cover_path(size);
+        let name = format!("{} - {}.jpg", self.artist, self.album);
+        cached.push(filesan::escape_str(&name, '_', filesan::Mode::SYSTEM));
+
+        let size = size.size() as u32;
+
+        if cached.exists() {
+            return Ok(ImageReader::open(cached)?.decode()?);
+        }
+
+        let img = self.lookup_image()?;
+
+        create_dir_all(cached.parent().unwrap())?;
+
+        let (w, h) = if img.width() >= img.height() {
+            (size, img.height() * size / img.width())
+        } else {
+            (img.width() * size / img.height(), size)
+        };
+        let img = image::imageops::resize(
+            &img.to_rgb8(),
+            w,
+            h,
+            FilterType::Triangle,
+        );
+
+        create_dir_all(cached.parent().unwrap())?;
+        if img.save(&cached).is_err() {
+            _ = fs::remove_file(cached);
+        }
+
+        Ok(img.into())
     }
 
     /// Constructs invalid "ghost" song.

@@ -5,10 +5,14 @@ use std::{
 
 use image::imageops::FilterType;
 use itertools::Itertools;
-use termal::{codes, formatmc, printmc, printmcln};
+use termal::{codes, formatmc, printmc, printmcln, raw::term_size};
 
 use crate::{
-    core::{config::Config, library::Song, messenger::Info},
+    core::{
+        config::{CacheSize, Config},
+        library::Song,
+        messenger::Info,
+    },
     ext::duration_to_string,
 };
 
@@ -37,7 +41,7 @@ pub fn now_playing(info: &Info, conf: &Config, color: bool, lmc: bool) {
     let vbot = info.vbot();
     let volume = info.volume(color);
     let img = (color && conf.client_image_lookup())
-        .then(|| info.image())
+        .then(|| info.image(conf))
         .unwrap_or_default();
     let clear = lmc
         .then(|| {
@@ -380,21 +384,38 @@ impl Info {
         }
     }
 
-    fn image(&self) -> String {
+    fn image(&self, conf: &Config) -> String {
         // dbg!("Lookup");
         let mut res = String::new();
         let Some(s) = &self.now_playing else {
             return res;
         };
-        let Ok(img) = s.lookup_image() else {
+        let Ok(img) = s.lookup_cached_cover(conf, CacheSize::S256) else {
             return res;
         };
 
+        let ratio = term_size()
+            .map(|s| {
+                if s.pixel_height == 0 || s.pixel_width == 0 {
+                    0.5
+                } else {
+                    (s.pixel_width as f32 * s.char_height as f32)
+                        / (s.char_width as f32 * s.pixel_height as f32)
+                }
+            })
+            .unwrap_or(0.5);
+
         res.push('\n');
 
-        let w = 60;
-        let h = (img.height() as f32 * w as f32 / img.width() as f32
-            * (8. / 15.)) as usize;
+        let mut w = 60;
+        let mut h = 30;
+        if img.width() >= img.height() {
+            h = (img.height() as f32 * w as f32 / img.width() as f32 * ratio)
+                as usize;
+        } else {
+            w = (img.width() as f32 * h as f32 / img.height() as f32 * ratio)
+                as usize;
+        }
 
         // dbg!("Resize");
         let img = image::imageops::resize(

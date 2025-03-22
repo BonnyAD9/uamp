@@ -569,6 +569,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "filesan"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "202d30a624d774945a66ac0a49be81a24e82f86d2b4a0698b7115093a2c5fc5c"
+dependencies = [
+ "bitflags 2.9.0",
+]
+
+[[package]]
 name = "filetime"
 version = "0.2.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2288,11 +2297,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f433f70d5934e7a2cdf96e294483149a6f1fb2eb97de0d94b0427b1e31f6babb"
 dependencies = [
  "base64",
+ "bitflags 2.9.0",
  "image",
+ "libc",
  "litrs",
  "place_macro",
  "proc-macro2",
  "thiserror 2.0.12",
+ "winapi",
 ]
 
 [[package]]
@@ -2409,6 +2421,7 @@ dependencies = [
  "bitflags 2.9.0",
  "dirs",
  "edit",
+ "filesan",
  "flexi_logger",
  "futures",
  "image",
