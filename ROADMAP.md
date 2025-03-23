@@ -1,5 +1,4 @@
 # Roadmap
-- Clear playlist
 - TUI
 - Tag editor
 - Add manpage
