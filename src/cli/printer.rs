@@ -386,6 +386,7 @@ impl Info {
 
     fn image(&self, conf: &Config) -> String {
         const IMG_CHAR_WIDTH: usize = 60;
+        const DEFAULT_CHAR_RATIO: f32 = 0.5;
 
         // dbg!("Lookup");
         let mut res = String::new();
@@ -399,13 +400,13 @@ impl Info {
         let ratio = term_size()
             .map(|s| {
                 if s.pixel_height == 0 || s.pixel_width == 0 {
-                    0.5
+                    DEFAULT_CHAR_RATIO
                 } else {
                     (s.pixel_width as f32 * s.char_height as f32)
                         / (s.char_width as f32 * s.pixel_height as f32)
                 }
             })
-            .unwrap_or(0.5);
+            .unwrap_or(DEFAULT_CHAR_RATIO);
 
         res.push('\n');
 
