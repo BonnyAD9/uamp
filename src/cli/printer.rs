@@ -385,6 +385,8 @@ impl Info {
     }
 
     fn image(&self, conf: &Config) -> String {
+        const IMG_CHAR_WIDTH: usize = 60;
+
         // dbg!("Lookup");
         let mut res = String::new();
         let Some(s) = &self.now_playing else {
@@ -407,12 +409,13 @@ impl Info {
 
         res.push('\n');
 
-        let mut w = 60;
-        let mut h = 30;
+        let [w, h];
         if img.width() >= img.height() {
+            w = IMG_CHAR_WIDTH;
             h = (img.height() as f32 * w as f32 / img.width() as f32 * ratio)
                 as usize;
         } else {
+            h = (IMG_CHAR_WIDTH as f32 * ratio) as usize;
             w = (img.width() as f32 * h as f32 / (img.height() as f32 * ratio))
                 as usize;
         }
