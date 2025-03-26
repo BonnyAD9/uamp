@@ -413,7 +413,7 @@ impl Info {
             h = (img.height() as f32 * w as f32 / img.width() as f32 * ratio)
                 as usize;
         } else {
-            w = (img.width() as f32 * h as f32 / img.height() as f32 * ratio)
+            w = (img.width() as f32 * h as f32 / (img.height() as f32 * ratio))
                 as usize;
         }
 

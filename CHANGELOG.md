@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## future
+### Fixes
+- Fix image scaling for images that are taller tan wide.
+
 ## v0.5.8
 ### Changes
 - Print additional newline before image.
