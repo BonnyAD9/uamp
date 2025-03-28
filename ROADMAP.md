@@ -1,4 +1,6 @@
 # Roadmap
+- Json print style.
+- Use `{}` instead of `[]` in CLI.
 - TUI
 - Tag editor
 - Add manpage
