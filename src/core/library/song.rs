@@ -2,7 +2,7 @@ use std::{
     borrow::Cow,
     fmt::Debug,
     fs::{self, File, create_dir_all},
-    io::{Cursor, ErrorKind},
+    io::{BufReader, Cursor, ErrorKind},
     path::{Path, PathBuf},
     time::Duration,
 };
@@ -144,7 +144,11 @@ impl Song {
             )));
         };
 
-        Ok(ImageReader::open(img)?.decode()?)
+        // It is more reliable to guess the format of user provided image by
+        // its contents than using its extension.
+        Ok(ImageReader::new(BufReader::new(File::open(img)?))
+            .with_guessed_format()?
+            .decode()?)
     }
 
     pub fn lookup_cached_cover(
@@ -159,6 +163,8 @@ impl Song {
         let size = size.size() as u32;
 
         if cached.exists() {
+            // This image was created by uamp, so we can be sure that the
+            // format guessed from extension is correct.
             return Ok(ImageReader::open(cached)?.decode()?);
         }
 

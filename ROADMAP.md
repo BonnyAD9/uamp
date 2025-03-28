@@ -9,4 +9,3 @@
 - Grououping by albums and artists
 
 # known issues
-- Trench image doesn't show.

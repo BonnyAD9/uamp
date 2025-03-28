@@ -3,6 +3,7 @@
 ## future
 ### Fixes
 - Fix image scaling for images that are taller tan wide.
+- Fix loading of images with incorrect file extension.
 
 ## v0.5.8
 ### Changes
