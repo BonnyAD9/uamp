@@ -4,7 +4,7 @@ use pareg::Pareg;
 
 type CowStr = Cow<'static, str>;
 
-use crate::core::Result;
+use crate::core::{Result, config::Config};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TabMode {
@@ -92,21 +92,21 @@ impl TabComplete {
         Ok(Self { cur, mode })
     }
 
-    pub fn act(&self) -> Result<()> {
+    pub fn act(&self, conf: &Config) -> Result<()> {
         let p = &|a| println!("{a}");
 
         match self.mode {
-            TabMode::Basic => basic_args(&self.cur, p),
-            TabMode::Instance => instance_args(&self.cur, p),
-            TabMode::Run => run_args(&self.cur, p),
-            TabMode::Config => config_args(&self.cur, p),
-            TabMode::Shell => shell_args(&self.cur, p),
-            TabMode::Internal => internal_args(&self.cur, p),
+            TabMode::Basic => basic_args(conf, &self.cur, p),
+            TabMode::Instance => instance_args(conf, &self.cur, p),
+            TabMode::Run => run_args(conf, &self.cur, p),
+            TabMode::Config => config_args(conf, &self.cur, p),
+            TabMode::Shell => shell_args(conf, &self.cur, p),
+            TabMode::Internal => internal_args(conf, &self.cur, p),
             TabMode::InternalTabComplete => {}
-            TabMode::Help => help_args(&self.cur, p),
+            TabMode::Help => help_args(conf, &self.cur, p),
             TabMode::Invalid => {}
-            TabMode::Port => port_args(&self.cur, p),
-            TabMode::Color => color_args(&self.cur, p),
+            TabMode::Port => port_args(conf, &self.cur, p),
+            TabMode::Color => color_args(conf, &self.cur, p),
             TabMode::None => {}
         }
 
@@ -115,9 +115,9 @@ impl TabComplete {
 }
 
 macro_rules! prefixed_map {
-    ($arg:ident, $p:ident, $def:expr, $($pf:literal => $($f:ident)? $([$c:ident])?),* $(,)?) => {
+    ($arg:ident, $p:ident, $conf:ident, $def:expr, $($pf:literal => $($f:ident)? $([$c:ident])?),* $(,)?) => {
         $(if let Some(s) = $arg.strip_prefix($pf) {
-            $($f(s, &|a| $p(($pf.to_owned() + &a).into()));)?
+            $($f($conf, s, &|a| $p(($pf.to_owned() + &a).into()));)?
             $(select_args($c, s, $p);)?
         } else)* {
             $def
@@ -125,8 +125,8 @@ macro_rules! prefixed_map {
     };
 }
 
-fn basic_args(arg: &str, p: &impl Fn(CowStr)) {
-    prefixed_map!(arg, p, select_args(BASIC_ARG, arg, p),
+fn basic_args(conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
+    prefixed_map!(arg, p, conf, select_args(BASIC_ARG, arg, p),
         "--color=" => color_args,
         "--colour=" => color_args,
         "-I" => instance_args,
@@ -136,8 +136,8 @@ fn basic_args(arg: &str, p: &impl Fn(CowStr)) {
     );
 }
 
-fn instance_args(arg: &str, p: &impl Fn(CowStr)) {
-    prefixed_map!(arg, p, {
+fn instance_args(conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
+    prefixed_map!(arg, p, conf, {
             select_args(INSTANCE_ARG, arg, p);
             select_args(ANY_CONTROL_MSG, arg, p);
         },
@@ -146,45 +146,49 @@ fn instance_args(arg: &str, p: &impl Fn(CowStr)) {
         "mute=" => [MUTE_ARG],
         "p=" => file_args,
         "play=" => file_args,
+        "al=" => alias_args,
+        "alias=" => alias_args,
     );
 }
 
-fn run_args(arg: &str, p: &impl Fn(CowStr)) {
-    prefixed_map!(arg, p, {
+fn run_args(conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
+    prefixed_map!(arg, p, conf, {
             select_args(RUN_ARG, arg, p);
             select_args(ANY_CONTROL_MSG, arg, p);
         },
         "pp=" => [PLAY_PAUSE_ARG],
         "play-pause=" => [PLAY_PAUSE_ARG],
         "mute=" => [MUTE_ARG],
+        "al=" => alias_args,
+        "alias=" => alias_args,
     );
 }
 
-fn config_args(arg: &str, p: &impl Fn(CowStr)) {
+fn config_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
     select_args(CONFIG_ARG, arg, p);
 }
 
-fn shell_args(arg: &str, p: &impl Fn(CowStr)) {
+fn shell_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
     select_args(SHELL_ARG, arg, p);
 }
 
-fn internal_args(arg: &str, p: &impl Fn(CowStr)) {
+fn internal_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
     select_args(INTERANAL_ARG, arg, p);
 }
 
-fn help_args(arg: &str, p: &impl Fn(CowStr)) {
+fn help_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
     select_args(HELP_ARG, arg, p);
 }
 
-fn port_args(arg: &str, p: &impl Fn(CowStr)) {
+fn port_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
     select_args(PORT_ARG, arg, p);
 }
 
-fn color_args(arg: &str, p: &impl Fn(CowStr)) {
+fn color_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
     select_args(COLOR_ARG, arg, p);
 }
 
-fn file_args(arg: &str, p: &impl Fn(CowStr)) {
+fn file_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
     _ = file_args_inner(arg, p);
 }
 
@@ -224,6 +228,18 @@ fn file_args_inner(arg: &str, p: &impl Fn(CowStr)) -> Result<()> {
     }
 
     Ok(())
+}
+
+fn alias_args(conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
+    for (k, v) in conf.control_aliases() {
+        if k.starts_with(arg) {
+            if v.args().is_empty() {
+                p(k.to_string().into())
+            } else {
+                p(format!("{k}[{}]", v.args().join(",")).into())
+            }
+        }
+    }
 }
 
 fn select_args(

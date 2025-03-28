@@ -38,6 +38,10 @@ impl ControlFunction {
                 .try_collect()
         }
     }
+
+    pub fn args(&self) -> &[String] {
+        &self.args
+    }
 }
 
 impl ControlUnit {

@@ -2,7 +2,7 @@ use pareg::Pareg;
 
 mod tab_complete;
 
-use crate::core::Result;
+use crate::core::{Result, config::Config};
 
 pub use self::tab_complete::*;
 
@@ -30,10 +30,10 @@ impl Internal {
         }
     }
 
-    pub fn act(&self) -> Result<()> {
+    pub fn act(&self, conf: &Config) -> Result<()> {
         match self {
             Self::None => Ok(()),
-            Self::TabComplete(t) => t.act(),
+            Self::TabComplete(t) => t.act(conf),
         }
     }
 }

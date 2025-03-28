@@ -1,6 +1,9 @@
 # CHANGELOG
 
 ## future
+### New features
+- Tab completion now can suggest aliases.
+
 ### Fixes
 - Fix image scaling for images that are taller tan wide.
 - Fix loading of images with incorrect file extension.
