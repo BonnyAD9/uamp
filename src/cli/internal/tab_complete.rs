@@ -19,6 +19,7 @@ pub enum TabMode {
     Invalid,
     Port,
     Color,
+    Print,
     None,
 }
 
@@ -77,6 +78,10 @@ impl TabComplete {
                     mode2 = mode;
                     mode = TabMode::Color;
                 }
+                (TabMode::Basic, "--print") => {
+                    mode2 = mode;
+                    mode = TabMode::Print;
+                }
                 (TabMode::Internal, "tab-complete") => {
                     mode = TabMode::InternalTabComplete
                 }
@@ -107,6 +112,7 @@ impl TabComplete {
             TabMode::Invalid => {}
             TabMode::Port => port_args(conf, &self.cur, p),
             TabMode::Color => color_args(conf, &self.cur, p),
+            TabMode::Print => print_args(conf, &self.cur, p),
             TabMode::None => {}
         }
 
@@ -186,6 +192,10 @@ fn port_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
 
 fn color_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
     select_args(COLOR_ARG, arg, p);
+}
+
+fn print_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
+    select_args(PRINT_ARG, arg, p);
 }
 
 fn file_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
@@ -375,6 +385,8 @@ const PORT_ARG: &[&[&str]] =
     &[&["default", "-"], &["debug"], &["release", "uamp"]];
 
 const COLOR_ARG: &[&[&str]] = &[&["auto"], &["always"], &["never"]];
+
+const PRINT_ARG: &[&[&str]] = &[&["pretty"], &["debug"]];
 
 const PLAY_PAUSE_ARG: &[&[&str]] = &[&["play"], &["pause"]];
 

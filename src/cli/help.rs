@@ -16,70 +16,70 @@ pub fn help(args: &mut Pareg, res: &mut Args) {
     res.should_exit = true;
 
     if args.remaining().is_empty() {
-        help_short(res.stdout_color);
+        help_short(res.props.color);
         return;
     }
 
-    help_version(res.stdout_color);
+    help_version(res.props.color);
 
     let mut formats_header = false;
 
     while let Some(arg) = args.next() {
         match arg {
             "basic" => {
-                print_basic_help(res.stdout_color);
+                print_basic_help(res.props.color);
                 formats_header = false;
             }
             "i" | "instance" => {
-                print_instance_help(res.stdout_color);
+                print_instance_help(res.props.color);
                 formats_header = false;
             }
             "run" => {
-                print_run_help(res.stdout_color);
+                print_run_help(res.props.color);
                 formats_header = false;
             }
             "cfg" | "conf" | "config" => {
-                print_config_help(res.stdout_color);
+                print_config_help(res.props.color);
                 formats_header = false;
             }
             "sh" | "shell" => {
-                print_shell_help(res.stdout_color);
+                print_shell_help(res.props.color);
                 formats_header = false;
             }
             "internal" => {
-                print_internal_help(res.stdout_color);
+                print_internal_help(res.props.color);
                 formats_header = false;
             }
             "h" | "help" | "-h" | "-?" | "--help" => {
-                print_help_help(res.stdout_color);
+                print_help_help(res.props.color);
                 formats_header = false;
             }
             "all" | "elp" => {
-                print_help(res.stdout_color);
+                print_help(res.props.color);
                 formats_header = true;
             }
             "control-message" | "control-msg" | "cmsg" => {
-                print_control_messages_help(res.stdout_color);
+                print_control_messages_help(res.props.color);
                 formats_header = false;
             }
             "format" | "formats" => {
-                print_formats_help(res.stdout_color, formats_header);
+                print_formats_help(res.props.color, formats_header);
                 formats_header = true;
             }
             "port" => {
-                print_port_help(res.stdout_color, formats_header);
+                print_port_help(res.props.color, formats_header);
                 formats_header = true;
             }
             "query" => {
-                print_query_help(res.stdout_color, formats_header);
+                print_query_help(res.props.color, formats_header);
                 formats_header = true;
             }
             "filter" => {
-                print_filter_help(res.stdout_color, formats_header);
+                print_filter_help(res.props.color, formats_header);
                 formats_header = true;
             }
             "order" => {
-                print_order_help(res.stdout_color, formats_header);
+                print_order_help(res.props.color, formats_header);
                 formats_header = true;
             }
             "--" => break,
@@ -195,6 +195,9 @@ fn print_basic_help(color: bool) {
   {'y}--color  --colour{'w}=<(auto|always|never)>{'_}
     Enable/disable color in stdout. This will apply for help only when
     specified before.
+
+  {'y}--print {'w}<(pretty|debug)>
+    Select print mode. Default is pretty.
 
 {'g}Actions:{'_}
   {'b}i  instance {'gr}[instance arguments] [--]{'_}

@@ -12,11 +12,11 @@ use termal::eprintacln;
 use crate::core::{
     Error, PlayMsg, Result,
     config::Config,
-    messenger::{DataResponse, Info, Messenger, MsgMessage, Request},
+    messenger::{DataResponse, Messenger, MsgMessage, Request},
 };
 
 use super::{
-    help::help_instance, playlist_range::PlaylistRange, port::Port, printer,
+    Props, help::help_instance, playlist_range::PlaylistRange, port::Port,
 };
 
 //===========================================================================//
@@ -118,7 +118,7 @@ impl Instance {
     /// # Errors
     /// - There is no running instance of uamp with the server address and
     ///   port.
-    pub fn send(mut self, conf: &Config, color: bool) -> Result<()> {
+    pub fn send(mut self, conf: &Config, props: &Props) -> Result<()> {
         self.port = self.port.or(Some(conf.port()));
         self.server = self
             .server
@@ -131,7 +131,7 @@ impl Instance {
             match res {
                 Ok(MsgMessage::Success) => {}
                 Ok(MsgMessage::Data(d)) => {
-                    Self::print_data(d, conf, color, send_time, i);
+                    Self::print_data(d, conf, props, send_time, i);
                 }
                 Err(e) => eprintacln!("{e}"),
                 Ok(MsgMessage::Error(e)) => {
@@ -181,38 +181,20 @@ impl Instance {
     fn print_data(
         data: DataResponse,
         conf: &Config,
-        color: bool,
+        props: &Props,
         send_time: Instant,
         intention: Intention,
     ) {
         match data {
-            DataResponse::Info(i) => {
-                Self::print_info(*i, conf, color, intention)
-            }
+            DataResponse::Info(i) => props.print_style.info(
+                &i,
+                conf,
+                props.color,
+                intention == Intention::Clear,
+            ),
             DataResponse::SongList(songs) => {
-                printer::song_list(songs, color, send_time)
+                props.print_style.song_list(&songs, props.color, send_time)
             }
         }
-    }
-
-    fn print_info(
-        info: Info,
-        conf: &Config,
-        color: bool,
-        intention: Intention,
-    ) {
-        printer::now_playing(
-            &info,
-            conf,
-            color,
-            intention == Intention::Clear,
-        );
-
-        if !info.before.is_empty() || !info.after.is_empty() {
-            printer::playlist(&info, color);
-        }
-
-        printer::playlist_config(&info, color);
-        printer::footer(&info, color);
     }
 }

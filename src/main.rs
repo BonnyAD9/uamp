@@ -54,7 +54,7 @@ fn start() -> Result<()> {
 
     for a in args.actions {
         match a {
-            Action::Instance(i) => i.send(&conf, args.stdout_color)?,
+            Action::Instance(i) => i.send(&conf, &args.props)?,
             Action::RunDetached(mut i) => {
                 i.port = i.port.or(args.port);
                 i.server_address = i

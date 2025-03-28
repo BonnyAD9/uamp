@@ -10,14 +10,16 @@ use crate::{
     },
 };
 
-use super::{Action, Instance, Run, Shell, help::help, internal::Internal};
+use super::{
+    Action, Instance, Props, Run, Shell, help::help, internal::Internal,
+};
 
 //===========================================================================//
 //                                   Public                                  //
 //===========================================================================//
 
 /// Contains the CLI arguments values.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Args {
     /// Actions to do.
     pub actions: Vec<Action>,
@@ -32,8 +34,8 @@ pub struct Args {
     /// The mainloop should run in all cases if this is `true`.
     pub run: Option<Run>,
 
-    /// Determines whether color should be used in standard output.
-    pub stdout_color: bool,
+    /// Shared properties.
+    pub props: Props,
 }
 
 impl Args {
@@ -75,19 +77,6 @@ impl Args {
     }
 }
 
-impl Default for Args {
-    fn default() -> Self {
-        Self {
-            actions: vec![],
-            port: None,
-            server_address: None,
-            should_exit: false,
-            run: None,
-            stdout_color: io::stdout().is_terminal(),
-        }
-    }
-}
-
 //===========================================================================//
 //                                  Private                                  //
 //===========================================================================//
@@ -120,7 +109,7 @@ impl Args {
                 "internal" => self.internal(args)?,
                 "-h" | "--help" | "-?" => {
                     self.should_exit = true;
-                    help_short(self.stdout_color);
+                    help_short(self.props.color);
                 }
                 "--version" => {
                     self.should_exit = true;
@@ -133,8 +122,11 @@ impl Args {
                     self.server_address = Some(args.next_arg()?);
                 }
                 v if has_any_key!(v, '=', "--color", "--colour") => {
-                    self.stdout_color =
+                    self.props.color =
                         args.cur_val_or_next::<EnableColor>('=')?.into();
+                }
+                "--print" => {
+                    self.props.print_style = args.next_arg()?;
                 }
                 "--" => {}
                 a => {
@@ -174,7 +166,7 @@ impl Args {
         self.should_exit = true;
 
         let mut instance = Instance::default();
-        instance.parse(args, self.stdout_color)?;
+        instance.parse(args, self.props.color)?;
 
         if !instance.messages.is_empty() {
             self.actions.push(Action::Instance(instance));
@@ -185,7 +177,7 @@ impl Args {
 
     fn run(&mut self, args: &mut Pareg) -> Result<()> {
         let mut info = Run::default();
-        info.parse(args, self.stdout_color)?;
+        info.parse(args, self.props.color)?;
 
         if info.detach {
             self.should_exit = true;
@@ -201,7 +193,7 @@ impl Args {
         self.should_exit = true;
 
         let mut cfg = super::Config::default();
-        cfg.parse(args, self.stdout_color)?;
+        cfg.parse(args, self.props.color)?;
 
         if !cfg.actions.is_empty() {
             self.actions.push(Action::Config(cfg));
@@ -214,7 +206,7 @@ impl Args {
         self.should_exit = true;
 
         let mut sh = Shell::default();
-        sh.parse(args, self.stdout_color)?;
+        sh.parse(args, self.props.color)?;
         self.actions.push(Action::Shell(sh));
         Ok(())
     }
@@ -222,7 +214,7 @@ impl Args {
     fn internal(&mut self, args: &mut Pareg) -> Result<()> {
         self.should_exit = true;
 
-        let i = Internal::new(args, self.stdout_color)?;
+        let i = Internal::new(args, self.props.color)?;
         if !matches!(i, Internal::None) {
             self.actions.push(Action::Internal(i));
         }

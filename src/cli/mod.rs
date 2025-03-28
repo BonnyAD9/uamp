@@ -6,7 +6,8 @@ mod instance;
 mod internal;
 mod playlist_range;
 mod port;
-mod printer;
+mod printers;
+mod props;
 mod run;
 mod shell;
 
@@ -14,4 +15,6 @@ mod shell;
 //                                   Public                                  //
 //===========================================================================//
 
-pub use self::{action::*, args::*, config::*, instance::*, run::*, shell::*};
+pub use self::{
+    action::*, args::*, config::*, instance::*, props::*, run::*, shell::*,
+};

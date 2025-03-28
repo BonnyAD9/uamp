@@ -16,6 +16,17 @@ use crate::{
     ext::duration_to_string,
 };
 
+pub fn info(info: &Info, conf: &Config, color: bool, lmc: bool) {
+    now_playing(info, conf, color, lmc);
+
+    if !info.before.is_empty() || !info.after.is_empty() {
+        playlist(info, color);
+    }
+
+    playlist_config(info, color);
+    footer(info, color);
+}
+
 pub fn now_playing(info: &Info, conf: &Config, color: bool, lmc: bool) {
     let title = info.title();
 
@@ -146,7 +157,7 @@ pub fn footer(info: &Info, color: bool) {
     printmcln!(color, "{'gr}uamp{: >76}{'_}", info.version());
 }
 
-pub fn song_list(songs: Vec<Song>, color: bool, send_time: Instant) {
+pub fn song_list(songs: &[Song], color: bool, send_time: Instant) {
     printmcln!(
         color,
         "{'bold y}{:<30} {'c}{:<20} {'m}{:28}{'_}",
@@ -155,7 +166,7 @@ pub fn song_list(songs: Vec<Song>, color: bool, send_time: Instant) {
         "Album"
     );
     let mut total_dur = Duration::ZERO;
-    for s in &songs {
+    for s in songs {
         total_dur += s.length();
         print_song(s, color);
     }
