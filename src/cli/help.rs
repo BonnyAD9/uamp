@@ -196,7 +196,7 @@ fn print_basic_help(color: bool) {
     Enable/disable color in stdout. This will apply for help only when
     specified before.
 
-  {'y}--print {'w}<(pretty|debug)>
+  {'y}--print {'w}<(pretty|debug|json)>
     Select print mode. Default is pretty.
 
 {'g}Actions:{'_}

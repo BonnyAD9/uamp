@@ -4,13 +4,14 @@ use pareg::FromArg;
 
 use crate::core::{config::Config, library::Song, messenger::Info};
 
-use super::{debug, pretty};
+use super::{debug, json, pretty};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, FromArg)]
 pub enum PrintStyle {
     #[default]
     Pretty,
     Debug,
+    Json,
 }
 
 impl PrintStyle {
@@ -18,6 +19,7 @@ impl PrintStyle {
         match self {
             PrintStyle::Pretty => pretty::info(info, conf, color, lmc),
             PrintStyle::Debug => debug::info(info),
+            PrintStyle::Json => json::info(info),
         }
     }
 
@@ -25,6 +27,7 @@ impl PrintStyle {
         match self {
             PrintStyle::Pretty => pretty::song_list(songs, color, send_time),
             PrintStyle::Debug => debug::song_list(songs, send_time),
+            PrintStyle::Json => json::song_list(songs, send_time),
         }
     }
 }

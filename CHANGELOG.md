@@ -3,7 +3,7 @@
 ## future
 ### New features
 - Tab completion now can suggest aliases.
-- Set the print style with `--print`. Add new print styles: `debug`.
+- Set the print style with `--print`. Add new print styles: `debug`, `json`.
 
 ### Fixes
 - Fix image scaling for images that are taller tan wide.

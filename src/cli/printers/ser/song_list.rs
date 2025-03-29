@@ -1,12 +1,14 @@
 use std::time::{Duration, Instant};
 
+use serde::Serialize;
+
 use crate::{
     core::{config::VERSION_STR, library::Song},
     ext::Wrap,
 };
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct SongList<'a> {
     version: &'static str,
     time: Wrap<Duration>,

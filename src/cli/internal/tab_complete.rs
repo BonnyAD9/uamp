@@ -386,7 +386,7 @@ const PORT_ARG: &[&[&str]] =
 
 const COLOR_ARG: &[&[&str]] = &[&["auto"], &["always"], &["never"]];
 
-const PRINT_ARG: &[&[&str]] = &[&["pretty"], &["debug"]];
+const PRINT_ARG: &[&[&str]] = &[&["pretty"], &["debug"], &["json"]];
 
 const PLAY_PAUSE_ARG: &[&[&str]] = &[&["play"], &["pause"]];
 

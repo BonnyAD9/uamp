@@ -1,7 +1,9 @@
+use serde::Serialize;
+
 use crate::core::{config::VERSION_STR, messenger};
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Info<'a> {
     version: &'static str,
     info: &'a messenger::Info,
