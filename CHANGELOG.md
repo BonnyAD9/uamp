@@ -5,6 +5,10 @@
 - Tab completion now can suggest aliases.
 - Set the print style with `--print`. Add new print styles: `debug`, `json`.
 
+### Changes
+- CLI now uses `{` and `}` instead of `[` and `]`. The old way is still
+  supported.
+
 ### Fixes
 - Fix image scaling for images that are taller tan wide.
 - Fix loading of images with incorrect file extension.

@@ -110,7 +110,7 @@ impl<'a> Parser<'a> {
                 _ => {
                     return self
                         .err_unexpected_token()
-                        .inline_msg("Expected filter or `[`.")
+                        .inline_msg("Expected filter or `{`.")
                         .err();
                 }
             }
@@ -125,7 +125,7 @@ impl<'a> Parser<'a> {
                 _ => {
                     return self
                         .err_unexpected_token()
-                        .inline_msg("Expected `+` or `]`.")
+                        .inline_msg("Expected `+` or `}`.")
                         .err();
                 }
             }
@@ -144,7 +144,7 @@ impl<'a> Parser<'a> {
         if !matches!(self.cur()?, Some(Token::Close)) {
             return self
                 .err_unexpected_token()
-                .inline_msg("Expected `]`.")
+                .inline_msg("Expected `}`.")
                 .err();
         }
         self.next()?;
@@ -163,7 +163,7 @@ impl<'a> Parser<'a> {
                 _ => {
                     return self
                         .err_unexpected_token()
-                        .inline_msg("Expected filter or `[`.")
+                        .inline_msg("Expected filter or `{`.")
                         .err();
                 }
             }
@@ -178,7 +178,7 @@ impl<'a> Parser<'a> {
                 _ => {
                     return self
                         .err_unexpected_token()
-                        .inline_msg("Expected `.`, `]`, `+` or `@`.")
+                        .inline_msg("Expected `.`, `}`, `+` or `@`.")
                         .err();
                 }
             }

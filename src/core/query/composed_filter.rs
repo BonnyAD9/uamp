@@ -63,10 +63,10 @@ impl Display for ComposedFilter {
                 f.write_str(&ft.to_string().replace('/', "//"))
             }
             ComposedFilter::And(a) => {
-                write!(f, "[{}]", a.iter().map(|a| a.to_string()).join("."))
+                write!(f, "{{{}}}", a.iter().map(|a| a.to_string()).join("."))
             }
             ComposedFilter::Or(o) => {
-                write!(f, "[{}]", o.iter().map(|a| a.to_string()).join("+"))
+                write!(f, "{{{}}}", o.iter().map(|a| a.to_string()).join("+"))
             }
         }
     }

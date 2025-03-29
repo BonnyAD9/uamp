@@ -15,8 +15,8 @@ pub enum Token {
     Filter(Filter),
     And,   // .
     Or,    // +
-    Open,  // [
-    Close, // ]
+    Open,  // [, {
+    Close, // ], }
     At,    // @
 }
 
@@ -34,7 +34,7 @@ pub struct Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
-    const SPECIAL: &'static str = "[].+/@";
+    const SPECIAL: &'static str = "[]{}.+/@";
 
     pub fn new(s: &'a str) -> Self {
         Self {
@@ -128,8 +128,8 @@ impl<'a> Lexer<'a> {
         let res = match c {
             '.' => Token::And,
             '+' => Token::Or,
-            '[' => Token::Open,
-            ']' => Token::Close,
+            '[' | '{' => Token::Open,
+            ']' | '}' => Token::Close,
             '@' => Token::At,
             _ => unreachable!(),
         };
@@ -243,8 +243,8 @@ impl Display for Token {
             Token::Filter(filter) => write!(f, "Filter({filter})"),
             Token::And => f.write_str("."),
             Token::Or => f.write_str("+"),
-            Token::Open => f.write_str("["),
-            Token::Close => f.write_str("]"),
+            Token::Open => f.write_str("{"),
+            Token::Close => f.write_str("}"),
             Token::At => f.write_char('@'),
         }
     }

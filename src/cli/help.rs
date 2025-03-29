@@ -498,20 +498,22 @@ fn print_control_messages_help(color: bool) {
     default value for {'i}cnt{'_} is 1. 0 means flatten the whole stack.
 
   {'r}queue  q{'gr}[={'bold}<query>{'_bold}]{'_}
-    Adds songs to the end of the queue (current playlist). Without value, queues
-    all songs. See `{'c}uamp {'b}h {'w bold}port{'_}` for more info.
+    Adds songs to the end of the queue (current playlist). Without value,
+    queues all songs. See `{'c}uamp {'b}h {'w bold}port{'_}` for more info.
 
   {'r}play-next  queue-next  qn{'gr}[={'bold}<query>{'_bold}]{'_}
     Adds songs after the currently playing in the current playlist. Without
-    value, queues all songs. See `{'c}uamp {'b}h {'w bold}port{'_}` for more info.
+    value, queues all songs. See `{'c}uamp {'b}h {'w bold}port{'_}` for more \
+    info.
 
   {'r}save{'_}
     Triggers save (but saves only if there is change).
 
-  {'r}alias  al{'w}=<alias name>{'gr}[`[`<arg1>,<arg2>,...`]`]{'_}
+  {'r}alias  al{'w}=<alias name>{'gr}[{{<arg1>,...}}]{'_}
     Runs the actions given by the alias. You can pass arguments to the alias.
 
-  {'r}playlist-end-action  playlist-end  pl-end  spea{'gr}[=<alias name>]{'_}
+  {'r}playlist-end-action  playlist-end  pl-end
+  spea{'gr}[=<alias name>]{'gr}[{{<arg1>,...}}]{'_}
     Sets the playlist end action of the current playlist to actions specified
     by the alias. Without value, unsets the playlist end action.
 
@@ -627,7 +629,7 @@ fn print_filter_help(color: bool, header: bool) {
     You can combine filters using:
       `{'i}+{'_}`    Or - one of the filters must pass.
       `{'i}.{'_}`    And - Both of the filters must pass.
-      `{'i}[  ]{'_}` Brackets to change the precedence.
+      `{'i}{{  }}{'_}` Brackets to change the precedence.
 
     `{'i}.{'_}` (And) is evaluated first so `{'i}an:a+an:b.an:c{'_}` is the
     same as `{'i}an:a+[an:b.an:c]{'_}`.

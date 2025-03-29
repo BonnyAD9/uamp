@@ -72,7 +72,7 @@ impl ControlUnit {
 impl Display for ControlFunction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if !self.args.is_empty() {
-            write!(f, "[{}]:", self.args.join(","))?;
+            write!(f, "{{{}}}:", self.args.join(","))?;
         }
 
         let body = shell_words::join(self.body.iter().map(|a| {
@@ -111,7 +111,7 @@ impl FromStr for ControlFunction {
     fn from_str(mut s: &str) -> std::result::Result<Self, Self::Err> {
         let s0 = s;
 
-        if !s.starts_with('[') {
+        if !s.starts_with(['[', '{']) {
             let body: Vec<_> = shell_words::split(s)?
                 .iter()
                 .map(|a| -> Result<_> { Ok(ControlUnit::Simple(a.parse()?)) })
@@ -120,8 +120,10 @@ impl FromStr for ControlFunction {
         }
 
         s = &s[1..];
-        let Some((i, _)) = s.char_indices().find(|(_, c)| *c == ']') else {
-            return ArgError::parse_msg("Missing closing `]`", s0.to_string())
+        let Some((i, _)) =
+            s.char_indices().find(|(_, c)| matches!(c, ']' | '}'))
+        else {
+            return ArgError::parse_msg("Missing closing `}`", s0.to_string())
                 .spanned(s0.len() - s.len()..s0.len())
                 .err()?;
         };

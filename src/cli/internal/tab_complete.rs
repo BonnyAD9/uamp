@@ -246,7 +246,7 @@ fn alias_args(conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
             if v.args().is_empty() {
                 p(k.to_string().into())
             } else {
-                p(format!("{k}[{}]", v.args().join(",")).into())
+                p(format!("{k}{{{}}}", v.args().join(",")).into())
             }
         }
     }

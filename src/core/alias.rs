@@ -20,7 +20,9 @@ impl FromStr for Alias {
 
     fn from_str(mut s: &str) -> Result<Self> {
         let s0 = s;
-        let Some((i, _)) = s.char_indices().find(|(_, c)| *c == '[') else {
+        let Some((i, _)) =
+            s.char_indices().find(|(_, c)| matches!(c, '[' | '{'))
+        else {
             return Ok(Self {
                 name: s.to_string(),
                 args: vec![],
@@ -51,17 +53,17 @@ fn read_arg(s: &mut &str) -> Result<String> {
 
     while let Some((i, c)) = chrs.next() {
         match c {
-            '[' => {
+            '[' | '{' => {
                 depth += 1;
-                res.push('[');
+                res.push(c);
             }
-            ']' => {
+            ']' | '}' => {
                 if depth == 0 {
                     if chrs.as_str().is_empty() {
                         break;
                     }
                     return ArgError::parse_msg(
-                        "Additional data after `]`",
+                        format!("Additional data after `{c}`"),
                         s.to_string(),
                     )
                     .spanned(i + 1..s.len())
@@ -96,7 +98,7 @@ impl Display for Alias {
         if self.args.is_empty() {
             write!(f, "{}", self.name)
         } else {
-            write!(f, "{}[{}]", self.name, self.args.join(","))
+            write!(f, "{}{{{}}}", self.name, self.args.join(","))
         }
     }
 }
