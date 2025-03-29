@@ -8,6 +8,7 @@
 ### Changes
 - CLI now uses `{` and `}` instead of `[` and `]`. The old way is still
   supported.
+- `uamp run -h` will now not start uamp.
 
 ### Fixes
 - Fix image scaling for images that are taller tan wide.

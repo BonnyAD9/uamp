@@ -33,6 +33,8 @@ pub struct Run {
     /// Messages that will be performed after the initialization of the new
     /// instance.
     pub init: Vec<AnyControlMsg>,
+
+    pub run: Option<bool>,
 }
 
 impl Run {
@@ -47,15 +49,26 @@ impl Run {
     ) -> Result<()> {
         while let Some(arg) = args.next() {
             match arg {
-                "-h" | "-?" | "--help" => help_run(color),
-                "-d" | "--detach" => self.detach = true,
+                "-h" | "-?" | "--help" => {
+                    help_run(color);
+                    self.run = Some(self.run.unwrap_or_default());
+                }
+                "-d" | "--detach" => {
+                    self.detach = true;
+                    self.run = Some(true);
+                }
                 "-p" | "--port" => {
-                    self.port = Some(args.next_arg::<Port>()?.0)
+                    self.port = Some(args.next_arg::<Port>()?.0);
+                    self.run = Some(true);
                 }
                 "-a" | "--address" => {
-                    self.server_address = Some(args.next_arg()?)
+                    self.server_address = Some(args.next_arg()?);
+                    self.run = Some(true);
                 }
-                _ => self.init.push(args.cur_arg()?),
+                _ => {
+                    self.init.push(args.cur_arg()?);
+                    self.run = Some(true);
+                }
             }
         }
         Ok(())

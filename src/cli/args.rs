@@ -179,6 +179,11 @@ impl Args {
         let mut info = Run::default();
         info.parse(args, self.props.color)?;
 
+        if !info.run.unwrap_or(true) {
+            self.should_exit = true;
+            return Ok(());
+        }
+
         if info.detach {
             self.should_exit = true;
             self.actions.push(Action::RunDetached(info));

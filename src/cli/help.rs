@@ -134,6 +134,10 @@ pub fn help_version(color: bool) {
         color,
         "Welcome in {'i g}{APP_ID}{'_} by {signature}{'_}
 Version {VERSION_STR}
+
+uamp (short for Universal Advanced Music Player) is CLI only music player and
+music library manager without UI. For more information about how uamp works see
+{'i}uamp(1){'_}.
 "
     )
 }
@@ -272,6 +276,7 @@ fn print_help_help(color: bool) {
 
     {'r}filter{'_}
       Help for {'w bold}filter{'_} format.
+
     {'r}order{'_}
       Help for {'w bold}order{'_} format.
 ",
@@ -309,9 +314,9 @@ fn print_instance_help(color: bool) {
   {'r}show{'gr}[=[-<before>]..[<after>]]{'_}
     Same as {'r}info{'_} but will also clear the screen before printing.
 
-  {'r}query  list  l{'gr}[={'bold}<filter>{'_bold}]{'_}
-    Print all songs that pass the filter. Without value, lists all songs. See
-    `{'c}uamp {'b}h {'w bold}filter{'_}` for more info.
+  {'r}query  list  l{'gr}[={'bold}<query>{'_bold}]{'_}
+    Print all songs that pass the query. Without value, lists all songs. See
+    `{'c}uamp {'b}h {'w bold}query{'_}` for more info.
 
   {'r}play p{'w}=<file path>{'_}
     Play the given file in the secondary playlist.
