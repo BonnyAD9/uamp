@@ -440,13 +440,16 @@ impl Info {
             FilterType::Triangle,
         );
 
-        res += "          ";
+        let indent = (80 - w) / 2;
+        let indent = format!("\n{:>indent$}", "");
+
+        res += &indent[1..];
 
         // dbg!("Texelize");
         termal::image::push_texel_quater(
             &img,
             &mut res,
-            "\n          ",
+            &indent,
             Some(w),
             Some(h),
         );
