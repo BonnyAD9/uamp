@@ -1,0 +1,915 @@
+.TH UAMP 1 2025\-03\-29
+.SH NAME
+.PP
+uamp \- Universal Advanced Music Player
+.SH SYNOPSIS
+.PP
+\fB\fCuamp\fR [\fB\fC\-h\fR] [\fB\fC\-p\fR \fIport\fP] [\fB\fC\-a\fR \fIaddress\fP] [\fB\fC\-\-version\fR]
+[\fB\fC\-\-color\fR \fIcolor\-mode\fP] [\fB\fC\-\-print\fR \fIprint\-mode\fP] [\fIaction\fP [\fIaction\-opt\fP] ...
+[\fB\fC\-\-\fR [\fIaction\fP ...]]]
+.PP
+\fB\fCuamp\fR \fB\fChelp\fR [\fIhelp\-section\fP] ...
+.PP
+\fB\fCuamp\fR \fB\fCinstance\fR [\fB\fC\-h\fR] [\fB\fC\-p\fR \fIport\fP] [\fB\fC\-a\fR \fIaddress\fP] [\fIinstance\-message\fP]
+\&... [\fIcontrol\-message\fP] ... [\fB\fC\-\-\fR]
+.PP
+\fB\fCuamp\fR \fB\fCrun\fR [\fB\fC\-h\fR] [\fB\fC\-d\fR] [\fB\fC\-p\fR \fIport\fP] [\fB\fC\-a\fR \fIaddress\fP] [\fIcontrol\-message\fP]
+\&... [\fB\fC\-\-\fR]
+.PP
+\fB\fCuamp\fR \fB\fCconfig\fR [\fB\fC\-h\fR] [\fB\fC\-e\fR] [\fB\fC\-p\fR] [\fB\fC\-\-default\fR] [\fB\fC\-\-\fR]
+.PP
+\fB\fCuamp\fR \fB\fCshell\fR [\fB\fC\-h\fR] [\fB\fC\-s\fR] [\fB\fCtab\fR]
+.PP
+\fB\fCuamp\fR \fB\fCinternal\fR \fB\fCtab\-complete\fR \fIopt\-index\fP \fIuamp\-bin\fP [\fIopt\fP] ...
+.SH DESCRIPTION
+.PP
+\fB\fCuamp\fR is pure CLI music player server without any other UI. It is ment to run
+in background and be controled trough CLI. \fB\fCuamp\fR is made to be robust,
+efficient and light on system resources. Even though \fB\fCuamp\fR doesn't have any UI
+it is full of features such as fade play/pause, gapless playback and stack
+based playlist (queue) management.
+.SS Actions
+.PP
+Uamp has few categories of actions it can do. Specifying action will move
+processing of arguments to mode specific to that action. The mode can be ended
+with \fB\fC\-\-\fR\&.
+.PP
+For example in:
+.PP
+.RS
+.nf
+uamp \-\-print json instance \-p debug next\-song info \-\- \-\-version run \-d
+.fi
+.RE
+.PP
+arguments \fB\fC\-\-print json\fR are in the default mode. Argument \fB\fCinstance\fR is action
+that will move processing to instance arguments. Arguments \fB\fC\-p debug\fR,
+\fB\fCnext\-song\fR and \fB\fCinfo\fR are in the instance mode. The argument \fB\fC\-\-\fR will end the
+instance mode and move argument processing back to the default mode. Argument
+\fB\fC\-\-version\fR is again in the default mode. \fB\fCrun\fR is action that will move
+processing to run arguments in which the argument \fB\fC\-d\fR is processed. Arguments
+now end so there is no need to end the run mode with \fB\fC\-\-\fR\&.
+.SS Playlists/Queues
+.PP
+Playlist and queue refer to the same thing. Queue is just the playlist that
+plays right now. I prefer using the word playlist, even in places where you
+would expect the word queue.
+.PP
+Uamp has unique playlist managment. It contains stack of playlists. Each
+playlist has its songs, current position within playlist, current position
+within the song and user action that will happen once the playlist ends.
+.PP
+The playlist at the top of the stack is the one that is currently playing. It
+can be created for example by using \fB\fCuamp i p=\fR\fIaudio\-file\fP or
+\fB\fCuamp i push=\fR\fIquery\fP\&. The top playlist can be poped by using \fB\fCuamp i pop\fR\&.
+Popping the plalist doesn't change the playback state, so if uamp was playing
+while the playlist was popped, it will continue to play from the new top
+playlist at the current position within the current song.
+.PP
+Each playlist has asociated end action. The end action is just alias
+invokation. If playlist ends, the playback state will change to stopped and
+than the end action will be invoked if it is set. When creating playlist, the
+end action will be set to the default end action specified in configuration.
+.PP
+By default, uamp has defined some aliases useful as end actions for playlists:
+.RS
+.IP \(bu 2
+\fB\fCrepeat\-once\fR \- when the playlist ends, repeat it one more time, than do the
+default end action.
+.IP \(bu 2
+\fB\fCrepeat\fR \- repeat the playlist indefinitely.
+.IP \(bu 2
+\fB\fCpcont\fR \- pop the playlist and continue playing with the next playlist.
+.RE
+.SS Configuration
+.PP
+Configuration is usually saved in \fB\fC~/.config/uamp\fR\&. You can get the
+configuration path with \fB\fCuamp config \-p\fR\&.
+.PP
+If you wan't to edit the configuration you can use \fB\fCuamp config\fR\&. This will
+open the configuration in your default text editor.
+.PP
+Running instances of uamp will get notified when the configuration file changes
+and they will automatically reload their configuration.
+.PP
+When uamp server starts and either port or address is set from the CLI, the
+server will disable saving of configuration and listening to changes in config
+file. This is to avoid overwriting configuration with values from cli that are
+not ment to be saved, and to avoid resetting the values in the server from the
+configuration.
+.SH OPTIONS
+.PP
+Uamp has few categories of actions it can do. If no action is specified, uamp
+start as server, unless \fB\fC\-h\fR or \fB\fC\-\-version\fR is specified in the arguments.
+.PP
+These are the actions:
+.TP
+\fB\fCh\fR \fIhelp\-section\fP ... [\fB\fC\-\-\fR], \fB\fChelp\fR \fIhelp\-section\fP ... [\fB\fC\-\-\fR]
+Print help for the given sections. See \fIAction help\fP for more info.
+.PP
+\fB\fCi\fR \fIinstance\-opt\fP ... [\fB\fC\-\-\fR],
+\fB\fCinstance\fR  \fIinstance\-opt\fP ... [\fB\fC\-\-\fR]
+  Send messages to running instance of uamp. See \fIAction instance\fP for more info.
+.TP
+\fB\fCrun\fR \fIrun\-opt\fP ... [\fB\fC\-\-\fR]
+Start new instance of uamp. See \fIAction run\fP for more info.
+.PP
+\fB\fCcfg\fR \fIconfig\-opt\fP ... [\fB\fC\-\-\fR], \fB\fCconf\fR \fIconfig\-opt\fP ... [\fB\fC\-\-\fR],
+\fB\fCconfig\fR \fIconfig\-opt\fP ... [\fB\fC\-\-\fR]
+  Manage uamp configuration. See \fIAction config\fP for more info.
+.TP
+\fB\fCsh\fR \fIshell\-opt\fP ... [\fB\fC\-\-\fR], \fB\fCshell\fR \fIshell\-opt\fP ... [\fB\fC\-\-\fR]
+Get shell integration script for uamp.
+.TP
+\fB\fCinternal\fR \fIinternal\-opt\fP ...
+Internal commands used for integration. Usualy not useful to be used directly
+by users. See \fIAction internal\fP for more info.
+.PP
+These are the core options:
+.TP
+\fB\fC\-h\fR, \fB\fC\-?\fR, \fB\fC\-\-help\fR
+Show short (basic) help for uamp.
+.TP
+\fB\fC\-p\fR \fIport\fP, \fB\fC\-\-port\fR \fIport\fP
+Set port to be used for communication with other instances of uamp.
+.IP
+\fIport\fP may be:
+.RS
+.IP \(bu 2
+number from \fB\fC0\fR to \fB\fC65535\fR
+.IP \(bu 2
+\fB\fC\-\fR or \fB\fCdefault\fR (default) \- use the default port uamp uses in this build
+mode.
+.IP \(bu 2
+\fB\fCdebug\fR \- use port 33284. Default port used by debug builds of uamp.
+.IP \(bu 2
+\fB\fCrelease\fR or \fB\fCuamp\fR \- use port 8267. Default port used by release builds
+of uamp.
+.RE
+.TP
+\fB\fC\-a\fR \fIaddress\fP, \fB\fC\-\-address\fR \fIaddress\fP
+Set address used for communication with other instances of uamp.
+.IP
+This may be any IPv4, IPv6 or DNS address.
+.IP
+By default uamp uses value \fB\fC127.0.0.1\fR for local server.
+.TP
+\fB\fC\-\-version\fR
+Print the version of uamp.
+.PP
+\fB\fC\-I\fR\fIarg\fP
+  Equivalent to:
+    \fB\fCinstance\fR \fIarg\fP \fB\fC\-\-\fR
+.IP
+It is useful as shorthand if you want to do single instance action and than
+follow it by other arguments.
+.PP
+\fB\fC\-R\fR\fIarg\fP
+  Equivalent to:
+    \fB\fCrun\fR \fIarg\fP \fB\fC\-\-\fR
+.IP
+It is useful as shorthand if you want to do single run action and than follow
+it by other arguments.
+.PP
+\fB\fC\-H\fR\fIarg\fP
+  Equivalent to:
+    \fB\fChelp\fR \fIarg\fP \fB\fC\-\-\fR
+.IP
+It is useful as shorthand if you want to do single help actoin and than
+follow it by other arguments.
+.PP
+\fB\fC\-\-color\fR \fIcolor\-mode\fP, \fB\fC\-\-colour\fR \fIcolor\-mode\fP
+\fB\fC\-\-color=\fR\fIcolor\-mode\fP, \fB\fC\-\-colour=\fR\fIcolor\-mode\fP
+  Set the color mode.
+.IP
+\fIcolor\-mode\fP may be one of:
+.RS
+.IP \(bu 2
+\fB\fCauto\fR (default) \- use color if printing to terminal.
+.IP \(bu 2
+\fB\fCalways\fR \- use color.
+.IP \(bu 2
+\fB\fCnever\fR \- don't use color.
+.RE
+.IP
+Help actions are evaulated immidietely, so they will use the last color mode
+before the help action. Other printing will use the last mode set. So when
+using:
+.PP
+.RS
+.nf
+uamp \-\-color always \-\-help instance info \-\- \-\-color never
+.fi
+.RE
+.IP
+Help will be printed in color, but the instance info will be printed without
+color.
+.TP
+\fB\fC\-\-print\fR \fIprint\-mode\fP
+Sets the print mode for information from running instance.
+.IP
+The print mode may be on of:
+.RS
+.IP \(bu 2
+\fB\fCpretty\fR (default) \- print in human friendly format.
+.IP \(bu 2
+\fB\fCdebug\fR \- print the exact received information using rust debug
+implementation.
+.IP \(bu 2
+\fB\fCjson\fR \- print the exact received information in json format.
+.RE
+.SS Action \fB\fChelp\fR
+.PP
+\fB\fChelp\fR [\fIhelp\-section\fP] ... [\fB\fC\-\-\fR]
+.PP
+\fB\fCh\fR [\fIhelp\-section\fP] ... [\fB\fC\-\-\fR]
+.PP
+This will show the help for the given actions. If the action \fB\fChelp\fR is the last
+argument, it will show the basic help. If there are no \fIhelp\-section\fPs
+specified, and the help action is ended with \fB\fC\-\-\fR, this will print only the
+help header.
+.PP
+The help header is printed always exactly once with the help action. It
+contains the build mode that is either \fB\fCuamp\fR or \fB\fCuamp_debug\fR, author nick
+(BonnyAD9) version of uamp and basic description of what uamp is.
+.PP
+Help is printed for each of the sections in the order in which they are
+specified. If there are duplicates or informational overlaps, the duplicates
+and overlaps will be also in the output.
+.PP
+The available sections are:
+.TP
+\fB\fCall\fR, \fB\fCelp\fR
+Print all the sections in sensible order.
+.TP
+\fB\fCbasic\fR
+Print the basic help. This is the default.
+.TP
+\fB\fCi\fR, \fB\fCinstance\fR
+Print help specific to instance action.
+.TP
+\fB\fCrun\fR
+Print help specific to run action.
+.TP
+\fB\fCcfg\fR, \fB\fCconf\fR, \fB\fCconfig\fR
+Print help specific to config action.
+.TP
+\fB\fCsh\fR, \fB\fCshell\fR
+Print help specific to shell action.
+.TP
+\fB\fCinternal\fR
+Print help specific to internal action.
+.TP
+\fB\fCh\fR, \fB\fChelp\fR, \fB\fC\-h\fR, \fB\fC\-?\fR, \fB\fC\-\-help\fR
+Print help specific to this help action.
+.TP
+\fB\fCcmsg\fR, \fB\fCcontrol\-msg\fR, \fB\fCcontrol\-messages\fR
+Print help for all control messages.
+.TP
+\fB\fCformat\fR, \fB\fCformats\fR
+Print help for all formats.
+.TP
+\fB\fCport\fR
+Print help for port format.
+.TP
+\fB\fCquery\fR
+Print help for query format.
+.TP
+\fB\fCfilter\fR
+Print help for filter format.
+.TP
+\fB\fCorder\fR
+Print help for order format.
+.SS Action \fB\fCinstance\fR
+.PP
+\fB\fCinstance\fR [\fB\fC\-h\fR] [\fB\fC\-p\fR \fIport\fP] [\fB\fC\-a\fR \fIaddress\fP] \fIinstance\-message\fP ...
+\fIcontrol\-message\fP ... [\fB\fC\-\-\fR]
+.PP
+\fB\fCi\fR [\fB\fC\-h\fR] [\fB\fC\-p\fR \fIport\fP] [\fB\fC\-a\fR \fIaddress\fP] \fIinstance\-message\fP ...
+\fIcontrol\-message\fP ... [\fB\fC\-\-\fR]
+.PP
+Instance action will communicate with running instance of uamp. It will send
+messages over TCP to running uamp server. It supports every \fIcontrol\-message\fP
+and some additional messages specific to \fB\fCinstance\fR action.
+.PP
+For \fIcontrol\-message\fPs see \fIMessage control\fP\&.
+.PP
+These are options available for instance:
+.TP
+\fB\fC\-h\fR, \fB\fC\-?\fR, \fB\fC\-\-help\fR
+Print help for instance. The help is equivalent to what would be printed
+with:
+.PP
+.RS
+.nf
+uamp help instance
+.fi
+.RE
+.TP
+\fB\fC\-p\fR \fIport\fP, \fB\fC\-\-port\fR \fIport\fP
+Sets port for the communication with running uamp instance. This may have the
+same values as \fB\fC\-\-port\fR in core options. If not specified, port from core
+options will be used.
+.TP
+\fB\fC\-a\fR \fIaddress\fP, \fB\fC\-\-address\fR \fIaddress\fP
+Sets address for communication with running uamp instance. This may have the
+same values as \fB\fC\-\-address\fR in the core options. If not specified, address
+from the core options will be used.
+.PP
+These are instance messages:
+.TP
+\fB\fCnfo\fR[\fB\fC=\fR[\fB\fC\-\fR\fIbefore\fP]..[\fIafter\fP]], \fB\fCinfo\fR[\fB\fC=\fR[\fB\fC\-\fR\fIbefore\fP]..[\fIafter\fP]]
+Request information about current playback from the running instance.
+\fIbefore\fP and \fIafter\fP are numbers specifying how much songs in the current
+queue before and after the current song should be sent. The default value
+for \fIbefore\fP and \fIafter\fP is \fB\fC0\fR\&. If the range is not specified, the default
+range \fB\fC\-1..3\fR will be used.
+.IP
+The print format of the output is specified by the core option \fB\fC\-\-print\fR\&. If
+print mode is set to \fB\fCpretty\fR, color is enabled and client side image lookup
+is enabled in configuration, uamp will also lookup image and print it using
+ansi colored blocks.
+.TP
+\fB\fCshow\fR[\fB\fC=\fR[\fB\fC\-\fR\fIbefore\fP]..[\fIafter\fP]]
+Same as \fB\fCinfo\fR, but it will also clear the screen if in print mode is set to
+\fB\fCpretty\fR\&.
+.IP
+This is useful to minimize the blank screen time in simple scripts such as:
+.PP
+.RS
+.nf
+while uamp i show; do sleep 1; done
+.fi
+.RE
+.TP
+\fB\fCl\fR[\fB\fC=\fR\fIquery\fP], \fB\fClist\fR[\fB\fC=\fR\fIquery\fP], \fB\fCquery\fR[\fB\fC=\fR\fIquery\fP]
+Search in all songs managed by running instance of uamp. \fIquery\fP specifies
+filter for the songs and their order. See \fIFormat query\fP for more info.
+.TP
+\fB\fCp\fR[\fB\fC=\fR\fIaudio\-file\fP], \fB\fCplay\fR[\fB\fC=\fR\fIaudio\-file\fP]
+Load the audio file given by \fIaudio\-file\fP as temporary song into uamp and
+push it as new playlist to the playlist stack.
+.SS Action \fB\fCrun\fR
+.PP
+\fB\fCrun\fR [\fB\fC\-h\fR] [\fB\fC\-d\fR] [\fB\fC\-p\fR \fIport\fP] [\fB\fC\-a\fR \fIaddress\fP] [\fIcontrol\-message\fP] ...
+[\fB\fC\-\-\fR]
+.PP
+Run new instance of uamp server. The instance must have unique combination of
+port and address so that it can create TCP server. The control messages will
+run on the server when it starts.
+.PP
+If either port or address is specified (here or in the core options), the new
+instance will not save its configuration and will not react to configuration
+changes.
+.PP
+The server will exit when it receives close message, or when it receives
+terminating signal. If the server will receive four terminating signals, it
+will end itself forcefully. So you are free to exit non\-detached uamp with
+Ctrl+D, it will handle the signal and exit correctly.
+.PP
+For \fIcontrol\-message\fPs see \fIMessage control\fP\&.
+.PP
+Run action accepts the following options:
+.TP
+\fB\fC\-h\fR, \fB\fC\-?\fR, \fB\fC\-\-help\fR
+Show help for usage of run. If this is present without any other options, the
+server will not start.
+.TP
+\fB\fC\-d\fR, \fB\fC\-\-detach\fR
+Run uamp in background as detached process.
+.TP
+\fB\fC\-p\fR \fIport\fP, \fB\fC\-\-port\fR \fIport\fP
+Set port for server of the new instance. The new instance will not save
+cafiguration or load it when it updates to preserve different configuration
+in both places.
+.TP
+\fB\fC\-a\fR \fIaddress\fP, \fB\fC\-\-address\fR \fIaddress\fP
+Set address for the server of the new instance. The new instance will not
+save cafiguration or load it when it updates to preserve different
+configuration in both places.
+.SS Action \fB\fCconfig\fR
+.PP
+\fB\fCconfig\fR [\fB\fC\-h\fR] [\fB\fC\-e\fR] [\fB\fC\-p\fR] [\fB\fC\-\-default\fR] [\fB\fC\-\-\fR]
+.PP
+\fB\fCconf\fR [\fB\fC\-h\fR] [\fB\fC\-e\fR] [\fB\fC\-p\fR] [\fB\fC\-\-default\fR] [\fB\fC\-\-\fR]
+.PP
+\fB\fCcfg\fR [\fB\fC\-h\fR] [\fB\fC\-e\fR] [\fB\fC\-p\fR] [\fB\fC\-\-default\fR] [\fB\fC\-\-\fR]
+.PP
+Manage configuration of uamp. If no options are specified it is as if only the
+option \fB\fC\-e\fR was specified.
+.PP
+Config action accepts the following options:
+.TP
+\fB\fC\-h\fR, \fB\fC\-?\fR, \fB\fC\-\-help\fR
+Print help for config action.
+.TP
+\fB\fC\-e\fR, \fB\fC\-\-edit\fR, \fB\fC\-\-edit\-file\fR
+Open the configuration file in your default editor.
+.TP
+\fB\fC\-p\fR, \fB\fC\-\-print\-path\fR
+Print path to the configuration file.
+.TP
+\fB\fC\-\-default\fR
+Print the default configuration in json format (same as the actual format of
+the configuration file).
+.SS Action \fB\fCshell\fR
+.PP
+\fB\fCshell\fR [\fB\fC\-h\fR] [\fB\fC\-s\fR] [\fB\fCtab\fR]
+.PP
+\fB\fCsh\fR [\fB\fC\-h\fR] [\fB\fC\-s\fR] [\fB\fCtab\fR]
+.PP
+Print script for shell integration. Right now the only shell intergration
+script is for tab completion. The shell scripts are verified to work in bash
+and zsh.
+.PP
+By default only short runner script is printed.
+.PP
+The tab completoion script can be integrated just by using the following shell
+command:
+.PP
+.RS
+.nf
+`uamp sh tab`
+.fi
+.RE
+.PP
+The shell action accepts the following options:
+.TP
+\fB\fC\-h\fR, \fB\fC\-?\fR, \fB\fC\-\-help\fR
+Print help for shell action.
+.TP
+\fB\fC\-s\fR, \fB\fC\-\-script\fR
+Print long script instead of short script runner. The two scripts don't have
+to be different.
+.PP
+The following shell integrations are supported:
+.TP
+\fB\fCtab\fR, \fB\fCtab\-completion\fR
+Adds tab completion for uamp CLI. Verified to work in \fB\fCbash\fR and \fB\fCzsh\fR\&.
+.SS Action \fB\fCinternal\fR
+.PP
+\fB\fCinternal\fR \fB\fCtab\-complete\fR \fIopt\-index\fP \fIuamp\-bin\fP [\fIopt\fP] ...
+.PP
+CLI ment to be used internally with integrations. This mode cannot be ended
+with \fB\fC\-\-\fR\&. The only internal integration is tab completion.
+.PP
+Integrations:
+.TP
+\fB\fCtab\-complete\fR \fIopt\-index\fP \fIuamp\-bin\fP [\fIopt\fP] ...
+Gets tab completion suggestions for uamp. \fIuamp\-bin\fP is path to uamp. This is
+here only to simplify implementation of integrations, and is actually
+ignored.
+.IP
+\fIopt\fP are command line arguments for uamp for which the completion will be
+generated. The exact argument for which the completion should be generated
+is given by \fIopt\-index\fP\&.
+.IP
+All arguments after argument given by \fIopt\-index\fP are ignored.
+.SS Message control
+.TP
+\fB\fCpp\fR[\fB\fC=\fR\fIplay\-state\fP], \fB\fCplay\-pause\fR[\fB\fC=\fR\fIplay\-state\fP]
+Play/Pause playback. Without \fIplay\-state\fP toggles between the states.
+.IP
+\fIplay\-state\fP can have values:
+.RS
+.IP \(bu 2
+\fB\fCplay\fR the playback will play.
+.IP \(bu 2
+\fB\fCpause\fR the playback will pause.
+.RE
+.TP
+\fB\fCvu\fR[\fB\fC=\fR\fIvolume\fP], \fB\fCvol\-up\fR[\fB\fC=\fR\fIvolume\fP], \fB\fCvolume\-up\fR[\fB\fC=\fR\fIvolume\fP]
+Increases the volume by amount given by \fIvolume\fP\&. If the amount was not given
+increase by the default amount given in configuration. The actual volume is
+clamped to value from \fB\fC0\fR to \fB\fC1\fR\&.
+.TP
+\fB\fCvd\fR[\fB\fC=\fR\fIvolume\fP], \fB\fCvol\-down\fR[\fB\fC=\fR\fIvolume\fP], \fB\fCvolume\-down\fR[\fB\fC=\fR\fIvolume\fP]
+Decreases the volume by amount given by \fIvolume\fP\&. If the amount was not given
+decrease by the default amount given in configuration. The actual volume is
+clamped to value from \fB\fC0\fR to \fB\fC1\fR\&.
+.TP
+\fB\fCns\fR[\fB\fC=\fR\fIN\fP], \fB\fCnext\-song\fR[\fB\fC=\fR\fIN\fP]
+Jump to the \fIN\fPth next song in the playlist. If not specified, \fIN\fP is \fB\fC1\fR\&.
+.TP
+\fB\fCps\fR[\fB\fC=\fR\fIN\fP], \fB\fCprevious\-song\fR[\fB\fC=\fR\fIN\fP]
+Jump to the \fIN\fPth previous song in the playlist. If not specified, \fIN\fP is
+\fB\fC1\fR\&.
+.TP
+\fB\fCpj\fR[\fB\fC=\fR\fIN\fP], \fB\fCplaylist\-jump\fR[\fB\fC=\fR\fIN\fP]
+Jump to the \fIN\fPth song in the playlist. The value will be clamped to value
+from \fB\fC0\fR to playlist length. The first song in the playlist has index \fB\fC0\fR\&.
+If not specified, \fIN\fP is \fB\fC0\fR\&.
+.TP
+\fB\fCv=\fR\fIvolume\fP, \fB\fCvol=\fR\fIvolume\fP, \fB\fCvolume=\fR\fIvolume\fP
+Set volume to \fIvolume\fP\&. \fIvolume\fP must be value from \fB\fC0\fR to \fB\fC1\fR\&.
+.TP
+\fB\fCmute\fR[\fB\fC=\fR\fIB\fP]
+Mute/Unmute. If \fIB\fP is not specified, toggle between the states.
+.IP
+\fIB\fP may be:
+.RS
+.IP \(bu 2
+\fB\fCtrue\fR \- mute.
+.IP \(bu 2
+\fB\fCfalse\fR \- unmute.
+.RE
+.TP
+\fB\fCload\-songs\fR[\fB\fC=\fR[\fB\fCl\fR|\fB\fCr\fR][\fB\fC\-\fR|\fB\fCe\fR|\fB\fCn\fR|\fB\fCm\fR]]
+Load new songs to library from folders specified in configuration. The value
+specifies load mode and what should be done with any of newly loaded songs.
+If not specified, defaults from playlist/configuration are used.
+.IP
+There are the following load modes:
+.RS
+.IP \(bu 2
+\fB\fCl\fR \- don't remove songs from library with invalid paths.
+.IP \(bu 2
+\fB\fCr\fR \- remove songs from library with invalid paths.
+.RE
+.IP
+And there are the following modes for adding new songs to playlist:
+.RS
+.IP \(bu 2
+\fB\fC\-\fR \- don't add the new songs to the playlist.
+.IP \(bu 2
+\fB\fCe\fR \- add the new songs to the end of the playlist.
+.IP \(bu 2
+\fB\fCn\fR \- add the new songs as next (after the current song) in the playlist.
+.IP \(bu 2
+\fB\fCm\fR \- mix the new songs randomly into the unplayed part of the playlist.
+.RE
+.TP
+\fB\fCshuffle\fR, \fB\fCshuffle\-playlist\fR
+Shuffles the current playlist.
+.IP
+If \fB\fCshuffle_current\fR in configuration is set to \fB\fCtrue\fR, the current song will
+be shuffled into the playlist, and so the playlist position will likely not be
+\fB\fC0\fR\&.
+.IP
+If \fB\fCshuffle_current\fR in configuration is set to \fB\fCfalse\fR, the current song
+will be moved to index \fB\fC0\fR in the playlist.
+.IP
+Difference from \fB\fCsort=rng\fR is that \fB\fCsort=rng\fR will not respect the config
+setting \fB\fCshuffle_current\fR\&.
+.TP
+\fB\fCsort=\fR\fIorder\fP, \fB\fCsort\-playlist=\fR\fIorder\fP
+Sort the current playlist according to criteria given in \fIorder\fP\&. See \fIFormat
+order\fP for more information. The current song will not change, but the index
+of it in playlist will be likely to change.
+.IP
+\fB\fCsort=rng\fR will not respect the setting \fB\fCshuffle_current\fR\&. If you want to
+randomy shuffle the playlist and respect the setting, use \fB\fCshuffle\fR\&.
+.TP
+\fB\fCx\fR, \fB\fCexit\fR, \fB\fCclose\fR
+Exit uamp.
+.TP
+\fB\fCseek=\fR\fItimestamp\fP, \fB\fCseek\-to=\fR\fItimestamp\fP
+Seek to the given \fItimestamp\fP within the current song. For the format of
+\fItimestamp\fP see \fIFormat duration/timestamp\fP\&.
+.TP
+\fB\fCff\fR[\fB\fC=\fR\fIduration\fP], \fB\fCfast\-forward\fR[\fB\fC=\fR\fIduration\fP]
+Fast forward in current song by the given \fIduration\fP\&. If \fIduration\fP is not
+specified, fast forward by the default amount given in configuration.
+.IP
+See \fIFormat duration/timestamp for more info about the format of *duration\fP\&.
+.TP
+\fB\fCrw\fR[\fB\fC=\fR\fIduratoin\fP], \fB\fCrewind\fR[\fB\fC=\fR\fIduration\fP]
+Rewind the current song by the given \fIduration\fP\&. If \fIduration\fP is not
+specified, rewdind by the default amount given in configuration.
+.IP
+See \fIFormat duration/timestamp for more info about the format of *duration\fP\&.
+.TP
+\fB\fCsp\fR[\fB\fC=\fR\fIquery\fP], \fB\fCset\-playlist\fR[\fB\fC=\fR\fIquery\fP]
+Set the current playlist to songs resulting from the \fIquery\fP\&. If \fIquery\fP is
+not specified, set the playlist to all songs in library in the order in which
+they are in library.
+.IP
+See \fIFormat query\fP for more information on \fIquery\fP\&.
+.TP
+\fB\fCpush\fR[\fB\fC=\fR\fIquery\fP], \fB\fCpush\-playlist\fR[\fB\fC=\fR\fIquery\fP]
+Push new playlist to the playlist stack. The playlist is created from the
+given \fIquery\fP\&. If \fIquery\fP is not specified, all songs are added to the new
+playlist.
+.IP
+See \fIFormat query\fP for more information on \fIquery\fP\&.
+.TP
+\fB\fCpc\fR[\fB\fC=\fR\fIquery\fP], \fB\fCpush\-cur\fR[\fB\fC=\fR\fIquery\fP], \fB\fCpush\-with\-cur\fR[\fB\fC=\fR\fIquery\fP]
+Same as \fB\fCpush\fR\&. Additionaly, the current song will be moved from the old
+playlist to the start of the new playlist.
+.IP
+See \fIFormat query\fP for more information on \fIquery\fP\&.
+.TP
+\fB\fCpop\fR, \fB\fCpop\-playlist\fR
+Pop the current playlist from the top of the stack. Playback status will not
+change. The playlist end action of the poped playlist will not be invoked.
+If the playlist stack has only one playlist, it cannot be poped.
+.TP
+\fB\fCflat\fR[\fB\fC=\fR\fIN\fP], \fB\fCflatten\fR[\fB\fC=\fR\fIN\fP]
+Insert the current playlist into the next playlist on the stack at the
+position of current song. Pop the top playlist (the inserted). Do this \fIN\fP
+times. If not specified, \fIN\fP is \fB\fC1\fR\&.
+.TP
+\fB\fCq\fR[\fB\fC=\fR\fIquery\fP], \fB\fCqueue\fR[\fB\fC=\fR\fIquery\fP]
+Adds songs resulting from \fIquery\fP to the end of the current playlist.
+.IP
+See \fIFormat query\fP for more information on \fIquery\fP\&.
+.TP
+\fB\fCqn\fR[\fB\fC=\fR\fIquery\fP], \fB\fCqueue\-next\fR[\fB\fC=\fR\fIquery\fP], \fB\fCplay\-next\fR[\fB\fC=\fR\fIquery\fP]
+Insert songs resulting from \fIquery\fP into the current playlist after the
+current song.
+.IP
+See \fIFormat query\fP for more information on \fIquery\fP\&.
+.TP
+\fB\fCsave\fR
+Trigger save. Saves are lazy and this will do nothing if there is no change
+from the previous save. If the instance has disabled config saves, this will
+not save the configuration.
+.TP
+\fB\fCal=\fR\fIalias\fP, \fB\fCalias=\fR\fIalias\fP
+Invoke the given alias. Arguments to the alias are passed inside \fB\fC{\fR and \fB\fC}\fR
+and are separated by \fB\fC,\fR\&. For example:
+.PP
+.RS
+.nf
+al=palb{trench}
+.fi
+.RE
+.PP
+\fB\fCspea\fR[\fB\fC=\fR\fIalias\fP], \fB\fCpl\-end\fR[\fB\fC=\fR\fIalias\fP], \fB\fCplaylist\-end\fR[\fB\fC=\fR\fIalias\fP],
+\fB\fCplaylist\-end\-action\fR[\fB\fC=\fR\fIalias\fP]
+  Set playlist end action to the given alias invokation. \fIalias\fP is same as in
+  \fB\fCalias=\fR\fIalias\fP\&. If \fIalias\fP is not specified, unsets the playlist end action.
+.PP
+\fB\fCpap\fR[\fB\fC=\fR\fIadd\-policy\fP], \fB\fCadd\-policy\fR[\fB\fC=\fR\fIadd\-policy\fP],
+\fB\fCplaylist\-add\-policy\fR[\fB\fC=\fR\fIadd\-policy\fP]
+  Sets the playlist add policy. \fIadd\-policy\fP is by default \fB\fCnone\fR\&.
+.IP
+\fIadd\-policy\fP may be one of:
+.RS
+.IP \(bu 2
+\fB\fC\-\fR, \fB\fCnone\fR \- don't add newly loaded songs to playlist.
+.IP \(bu 2
+\fB\fCe\fR, \fB\fCend\fR \- add newly loaded songs to the end of the playlist.
+.IP \(bu 2
+\fB\fCn\fR, \fB\fCnext\fR \- add newly loaded songs after the current song in the
+playlist.
+.IP \(bu 2
+\fB\fCm\fR, \fB\fCmix\fR, \fB\fCmix\-in\fR \- mix the newly loaded songs into the unplayed part
+of the playlist.
+.RE
+.SH FORMATS
+.PP
+This section describes formats referenced in other parts of this document.
+.SS Format filter
+.PP
+\fIfield\fP[\fI:\fP[\fB\fC/\fR]\fIvalue\fP[\fB\fC/\fR]]
+.PP
+\fB\fC{\fR\fIfilter\fP\fB\fC}\fR
+.PP
+\fIfilter\fP\fB\fC+\fR\fIfilter\fP
+.PP
+\fIfilter\fP\fB\fC\&.\fR\fIfilter\fP
+.PP
+Filter is used to filter list of songs. Basic filter consists of \fIfield\fP that
+will be matched, the matching mode \fI:\fP and the pattern given in \fIvalue\fP\&. Some
+field don't have \fIvalue\fP and some ignore the matching mode \fI:\fP\&. If value should
+contain characters that would be normally interpreted, you can enclose it with
+\fB\fC/\fR\&. If enclosed you can use \fB\fC//\fR to represent single \fB\fC/\fR\&. Several such filters
+may be joined together using \fB\fC+\fR (or) or \fB\fC\&.\fR (and). \fB\fC\&.\fR (and) is evaluated
+first. The precedence of these operators may be modified with brackets \fB\fC{\fR and
+\fB\fC}\fR\&.
+.PP
+Here is list of supported fields to match and their meaning:
+.TP
+\fB\fCany\fR
+All songs pass this filter.
+.TP
+\fB\fCnone\fR
+No songs pass this filter.
+.TP
+\fB\fCs\fR\fI:pattern\fP, \fB\fCan\fR\fI:pattern\fP, \fB\fCany\-name\fR\fI:pattern\fP
+Matches all songs where either title, artist or album matches \fIpattern\fP in
+mode \fI:\fP\&.
+.TP
+\fB\fCn\fR\fI:pattern\fP, \fB\fCtit\fR\fI:pattern\fP, \fB\fCtitle\fR\fI:pattern\fP, \fB\fCname\fR\fI:pattern\fP
+Matches all songs where the title matches \fIpattern\fP in mode \fI:\fP\&.
+.PP
+\fB\fCp\fR\fI:pattern\fP, \fB\fCart\fR\fI:pattern\fP, \fB\fCartist\fR\fI:pattern\fP, \fB\fCperformer\fR\fI:pattern\fP,
+\fB\fCauth\fR\fI:pattern\fP, \fB\fCauthor\fR\fI:pattern\fP
+  Matches all songs where the artist matches \fIpattern\fP in mode \fI:\fP\&.
+.TP
+\fB\fCa\fR\fI:pattern\fP, \fB\fCalb\fR\fI:pattern\fP, \fB\fCalbum\fR\fI:pattern\fP
+Matches all songs where the album matches \fIpattern\fP in mode \fI:\fP\&.
+.TP
+\fB\fCt:\fR\fIuint\fP, \fB\fCtrk:\fR\fIuint\fP, \fB\fCtrack:\fR\fIuint\fP, \fB\fCtrack\-number:\fR\fIuint\fP
+Matches all songs where the track number is \fIuint\fP\&. The mode is ignored.
+.TP
+\fB\fCd:\fR\fIuint\fP, \fB\fCdisc:\fR\fIuint\fP
+Matches all songs where the disc number is \fIuint\fP\&. The mode is ignored.
+.TP
+\fB\fCy:\fR\fIint\fP, \fB\fCyear:\fR\fIuint\fP
+Matches all songs where the year is \fIuint\fP\&. The mode is ignored.
+.TP
+\fB\fCg\fR\fI:pattern\fP, \fB\fCgenre\fR\fI:pattern\fP
+Matches all songs where the genre matches \fIpattern\fP in mode \fI:\fP\&.
+.PP
+These are the available pattern matching modes \fI:\fP:
+.TP
+\fB\fC=\fR
+The string must match exactly.
+.TP
+\fB\fC\-\fR
+The string must contain exact match of the pattern.
+.TP
+\fB\fC:\fR
+The lowercase ascii representation of the string without whitespace must
+equal the pattern.
+.TP
+\fB\fC~\fR
+The lowercase ascii representation of the string without whitespace must
+contain the pattern.
+.PP
+\fB\fC@\fR is not allowed in filters, so it must be escaped using \fB\fC/\fR\&.
+.PP
+Example filter to match all songs where the album title is  \fB\fCsmoke+mirrors\fR or
+\fB\fCtrench\fR:
+.PP
+.RS
+.nf
+alb:/smoke+mirrors/+alb:trench
+.fi
+.RE
+.SS Format order
+.PP
+[\fB\fC<\fR|\fB\fC>\fR|\fB\fC/\fR|\fB\fC\\\fR|\fB\fC~\fR][\fB\fC+\fR|\fB\fC\-\fR]\fIfield\fP
+.PP
+Order is used to sort songs in ascending or descending order using \fIfield\fP\&.
+The ascending or descending order is given by the first optional character. If
+it is not given, uamp wil sort in ascending order. Uamp supports two ways of
+ordering, simple or complex. The second optional character determines which of
+these will be used. If not present, the default value from configuration will
+be used.
+.PP
+In simple ordering only the actual field is considered. If the values are same
+their order will be preserved. If complex ordering is enabled, same values may
+be sorted according to other related fields.
+.PP
+Here is list of available fields for sorting:
+.TP
+\fB\fCsame\fR
+Don't change the order.
+.TP
+\fB\fCrev\fR, \fB\fCreverse\fR
+Reverse the order of the songs.
+.TP
+\fB\fCrng\fR, \fB\fCrand\fR, \fB\fCrandom\fR, \fB\fCrandomize\fR
+Randomly shuffle the songs.
+.TP
+\fB\fCpath\fR
+Sort by the path to the audio file.
+.TP
+\fB\fCn\fR, \fB\fCtit\fR, \fB\fCtitle\fR, \fB\fCname\fR
+Sort by the title of the song.
+.TP
+\fB\fCp\fR, \fB\fCart\fR, \fB\fCartist\fR, \fB\fCperformer\fR, \fB\fCauth\fR, \fB\fCauthor\fR
+Sort by the artist.
+.IP
+If complex sorting is enabled, also sort by year, album name, disc and track
+number.
+.TP
+\fB\fCa\fR, \fB\fCalb\fR, \fB\fCalbum\fR
+Sort by the album name.
+.IP
+If complex sorting is enabled, also sort by disc and track number.
+.TP
+\fB\fCt\fR, \fB\fCtrk\fR, \fB\fCtrack\fR, \fB\fCtrack\-number\fR
+Sort by track number.
+.TP
+\fB\fCd\fR, \fB\fCdisc\fR
+Sort by disc number.
+.IP
+If complex sorting is enabled, also sort by track number.
+.TP
+\fB\fCy\fR, \fB\fCyear\fR
+Sort by year.
+.IP
+If complex sorting is enabled, also sort by album name, disc and track
+number.
+.TP
+\fB\fClen\fR, \fB\fClength\fR
+Sort by the length of the song.
+.TP
+\fB\fCg\fR, \fB\fCgenre\fR
+Sort by the genre of the song.
+.PP
+Prefix chars meaning:
+.TP
+\fB\fC<\fR, \fB\fC/\fR
+Sort in ascending order.
+.TP
+\fB\fC>\fR, \fB\fC\\\fR, \fB\fC~\fR
+Sort in descending order.
+.TP
+\fB\fC+\fR
+Use complex sorting.
+.TP
+\fB\fC\-\fR
+Use simple sorting.
+.SS Format query
+.PP
+[\fIfilter\fP][\fB\fC@\fR\fIorder\fP]
+.PP
+Query is just combination of \fIfilter\fP and \fIorder\fP\&. Song list will be first
+filtered by \fIfilter\fP and than ordered by \fIorder\fP\&. See \fIFormat filter\fP and
+\fIFormat order\fP for more info.
+.SH FILES
+.TP
+\fI~/.config/uamp/config.json\fP
+Configuration file for uamp. Running instances of uamp will get notified when
+the file is notified. This file is expected to be edited by user.
+.TP
+\fI~/.config/uamp/library.json\fP
+Contains loaded library songs. The path to this file may be modified in
+config file. This file is not expected to be modified by user.
+.TP
+\fI~/.config/uamp/player.json\fP
+Contains information about playback. The path to this file may be modified in
+config file. This file is not expected to be modified by user.
+.TP
+\fI~/.local/share/uamp/log/\fP
+This folder contains log files generated by uamp. Uamp will automatically
+delete old log files after the time specified in configuration.
+.TP
+\fI~/.cache/uamp/cache/cover256/\fP
+This folder contains cached images of albums scaled so that their larger
+dimension is 256 pixels wide.
+.IP
+Contents of this file may be safely deleted, but this may have slight impact
+on performance of uamp, and uamp will likely generate the images again.
+.SH ENVIRONMENT
+.TP
+\fB\fCRUST_LOG\fR
+Configures logger used by uamp. For decription on format of this variable
+see flexi logger documentation \[la]https://docs.rs/flexi_logger/latest/flexi_logger/struct.LogSpecification.html\[ra]\&.
+.TP
+\fB\fCVISUAL\fR
+This may contain editor used when uamp will try to edit file. This has the
+highest precedence when choosing editor.
+.TP
+\fB\fCEDITOR\fR
+This may contain editor used when uamp will try to edit file. This has the
+second highest precedence when choosing editor (after \fB\fCVISUAL\fR).
+.TP
+\fB\fCRUST_BACKTRACE\fR
+When this is set to \fB\fC0\fR, uamp will print whole backtrace when panics.
+.SH DIAGNOSTICS
+.PP
+Invalid command line arguments are reported with user friendly message
+describing the problem and highlighting the incorrect argument.
+.PP
+Uamp will fail to start new instance of server if the combination of address
+and port is unavailable. If you are using the defaults, it is possible that
+instance of uamp is already running and using that address and port.
+.PP
+Uamp will fail to communicate with existing instance if it will fail to connect
+to that instance TCP server. This may be because there is no running instance
+of uamp, or the port and address of the instance is different than what was
+uamp trying to connect to.
+.SH EXAMPLES
+.SS Useful commands
+.PP
+Here are some useful uamp commands to get you started:
+.TP
+\fB\fCuamp run \-d\fR
+Run uamp in detached mode (in background).
+.TP
+\fB\fCuamp i x\fR
+Exit running instance of uamp.
+.TP
+\fB\fCuamp i info\fR
+Print playback information.
+.TP
+\fB\fCuamp i pp\fR
+Toggle play/pause.
+.TP
+\fB\fCuamp i v=.5\fR
+Set the volume to 50%.
+.TP
+\fB\fCuamp i p=song.mp3\fR
+Play the file \fB\fCsong.mp3\fR as new pushed playlist.
+.TP
+\fB\fCuamp i al=reset\-playlist\fR
+Set current playlist to all songs in the library shuffled and play. If the
+playlist ends, it will reshuffle all the songs again and star over. If new
+songs are added to the library, they will get mixed into the unplayed part of
+the playlist.
+.TP
+\fB\fCuamp i al=palb{/trench/}\fR
+Push album with the name \fB\fCtrench\fR as new playlist. Once the album ends,
+playback will continue where it ended in the previous playlist.
+.TP
+\fB\fCuamp i spea=repeat\fR
+Set the current playlist to repeat.
+.SH AUTHOR
+.PP
+Jakub Antonín Štigler \[la]https://github.com/BonnyAD9\[ra]
