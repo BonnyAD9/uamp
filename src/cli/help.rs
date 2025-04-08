@@ -625,7 +625,7 @@ fn print_filter_help(color: bool, header: bool) {
     Instead of `{'i}:{'_}` you can use different separator to change the
     comparison:
       `{'i}={'_}` The string must match exactly.
-      `{'i}+{'_}` The string must contain the exact pattern.
+      `{'i}-{'_}` The string must contain the exact pattern.
       `{'i}:{'_}` The strings converted to lowercase ascii without whitespace
           must match.
       `{'i}~{'_}` The string converted to lowercase asci without whitespace

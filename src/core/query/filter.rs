@@ -165,7 +165,7 @@ impl Display for Filter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let c = match self.cmp {
             CmpType::Strict => '=',
-            CmpType::StrictContains => '+',
+            CmpType::StrictContains => '-',
             CmpType::Lenient => ':',
             CmpType::LenientContains => '~',
         };
@@ -219,7 +219,7 @@ impl FromStr for Filter {
         let val = &s[p + c.len_utf8()..];
         let cmp = match c {
             '=' => CmpType::Strict,
-            '+' => CmpType::StrictContains,
+            '-' => CmpType::StrictContains,
             ':' => CmpType::Lenient,
             '~' => CmpType::LenientContains,
             _ => unreachable!(),

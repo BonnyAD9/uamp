@@ -560,6 +560,8 @@ Integrations:
   Same as `push`. Additionaly, the current song will be moved from the old
   playlist to the start of the new playlist.
 
+  See *Format query* for more information on *query*.
+
 `pop`, `pop-playlist`
   Pop the current playlist from the top of the stack. Playback status will not
   change. The playlist end action of the poped playlist will not be invoked.
@@ -612,7 +614,168 @@ Integrations:
 
 ## FORMATS
 
-TODO
+This section describes formats referenced in other parts of this document.
+
+### Format filter
+
+*field*[*:*[`/`]*value*[`/`]]
+
+`{`*filter*`}`
+
+*filter*`+`*filter*
+
+*filter*`.`*filter*
+
+Filter is used to filter list of songs. Basic filter consists of *field* that
+will be matched, the matching mode *:* and the pattern given in *value*. Some
+field don't have *value* and some ignore the matching mode *:*. If value should
+contain characters that would be normally interpreted, you can enclose it with
+`/`. If enclosed you can use `//` to represent single `/`. Several such filters
+may be joined together using `+` (or) or `.` (and). `.` (and) is evaluated
+first. The precedence of these operators may be modified with brackets `{` and
+`}`.
+
+Here is list of supported fields to match and their meaning:
+
+`any`
+  All songs pass this filter.
+
+`none`
+  No songs pass this filter.
+
+`s`*:pattern*, `an`*:pattern*, `any-name`*:pattern*
+  Matches all songs where either title, artist or album matches *pattern* in
+  mode *:*.
+
+`n`*:pattern*, `tit`*:pattern*, `title`*:pattern*, `name`*:pattern*
+  Matches all songs where the title matches *pattern* in mode *:*.
+
+`p`*:pattern*, `art`*:pattern*, `artist`*:pattern*, `performer`*:pattern*,
+`auth`*:pattern*, `author`*:pattern*
+  Matches all songs where the artist matches *pattern* in mode *:*.
+
+`a`*:pattern*, `alb`*:pattern*, `album`*:pattern*
+  Matches all songs where the album matches *pattern* in mode *:*.
+
+`t:`*uint*, `trk:`*uint*, `track:`*uint*, `track-number:`*uint*
+  Matches all songs where the track number is *uint*. The mode is ignored.
+
+`d:`*uint*, `disc:`*uint*
+  Matches all songs where the disc number is *uint*. The mode is ignored.
+
+`y:`*int*, `year:`*uint*
+  Matches all songs where the year is *uint*. The mode is ignored.
+
+`g`*:pattern*, `genre`*:pattern*
+  Matches all songs where the genre matches *pattern* in mode *:*.
+
+These are the available pattern matching modes *:*:
+
+`=`
+  The string must match exactly.
+
+`-`
+  The string must contain exact match of the pattern.
+
+`:`
+  The lowercase ascii representation of the string without whitespace must
+  equal the pattern.
+
+`~`
+  The lowercase ascii representation of the string without whitespace must
+  contain the pattern.
+
+`@` is not allowed in filters, so it must be escaped using `/`.
+
+Example filter to match all songs where the album title is  `smoke+mirrors` or
+`trench`:
+
+    alb:/smoke+mirrors/+alb:trench
+
+### Format order
+
+[`<`|`>`|`/`|`\`|`~`][`+`|`-`]*field*
+
+Order is used to sort songs in ascending or descending order using *field*.
+The ascending or descending order is given by the first optional character. If
+it is not given, uamp wil sort in ascending order. Uamp supports two ways of
+ordering, simple or complex. The second optional character determines which of
+these will be used. If not present, the default value from configuration will
+be used.
+
+In simple ordering only the actual field is considered. If the values are same
+their order will be preserved. If complex ordering is enabled, same values may
+be sorted according to other related fields.
+
+Here is list of available fields for sorting:
+
+`same`
+  Don't change the order.
+
+`rev`, `reverse`
+  Reverse the order of the songs.
+
+`rng`, `rand`, `random`, `randomize`
+  Randomly shuffle the songs.
+
+`path`
+  Sort by the path to the audio file.
+
+`n`, `tit`, `title`, `name`
+  Sort by the title of the song.
+
+`p`, `art`, `artist`, `performer`, `auth`, `author`
+  Sort by the artist.
+
+  If complex sorting is enabled, also sort by year, album name, disc and track
+  number.
+
+`a`, `alb`, `album`
+  Sort by the album name.
+
+  If complex sorting is enabled, also sort by disc and track number.
+
+`t`, `trk`, `track`, `track-number`
+  Sort by track number.
+
+`d`, `disc`
+  Sort by disc number.
+
+  If complex sorting is enabled, also sort by track number.
+
+`y`, `year`
+  Sort by year.
+
+  If complex sorting is enabled, also sort by album name, disc and track
+  number.
+
+`len`, `length`
+  Sort by the length of the song.
+
+`g`, `genre`
+  Sort by the genre of the song.
+
+Prefix chars meaning:
+
+`<`, `/`
+  Sort in ascending order.
+
+`>`, `\`, `~`
+  Sort in descending order.
+
+`+`
+  Use complex sorting.
+
+`-`
+  Use simple sorting.
+
+### Format query
+
+[*filter*][`@`*order*]
+
+Query is just combination of *filter* and *order*. Song list will be first
+filtered by *filter* and than ordered by *order*. See *Format filter* and
+*Format order* for more info.
 
 ## FILES
 
