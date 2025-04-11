@@ -226,6 +226,8 @@ fn print_basic_help(color: bool) {
     categories.
 
     Use `{'c}uamp {'b}h {'r}all{'_}` to show the whole help.
+
+For detailed description see {'i}uamp(1){'_} and {'i}uamp(5){'_}.
 ",
     )
 }

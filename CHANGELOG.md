@@ -4,6 +4,7 @@
 ### New features
 - Tab completion now can suggest aliases.
 - Set the print style with `--print`. Add new print styles: `debug`, `json`.
+- Add manpages.
 
 ### Changes
 - CLI now uses `{` and `}` instead of `[` and `]`. The old way is still
