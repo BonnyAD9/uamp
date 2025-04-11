@@ -1,7 +1,7 @@
-.TH UAMP 1 2025\-03\-29
+.TH UAMP 1 2025\-04\-11
 .SH NAME
 .PP
-uamp \- Universal Advanced Music Player
+uamp \- Universal Advanced Music Player \- command line interface
 .SH SYNOPSIS
 .PP
 \fB\fCuamp\fR [\fB\fC\-h\fR] [\fB\fC\-p\fR \fIport\fP] [\fB\fC\-a\fR \fIaddress\fP] [\fB\fC\-\-version\fR]
@@ -87,7 +87,9 @@ Configuration is usually saved in \fB\fC~/.config/uamp\fR\&. You can get the
 configuration path with \fB\fCuamp config \-p\fR\&.
 .PP
 If you wan't to edit the configuration you can use \fB\fCuamp config\fR\&. This will
-open the configuration in your default text editor.
+open the configuration in your default text editor. For detailed decription of
+configuration see \fI
+.BR uamp (5)\fP\&.
 .PP
 Running instances of uamp will get notified when the configuration file changes
 and they will automatically reload their configuration.
@@ -660,6 +662,34 @@ of the playlist.
 .SH FORMATS
 .PP
 This section describes formats referenced in other parts of this document.
+.SS Format duration
+.PP
+[\fIdays\fP\fB\fCd\fR][\fIhours\fP]\fB\fC:\fR[\fIminutes\fP]\fB\fC:\fR[\fIseconds\fP][\fB\fC\&.\fR\fIfrac\fP]
+.PP
+[\fIdays\fP\fB\fCd\fR][[\fIminutes\fP]\fB\fC:\fR][\fIseconds\fP][\fB\fC\&.\fR\fIfrac\fP]
+.PP
+Duration describes duration in time. It has precision from years to
+nanoseconds. If you are unsure, you can just type the seconds as you are used
+to (e.g \fB\fC120.5\fR for two minutes and half a second).
+.PP
+\fIdays\fP describe the number of days in the duration. \fB\fC1d\fR is equivalent to
+\fB\fC24::\fR\&.
+.PP
+\fIhours\fP describe to number of yours in the duration. \fB\fC1::\fR is equivalent to
+\fB\fC60:\fR\&.
+.PP
+\fIminutes\fP describe the number of minutes in the duration. \fB\fC1:\fR is equivalent to
+\fB\fC60\fR\&.
+.PP
+\fIseconds\fP describe the number of whole seconds.
+.PP
+\fIfrac\fP describes the decimal part of seconds. Only the 10 most significant
+digits are considered. The 9 most significant digits are stored precisely and
+the 10th digit will be rounded.
+.PP
+Even though the convention may suggest that it is necesary to use the largest
+component possible, it is not required. All the following values are valid and
+have the same value: \fB\fC1d\fR == \fB\fC24::\fR == \fB\fC1440:\fR == \fB\fC86400\fR\&.
 .SS Format filter
 .PP
 \fIfield\fP[\fI:\fP[\fB\fC/\fR]\fIvalue\fP[\fB\fC/\fR]]
@@ -910,6 +940,13 @@ playback will continue where it ended in the previous playlist.
 .TP
 \fB\fCuamp i spea=repeat\fR
 Set the current playlist to repeat.
+.SH SEE ALSO
+.PP
+.BR uamp (5)
+.SH BUGS
+.PP
+Found a bug? Please report it at
+github \[la]https://github.com/BonnyAD9/uamp/issues\[ra]\&.
 .SH AUTHOR
 .PP
 Jakub Antonín Štigler \[la]https://github.com/BonnyAD9\[ra]

@@ -83,6 +83,7 @@ gen_struct! {
                 ].into()),
                 ("endless-mix".into(), [
                     DataControlMsg::SetPlaylist(Query::all_rng()).into(),
+                    ControlMsg::PlaylistJump(0).into(),
                     ControlMsg::PlayPause(Some(true)).into(),
                     ControlMsg::SetPlaylistAddPolicy(AddPolicy::MixIn).into(),
                     end_action("endless-mix"),
@@ -91,7 +92,7 @@ gen_struct! {
                     ControlMsg::PopPlaylist.into(),
                     ControlMsg::PlayPause(Some(true)).into(),
                 ].into()),
-                ("palb".into(), "[name]push=a:${name}@t pp=play spea=pcont".parse().unwrap()),
+                ("palb".into(), "[name]push=a:${name}@+a pp=play spea=pcont".parse().unwrap()),
             ].into()
         },
 

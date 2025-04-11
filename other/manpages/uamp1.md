@@ -1,8 +1,8 @@
-# UAMP 1 2025-03-29
+# UAMP 1 2025-04-11
 
 ## NAME
 
-uamp - Universal Advanced Music Player
+uamp - Universal Advanced Music Player - command line interface
 
 ## SYNOPSIS
 
@@ -85,7 +85,8 @@ Configuration is usually saved in `~/.config/uamp`. You can get the
 configuration path with `uamp config -p`.
 
 If you wan't to edit the configuration you can use `uamp config`. This will
-open the configuration in your default text editor.
+open the configuration in your default text editor. For detailed decription of
+configuration see *uamp(5)*.
 
 Running instances of uamp will get notified when the configuration file changes
 and they will automatically reload their configuration.
@@ -616,6 +617,35 @@ Integrations:
 
 This section describes formats referenced in other parts of this document.
 
+### Format duration
+
+[*days*`d`][*hours*]`:`[*minutes*]`:`[*seconds*][`.`*frac*]
+
+[*days*`d`][[*minutes*]`:`][*seconds*][`.`*frac*]
+
+Duration describes duration in time. It has precision from years to
+nanoseconds. If you are unsure, you can just type the seconds as you are used
+to (e.g `120.5` for two minutes and half a second).
+
+*days* describe the number of days in the duration. `1d` is equivalent to
+`24::`.
+
+*hours* describe to number of yours in the duration. `1::` is equivalent to
+`60:`.
+
+*minutes* describe the number of minutes in the duration. `1:` is equivalent to
+`60`.
+
+*seconds* describe the number of whole seconds.
+
+*frac* describes the decimal part of seconds. Only the 10 most significant
+digits are considered. The 9 most significant digits are stored precisely and
+the 10th digit will be rounded.
+
+Even though the convention may suggest that it is necesary to use the largest
+component possible, it is not required. All the following values are valid and
+have the same value: `1d` == `24::` == `1440:` == `86400`.
+
 ### Format filter
 
 *field*[*:*[`/`]*value*[`/`]]
@@ -869,6 +899,15 @@ Here are some useful uamp commands to get you started:
 
 `uamp i spea=repeat`
   Set the current playlist to repeat.
+
+## SEE ALSO
+
+uamp(5)
+
+## BUGS
+
+Found a bug? Please report it at
+[github](https://github.com/BonnyAD9/uamp/issues).
 
 ## AUTHOR
 

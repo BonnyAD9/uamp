@@ -1,0 +1,619 @@
+.TH UAMP 5 2025\-04\-11
+.SH NAME
+.PP
+uamp \- Universal Advanced Music Player \- JSON configuration file format.
+.SH SYNTAX
+.PP
+Uamp configuration file uses the JSON format. The format's specification can
+be found at json.org \[la]https://www.json.org\[ra]\&.
+.SH LOCATION
+.PP
+If the configuration is not present, it will be created on UNIX systems at:
+1. \fB\fC$XDG_CONFIG_HOME/uamp/config.json\fR
+2. \fB\fC$HOME/.config/uamp/config.json\fR
+.PP
+On windows it will be at:
+1. \fB\fC{FOLDERID_RoamingAppData}\\uamp\\config.json\fR which usually is
+   \fB\fC%APPDATA%\\uamp\\config.json\fR
+.PP
+On macOS it is at:
+1. \fB\fC$HOME/Library/Application Support/uamp/config.json\fR
+.SH OPTIONS
+.PP
+This section documents all options that can be present in configuration file.
+.SS Library
+.PP
+This section documents all options related to library.
+.TP
+\fB\fCsearch_paths\fR
+This option is list of absolute paths to folders where uamp will search for
+music. By default uamp uses the default music folder on your system.
+.IP
+On UNIX systems, default music folder is:
+1. \fB\fC$XDG_MUSIC_DIR\fR
+.IP
+On windows it is:
+1. \fB\fC{FOLDERID_Music}\fR which usually is \fB\fC%USERPROFILE%\\Music\fR
+.IP
+On macOS the folder is:
+1. \fB\fC$HOME/Music\fR
+.IP
+Example default value on linux:
+.PP
+.RS
+.nf
+"search_paths": [
+    "/home/alice/music"
+]
+.fi
+.RE
+.TP
+\fB\fCaudio_extensions\fR
+This is list of file extensions (without dot) that uamp will recognize as
+audio files. It is used to speed up library load by not examining files with
+other file extensions.
+.IP
+The default value is:
+.PP
+.RS
+.nf
+"audio_extensions": [
+    "flac",
+    "mp3",
+    "m4a",
+    "mp4"
+]
+.fi
+.RE
+.TP
+\fB\fCrecursive_search\fR
+If this is set to \fB\fCtrue\fR, uamp will search for songs in library paths
+recursively (traversing all subdirectories). This may be slow in some cases,
+but it is usually the expected behaviour.
+.IP
+Default value:
+.PP
+.RS
+.nf
+"recursive_search": true
+.fi
+.RE
+.TP
+\fB\fCupdate_library_on_start\fR
+If this is set to \fB\fCtrue\fR, uamp will search library paths every time on
+startup. This was slow in previous versions, but it has been sice optimized
+so unless you have really huge library of songs, there is no reason to
+disable this. (My library of ~3000 songs loads in imperceptible time).
+.IP
+Default value:
+.PP
+.RS
+.nf
+"update_library_on_start": true
+.fi
+.RE
+.TP
+\fB\fCremove_missing_on_load\fR
+Uamp caches(/stores) its library in library file \fB\fClibrary.json\fR\&. The file
+contains all songs in the library with paths to the files and relevant
+extracted information. This library is updated on start if
+\fB\fCupdate_library_on_start\fR is set to \fB\fCtrue\fR or when user requests it. This
+option decides what should be done if path to song (audio file) from the
+library no longer exists.
+.IP
+If set to \fB\fCtrue\fR uamp will remove nonexisting songs from library. If set to
+\fB\fCfalse\fR the songs will remain in library (but won't be able to play, because
+their audio files no longer exist).
+.IP
+You may want to set this to \fB\fCfalse\fR if your library is on portable media that
+is not connected to your PC all the time.
+.IP
+When loading on user request from CLI, this default value may be overriden.
+.IP
+Default value:
+.PP
+.RS
+.nf
+"remove_missing_on_load": true
+.fi
+.RE
+.SS Playlists
+.PP
+This section documents options related to manipulating playlists.
+.TP
+\fB\fCcontrol_aliases\fR
+This list defines aliases. Alias is a set of control messages that will be
+used in its place. It can be used with the contol message \fB\fCalias\fR\&. See
+\fI
+.BR uamp (1)\fP 
+for list of all control messages. Aliases defined in this list may
+be simple collections of other control messages, or they may have arguments.
+.IP
+Simple alias will contain invokations of control messages the same was as it
+would be written in cli after e.g. \fB\fCuamp instance\fR\&.
+.IP
+If alias has arguments, the arguments are specified with \fB\fC{arg1,arg2}:\fR
+before the control messages invocations. \fB\fCarg1\fR and \fB\fCarg2\fR are names of the
+arguments. The arguments may be referenced in the control messages with \fB\fC${}\fR
+(e.g \fB\fC${arg1}\fR). The value of the argument is placed directly at that
+position before the control messages are fully parsed.
+.IP
+The default value is:
+.PP
+.RS
+.nf
+"control_aliases": {
+    "pcont": "pop 'pp=play'",
+    "repeat": "'pj=0' 'pp=play' 'spea=repeat'",
+    "repeat\-once": "'pj=0' 'pp=play' spea",
+    "endless\-mix":
+        "'sp=any@rng' 'pj=0' 'pp=play' 'pap=m' 'spea=endless\-mix'",
+    "palb": "{name}:'push=a:${name}@+a' 'pp=play' 'spea=pcont'"
+}
+.fi
+.RE
+.IP
+The order of the aliases doesn't matter.
+.IP
+As you can see, uamp has by default some useful predefined aliases. Other
+players nay have specific actions for what uamp has just defined alias.
+.IP
+The default aliases have meaning:
+.RS
+.IP \(bu 2
+\fB\fCpcont\fR: Useful as playlist end action. Pop the current playlist and
+continue playing the next. If there is no next playlist, play from start.
+.IP \(bu 2
+\fB\fCrepeat\fR: Useful as playlist end action. Repeat the current playlist
+indefinitely.
+.IP \(bu 2
+\fB\fCrepeat\-once\fR: Useful as playlist end action. Repeat the current playlist
+once, and than end playback.
+.IP \(bu 2
+\fB\fCendless\-mix\fR: Play random songs indefinitelly.
+.IP \(bu 2
+\fB\fCpalb\fR: Play album with the given name. Than continue with the previous
+playback.
+.RE
+.TP
+\fB\fCdefault_playlist_end_action\fR
+This sets alias invocation that will be set as default playlist end action.
+If this is \fB\fCnull\fR, playlist will by default have no end action.
+.IP
+Default value:
+.PP
+.RS
+.nf
+"default_playlist_end_action": null
+.fi
+.RE
+.TP
+\fB\fCsimple_sorting\fR
+Uamp supports two types of sorting songs. Simple and complex. This will
+select the default behaviour if it is not specified in the sorting operation.
+\fB\fCtrue\fR \- use simple sorting, \fB\fCfalse\fR \- use complex sorting.
+.IP
+When using simple sorting, uamp will sort only by the given field. If two
+songs have same value in the field, their relative position will stay the
+same.
+.IP
+When using complex sorting, songs with same field will additionally be sorted
+by other fields specific to the primary field. For more info about sorting
+see \fI
+.BR uamp (1)\fP 
+section \fIFormat order\fP\&.
+.IP
+Default value:
+.PP
+.RS
+.nf
+"simple_sorting": false
+.fi
+.RE
+.TP
+\fB\fCshuffle_current\fR
+This changes the behaviour of the control message \fB\fCshuffle\fR\&. If it is set to
+\fB\fCtrue\fR, \fB\fCshuffle\fR will randomly shuffle all the songs in playlist. If it is
+set to \fB\fCfalse\fR, the currently playing song will be moved to the first
+position in the playlist after shuffling.
+.IP
+Default value:
+.PP
+.RS
+.nf
+"shuffle_current": true
+.fi
+.RE
+.SS Playback
+.PP
+This section contains options related to playback.
+.TP
+\fB\fCplay_on_start\fR
+When this is set to  \fB\fCtrue\fR, uamp will continue playing when it starts.
+.IP
+Default value:
+.PP
+.RS
+.nf
+"play_on_start": false
+.fi
+.RE
+.TP
+\fB\fCvolume_jump\fR
+This setting specifies the default change of volume. If you use the message
+\fB\fCvolume\-up\fR or \fB\fCvolume\-down\fR without specifying the amount, this amount will
+be used.
+.IP
+The value has no unit, it is value in range from 0 to 1.
+.IP
+Default value (2.5 %):
+.PP
+.RS
+.nf
+"volume_jump": 0.025
+.fi
+.RE
+.TP
+\fB\fCsave_playback_pos\fR
+This determines whether uamp will retain position within current track after
+exiting.
+.TP
+The available values are:
+\- \fB\fC"Never"\fR: uamp will never save position within current song for the
+    current playlist.
+\- \fB\fC"OnSave"\fR: uamp will save position within current song when it exits but
+    not on periodic saves.
+\- \fB\fC"Always"\fR: uamp will always save position within current song.
+.IP
+Default value:
+.PP
+.RS
+.nf
+"save_playback_pos": "Never"
+.fi
+.RE
+.TP
+\fB\fCfade_play_pause\fR
+When you play or pause playback when something loud is playing, it is usually
+not plesent when it stops immidietely. When this is set to nonzero value,
+uamp will change smoothly decrease the volume to 0 before pausing, and it
+will smoothly transition from volume 0 to the set volume before playing.
+.IP
+This setting is the duration of the transition. For more info about its
+format see \fIFormat duration\fP\&.
+.IP
+Default value (0.15 seconds):
+.PP
+.RS
+.nf
+"fade_play_pause": "00:00.15"
+.fi
+.RE
+.TP
+\fB\fCgapless\fR
+When encoding audio, encoders sometimes insert small silence before or after
+the audio. If this is set to \fB\fCtrue\fR, uamp will configure its decoder to
+automatically remove this silence.
+.IP
+Uamp also prefetches the next song if the current is ending so that there is
+no gap between songs. But the prefetching can be used only if the channel
+count and sample rate of the two consecutive songs match. If they don't match
+the audio device has to be reconfigured and this will result in small gap
+that may be noticable to some listeneres if the two songs are ment to follow
+up each other. This is usually not problem though, because songs that are
+meth to follow up each other will come from the same source and so they will
+have the same number of channels and the same sample rate (e.g. songs from
+the same album ripped from the same cd).
+.IP
+Default value:
+.PP
+.RS
+.nf
+"gapless": false
+.fi
+.RE
+.TP
+\fB\fCseek_jump\fR
+This setting specifies the default amount to seek by if it is not specified
+in the \fB\fCfast\-forward\fR or \fB\fCrewind\fR messages.
+.IP
+Default value (10 seconds):
+.PP
+.RS
+.nf
+"seek_jump": "00:10"
+.fi
+.RE
+.TP
+\fB\fCprevious_timeout\fR
+This option determines the behaviour of moving to the previous song. If this
+is not \fB\fCnull\fR, uamp may jump to the start of the current song instead and
+will jump to the previous song only if you go to the previous song twice in a
+row.
+.IP
+The value of this setting determines the position within song when this
+behaviour changes. If you jump to the previous song when current song
+position is less than \fB\fCprevious_timeout\fR, uamp will jump to the previous
+song. Otherwise uamp will jump to the start of this song instead. The value
+may be \fB\fCnull\fR or duration. For the format of duration see \fIFormat duration\fP\&.
+.IP
+Default value (disabled):
+.PP
+.RS
+.nf
+"previous_timeout": null
+.fi
+.RE
+.SS Other
+.PP
+This section contains options that don't cleary fit to any of the previous
+sections. These options are usually little more advanced to the previous
+options.
+.TP
+\fB\fCserver_address\fR
+Uamp creates TCP server for communication across uamp instances. This is the
+way that you can control uamp that is running in background using terminal
+commands. This is the address of that server. The instance that runs the
+player (e.g. in background) will create server at this address. Instances
+that connect to the server will than use this as default address to connect
+to when trying to communicate with running instance of uamp.
+.IP
+The default value is:
+.PP
+.RS
+.nf
+"server_address": "127.0.0.1"
+.fi
+.RE
+.TP
+\fB\fCport\fR
+When uamp creates or connects to uamp server (see \fB\fCserver_address\fR) it will
+use this port.
+.IP
+The default value is:
+.PP
+.RS
+.nf
+"port": "33284"
+.fi
+.RE
+.TP
+\fB\fCenable_server\fR
+Currently uamp has no UI and so the TCP server is necessary. This mode will
+allow the user to disable the server for when uamp is run with UI. For non\-UI
+modes, this setting has no effect and server is always enabled.
+.IP
+Because currently uamp has no UI mode, this setting has no effect.
+.IP
+Default value:
+.PP
+.RS
+.nf
+"enable_server": true
+.fi
+.RE
+.TP
+\fB\fCsave_timeout\fR
+Uamp periodically saves any changes to its state. This option determines how
+ofter these save will occur. If there is no change in state of uamp, there
+will always be no save. The value is duration, for more info about its format
+see \fIFormat duration\fP\&.
+.IP
+Default value (every minute):
+.PP
+.RS
+.nf
+"save_timeout": "01:00"
+.fi
+.RE
+.TP
+\fB\fCdelete_logs_after\fR
+Uamp stores its logs in your systems data folder. Logs are usually useful
+when there is some problem with uamp. They can tell the developer what went
+wrong, but there is no reason to store old logs, because they are irelevant
+to any new issue that may occur. This is why uamp will automatically delete
+old logs so that they don't take up space on your system. This setting will
+determine how old the log must be so that it is delted. The value is
+duration, for more info about its format see \fIFormat duration\fP\&.
+.IP
+Default value (3 days):
+.PP
+.RS
+.nf
+"delete_logs_after": "3d00:00"
+.fi
+.RE
+.TP
+\fB\fCclient_image_lookup\fR
+If this is set to \fB\fCtrue\fR, uamp will try to show song image in terminal when
+using instance message \fB\fCinfo\fR or \fB\fCshow\fR\&.
+.IP
+Default value:
+.PP
+.RS
+.nf
+"client_image_lookup": false
+.fi
+.RE
+.SS Advanced
+.PP
+This section contains advanced options that normal user has no reason to
+change.
+.TP
+\fB\fClibrary_path\fR
+This is path to file where library will be saved. I don't really see why
+would user change this, but the option is available. By default it is stored
+alongside the configuration.
+.IP
+On UNIX systems, default library file path is:
+1. \fB\fC$XDG_CONFIG_HOME/uamp/library.json\fR
+2. \fB\fC$HOME/.config/uamp/library.json\fR
+.TP
+On windows it is:
+1. \fB\fC{FOLDERID_RoamingAppData}\\uamp\\library.json\fR which usually is
+     \fB\fC%APPDATA%\\uamp\\library.json\fR
+.IP
+On macOS the file is:
+1. \fB\fC$HOME/Library/Application Support/uamp/library.json\fR
+.IP
+Example default value on linux:
+.PP
+.RS
+.nf
+"library_path": "/home/alice/.config/uamp/library.json"
+.fi
+.RE
+.TP
+\fB\fCplayer_path\fR
+This is path to file where player will store its playlist and state such as
+volume or song position. The playlist references information in library file
+and so it cannot be transferred to be used another library (even if it is on
+the same system). I don't really see why would user change this, but the
+option is available. By default it is stored alongside the library and
+configuration.
+.IP
+On UNIX systems, default player file path is:
+1. \fB\fC$XDG_CONFIG_HOME/uamp/player.json\fR
+2. \fB\fC$HOME/.config/uamp/player.json\fR
+.TP
+On windows it is:
+1. \fB\fC{FOLDERID_RoamingAppData}\\uamp\\player.json\fR which usually is
+     \fB\fC%APPDATA%\\uamp\\player.json\fR\&.
+.IP
+On macOS the file is:
+1. \fB\fC$HOME/Library/Application Support/uamp/player.json\fR
+.IP
+Example default value on linux:
+.PP
+.RS
+.nf
+"player_path": "/home/alice/.config/uamp/player.json"
+.fi
+.RE
+.TP
+\fB\fCcache_path\fR
+This is path to folder where uamp will store precomputed data such as scaled
+images. Deleting the folder will only temporary impact performance. Uamp will
+recreate the folder and use it if it is not created. By default it uses the
+systems cache folder.
+.IP
+On UNIX systems, default cache folder is:
+1. \fB\fC$XDG_CACHE_HOME$/uamp/cache\fR
+2. \fB\fC$HOME/.cache/uamp/cache\fR
+.IP
+On windows it is:
+1. \fB\fC{FOLDERID_LocalAppData}\\uamp\\cache\fR
+.IP
+On macOS the file is:
+1. \fB\fC$HOME/Library/Caches/uamp/cache\fR
+.IP
+Example default value on linux:
+.PP
+.RS
+.nf
+"cache_path": "/home/alice/.cache/uamp/cache"
+.fi
+.RE
+.TP
+\fB\fC$schema\fR
+This link to json schema of the configuration document. It is not read by
+uamp, but it is set by uamp when it writes the file.
+.IP
+Default value:
+.PP
+.RS
+.nf
+"$schema": "https://raw.githubusercontent.com/BonnyAD9/uamp/master/other/json_schema/config_schema.json"
+.fi
+.RE
+.SH Formats
+.PP
+This section describes formats of values referenced in previous section.
+.SS Format duration
+.PP
+[\fIdays\fP\fB\fCd\fR][\fIhours\fP]\fB\fC:\fR[\fIminutes\fP]\fB\fC:\fR[\fIseconds\fP][\fB\fC\&.\fR\fIfrac\fP]
+.PP
+[\fIdays\fP\fB\fCd\fR][[\fIminutes\fP]\fB\fC:\fR][\fIseconds\fP][\fB\fC\&.\fR\fIfrac\fP]
+.PP
+Duration describes duration in time. It has precision from years to
+nanoseconds. If you are unsure, you can just type the seconds as you are used
+to (e.g \fB\fC120.5\fR for two minutes and half a second).
+.PP
+\fIdays\fP describe the number of days in the duration. \fB\fC1d\fR is equivalent to
+\fB\fC24::\fR\&.
+.PP
+\fIhours\fP describe to number of yours in the duration. \fB\fC1::\fR is equivalent to
+\fB\fC60:\fR\&.
+.PP
+\fIminutes\fP describe the number of minutes in the duration. \fB\fC1:\fR is equivalent to
+\fB\fC60\fR\&.
+.PP
+\fIseconds\fP describe the number of whole seconds.
+.PP
+\fIfrac\fP describes the decimal part of seconds. Only the 10 most significant
+digits are considered. The 9 most significant digits are stored precisely and
+the 10th digit will be rounded.
+.PP
+Even though the convention may suggest that it is necesary to use the largest
+component possible, it is not required. All the following values are valid and
+have the same value: \fB\fC1d\fR == \fB\fC24::\fR == \fB\fC1440:\fR == \fB\fC86400\fR\&.
+.SH EXAMPLES
+.PP
+To see the default configuration you can use the command \fB\fCuamp conf \-\-default\fR\&.
+The default configuration may be on a linux system:
+.PP
+.RS
+.nf
+{
+    "$schema": "https://raw.githubusercontent.com/BonnyAD9/uamp/master/other/json_schema/config_schema.json",
+    "search_paths": [
+        "/home/alice/music"
+    ],
+    "library_path": "/home/alice/.config/uamp_debug/library.json",
+    "player_path": "/home/alice/.config/uamp_debug/player.json",
+    "cache_path": "/home/alice/.cache/uamp_debug/cache",
+    "audio_extensions": [
+        "flac",
+        "mp3",
+        "m4a",
+        "mp4"
+    ],
+    "server_address": "127.0.0.1",
+    "control_aliases": {
+        "repeat": "'pj=0' 'pp=play' 'spea=repeat'",
+        "palb": "{name}:'push=a:${name}@+a' 'pp=play' 'spea=pcont'",
+        "repeat\-once": "'pj=0' 'pp=play' spea",
+        "endless\-mix": "'sp=any@rng' 'pj=0' 'pp=play' 'pap=m' 'spea=endless\-mix'",
+        "pcont": "pop 'pp=play'"
+    },
+    "default_playlist_end_action": null,
+    "simple_sorting": false,
+    "play_on_start": false,
+    "shuffle_current": true,
+    "recursive_search": true,
+    "update_library_on_start": true,
+    "remove_missing_on_load": true,
+    "volume_jump": 0.025,
+    "save_playback_pos": "Never",
+    "save_timeout": "01:00",
+    "fade_play_pause": "00:00.15",
+    "gapless": false,
+    "seek_jump": "00:10",
+    "port": 33284,
+    "delete_logs_after": "3d00:00",
+    "enable_server": true,
+    "previous_timeout": null,
+    "client_image_lookup": false
+}
+.fi
+.RE
+.SH SEE ALSO
+.PP
+.BR uamp (1)
+.SH BUGS
+.PP
+Found a bug? Please report it at
+github \[la]https://github.com/BonnyAD9/uamp/issues\[ra]\&.
+.SH AUTHOR
+.PP
+Jakub Antonín Štigler \[la]https://github.com/BonnyAD9\[ra]
