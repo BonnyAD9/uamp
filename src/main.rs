@@ -66,6 +66,7 @@ fn start() -> Result<()> {
             Action::Config(c) => c.act()?,
             Action::Shell(s) => s.act(),
             Action::Internal(i) => i.act(&conf)?,
+            Action::Man(m) => m.act()?,
         }
     }
 

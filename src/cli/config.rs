@@ -30,7 +30,7 @@ impl Config {
                 "-e" | "--edit" | "--edit-file" => {
                     self.actions.push(ConfigAction::EditFile);
                 }
-                "-p" | "--print-path" => {
+                "-p" | "--path" | "--print-path" => {
                     self.actions.push(ConfigAction::PrintPath);
                 }
                 "--default" => {

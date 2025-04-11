@@ -30,6 +30,9 @@ pub enum Error {
     /// A secondary thread panicked.
     #[error("{0}")]
     ThreadPanicked(Box<ErrCtx<&'static str>>),
+    /// Cannot pipe to stdin of child process.
+    #[error("{0}")]
+    NoStdinPipe(Box<ErrCtx<&'static str>>),
     /// Failed to parse arguments.
     #[error(transparent)]
     Pareg(#[from] pareg::ArgError),
@@ -83,6 +86,14 @@ macro_rules! map_ctx {
             Error::InvalidOperation(mut $ctx) => {
                 *$ctx = $f;
                 Error::InvalidOperation($ctx)
+            }
+            Error::ThreadPanicked(mut $ctx) => {
+                *$ctx = $f;
+                Error::ThreadPanicked($ctx)
+            }
+            Error::NoStdinPipe(mut $ctx) => {
+                *$ctx = $f;
+                Error::NoStdinPipe($ctx)
             }
             Error::AudioTag(mut $ctx) => {
                 *$ctx = $f;
@@ -141,6 +152,10 @@ impl Error {
 
     pub fn unsupported() -> Self {
         Self::InvalidOperation("Not supported.".into())
+    }
+
+    pub fn no_stdin_pipe() -> Self {
+        Self::InvalidOperation("No stdin pipe.".into())
     }
 
     pub fn thread_panicked(e: Option<Box<dyn Any + Send + 'static>>) -> Self {
@@ -233,6 +248,7 @@ impl Error {
             Error::NoProgramName(err_ctx) => err_ctx.clone_universal(),
             Error::InvalidOperation(err_ctx) => err_ctx.clone_universal(),
             Error::ThreadPanicked(err_ctx) => err_ctx.clone_universal(),
+            Error::NoStdinPipe(err_ctx) => err_ctx.clone_universal(),
             Error::AudioTag(err_ctx) => err_ctx.clone_universal(),
             Error::Raplay(err_ctx) => err_ctx.clone_universal(),
             Error::SerdeJson(err_ctx) => err_ctx.clone_universal(),

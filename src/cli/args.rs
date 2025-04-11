@@ -11,7 +11,7 @@ use crate::{
 };
 
 use super::{
-    Action, Instance, Props, Run, Shell, help::help, internal::Internal,
+    Action, Instance, Man, Props, Run, Shell, help::help, internal::Internal,
 };
 
 //===========================================================================//
@@ -107,6 +107,7 @@ impl Args {
                 "cfg" | "conf" | "config" => self.config(args)?,
                 "sh" | "shell" => self.shell(args)?,
                 "internal" => self.internal(args)?,
+                "man" => self.man(args)?,
                 "-h" | "--help" | "-?" => {
                     self.should_exit = true;
                     help_short(self.props.color);
@@ -223,6 +224,15 @@ impl Args {
         if !matches!(i, Internal::None) {
             self.actions.push(Action::Internal(i));
         }
+        Ok(())
+    }
+
+    fn man(&mut self, args: &mut Pareg) -> Result<()> {
+        self.should_exit = true;
+
+        let mut m = Man::default();
+        m.parse(args, self.props.color)?;
+        self.actions.push(Action::Man(m));
         Ok(())
     }
 }

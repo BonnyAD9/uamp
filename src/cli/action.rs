@@ -1,4 +1,4 @@
-use super::{Instance, Run, Shell, internal::Internal};
+use super::{Instance, Man, Run, Shell, internal::Internal};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -17,4 +17,6 @@ pub enum Action {
     Shell(Shell),
     /// Internal special features.
     Internal(Internal),
+    /// See man pages.
+    Man(Man),
 }

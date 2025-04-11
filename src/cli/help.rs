@@ -54,6 +54,10 @@ pub fn help(args: &mut Pareg, res: &mut Args) {
                 print_help_help(res.props.color);
                 formats_header = false;
             }
+            "man" => {
+                print_man_help(res.props.color);
+                formats_header = false;
+            }
             "all" | "elp" => {
                 print_help(res.props.color);
                 formats_header = true;
@@ -120,6 +124,11 @@ pub fn help_shell(color: bool) {
 pub fn help_internal(color: bool) {
     help_version(color);
     print_internal_help(color);
+}
+
+pub fn help_man(color: bool) {
+    help_version(color);
+    print_man_help(color);
 }
 
 /// Prints the help header and version.
@@ -220,6 +229,9 @@ fn print_basic_help(color: bool) {
   {'b}internal {'gr}[internal arguments]{'_}
     Used internally by uamp, but nothing will stop you from using it.
 
+  {'b}man {'gr}[man arguments]{'_}
+    See the manual page.
+
   {'b}h  help {'gr}[help aguments] [--]{'_}
     Shows help. With no arguments basic help. With arguments help for the given
     categories. Use `{'c}uamp {'b}h h{'_}` to get more info about help \
@@ -227,7 +239,8 @@ fn print_basic_help(color: bool) {
 
     Use `{'c}uamp {'b}h {'r}all{'_}` to show the whole help.
 
-For detailed description see {'i}uamp(1){'_} and {'i}uamp(5){'_}.
+For detailed description see {'i}uamp(1){'_} and {'i}uamp(5){'_} or do
+`{'c}uamp {'b}man{'_}` and `{'c}uamp {'b}man {'w}5{'_}`.
 ",
     )
 }
@@ -364,8 +377,7 @@ fn print_config_help(color: bool) {
     Open configuration in the default editor.
 
   {'c}uamp {'b}conf {'gr}[{'dy}flags{'gr}] [--]{'_}
-    Runs new instance of uamp. The given messages are executed on the new
-    instance.
+    Do what the flags say about the configuration.
 
 {'g}Config flags:
   {'y}-h  -?  --help{'_}
@@ -374,7 +386,7 @@ fn print_config_help(color: bool) {
   {'y}-e  --edit  --edit-file{'_}
     Open configuration in the default editor.
 
-  {'y}-p  --print-path{'_}
+  {'y}-p  --path  --print-path{'_}
     Print path to the default config file location.
 
   {'y}--default{'_}
@@ -416,6 +428,31 @@ fn print_internal_help(color: bool) {
     Get uamp tab completion for the given arguments.
 ",
     )
+}
+
+fn print_man_help(color: bool) {
+    printmcln!(
+        color,
+        "{'g}Man usage:
+  {'c}uamp {'b}man {'gr}[{'dy}flags{'gr}] {'gr}[{'dr}page{'gr}]{'_}
+    See manual page. If there is no manual page, open the main man page.
+
+{'g}Man flags:
+  {'y}-h  -?  --help{'_}
+    See help for man pages.
+
+  {'y}-p  --print{'_}
+    Print the man page in troff format instead of showing the man page with
+    man.
+
+{'g}Man pages:
+  {'r}1  cli{'_}
+    Man page about the cli. Basically detailed help.
+
+  {'r}5  cfg  conf  config{'_}
+    Man page about configuration.
+"
+    );
 }
 
 fn print_control_messages_help(color: bool) {

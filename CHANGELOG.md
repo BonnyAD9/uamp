@@ -4,7 +4,8 @@
 ### New features
 - Tab completion now can suggest aliases.
 - Set the print style with `--print`. Add new print styles: `debug`, `json`.
-- Add manpages.
+- Add manpages. Open them with `uamp man`.
+- In CLI `config` add `--path` as alias to `--print-path`.
 
 ### Changes
 - CLI now uses `{` and `}` instead of `[` and `]`. The old way is still
