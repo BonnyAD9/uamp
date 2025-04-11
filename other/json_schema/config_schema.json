@@ -62,7 +62,7 @@
             "description": "When playback position is saved, it can be loaded the next time uamp starts. This means that your song will continue playing at the same place that it was when you closed uamp.",
             "type": "string",
             "default": "Never",
-            "pattern": "Never|OnSave|Always"
+            "pattern": "Never|OnClose|Always"
         },
         "save_timeout": {
             "description": "When not null, saves all the data every number of seconds specified here",
@@ -79,7 +79,7 @@
         "gapless": {
             "description": "Enable/disable gapless playback.",
             "type": "boolean",
-            "default": "false"
+            "default": "true"
         },
         "seek_jump": {
             "description": "Determines how much should be seeked with fast-forward/rewind",
@@ -138,9 +138,9 @@
             "default": {
                 "repeat": "pj pp=play spea=repeat",
                 "repeat-once": "pj pp=play spea",
-                "endless-mix": "sp=@rng pap=m spea=endless-mix",
+                "endless-mix": "sp=@rng pj pp=play pap=m spea=endless-mix",
                 "pcont": "pop pp=play",
-                "palb": "[name]:push=a:name@t pp=play"
+                "palb": "{name}:push=a:${name}@+a pp=play spea=pcont"
             }
         },
         "default_playlist_end_action": {
@@ -151,7 +151,7 @@
         "client_image_lookup": {
             "description": "If true, clients will try to lookup song images.",
             "type": "boolean",
-            "default": false
+            "default": true
         }
     }
 }

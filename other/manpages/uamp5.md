@@ -215,13 +215,13 @@ This section contains options related to playback.
   The available values are:
   - `"Never"`: uamp will never save position within current song for the
     current playlist.
-  - `"OnSave"`: uamp will save position within current song when it exits but
+  - `"OnClose"`: uamp will save position within current song when it exits but
     not on periodic saves.
   - `"Always"`: uamp will always save position within current song.
 
   Default value:
 
-    "save_playback_pos": "Never"
+    "save_playback_pos": "OnClose"
 
 `fade_play_pause`
   When you play or pause playback when something loud is playing, it is usually
@@ -253,7 +253,7 @@ This section contains options related to playback.
 
   Default value:
 
-    "gapless": false
+    "gapless": true
 
 `seek_jump`
   This setting specifies the default amount to seek by if it is not specified
@@ -322,6 +322,8 @@ options.
   will always be no save. The value is duration, for more info about its format
   see *Format duration*.
 
+  When this is set to `null`, periodic saves will be disabled.
+
   Default value (every minute):
 
     "save_timeout": "01:00"
@@ -345,7 +347,7 @@ options.
 
   Default value:
 
-    "client_image_lookup": false
+    "client_image_lookup": true
 
 ### Advanced
 
@@ -356,6 +358,8 @@ change.
   This is path to file where library will be saved. I don't really see why
   would user change this, but the option is available. By default it is stored
   alongside the configuration.
+
+  If this is `null`, uamp will not save or load library.
 
   On UNIX systems, default library file path is:
   1. `$XDG_CONFIG_HOME/uamp/library.json`
@@ -379,6 +383,8 @@ change.
   the same system). I don't really see why would user change this, but the
   option is available. By default it is stored alongside the library and
   configuration.
+
+  If this is `null`, uamp will not save or load playback information.
 
   On UNIX systems, default player file path is:
   1. `$XDG_CONFIG_HOME/uamp/player.json`

@@ -12,6 +12,10 @@
   supported.
 - `uamp run -h` will now not start uamp.
 - Change filter mode `+` to `-`.
+- Review default configuration.
+    - `save_playback_pos` is now by default `OnClose`.
+    - `gapless` is by default enabled.
+    - `client_image_lookup` is enabled by default.
 
 ### Fixes
 - Fix image scaling for images that are taller tan wide.

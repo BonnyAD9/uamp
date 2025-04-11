@@ -261,7 +261,7 @@ exiting.
 The available values are:
 \- \fB\fC"Never"\fR: uamp will never save position within current song for the
     current playlist.
-\- \fB\fC"OnSave"\fR: uamp will save position within current song when it exits but
+\- \fB\fC"OnClose"\fR: uamp will save position within current song when it exits but
     not on periodic saves.
 \- \fB\fC"Always"\fR: uamp will always save position within current song.
 .IP
@@ -269,7 +269,7 @@ Default value:
 .PP
 .RS
 .nf
-"save_playback_pos": "Never"
+"save_playback_pos": "OnClose"
 .fi
 .RE
 .TP
@@ -309,7 +309,7 @@ Default value:
 .PP
 .RS
 .nf
-"gapless": false
+"gapless": true
 .fi
 .RE
 .TP
@@ -399,6 +399,8 @@ ofter these save will occur. If there is no change in state of uamp, there
 will always be no save. The value is duration, for more info about its format
 see \fIFormat duration\fP\&.
 .IP
+When this is set to \fB\fCnull\fR, periodic saves will be disabled.
+.IP
 Default value (every minute):
 .PP
 .RS
@@ -432,7 +434,7 @@ Default value:
 .PP
 .RS
 .nf
-"client_image_lookup": false
+"client_image_lookup": true
 .fi
 .RE
 .SS Advanced
@@ -444,6 +446,8 @@ change.
 This is path to file where library will be saved. I don't really see why
 would user change this, but the option is available. By default it is stored
 alongside the configuration.
+.IP
+If this is \fB\fCnull\fR, uamp will not save or load library.
 .IP
 On UNIX systems, default library file path is:
 1. \fB\fC$XDG_CONFIG_HOME/uamp/library.json\fR
@@ -471,6 +475,8 @@ and so it cannot be transferred to be used another library (even if it is on
 the same system). I don't really see why would user change this, but the
 option is available. By default it is stored alongside the library and
 configuration.
+.IP
+If this is \fB\fCnull\fR, uamp will not save or load playback information.
 .IP
 On UNIX systems, default player file path is:
 1. \fB\fC$XDG_CONFIG_HOME/uamp/player.json\fR

@@ -134,7 +134,7 @@ gen_struct! {
 
         #[doc = "Determines whether the playback position is saved."]
         save_playback_pos: SongPosSave { pub, pub } => pub(super) () {
-            SongPosSave::Never
+            SongPosSave::OnClose
         },
 
         #[doc = "Determines how often uamp automatically saves its state."]
@@ -148,7 +148,7 @@ gen_struct! {
         },
 
         #[doc = "Enable/Disable gapless playback."]
-        gapless: bool { pub, pub } => pub(super) () false,
+        gapless: bool { pub, pub } => pub(super) () true,
 
         #[doc = "Detemines how much uamp seeks with fast forward/rewind"]
         seek_jump: Wrap<Duration> { pub, pub } => pub(super) () {
@@ -176,7 +176,7 @@ gen_struct! {
             => pub(super) () None,
 
         #[doc = "If this is true, clients will try to lookup images."]
-        client_image_lookup: bool { pub, pub } => pub(super) () false,
+        client_image_lookup: bool { pub, pub } => pub(super) () true,
 
         ; // fields that aren't serialized
 
