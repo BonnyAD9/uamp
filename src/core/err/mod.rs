@@ -21,9 +21,6 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// Unified error type of uamp
 #[derive(Error, Debug)]
 pub enum Error {
-    /// Cannot get my own name.
-    #[error("{0}")]
-    NoProgramName(Box<ErrCtx<&'static str>>),
     /// The requested operatoin was invalid at the time.
     #[error("{0}")]
     InvalidOperation(Box<ErrCtx<&'static str>>),
@@ -79,10 +76,6 @@ pub enum Error {
 macro_rules! map_ctx {
     ($s:ident, |$ctx:ident| $f:expr $(, $($p:pat => $pb:expr),* $(,)?)?) => {
         match $s {
-            Error::NoProgramName(mut $ctx) => {
-                *$ctx = $f;
-                Error::NoProgramName($ctx)
-            }
             Error::InvalidOperation(mut $ctx) => {
                 *$ctx = $f;
                 Error::InvalidOperation($ctx)
@@ -142,10 +135,6 @@ macro_rules! map_ctx {
 }
 
 impl Error {
-    pub fn no_program_name() -> Self {
-        Self::NoProgramName("Cannot get path to uamp binary.".into())
-    }
-
     pub fn invalid_operation() -> Self {
         Self::InvalidOperation("Invalid operation.".into())
     }
@@ -245,7 +234,6 @@ impl Error {
 
     pub fn clone_universal(&self) -> ErrCtx<String> {
         match self {
-            Error::NoProgramName(err_ctx) => err_ctx.clone_universal(),
             Error::InvalidOperation(err_ctx) => err_ctx.clone_universal(),
             Error::ThreadPanicked(err_ctx) => err_ctx.clone_universal(),
             Error::NoStdinPipe(err_ctx) => err_ctx.clone_universal(),

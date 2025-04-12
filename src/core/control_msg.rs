@@ -220,7 +220,7 @@ impl Display for ControlMsg {
                 }
             }
             ControlMsg::SeekTo(d) => {
-                write!(f, "st={}", duration_to_string(*d, false))
+                write!(f, "seek={}", duration_to_string(*d, false))
             }
             ControlMsg::FastForward(None) => f.write_str("ff"),
             ControlMsg::FastForward(Some(d)) => {

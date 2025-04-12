@@ -47,6 +47,18 @@ impl Library {
         }
     }
 
+    pub fn save_to_default_json(
+        &mut self,
+        conf: &Config,
+        player: &mut Player,
+    ) -> Result<()> {
+        if let Some(p) = conf.library_path() {
+            let used = player.get_ids();
+            self.write_json(p, used.iter().flatten().copied())?;
+        }
+        Ok(())
+    }
+
     /// Starts new task that saves the library to json.
     ///
     /// The task is started only when there is any change in the library and if
@@ -82,7 +94,7 @@ impl Library {
                 )
             };
 
-            ctrl.add_task(TaskType::LibraryLoad, task);
+            ctrl.add_task(TaskType::LibrarySave, task);
         }
 
         self.set_change(false);

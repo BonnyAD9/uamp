@@ -98,9 +98,8 @@ impl Run {
             warn!("Detached is not set to detached when running as detached");
         }
 
-        let cmd = env::args_os().next().ok_or(
-            Error::no_program_name().msg("Failed to run detached uamp."),
-        )?;
+        let cmd = env::current_exe()
+            .map_err(|e| Error::from(e).msg("Failed to run detached uamp."))?;
         let mut cmd = Command::new(cmd);
         cmd.stdin(Stdio::null());
         cmd.stdout(Stdio::null());

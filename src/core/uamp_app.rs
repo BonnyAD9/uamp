@@ -1,13 +1,17 @@
 use std::{
+    env,
     fs::{self, DirEntry},
     net::TcpListener,
-    path::Path,
-    process,
+    path::{Path, PathBuf},
+    process::{self, Command},
     time::{Duration, Instant},
 };
 
+#[cfg(unix)]
+use std::os::unix::process::CommandExt;
+
 use futures::{StreamExt, channel::mpsc::UnboundedSender};
-use log::{error, trace, warn};
+use log::{error, info, trace, warn};
 use notify::{INotifyWatcher, Watcher};
 use signal_hook_async_std::Signals;
 
@@ -21,7 +25,7 @@ use crate::{
 };
 
 use super::{
-    ControlMsg, TaskMsg, TaskType,
+    ControlMsg, DataControlMsg, TaskMsg, TaskType,
     config::{Config, ConfigMsg, default_log_dir},
     library::{Library, SongId},
     player::Player,
@@ -56,7 +60,9 @@ pub struct UampApp {
     /// Las time that song was rewinded to the start with button.
     pub(super) last_prev: Instant,
 
-    _config_watch: Option<INotifyWatcher>,
+    pub(super) restart_path: Option<PathBuf>,
+
+    _file_watch: Option<INotifyWatcher>,
 }
 
 impl UampApp {
@@ -93,7 +99,7 @@ impl UampApp {
         }
 
         let config_watch = if let Some(path) = &conf.config_path {
-            match Self::watch_config_task(sender.clone(), path.as_path()) {
+            match Self::watch_files(sender.clone(), path.as_path()) {
                 Ok(r) => Some(r),
                 Err(e) => {
                     error!("Failed to watch config file: {}", e.log());
@@ -121,8 +127,9 @@ impl UampApp {
             last_prev: Instant::now(),
 
             hard_pause_at: None,
+            restart_path: None,
 
-            _config_watch: config_watch,
+            _file_watch: config_watch,
         })
     }
 
@@ -192,6 +199,28 @@ impl UampApp {
             ctrl,
             &mut self.player,
         ) {
+            Err(Error::InvalidOperation(_)) => {}
+            Err(e) => res.push(e.prepend("Failed to start library save.")),
+            _ => {}
+        }
+        if let Err(e) = self.player.save_to_default_json(closing, &self.config)
+        {
+            res.push(e.prepend("Failed to save play state."));
+        }
+        if let Err(e) = self.config.to_default_json() {
+            res.push(e.prepend("Failed to save config."));
+        }
+
+        self.last_save = Instant::now();
+        Error::multiple(res)
+    }
+
+    pub(super) fn save_all_block(&mut self, closing: bool) -> Result<()> {
+        let mut res = vec![];
+        match self
+            .library
+            .save_to_default_json(&self.config, &mut self.player)
+        {
             Err(Error::InvalidOperation(_)) => {}
             Err(e) => res.push(e.prepend("Failed to start library save.")),
             _ => {}
@@ -300,13 +329,25 @@ impl UampApp {
         let up = self.library_routine();
         self.player_routine(now, up);
         errs.extend(self.config_routine(ctrl, now).err());
+        errs.extend(self.restart(ctrl).err());
     }
 
-    fn watch_config_task(
+    fn watch_files(
         sender: UnboundedSender<Msg>,
-        watched: &Path,
+        config_path: &Path,
     ) -> Result<INotifyWatcher> {
-        let wat = watched.to_owned();
+        let cfg = config_path.to_owned();
+
+        let executable_path = match env::current_exe() {
+            Err(e) => {
+                error!("Failed to retrieve current executable path: {e}");
+                None
+            }
+            Ok(p) => Some(p),
+        };
+
+        let exe = executable_path.clone().unwrap_or_default();
+
         let mut watcher = notify::recommended_watcher(move |res| {
             let v: notify::Event = match res {
                 Ok(r) => r,
@@ -316,18 +357,33 @@ impl UampApp {
                 }
             };
 
-            if (v.kind.is_create() || v.kind.is_modify())
-                && v.paths.contains(&wat)
-            {
-                if let Err(e) =
-                    sender.unbounded_send(Msg::Config(ConfigMsg::Reload))
+            for path in v.paths {
+                let msg = if path == cfg
+                    && (v.kind.is_create() || v.kind.is_modify())
                 {
-                    error!("Failed to send message: {e}");
+                    Some(Msg::Config(ConfigMsg::Reload))
+                } else if path == exe
+                    && (v.kind.is_remove()
+                        || v.kind.is_create()
+                        || v.kind.is_modify())
+                {
+                    Some(Msg::DataControl(DataControlMsg::Restart(Some(path))))
+                } else {
+                    None
+                };
+
+                if let Some(msg) = msg {
+                    if let Err(e) = sender.unbounded_send(msg) {
+                        error!("Failed to send message: {e}");
+                    }
                 }
             }
         })?;
 
-        watcher.watch(watched, notify::RecursiveMode::NonRecursive)?;
+        watcher.watch(config_path, notify::RecursiveMode::NonRecursive)?;
+        if let Some(p) = executable_path {
+            watcher.watch(&p, notify::RecursiveMode::NonRecursive)?;
+        }
 
         Ok(watcher)
     }
@@ -408,6 +464,62 @@ impl UampApp {
             } else {
                 warn!("Received unknown signal {sig}");
             }
+        }
+    }
+
+    fn restart(&mut self, ctrl: &mut AppCtrl) -> Result<()> {
+        let Some(exe) = &self.restart_path else {
+            return Ok(());
+        };
+
+        if !exe.exists() {
+            warn!(
+                "Cannot restart now. The new uamp binary doesn't exist. \
+                Waiting for the new binary to exist."
+            );
+            return Ok(());
+        }
+
+        info!("Restarting uamp.");
+
+        let exe = exe.clone();
+
+        self.save_all_block(true)?;
+
+        let mut cmd = Command::new(exe);
+        cmd.arg("run");
+        self.construct_state(|arg| {
+            cmd.arg(arg);
+        });
+
+        #[cfg(unix)]
+        let res = Err(cmd.exec());
+        #[cfg(not(unix))]
+        let res = cmd.spawn();
+
+        res.map_err(|e| {
+            Error::from(e).msg("Failed to start new instance of uamp.")
+        })?;
+
+        info!("New uamp started. Exec not supported. Quitting.");
+
+        ctrl.exit();
+        Ok(())
+    }
+
+    fn construct_state(&self, mut arg: impl FnMut(&str)) {
+        if self.config.config_path.is_none() {
+            arg("-p");
+            arg(&self.config.port().to_string());
+            arg("-a");
+            arg(self.config.server_address());
+        }
+
+        let play = self.player.is_playing();
+        arg(&ControlMsg::PlayPause(Some(play)).to_string());
+
+        if let Some(pos) = self.player.timestamp() {
+            arg(&ControlMsg::SeekTo(pos.current).to_string());
         }
     }
 }

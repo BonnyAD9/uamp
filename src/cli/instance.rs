@@ -10,7 +10,7 @@ use pareg::{Pareg, has_any_key};
 use termal::eprintacln;
 
 use crate::core::{
-    Error, PlayMsg, Result,
+    AnyControlMsg, DataControlMsg, Error, PlayMsg, Result,
     config::Config,
     messenger::{DataResponse, Messenger, MsgMessage, Request},
 };
@@ -127,13 +127,30 @@ impl Instance {
 
         for (m, i) in mem::take(&mut self.messages) {
             let send_time = Instant::now();
+            let restarting = matches!(
+                m,
+                MsgMessage::Control(AnyControlMsg::Data(
+                    DataControlMsg::Restart(_)
+                ))
+            );
             let res = self.send_message(m);
             match res {
                 Ok(MsgMessage::Success) => {}
                 Ok(MsgMessage::Data(d)) => {
                     Self::print_data(d, conf, props, send_time, i);
                 }
-                Err(e) => eprintacln!("{e}"),
+                // When restarting, the restarted uamp will not answer and this
+                // error will occur. This is expected so we don't want to alert
+                // the user.
+                Err(Error::SerdeRmpDecode(e))
+                    if restarting
+                        && matches!(
+                            e.inner(),
+                            rmp_serde::decode::Error::InvalidMarkerRead(e)
+                                if e.kind()
+                                    == std::io::ErrorKind::UnexpectedEof
+                        ) => {}
+                Err(e) => eprintacln!("{e:?}"),
                 Ok(MsgMessage::Error(e)) => {
                     eprintln!("{}", e.ctx);
                 }

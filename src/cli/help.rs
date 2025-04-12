@@ -569,6 +569,11 @@ fn print_control_messages_help(color: bool) {
     - `{'i}m  mix  mix-in{'_}` randomly mix the the songs after the currently
                        playing song.
     Without value it is the same as setting it to `{'i}none{'_}`.
+
+  {'r}restart{'gr}[=<exec-path>]{'_}
+    Restart uamp. The optional argument gives path to new uamp binary that will
+    take place of the current binary. If not present, uamp will try to get the
+    path to the current binary.
 ",
     )
 }

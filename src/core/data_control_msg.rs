@@ -1,4 +1,4 @@
-use std::{fmt::Display, str::FromStr};
+use std::{env, fmt::Display, path::PathBuf, str::FromStr};
 
 use pareg::{ArgErrCtx, ArgError, FromArgStr, has_any_key, mval_arg, val_arg};
 use serde::{Deserialize, Serialize};
@@ -30,6 +30,8 @@ pub enum DataControlMsg {
     Queue(Query),
     /// Add songs specified by the filter after the current song in playlist.
     PlayNext(Query),
+    /// Restart uamp with the given binary when that binary becomes available.
+    Restart(Option<PathBuf>),
 }
 
 impl UampApp {
@@ -92,6 +94,15 @@ impl UampApp {
                 );
                 self.player.playlist_mut().play_next(songs);
             }
+            DataControlMsg::Restart(exe) => {
+                self.restart_path = None;
+                let exe = if let Some(exe) = exe {
+                    exe
+                } else {
+                    env::current_exe()?
+                };
+                self.restart_path = Some(exe);
+            }
         }
 
         Ok(vec![])
@@ -140,6 +151,9 @@ impl FromStr for DataControlMsg {
                     mval_arg(v, '=')?.unwrap_or_default(),
                 ))
             }
+            v if has_any_key!(v, '=', "restart") => {
+                Ok(DataControlMsg::Restart(mval_arg(v, '=')?))
+            }
             v => ArgError::UnknownArgument(Box::new(ArgErrCtx::from_msg(
                 "Unknown control msg.",
                 v.to_string(),
@@ -162,6 +176,10 @@ impl Display for DataControlMsg {
             DataControlMsg::PushPlaylistAndCur(ft) => write!(f, "pc={ft}"),
             DataControlMsg::Queue(ft) => write!(f, "q={ft}"),
             DataControlMsg::PlayNext(ft) => write!(f, "qn={ft}"),
+            DataControlMsg::Restart(None) => write!(f, "restart"),
+            DataControlMsg::Restart(Some(ft)) => {
+                write!(f, "restart={}", ft.to_string_lossy())
+            }
         }
     }
 }

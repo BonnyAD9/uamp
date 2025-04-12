@@ -91,6 +91,10 @@ where
             prepend: self.prepend.clone(),
         }
     }
+
+    pub fn inner(&self) -> &T {
+        &self.inner
+    }
 }
 
 impl<T> Display for ErrCtx<T>

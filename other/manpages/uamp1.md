@@ -613,6 +613,11 @@ Integrations:
   - `m`, `mix`, `mix-in` - mix the newly loaded songs into the unplayed part
     of the playlist.
 
+`restart`[`=`*binary-path*]
+  Restart the uamp instance. Without the argument, uamp will use its current
+  executable. If *binary-path* is present, uamp will use its as the newly
+  restarted binary of uamp.
+
 ## FORMATS
 
 This section describes formats referenced in other parts of this document.
@@ -831,6 +836,10 @@ filtered by *filter* and than ordered by *order*. See *Format filter* and
 
   Contents of this file may be safely deleted, but this may have slight impact
   on performance of uamp, and uamp will likely generate the images again.
+
+**path to uamp**
+  Uamp will watch its ouwn executable. If it is updated, uamp will restart
+  itself.
 
 ## ENVIRONMENT
 

@@ -659,6 +659,11 @@ playlist.
 \fB\fCm\fR, \fB\fCmix\fR, \fB\fCmix\-in\fR \- mix the newly loaded songs into the unplayed part
 of the playlist.
 .RE
+.TP
+\fB\fCrestart\fR[\fB\fC=\fR\fIbinary\-path\fP]
+Restart the uamp instance. Without the argument, uamp will use its current
+executable. If \fIbinary\-path\fP is present, uamp will use its as the newly
+restarted binary of uamp.
 .SH FORMATS
 .PP
 This section describes formats referenced in other parts of this document.
@@ -876,6 +881,10 @@ dimension is 256 pixels wide.
 .IP
 Contents of this file may be safely deleted, but this may have slight impact
 on performance of uamp, and uamp will likely generate the images again.
+.TP
+\fBpath to uamp\fP
+Uamp will watch its ouwn executable. If it is updated, uamp will restart
+itself.
 .SH ENVIRONMENT
 .TP
 \fB\fCRUST_LOG\fR
