@@ -1,6 +1,6 @@
 use std::{fmt::Debug, fs::File, time::Duration};
 
-use log::warn;
+use log::{error, warn};
 use raplay::{
     CallbackInfo, CpalError, Sink, Timestamp,
     reexp::BuildStreamError,
@@ -174,8 +174,20 @@ impl SinkWrapper {
     /// - Nothing is playing.
     /// - It is unsupported.
     /// - Synchronization problems (shouldn't happen).
-    pub fn get_timestamp(&self) -> Result<Timestamp> {
-        Ok(self.sink.get_timestamp()?)
+    pub fn get_timestamp(&self) -> Option<Timestamp> {
+        match self.sink.get_timestamp() {
+            Ok(ts) => Some(ts),
+            Err(raplay::Error::NoSourceIsPlaying) => None,
+            Err(e @ raplay::Error::Unsupported { .. }) => {
+                warn!("Failed to get current timestamp: {e}");
+                None
+            }
+            Err(e) => {
+                dbg!(&e);
+                error!("Failed to get current timestamp: {e}");
+                None
+            }
+        }
     }
 
     /// Hard pauses the playback so that it doesn't just play silence.

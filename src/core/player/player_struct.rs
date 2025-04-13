@@ -221,7 +221,7 @@ impl Player {
         if self.state.is_stopped() {
             None
         } else {
-            self.inner.get_timestamp().ok()
+            self.inner.get_timestamp()
         }
     }
 
