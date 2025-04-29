@@ -1,0 +1,3 @@
+[submodule "packages/arch"]
+	path = packages/arch
+	url = ssh://aur@aur.archlinux.org/uamp.git
