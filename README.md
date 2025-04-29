@@ -1,4 +1,6 @@
 # uamp
+[![version][aur-badge]][aur]
+
 Universal Advanced Music Player written in Rust.
 
 (May not be as advanced yet)
@@ -124,9 +126,16 @@ the binary will be `./target/release/uamp`. It doesn't depend on any other
 files.
 
 ## Links
-- **Author:** [BonnyAD9](https://github.com/BonnyAD9)
-- **GitHub repository:**
-  [BonnyAD9/makemake-rs](https://github.com/BonnyAD9/uamp)
-- **My website:** [bonnyad9.github.io](https://bonnyad9.github.io/)
-- **Project website:**
-  [bonnyad9.github.io/uamp](https://bonnyad9.github.io/uamp/)
+- **Author:** [BonnyAD9][https://github.com/BonnyAD9]
+- **GitHub repository:** [BonnyAD9/uamp][github]
+- **My website:** [bonnyad9.github.io][my-web]
+- **Project website:** [bonnyad9.github.io/uamp][uamp-web]
+- **Aur package:** [aur.archlinux.org][aur]
+
+
+[author]: https://github.com/BonnyAD9
+[github]: https://github.com/BonnyAD9/uamp
+[my-web]: https://bonnyad9.github.io/
+[uamp-web]: https://bonnyad9.github.io/uamp/
+[aur]: https://aur.archlinux.org/packages/uamp
+[aur-badge]: https://img.shields.io/aur/version/uamp
