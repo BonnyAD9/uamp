@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.5.9
 ### New features
 - Tab completion now can suggest aliases.
 - Set the print style with `--print`. Add new print styles: `debug`, `json`.
