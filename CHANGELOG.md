@@ -18,6 +18,7 @@
     - `save_playback_pos` is now by default `OnClose`.
     - `gapless` is by default enabled.
     - `client_image_lookup` is enabled by default.
+- Add website link to help.
 
 ### Fixes
 - Fix image scaling for images that are taller tan wide.
