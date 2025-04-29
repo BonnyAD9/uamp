@@ -117,8 +117,10 @@ zsh). To do that add this to your `.bashrc`/`.zshrc`/...:
 And that is it. Uamp will now have custom tab completion.
 
 ## How to get it
-To use the player you have to compile it yourself, but that shouldn't be any
-problem because all you need is `cargo`:
+If you have arch, you can install it from [aur][aur].
+
+If you don't have arch, you have to compile it yourself, but that shouldn't be
+any problem because all you need is `cargo`:
 ```sh
 cargo build -r
 ```
