@@ -126,7 +126,7 @@ the binary will be `./target/release/uamp`. It doesn't depend on any other
 files.
 
 ## Links
-- **Author:** [BonnyAD9][https://github.com/BonnyAD9]
+- **Author:** [BonnyAD9][author]
 - **GitHub repository:** [BonnyAD9/uamp][github]
 - **My website:** [bonnyad9.github.io][my-web]
 - **Project website:** [bonnyad9.github.io/uamp][uamp-web]
