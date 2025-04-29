@@ -125,5 +125,8 @@ files.
 
 ## Links
 - **Author:** [BonnyAD9](https://github.com/BonnyAD9)
-- **GitHub repository:** [BonnyAD9/makemake-rs](https://github.com/BonnyAD9/uamp)
+- **GitHub repository:**
+  [BonnyAD9/makemake-rs](https://github.com/BonnyAD9/uamp)
 - **My website:** [bonnyad9.github.io](https://bonnyad9.github.io/)
+- **Project website:**
+  [bonnyad9.github.io/uamp](https://bonnyad9.github.io/uamp/)

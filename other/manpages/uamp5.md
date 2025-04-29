@@ -513,7 +513,8 @@ The default configuration may be on a linux system:
 
 ## SEE ALSO
 
-uamp(1)
+uamp(1), [uamp github](https://github.com/BonnyAD9/uamp),
+[uamp website](https://bonnyad9.github.io/uamp)
 
 ## BUGS
 

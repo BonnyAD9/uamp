@@ -911,7 +911,8 @@ Here are some useful uamp commands to get you started:
 
 ## SEE ALSO
 
-uamp(5)
+uamp(5), [uamp github](https://github.com/BonnyAD9/uamp),
+[uamp website](https://bonnyad9.github.io/uamp)
 
 ## BUGS
 

@@ -240,7 +240,8 @@ fn print_basic_help(color: bool) {
     Use `{'c}uamp {'b}h {'r}all{'_}` to show the whole help.
 
 For detailed description see {'i}uamp(1){'_} and {'i}uamp(5){'_} or do
-`{'c}uamp {'b}man{'_}` and `{'c}uamp {'b}man {'w}5{'_}`.
+`{'c}uamp {'b}man{'_}` and `{'c}uamp {'b}man {'w}5{'_}`. For more info about
+uamp in general see {'b u}https://bonnyad9.github.io/uamp/{'_}.
 ",
     )
 }
