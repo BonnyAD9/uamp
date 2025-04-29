@@ -40,7 +40,7 @@ pub fn duration_to_string(dur: Duration, trunc: bool) -> String {
         if dur.subsec_nanos() != 0 {
             let s = dur.subsec_nanos().to_string();
             res.push('.');
-            res.extend(iter::repeat('0').take(9 - s.len()));
+            res.extend(iter::repeat_n('0', 9 - s.len()));
             res += s.trim_end_matches('0');
         }
     }
