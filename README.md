@@ -117,7 +117,19 @@ zsh). To do that add this to your `.bashrc`/`.zshrc`/...:
 And that is it. Uamp will now have custom tab completion.
 
 ## How to get it
+
+### Arch linux
 If you have arch, you can install it from [aur][aur].
+
+### Linux single line install
+This install script might ask for sudo privilages if the final move fails.
+
+This script doesn't handle manpages yet.
+```sh
+wget -nv -O - https://raw.githubusercontent.com/BonnyAD9/uamp/master/packages/script/install.sh | sh
+```
+
+### Build from source
 
 If you don't have arch, you have to compile it yourself, but that shouldn't be
 any problem because all you need is `cargo`:

@@ -8,6 +8,7 @@ _REPO="https://github.com/BonnyAD9/uamp.git"
 _GIT=${GIT_BINARY-git}
 _CARGO=${CARGO_BINARY-cargo}
 _UAMP=${UAMP_PATH-"/usr/bin/uamp"}
+_FORCE=${FORCE_INSTALL-no}
 
 # Define colors
 if [ -t 1 ]; then
@@ -82,6 +83,9 @@ ${_GREEN}Environment variables:$_RESET
 
   ${_MAGENTA}UAMP_PATH$_RESET
     Choose uamp install path. (${_ITALIC}/usr/bin/uamp$_RESET by default)
+
+  ${_MAGENTA}FORCE_INSTALL$_RESET
+    Set to ${_ITALIC}yes$_RESET to force install uamp.
 "
 
 # Parse arguments
@@ -192,7 +196,7 @@ if ! (mkdir -p "`dirname "$_UAMP"`" && mv "$_GROOT/target/release/uamp" "$_UAMP"
 fi
 
 if "$_UAMP" --version; then
-    echo "${_GREEN}Success!$_RESET uamp is installed!"
+    echo "${_GREEN}Success!$_RESET uamp is installed at $_ITALIC$_UAMP$_RESET!"
 else
     error_out "uamp installation failed."
 fi
