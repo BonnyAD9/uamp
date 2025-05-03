@@ -9,6 +9,7 @@ _GIT=${GIT_BINARY-git}
 _CARGO=${CARGO_BINARY-cargo}
 _UAMP=${UAMP_PATH-"/usr/bin/uamp"}
 _FORCE=${FORCE_INSTALL-no}
+_CLEAN=${UAMP_CLEANUP-tmp}
 
 # Define colors
 if [ -t 1 ]; then
@@ -74,6 +75,11 @@ ${_GREEN}Flags:
   $_YELLOW--cargo $_WHITE<cargo binary>$_RESET
     Choose cargo binary.
 
+  $_YELLOW--clean $_WHITE(yes|tmp|no)$_RESET
+    If set to ${_ITALIC}yes$_RESET the build directory will be removed after
+    installation is complete. If set to ${_ITALIC}tmp$_RESET it will be deleted
+    only if it wasn't given. Otherwise the directory will be left.
+
 ${_GREEN}Environment variables:$_RESET
   ${_MAGENTA}GIT_BINARY$_RESET
     Chooses the git binary. (${_ITALIC}git$_RESET by default)
@@ -97,13 +103,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         -p|--path)
             _UAMP="$2"
-            shift
-            shift
+            shift && shift
             ;;
         -c|--cache)
             _DIR="$2"
-            shift
-            shift
+            shift && shift
             ;;
         --force)
             _FORCE=yes
@@ -111,24 +115,23 @@ while [[ $# -gt 0 ]]; do
             ;;
         -r|--repository)
             _REPO="$2"
-            shift
-            shift
+            shift && shift
             ;;
         -t|--tag)
             _TAG="$2"
-            shift
-            shift
+            shift && shift
             ;;
         --git)
             _GIT="$2"
-            shift
-            shift
+            shift && shift
             ;;
         --cargo)
             _CARGO="$2"
-            shift
-            shift
+            shift && shift
             ;;
+        --clean)
+            _CLEAN="$2"
+            shift && shift
         *)
             error_out 'Unknown option `'"$1"'`.'
             ;;
@@ -157,6 +160,10 @@ echo "Creating temp directory..."
 
 if [ -z "$_DIR" ]; then
     _DIR=`mktemp -d`
+    if [ "$_CLEAN" == tmp ]; then
+        _CLEAN=yes
+    fi
+    _CLEAN_DIR=$_DIR
 fi
 
 _WD=`pwd`
@@ -199,4 +206,12 @@ if "$_UAMP" --version; then
     echo "${_GREEN}Success!$_RESET uamp is installed at $_ITALIC$_UAMP$_RESET!"
 else
     error_out "uamp installation failed."
+fi
+
+if [ "$_CLEAN" == yes ]; then
+    echo "Cleaning up..."
+    if [ -z "$_CLEAN_DIR" ]; then
+        _CLEAN_DIR="$_GROOT"
+    fi
+    rm -rf "${_CLEAN_DIR}"
 fi
