@@ -122,9 +122,9 @@ And that is it. Uamp will now have custom tab completion.
 If you have arch, you can install it from [aur][aur].
 
 ### Linux single line install
-This install script might ask for sudo privilages if the final move fails.
+This install script will ask for sudo privilages to move the build files to
+their apropriate locations.
 
-This script doesn't handle manpages yet.
 ```sh
 wget -nv -O - https://raw.githubusercontent.com/BonnyAD9/uamp/master/packages/script/install.sh | sh
 ```
