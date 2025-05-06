@@ -142,6 +142,7 @@ while [[ $# -gt 0 ]]; do
         --clean)
             _CLEAN="$2"
             shift && shift
+            ;;
         *)
             error_out 'Unknown option `'"$1"'`.'
             ;;
