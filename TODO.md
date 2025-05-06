@@ -17,4 +17,3 @@
 - When output device doesn't support required sample rate, aliasing may occur.
   (this doesn't happen on any normal system).
 - `uamp i nfo` will sometimes fail to get current playback position.
-- Function aliases don't work.

@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## future
+### Fixes
+- Fix function aliases.
+
 ## v0.5.9
 ### New features
 - Tab completion now can suggest aliases.

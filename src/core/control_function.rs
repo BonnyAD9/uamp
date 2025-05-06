@@ -132,6 +132,11 @@ impl FromStr for ControlFunction {
             s[..i].split(',').map(|a| a.trim().to_owned()).collect_vec();
 
         s = &s[i + 1..];
+        let Some(s) = s.strip_prefix(':') else {
+            return ArgError::parse_msg("Expected `:`", s0.to_string())
+                .spanned(s0.len() - s.len()..s0.len() - s.len())
+                .err()?;
+        };
 
         let body: Vec<_> = shell_words::split(s)?
             .iter()

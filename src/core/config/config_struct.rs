@@ -92,7 +92,12 @@ gen_struct! {
                     ControlMsg::PopPlaylist.into(),
                     ControlMsg::PlayPause(Some(true)).into(),
                 ].into()),
-                ("palb".into(), "[name]push=a:${name}@+a pp=play spea=pcont".parse().unwrap()),
+                (
+                    "palb".into(),
+                    "[name]:push=a:${name}@+a pp=play spea=pcont"
+                        .parse()
+                        .unwrap()
+                ),
             ].into()
         },
 
