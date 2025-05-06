@@ -16,5 +16,5 @@
   bug has been fixed in symphona, but it is not yet released.
 - When output device doesn't support required sample rate, aliasing may occur.
   (this doesn't happen on any normal system).
-- `uamp i nfo` will sometimes fail to get current playback position. (this is
-  bug in raplay that has been fixed but not yet released)
+- `uamp i nfo` will sometimes fail to get current playback position.
+- Function aliases don't work.
