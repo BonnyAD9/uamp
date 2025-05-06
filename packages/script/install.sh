@@ -69,7 +69,8 @@ ${_GREEN}Flags:
 
   $_YELLOW-t  --tag $_WHITE<tag>$_RESET
     Choose tag/commit/branch in repository which will be used to install. This
-    is by default the latest tag.
+    is by default the latest tag. Use ${_ITALIC}master$_RESET to get the latest
+    commit.
 
   $_YELLOW--git $_WHITE<git binary>$_RESET
     Choose git binary.
