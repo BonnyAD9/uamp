@@ -7,7 +7,7 @@ set -e
 _REPO="https://github.com/BonnyAD9/uamp.git"
 _GIT=${GIT_BINARY-git}
 _CARGO=${CARGO_BINARY-cargo}
-_GZIP=${GZIP_BINARY-tar}
+_GZIP=${GZIP_BINARY-gzip}
 _UAMP=${UAMP_PATH-"/usr/bin/uamp"}
 _FORCE=${FORCE_INSTALL-no}
 _CLEAN=${UAMP_CLEANUP-tmp}
