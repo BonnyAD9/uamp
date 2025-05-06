@@ -203,8 +203,8 @@ $_CARGO build -r
 
 echo "Building man pages..."
 mkdir -p target/manpages
-"$_GZIP" --fast other/manpages/uamp.1 > target/manpages/uamp.1.gz
-"$_GZIP" --fast other/manpages/uamp.5 > target/manpages/uamp.5.gz
+"$_GZIP" --best other/manpages/uamp.1 > target/manpages/uamp.1.gz
+"$_GZIP" --best other/manpages/uamp.5 > target/manpages/uamp.5.gz
 
 echo "Moving files to system..."
 echo "Sudo is required for this final step."
