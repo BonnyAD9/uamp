@@ -7,9 +7,11 @@ set -e
 _REPO="https://github.com/BonnyAD9/uamp.git"
 _GIT=${GIT_BINARY-git}
 _CARGO=${CARGO_BINARY-cargo}
+_GZIP=${GZIP_BINARY-tar}
 _UAMP=${UAMP_PATH-"/usr/bin/uamp"}
 _FORCE=${FORCE_INSTALL-no}
 _CLEAN=${UAMP_CLEANUP-tmp}
+_MAN_DIR=${MAN_DIRECTORY-/usr/share/man}
 
 # Define colors
 if [ -t 1 ]; then
@@ -87,11 +89,18 @@ ${_GREEN}Environment variables:$_RESET
   ${_MAGENTA}CARGO_BINARY$_RESET
     Chooses the cargo binary. (${_ITALIC}cargo$_RESET by default)
 
+  ${_MAGENTA}GZIP_BINARY$_RESET
+    Choose the gzip binary. (${_ITALIC}gzip$_RESET by default)
+
   ${_MAGENTA}UAMP_PATH$_RESET
     Choose uamp install path. (${_ITALIC}/usr/bin/uamp$_RESET by default)
 
   ${_MAGENTA}FORCE_INSTALL$_RESET
     Set to ${_ITALIC}yes$_RESET to force install uamp.
+
+  ${_MAGENTA}MAN_DIRECTORY$_RESET
+    Choose where manapges will be installed (${_ITALIC}/usr/share/man$_RESET by
+    default).
 "
 
 # Parse arguments
@@ -142,7 +151,11 @@ done
 echo "Checking prerequisities..."
 
 if ! type $_GIT &> /dev/null; then
-    error_out "git is not installed"
+    error_out "git is not installed."
+fi
+
+if ! type $_TAR &> /dev/null; then
+    error_out "tar is not installed."
 fi
 
 if ! type $_CARGO &> /dev/null; then
@@ -153,7 +166,7 @@ fi
 
 if [ -e "$_UAMP" ] && ! [ "$_FORCE" == yes ]; then
     error_out 'Uamp is already installed. Remove the binary at '"$_UAMP"' or
-retry with `--force`'
+retry with `--force`.'
 fi
 
 echo "Creating temp directory..."
@@ -172,36 +185,37 @@ mkdir -p "$_DIR"
 cd "$_DIR"
 
 echo "Cloning uamp with git..."
-
 $_GIT clone "$_REPO"
 cd "`basename "$_REPO" .git`"
-
 _GROOT=`pwd`
 
 echo "Checking out..."
-
 git fetch --tags
 if [ -z "$_TAG" ]; then
     _TAG="`git describe --tag`"
 fi
-
 echo "checking out to $_ITALIC$_TAG$_RESET."
-
 $_GIT checkout "$_TAG"
 
 echo "Building uamp..."
-
 $_CARGO build -r
 
-echo "Moving built binary..."
+echo "Building man pages..."
+mkdir -p target/manpages
+"$_GZIP" --fast other/manpages/uamp.1 > target/manpages/uamp.1.gz
+"$_GZIP" --fast other/manpages/uamp.5 > target/manpages/uamp.5.gz
 
-cd "$_WD"
-if ! (mkdir -p "`dirname "$_UAMP"`" && mv "$_GROOT/target/release/uamp" "$_UAMP"); then
-    echo "Moving failed. I might need sudo privilages to move to $_ITALIC$_UAMP$_RESET."
-    sudo mkdir -p "`dirname "$_UAMP"`"
-    sudo mv "$_GROOT/target/release/uamp" "$_UAMP"
-fi
+echo "Moving files to system..."
+echo "Sudo is required for this final step."
+sudo mkdir -p "`dirname "$_UAMP"`"
+sudo mv "$_GROOT/target/release/uamp" "$_UAMP"
+sudo mkdir -p /usr/man/man1
+sudo mkdir -p /usr/man/man5
+sudo mv "$_GROOT/target/manpages/uamp.1.gz" /usr/share/man/man1/uamp.1
+sudo mv "$_GROOT/target/manpages/uamp.5.gz" /usr/share/man/man5/uamp.5
+sudo mandb
 
+echo "Checking that uamp works..."
 if "$_UAMP" --version; then
     echo "${_GREEN}Success!$_RESET uamp is installed at $_ITALIC$_UAMP$_RESET!"
 else
