@@ -7,23 +7,23 @@ amounts of songs.
 
 ### Simplicity
 
-This is not simplicity of use (although the CLI is friendly and well
-documented). Uamp is simple in principle. Music player should play music. That
-is what uamp does and does that very well.
+By simplicity, I don't mean it's simple to use (although the CLI is friendly
+and well documented). Uamp is simple in principle. The music player should play
+music. That is what uamp does and does that very well.
 
 ### Advanced features
 
-Uamp has many advanced features that will allow you to enjoy listening to your
+Uamp has many advanced features that allow you to enjoy listening to your
 music. These features include gapless playback, fade play/pause, advanced queue
-(playlist) management (queue stack) and much more.
+(playlist) management (queue stack), and more.
 
 ### No bloat
 
-Uamp is single binary that is about 18 MiB. Once compiled, it doesn't depend on
-any other files except common system libraries.
+Uamp is a single binary that is about 18 MiB. Once compiled, it doesn't depend
+on other files except common system libraries.
 
 ### Documentation
 
 Everything about uamp is well documented at multiple places. The complete basic
 CLI documentation is the help command. There are also two manual pages: 1 for
-the cli and general description and 5 for describing the documentation.
+the CLI and general description, and 5 for describing the documentation.
