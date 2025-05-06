@@ -3,7 +3,8 @@
 
 Universal Advanced Music Player written in Rust.
 
-(May not be as advanced yet)
+Uamp is a minimal music player that doesn't get in your way. It is fast,
+reliable, and powerful.
 
 Uamp currently works as playback server controled with CLI.
 
