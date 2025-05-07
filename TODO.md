@@ -1,5 +1,4 @@
 # TODO
-- Migrate to toml configuration
 - Self auto update (when installed from install script)
 - TUI
 - Tag editor
