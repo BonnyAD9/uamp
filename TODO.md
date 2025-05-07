@@ -1,5 +1,4 @@
 # TODO
-- Single line install script
 - Migrate to toml configuration
 - Self auto update (when installed from install script)
 - TUI
