@@ -12,6 +12,7 @@ pub struct Update {
     force: bool,
     remote: Option<String>,
     manpages: Option<bool>,
+    mode: Option<update::Mode>,
     help: bool,
 }
 
@@ -31,6 +32,7 @@ impl Update {
                 "--remote" => self.remote = Some(args.next_arg()?),
                 "--man" => self.manpages = Some(true),
                 "--no-man" => self.manpages = Some(false),
+                "-m" | "--mode" => self.mode = args.next_arg()?,
                 "--" => break,
                 _ => args.err_unknown_argument().err()?,
             }
@@ -57,7 +59,7 @@ impl Update {
 
         let r = update::try_update(
             self.remote.as_deref().unwrap_or(conf.update_remote()),
-            conf.update_mode(),
+            self.mode.as_ref().unwrap_or(conf.update_mode()),
             self.manpages.unwrap_or(update::INSTALL_MANPAGES),
         )?;
 

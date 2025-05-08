@@ -511,6 +511,20 @@ Do install man pages. By default man pages are enabled to install on unix
 .TP
 \fB\fC\-\-no\-man\fR
 Disable installing man pages.
+.TP
+\fB\fC\-m\fR \fImode\fP, \fB\fC\-\-mode\fR \fImode\fP
+Choose update mode. \fImode\fP may be:
+.RS
+.IP \(bu 2
+\fB\fCtag\fR, \fB\fClatest\-tag\fR, \fB\fCLatestTag\fR: Update to the latest tag on the remote
+repository.
+.IP \(bu 2
+\fB\fCcommit\fR, \fB\fClatest\-commit\fR, \fB\fCLatestCommit\fR: Update to the latest commit on
+the main branch on the remote repository.
+.IP \(bu 2
+\fB\fCbranch=\fR\fIbranch\fP, \fB\fCBranch=\fR\fIbranch\fP: Update to the latest commit on the
+given branch on the remote repository.
+.RE
 .SS Action \fB\fCinternal\fR
 .PP
 \fB\fCinternal\fR \fB\fCtab\-complete\fR \fIopt\-index\fP \fIuamp\-bin\fP [\fIopt\fP] ...

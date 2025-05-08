@@ -495,6 +495,13 @@ fn print_update_help(color: bool) {
 
   {'y}--no-man{'_}
     Disable installing man pages.
+
+  {'y}-m  --mode {'w}<mode>{'_}
+    Update uamp in the given mode. Mode may be:
+    - `{'i}tag  latest-tag  LatestTag{'_}`          update to the latest tag on
+                                            the remote repository.
+    - `{'i}commit  latest-commit  LatestCommit{'_}` update to the latest commit
+                                            on the remote repository.
 "
     );
 }

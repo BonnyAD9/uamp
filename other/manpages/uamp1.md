@@ -487,6 +487,16 @@ Update accepts the following options:
 `--no-man`
   Disable installing man pages.
 
+`-m` *mode*, `--mode` *mode*
+  Choose update mode. *mode* may be:
+
+  - `tag`, `latest-tag`, `LatestTag`: Update to the latest tag on the remote
+    repository.
+  - `commit`, `latest-commit`, `LatestCommit`: Update to the latest commit on
+    the main branch on the remote repository.
+  - `branch=`*branch*, `Branch=`*branch*: Update to the latest commit on the
+    given branch on the remote repository.
+
 ### Action `internal`
 
 `internal` `tab-complete` *opt-index* *uamp-bin* [*opt*] ...
