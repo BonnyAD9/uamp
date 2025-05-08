@@ -20,6 +20,11 @@ uamp \- Universal Advanced Music Player \- command line interface
 .PP
 \fB\fCuamp\fR \fB\fCshell\fR [\fB\fC\-h\fR] [\fB\fC\-s\fR] [\fB\fCtab\fR]
 .PP
+\fB\fCuamp\fR \fB\fCman\fR [\fB\fC\-h\fR] [\fB\fC\-p\fR] [\fIman\-page\fP]
+.PP
+\fB\fCuamp\fR \fB\fCupdate\fR [\fB\fC\-h\fR] [\fB\fC\-f\fR] [\fB\fC\-\-remote\fR \fIremote\fP] [\fB\fC\-\-man\fR] [\fB\fC\-\-no\-man\fR]
+[\fB\fC\-\-\fR]
+.PP
 \fB\fCuamp\fR \fB\fCinternal\fR \fB\fCtab\-complete\fR \fIopt\-index\fP \fIuamp\-bin\fP [\fIopt\fP] ...
 .SH DESCRIPTION
 .PP
@@ -265,6 +270,12 @@ Print help specific to internal action.
 \fB\fCh\fR, \fB\fChelp\fR, \fB\fC\-h\fR, \fB\fC\-?\fR, \fB\fC\-\-help\fR
 Print help specific to this help action.
 .TP
+\fB\fCman\fR
+Print help specific to man action.
+.TP
+\fB\fCupdate\fR
+Print help specific to update action.
+.TP
 \fB\fCcmsg\fR, \fB\fCcontrol\-msg\fR, \fB\fCcontrol\-messages\fR
 Print help for all control messages.
 .TP
@@ -448,6 +459,58 @@ The following shell integrations are supported:
 .TP
 \fB\fCtab\fR, \fB\fCtab\-completion\fR
 Adds tab completion for uamp CLI. Verified to work in \fB\fCbash\fR and \fB\fCzsh\fR\&.
+.SS Action \fB\fCman\fR
+.PP
+\fB\fCman\fR [\fB\fC\-h\fR] [\fB\fC\-p\fR] [\fIman\-page\fP]
+.PP
+Open the given man page with the program \fB\fCman\fR\&. The man page doesn't have to be
+installed, but the program \fB\fCman\fR must exist.
+.PP
+It accepts the following flags:
+.TP
+\fB\fC\-h\fR, \fB\fC\-?\fR, \fB\fC\-\-help\fR
+Print help for the man page command.
+.TP
+\fB\fC\-p\fR, \fB\fC\-\-print\fR
+Print the man page directly to stdout instead of using \fB\fCman\fR\&.
+.PP
+The following \fIman\-page\fP arguments are accepted:
+.TP
+\fB\fC1\fR, \fB\fCcli\fR
+Show the man page for section \fB\fC1\fR that describes CLI. It is this manpage.
+.TP
+\fB\fC5\fR, \fB\fCcfg\fR, \fB\fCconf\fR, \fB\fCconfig\fR
+Show man page for section \fB\fC5\fR that describes configuration file.
+.SS Action \fB\fCupdate\fR
+.PP
+\fB\fCupdate\fR [\fB\fC\-h\fR] [\fB\fC\-f\fR] [\fB\fC\-\-remote\fR \fIremote\fP] [\fB\fC\-\-man\fR] [\fB\fC\-\-no\-man\fR] [\fB\fC\-\-\fR]
+.PP
+Updates uamp. The path to the updated library will be same as the currently
+running executable. This is disabled and requires the option \fB\fC\-\-force\fR if uamp
+was installed from a repository and not from github. The update mode is
+selected in configuration.
+.PP
+This may require sudo.
+.PP
+Update accepts the following options:
+.TP
+\fB\fC\-h\fR, \fB\fC\-?\fR, \fB\fC\-\-help\fR
+Shows help for update. If this is present, uamp will not update and only show
+the help.
+.TP
+\fB\fC\-f\fR, \fB\fC\-\-force\fR
+Force the update even if it has been disabled.
+.TP
+\fB\fC\-\-remote\fR \fIremote\fP
+Select remote repository for the update. If not specified, value from config is
+used.
+.TP
+\fB\fC\-\-man\fR
+Do install man pages. By default man pages are enabled to install on unix
+(linux). On windows the path to man pages is unspecified so it will not work.
+.TP
+\fB\fC\-\-no\-man\fR
+Disable installing man pages.
 .SS Action \fB\fCinternal\fR
 .PP
 \fB\fCinternal\fR \fB\fCtab\-complete\fR \fIopt\-index\fP \fIuamp\-bin\fP [\fIopt\fP] ...

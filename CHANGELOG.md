@@ -1,6 +1,9 @@
 # CHANGELOG
 
 ## future
+### New features
+- Add self update with `uamp update`.
+
 ### Fixes
 - Fix function aliases.
 - Fix `uamp i nfo` sometimes failing to retreive position in song.

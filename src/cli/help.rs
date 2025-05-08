@@ -58,6 +58,10 @@ pub fn help(args: &mut Pareg, res: &mut Args) {
                 print_man_help(res.props.color);
                 formats_header = false;
             }
+            "update" => {
+                print_update_help(res.props.color);
+                formats_header = false;
+            }
             "all" | "elp" => {
                 print_help(res.props.color);
                 formats_header = true;
@@ -131,6 +135,11 @@ pub fn help_man(color: bool) {
     print_man_help(color);
 }
 
+pub fn help_update(color: bool) {
+    help_version(color);
+    print_update_help(color);
+}
+
 /// Prints the help header and version.
 pub fn help_version(color: bool) {
     let signature: Cow<str> = if color {
@@ -162,6 +171,8 @@ fn print_help(color: bool) {
     print_config_help(color);
     print_shell_help(color);
     print_internal_help(color);
+    print_man_help(color);
+    print_update_help(color);
     print_help_help(color);
     print_control_messages_help(color);
     print_formats_help(color, false);
@@ -231,6 +242,10 @@ fn print_basic_help(color: bool) {
 
   {'b}man {'gr}[man arguments]{'_}
     See the manual page.
+
+  {'b}update {'gr}[update arguments] [--]{'_}
+    Self update uamp from github. Don't use this if you installed uamp with
+    your distro package manager.
 
   {'b}h  help {'gr}[help aguments] [--]{'_}
     Shows help. With no arguments basic help. With arguments help for the given
@@ -452,6 +467,34 @@ fn print_man_help(color: bool) {
 
   {'r}5  cfg  conf  config{'_}
     Man page about configuration.
+"
+    );
+}
+
+fn print_update_help(color: bool) {
+    printmcln!(
+        color,
+        "{'g}Update usage:
+  {'c}uamp {'b}update {'gr}[{'dy}flags{'gr}] [--]{'_}
+    Self update uamp. Don't use this if you installed uamp with your distros
+    package manager.
+
+{'g}Update flags:
+  {'y}-h  -?  --help{'_}
+    See help for update.
+
+  {'y}-f  --force{'_}
+    Force self update even if it was disabled. DONT DO THIS unless you know
+    what you are doing.
+
+  {'y}--remote {'w}<remote>{'_}
+    Choose remote repository from which to update uamp.
+
+  {'y}--man{'_}
+    Enable installing man pages. On unix (linux) this is the default.
+
+  {'y}--no-man{'_}
+    Disable installing man pages.
 "
     );
 }

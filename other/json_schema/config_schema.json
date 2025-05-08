@@ -1,5 +1,5 @@
 {
-    "$schema": "http://json-schema.org/schema",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/BonnyAD9/uamp/master/other/json_schema/config_schema.json",
     "title": "uamp config file",
     "description": "Config file for uamp (audio player)",
@@ -152,6 +152,23 @@
             "description": "If true, clients will try to lookup song images.",
             "type": "boolean",
             "default": true
+        },
+        "update_mode": {
+            "description": "Determines to which will uamp update.",
+            "type": ["string", "object"],
+            "pattern": "LatestTag|LatestCommit",
+            "properties": {
+                "Branch": {
+                    "description": "Select branch from which uamp will update.",
+                    "type": "string"
+                }
+            },
+            "default": "LatestTag"
+        },
+        "update_remote": {
+            "description": "Determines remote git repository from which uamp will update.",
+            "type": "string",
+            "default": "https://github.com/BonnyAD9/uamp.git"
         }
     }
 }

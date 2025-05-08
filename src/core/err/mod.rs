@@ -30,6 +30,15 @@ pub enum Error {
     /// Cannot pipe to stdin of child process.
     #[error("{0}")]
     NoStdinPipe(Box<ErrCtx<&'static str>>),
+    /// Child process exit with failure.
+    #[error("{0}")]
+    ChildFailed(Box<ErrCtx<String>>),
+    /// Something is not present.
+    #[error("{0}")]
+    NotFound(Box<ErrCtx<&'static str>>),
+    /// An unexpected error.
+    #[error("{0}")]
+    Unexpected(Box<ErrCtx<&'static str>>),
     /// Failed to parse arguments.
     #[error(transparent)]
     Pareg(#[from] pareg::ArgError),
@@ -87,6 +96,18 @@ macro_rules! map_ctx {
             Error::NoStdinPipe(mut $ctx) => {
                 *$ctx = $f;
                 Error::NoStdinPipe($ctx)
+            }
+            Error::ChildFailed(mut $ctx) => {
+                *$ctx = $f;
+                Error::ChildFailed($ctx)
+            }
+            Error::NotFound(mut $ctx) => {
+                *$ctx = $f;
+                Error::NotFound($ctx)
+            }
+            Error::Unexpected(mut $ctx) => {
+                *$ctx = $f;
+                Error::Unexpected($ctx)
             }
             Error::AudioTag(mut $ctx) => {
                 *$ctx = $f;
@@ -237,6 +258,9 @@ impl Error {
             Error::InvalidOperation(err_ctx) => err_ctx.clone_universal(),
             Error::ThreadPanicked(err_ctx) => err_ctx.clone_universal(),
             Error::NoStdinPipe(err_ctx) => err_ctx.clone_universal(),
+            Error::ChildFailed(err_ctx) => err_ctx.clone_universal(),
+            Error::NotFound(err_ctx) => err_ctx.clone_universal(),
+            Error::Unexpected(err_ctx) => err_ctx.clone_universal(),
             Error::AudioTag(err_ctx) => err_ctx.clone_universal(),
             Error::Raplay(err_ctx) => err_ctx.clone_universal(),
             Error::SerdeJson(err_ctx) => err_ctx.clone_universal(),

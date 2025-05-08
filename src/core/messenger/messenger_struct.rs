@@ -8,7 +8,7 @@ use std::{
 
 use crate::{
     core::{
-        FnDelegate, Msg, Result, UampApp,
+        FnDelegate, Msg, Result, UampApp, config,
         messenger::{DataResponse, Error, ErrorKind},
         query::Query,
     },
@@ -185,9 +185,7 @@ impl UampApp {
         };
 
         let info = Info {
-            version: option_env!("CARGO_PKG_VERSION")
-                .unwrap_or("unknown")
-                .to_owned(),
+            version: config::VERSION_STR.to_owned(),
             now_playing: self
                 .player
                 .now_playing()

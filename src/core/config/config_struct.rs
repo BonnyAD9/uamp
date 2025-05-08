@@ -6,6 +6,7 @@ use crate::{
         Alias, AnyControlMsg, ControlFunction, ControlMsg, DataControlMsg,
         player::AddPolicy, query::Query,
     },
+    env::update,
     ext::Wrap,
     gen_struct,
 };
@@ -106,6 +107,16 @@ gen_struct! {
         default_playlist_end_action: Option<Alias> { pub, pub } =>
         pub(super) () {
             None
+        },
+
+        #[doc = "Determines how uamp will self update."]
+        update_mode: update::Mode { pub, pub } => pub(super) () {
+            Default::default()
+        },
+
+        #[doc = "Determines the repository fro which uamp will update."]
+        update_remote: String { pub, pub } => pub(super) () {
+            update::DEFAULT_REMOTE.to_owned()
         },
 
         ; // fields passed by value:
@@ -230,6 +241,8 @@ impl Config {
             server_address: default_server_address(),
             control_aliases: default_control_aliases(),
             default_playlist_end_action: default_default_playlist_end_action(),
+            update_mode: default_update_mode(),
+            update_remote: default_update_remote(),
             delete_logs_after: default_delete_logs_after(),
             enable_server: default_enable_server(),
             shuffle_current: default_shuffle_current(),

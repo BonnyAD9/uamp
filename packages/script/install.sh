@@ -200,7 +200,7 @@ echo "checking out to $_ITALIC$_TAG$_RESET."
 $_GIT checkout "$_TAG"
 
 echo "Building uamp..."
-$_CARGO build -r
+UAMP_VERSION_COMMIT=`"$_GIT" rev-parse HEAD` $_CARGO build -r
 
 echo "Building man pages..."
 mkdir -p target/manpages

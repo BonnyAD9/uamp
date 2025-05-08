@@ -11,7 +11,8 @@ use crate::{
 };
 
 use super::{
-    Action, Instance, Man, Props, Run, Shell, help::help, internal::Internal,
+    Action, Instance, Man, Props, Run, Shell, Update, help::help,
+    internal::Internal,
 };
 
 //===========================================================================//
@@ -108,6 +109,7 @@ impl Args {
                 "sh" | "shell" => self.shell(args)?,
                 "internal" => self.internal(args)?,
                 "man" => self.man(args)?,
+                "update" => self.update(args)?,
                 "-h" | "--help" | "-?" => {
                     self.should_exit = true;
                     help_short(self.props.color);
@@ -172,6 +174,17 @@ impl Args {
         if !instance.messages.is_empty() {
             self.actions.push(Action::Instance(instance));
         }
+
+        Ok(())
+    }
+
+    fn update(&mut self, args: &mut Pareg) -> Result<()> {
+        self.should_exit = true;
+
+        let mut update = Update::default();
+        update.parse(args, self.props.color)?;
+
+        self.actions.push(Action::Update(update));
 
         Ok(())
     }

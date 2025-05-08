@@ -2,6 +2,7 @@ mod app_ctrl;
 mod command;
 mod msg_stream;
 mod tasks;
+pub mod update;
 
 //===========================================================================//
 //                                   Public                                  //

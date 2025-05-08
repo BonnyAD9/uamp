@@ -279,11 +279,10 @@ This section contains options related to playback.
 
     "previous_timeout": null
 
-### Other
+### Server
 
-This section contains options that don't cleary fit to any of the previous
-sections. These options are usually little more advanced to the previous
-options.
+This section contains options related to the server created by uamp running in
+background.
 
 `server_address`
   Uamp creates TCP server for communication across uamp instances. This is the
@@ -315,6 +314,36 @@ options.
   Default value:
 
     "enable_server": true
+
+### Update
+
+This section controls options related to uamp self update.
+
+`update_mode`
+  Determines how uamp will update. It may have the folowing values:
+
+  - `"LatestTag"`: update to the latest tag in the remote repository.
+  - `"LatestCommit"`: update to the latest commit in the remote repository
+    master branch.
+  - `{ "Branch": "branch" }`: update to the latest commit on the branch
+    `branch`.
+
+  Default value:
+
+    "update_mode": "LatestTag"
+
+`update_remote`
+  Remote git repository from which updates will be downloaded.
+
+  Default value:
+
+    "update_remote": "https://github.com/BonnyAD9/uamp.git"
+
+### Other
+
+This section contains options that don't cleary fit to any of the previous
+sections. These options are usually little more advanced to the previous
+options.
 
 `save_timeout`
   Uamp periodically saves any changes to its state. This option determines how
@@ -471,11 +500,11 @@ The default configuration may be on a linux system:
 {
     "$schema": "https://raw.githubusercontent.com/BonnyAD9/uamp/master/other/json_schema/config_schema.json",
     "search_paths": [
-        "/home/alice/music"
+        "/home/kubas/music"
     ],
-    "library_path": "/home/alice/.config/uamp_debug/library.json",
-    "player_path": "/home/alice/.config/uamp_debug/player.json",
-    "cache_path": "/home/alice/.cache/uamp_debug/cache",
+    "library_path": "/home/kubas/.config/uamp_debug/library.json",
+    "player_path": "/home/kubas/.config/uamp_debug/player.json",
+    "cache_path": "/home/kubas/.cache/uamp_debug/cache",
     "audio_extensions": [
         "flac",
         "mp3",
@@ -484,13 +513,15 @@ The default configuration may be on a linux system:
     ],
     "server_address": "127.0.0.1",
     "control_aliases": {
+        "pcont": "pop 'pp=play'",
+        "endless-mix": "'sp=any@rng' 'pj=0' 'pp=play' 'pap=m' 'spea=endless-mix'",
         "repeat": "'pj=0' 'pp=play' 'spea=repeat'",
         "palb": "{name}:'push=a:${name}@+a' 'pp=play' 'spea=pcont'",
-        "repeat-once": "'pj=0' 'pp=play' spea",
-        "endless-mix": "'sp=any@rng' 'pj=0' 'pp=play' 'pap=m' 'spea=endless-mix'",
-        "pcont": "pop 'pp=play'"
+        "repeat-once": "'pj=0' 'pp=play' spea"
     },
     "default_playlist_end_action": null,
+    "update_mode": "LatestTag",
+    "update_remote": "https://github.com/BonnyAD9/uamp.git",
     "simple_sorting": false,
     "play_on_start": false,
     "shuffle_current": true,
@@ -498,16 +529,16 @@ The default configuration may be on a linux system:
     "update_library_on_start": true,
     "remove_missing_on_load": true,
     "volume_jump": 0.025,
-    "save_playback_pos": "Never",
+    "save_playback_pos": "OnClose",
     "save_timeout": "01:00",
     "fade_play_pause": "00:00.15",
-    "gapless": false,
+    "gapless": true,
     "seek_jump": "00:10",
     "port": 33284,
     "delete_logs_after": "3d00:00",
     "enable_server": true,
     "previous_timeout": null,
-    "client_image_lookup": false
+    "client_image_lookup": true
 }
 ```
 

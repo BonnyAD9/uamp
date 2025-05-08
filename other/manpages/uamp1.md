@@ -22,6 +22,11 @@ uamp - Universal Advanced Music Player - command line interface
 
 `uamp` `shell` [`-h`] [`-s`] [`tab`]
 
+`uamp` `man` [`-h`] [`-p`] [*man-page*]
+
+`uamp` `update` [`-h`] [`-f`] [`--remote` *remote*] [`--man`] [`--no-man`]
+[`--`]
+
 `uamp` `internal` `tab-complete` *opt-index* *uamp-bin* [*opt*] ...
 
 ## DESCRIPTION
@@ -247,6 +252,12 @@ The available sections are:
 `h`, `help`, `-h`, `-?`, `--help`
   Print help specific to this help action.
 
+`man`
+  Print help specific to man action.
+
+`update`
+  Print help specific to update action.
+
 `cmsg`, `control-msg`, `control-messages`
   Print help for all control messages.
 
@@ -422,6 +433,59 @@ The following shell integrations are supported:
 
 `tab`, `tab-completion`
   Adds tab completion for uamp CLI. Verified to work in `bash` and `zsh`.
+
+### Action `man`
+`man` [`-h`] [`-p`] [*man-page*]
+
+Open the given man page with the program `man`. The man page doesn't have to be
+installed, but the program `man` must exist.
+
+It accepts the following flags:
+
+`-h`, `-?`, `--help`
+  Print help for the man page command.
+
+`-p`, `--print`
+  Print the man page directly to stdout instead of using `man`.
+
+The following *man-page* arguments are accepted:
+
+`1`, `cli`
+  Show the man page for section `1` that describes CLI. It is this manpage.
+
+`5`, `cfg`, `conf`, `config`
+  Show man page for section `5` that describes configuration file.
+
+### Action `update`
+
+`update` [`-h`] [`-f`] [`--remote` *remote*] [`--man`] [`--no-man`] [`--`]
+
+Updates uamp. The path to the updated library will be same as the currently
+running executable. This is disabled and requires the option `--force` if uamp
+was installed from a repository and not from github. The update mode is
+selected in configuration.
+
+This may require sudo.
+
+Update accepts the following options:
+
+`-h`, `-?`, `--help`
+  Shows help for update. If this is present, uamp will not update and only show
+  the help.
+
+`-f`, `--force`
+  Force the update even if it has been disabled.
+
+`--remote` *remote*
+  Select remote repository for the update. If not specified, value from config is
+  used.
+
+`--man`
+  Do install man pages. By default man pages are enabled to install on unix
+  (linux). On windows the path to man pages is unspecified so it will not work.
+
+`--no-man`
+  Disable installing man pages.
 
 ### Action `internal`
 

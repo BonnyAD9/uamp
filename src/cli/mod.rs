@@ -11,6 +11,7 @@ mod printers;
 mod props;
 mod run;
 mod shell;
+mod update;
 
 //===========================================================================//
 //                                   Public                                  //
@@ -18,5 +19,5 @@ mod shell;
 
 pub use self::{
     action::*, args::*, config::*, instance::*, man::*, props::*, run::*,
-    shell::*,
+    shell::*, update::*,
 };
