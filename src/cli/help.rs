@@ -94,50 +94,72 @@ pub fn help(args: &mut Pareg, res: &mut Args) {
             a => eprintacln!("{'m}warning: {'_}Invalid help option {a}"),
         }
     }
+
+    help_footer(res.props.color);
 }
 
 /// Prints the short help.
 pub fn help_short(color: bool) {
     help_version(color);
     print_basic_help(color);
+    help_footer(color);
 }
 
 /// Prints the help for the instance action.
 pub fn help_instance(color: bool) {
     help_version(color);
     print_instance_help(color);
+    help_footer(color);
 }
 
 /// Prints help for the run action.
 pub fn help_run(color: bool) {
     help_version(color);
     print_run_help(color);
+    help_footer(color);
 }
 
 /// Print help for configuration.
 pub fn help_config(color: bool) {
     help_version(color);
     print_config_help(color);
+    help_footer(color);
 }
 
 pub fn help_shell(color: bool) {
     help_version(color);
     print_shell_help(color);
+    help_footer(color);
 }
 
 pub fn help_internal(color: bool) {
     help_version(color);
     print_internal_help(color);
+    help_footer(color);
 }
 
 pub fn help_man(color: bool) {
     help_version(color);
     print_man_help(color);
+    help_footer(color);
 }
 
 pub fn help_update(color: bool) {
     help_version(color);
     print_update_help(color);
+    help_footer(color);
+}
+
+/// Print the help footer.
+pub fn help_footer(color: bool) {
+    printmcln!(
+        color,
+        " \
+ “ {'i}The one who has found his life will lose it, and the
+   one who has lost his life on My account will find it. {'_}”
+                                           {'w bold}✝ Matthew 10:39{'_}
+"
+    )
 }
 
 /// Prints the help header and version.
