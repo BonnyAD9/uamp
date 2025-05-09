@@ -16,6 +16,7 @@ _MAN_DIR=${MAN_DIRECTORY-/usr/share/man}
 # Define colors
 if [ -t 1 ]; then
     _RESET=`printf '\x1b[0m'`
+    _BOLD=`printf '\x1b[1m'`
     _ITALIC=`printf '\x1b[3m'`
     _DYELLOW=`printf '\x1b[33m'`
     _GRAY=`printf '\x1b[90m'`
@@ -47,7 +48,7 @@ _HELP="Welcome in help for the $_ITALIC${_GREEN}uamp installer$_RESET by $_SIGN$
 Version 0.1.0
 
 This script is usually invoked directly from wget:
-  wget -nv -O - https://raw.githubusercontent.com/BonnyAD9/uamp/master/packages/script/install.sh | sh
+  ${_CYAN}wget $_YELLOW-nv -O $_WHITE- https://raw.githubusercontent.com/BonnyAD9/uamp/master/packages/script/install.sh $_RED| ${_CYAN}sh
 
 ${_GREEN}sage:
   ${_CYAN}install.sh $_GRAY[${_DYELLOW}flags$_GRAY]$_RESET
@@ -102,6 +103,10 @@ ${_GREEN}Environment variables:$_RESET
   ${_MAGENTA}MAN_DIRECTORY$_RESET
     Choose where manapges will be installed (${_ITALIC}/usr/share/man$_RESET by
     default).
+
+ “ ${_ITALIC}One who despises the word will do badly, But
+   one who fears the commandment will be rewarded.$_RESET ”
+                                    $_BOLD$_WHITE✝ Proverbs 13:13$RESET
 "
 
 # Parse arguments
