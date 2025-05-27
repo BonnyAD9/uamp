@@ -1,5 +1,5 @@
 # TODO
-- Self auto update (when installed from install script)
+- Trigger playlist add for playlists that are not on top.
 - TUI
 - Tag editor
 - Add manpage
