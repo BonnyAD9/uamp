@@ -130,7 +130,7 @@ impl Song {
             format!("{} - {}", self.artist(), self.album()).into(),
             "cover".into(),
         ];
-        let extensions = ["jpg", "jpeg", "png"];
+        let extensions = ["jpg", "jpeg", "png", "webp"];
         let path = lookup_names
             .iter()
             .flat_map(|n| extensions.iter().map(|e| n.to_string() + "." + e))
