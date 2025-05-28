@@ -1,4 +1,5 @@
 # TODO
+- Reorder playlist stack.
 - TUI
 - Tag editor
 - Add manpage
