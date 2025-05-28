@@ -1,5 +1,4 @@
 # TODO
-- Trigger playlist add for playlists that are not on top.
 - TUI
 - Tag editor
 - Add manpage

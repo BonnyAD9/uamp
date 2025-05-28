@@ -4,6 +4,9 @@
 ### New features
 - Add self update with `uamp update`.
 
+### Changes
+- Playlist add will now use playlist add policy of all playlists in the stack.
+
 ### Fixes
 - Fix function aliases.
 - Fix `uamp i nfo` sometimes failing to retreive position in song.

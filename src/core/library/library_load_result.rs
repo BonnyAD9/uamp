@@ -80,10 +80,12 @@ impl UampApp {
             self.library.update(LibraryUpdate::NewData);
         }
 
-        self.player.playlist_mut().add_songs(
-            (res.first_new..self.library.songs().len())
-                .map(SongId)
-                .chain(res.sparse_new),
+        self.player.add_songs(
+            || {
+                (res.first_new..self.library.songs().len())
+                    .map(SongId)
+                    .chain(res.sparse_new.iter().copied())
+            },
             res.add_policy,
         );
 

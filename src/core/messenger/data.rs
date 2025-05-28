@@ -12,7 +12,7 @@ pub struct Error {
     /// Describes the kind of the error.
     pub kind: ErrorKind,
     /// Message suitable for the user.
-    pub ctx: ErrCtx<String>,
+    pub ctx: Box<ErrCtx<String>>,
 }
 
 /// Describes the kind of the error
@@ -39,6 +39,9 @@ pub enum ErrorKind {
 impl Error {
     /// Creates a new error with the given type and message.
     pub fn new(kind: ErrorKind, ctx: ErrCtx<String>) -> Self {
-        Error { kind, ctx }
+        Error {
+            kind,
+            ctx: ctx.into(),
+        }
     }
 }

@@ -15,7 +15,8 @@ use crate::{
 };
 
 use super::{
-    PlayerMsg, Playlist, playback::Playback, sink_wrapper::SinkWrapper,
+    AddPolicy, PlayerMsg, Playlist, playback::Playback,
+    sink_wrapper::SinkWrapper,
 };
 
 //===========================================================================//
@@ -285,6 +286,19 @@ impl Player {
                 .map(|a| DataControlMsg::Alias(a).into())
         } else {
             None
+        }
+    }
+
+    /// Add new songs to the playlists based on the given default policy or
+    /// their policy.
+    pub fn add_songs<I: Iterator<Item = SongId>>(
+        &mut self,
+        mut songs: impl FnMut() -> I,
+        policy: Option<AddPolicy>,
+    ) {
+        self.playlist_mut().add_songs(songs(), policy);
+        for p in self.playlist_stack_mut() {
+            p.add_songs(songs(), policy);
         }
     }
 
