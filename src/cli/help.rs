@@ -429,6 +429,9 @@ fn print_config_help(color: bool) {
 
   {'y}--default{'_}
     Print the default configuration to stdout.
+    
+  {'y}--aliases{'_}
+    Print all aliases sorted alphabetically.
 ",
     )
 }

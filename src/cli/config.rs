@@ -1,5 +1,6 @@
 use std::io;
 
+use itertools::Itertools;
 use pareg::Pareg;
 
 use crate::core::{self, Error, Result, config::default_config_path};
@@ -11,6 +12,7 @@ pub enum ConfigAction {
     EditFile,
     PrintPath,
     PrintDefault,
+    PrintAliases,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -36,6 +38,7 @@ impl Config {
                 "--default" => {
                     self.actions.push(ConfigAction::PrintDefault);
                 }
+                "--aliases" => self.actions.push(ConfigAction::PrintAliases),
                 "--" => break,
                 _ => args.err_unknown_argument().err()?,
             }
@@ -48,7 +51,7 @@ impl Config {
         Ok(())
     }
 
-    pub fn act(&self) -> Result<()> {
+    pub fn act(&self, conf: &core::config::Config) -> Result<()> {
         for a in &self.actions {
             match a {
                 ConfigAction::PrintPath => {
@@ -67,6 +70,11 @@ impl Config {
                             e.msg("Failed to print default configuration.")
                         })?;
                     println!();
+                }
+                ConfigAction::PrintAliases => {
+                    for a in conf.control_aliases().keys().sorted() {
+                        println!("{a}");
+                    }
                 }
             }
         }

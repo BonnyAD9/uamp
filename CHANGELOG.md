@@ -4,6 +4,7 @@
 ### New features
 - Add self update with `uamp update`.
 - Support winamp way of looking up images.
+- Add option to print aliases with `uamp cfg --aliases`.
 
 ### Changes
 - Playlist add will now use playlist add policy of all playlists in the stack.

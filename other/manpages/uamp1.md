@@ -402,6 +402,9 @@ Config action accepts the following options:
 `--default`
   Print the default configuration in json format (same as the actual format of
   the configuration file).
+  
+`--aliases`
+  Print all the aliases sorted alphabetically.
 
 ### Action `shell`
 
