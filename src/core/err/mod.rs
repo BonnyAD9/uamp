@@ -3,7 +3,6 @@ use std::{any::Any, borrow::Cow, mem, time::SystemTimeError};
 use flexi_logger::FlexiLoggerError;
 use itertools::Itertools;
 use log::error;
-use pareg::ColorMode;
 use thiserror::Error;
 
 mod err_ctx;
@@ -212,10 +211,7 @@ impl Error {
 
     pub fn no_color(self) -> Self {
         map_ctx!(self, |c| c.no_color(),
-            Self::Pareg(p) => Self::Pareg(p.map_ctx(|mut c| {
-                c.color = ColorMode::Never;
-                c
-            })),
+            Self::Pareg(p) => Self::Pareg(p.no_color()),
             Self::Multiple(mut m) => {
                 for e in &mut m {
                     *e = mem::replace(e, Self::Multiple(vec![])).no_color();

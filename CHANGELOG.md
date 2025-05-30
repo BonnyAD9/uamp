@@ -11,6 +11,7 @@
 - Fix function aliases.
 - Fix `uamp i nfo` sometimes failing to retreive position in song.
 - Recognize `.webp` files as images.
+- Avoid printing with color when logging.
 
 ## v0.5.9
 ### New features
