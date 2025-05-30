@@ -1,6 +1,5 @@
 # TODO
 - Reorder playlist stack.
-- Image lookup only with album name.
 - Base for query.
 - TUI
 - Tag editor

@@ -16,7 +16,7 @@ bitflags = { version = "2.9.0", features = [ "serde" ] }
 const_format = { version = "0.2.34", features = [ "fmt" ] }
 dirs = "6.0.0"
 edit = { version = "0.1.5", features = [ "quoted-env" ] }
-filesan = "0.1.0"
+filesan = "0.2.0"
 flexi_logger = "0.30.1"
 futures = "0.3.31"
 image = "0.25.6"

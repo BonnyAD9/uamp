@@ -3,15 +3,18 @@
 ## future
 ### New features
 - Add self update with `uamp update`.
+- Support winamp way of looking up images.
 
 ### Changes
 - Playlist add will now use playlist add policy of all playlists in the stack.
+- Escaping of image names in image cache may be slightly different.
 
 ### Fixes
 - Fix function aliases.
 - Fix `uamp i nfo` sometimes failing to retreive position in song.
 - Recognize `.webp` files as images.
 - Avoid printing with color when logging.
+- Escape when looking up images.
 
 ## v0.5.9
 ### New features

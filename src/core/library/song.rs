@@ -127,7 +127,17 @@ impl Song {
         };
 
         let lookup_names: &[Cow<'static, str>] = &[
-            format!("{} - {}", self.artist(), self.album()).into(),
+            // Uamp way
+            filesan::escape_str(
+                &format!("{} - {}", self.artist(), self.album()),
+                '_',
+                filesan::Mode::ALL,
+            )
+            .into(),
+            // Winamp way
+            filesan::replace_escape(self.album(), '_', filesan::Mode::ALL)
+                .into(),
+            // Standard way if in separate folders.
             "cover".into(),
         ];
         let extensions = ["jpg", "jpeg", "png", "webp"];

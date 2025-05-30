@@ -598,9 +598,9 @@ dependencies = [
 
 [[package]]
 name = "filesan"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "202d30a624d774945a66ac0a49be81a24e82f86d2b4a0698b7115093a2c5fc5c"
+checksum = "12ed18e60d3839670124a3decba625e3f1fac631e21e724adf55dbb083b09f28"
 dependencies = [
  "bitflags 2.9.0",
 ]
