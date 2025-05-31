@@ -63,7 +63,7 @@ fn start() -> Result<()> {
                     .or_else(|| args.server_address.to_owned());
                 i.run_detached()?;
             }
-            Action::Config(c) => c.act(&conf)?,
+            Action::Config(c) => c.act(&conf, &args.props)?,
             Action::Shell(s) => s.act(),
             Action::Internal(i) => i.act(&conf)?,
             Action::Man(m) => m.act()?,

@@ -1,6 +1,6 @@
 use std::io::{self, IsTerminal};
 
-use pareg::{FromArg, Pareg, has_any_key};
+use pareg::{FromArg, Pareg, has_any_key, parse_arg};
 
 use crate::{
     cli::{help::help_short, port::Port},
@@ -131,6 +131,7 @@ impl Args {
                 "--print" => {
                     self.props.print_style = args.next_arg()?;
                 }
+                "-v" | "--verbose" => self.props.verbosity = 1,
                 "--" => {}
                 a => {
                     if let Some(i) = a.strip_prefix("-I") {
@@ -154,6 +155,12 @@ impl Args {
 
                     if let Some(i) = a.strip_prefix("-H") {
                         help(&mut opt_iter(i), self);
+                        continue;
+                    }
+
+                    if a.starts_with("-v") {
+                        self.props.verbosity =
+                            args.cur_manual(|a| parse_arg(&a[2..]))?;
                         continue;
                     }
 

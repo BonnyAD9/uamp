@@ -245,6 +245,12 @@ fn print_basic_help(color: bool) {
   {'y}--print {'w}<(pretty|debug|json)>
     Select print mode. Default is pretty.
 
+  {'y}--verbose
+  -v{'gr}[verbosity]{'_}
+    Set the verbosity. The default verbosity is 0. If this argument is present
+    without specific verbosity the verbosity is set to 1. You may also specify
+    any other (positive or negative) verbosity.
+
 {'g}Actions:{'_}
   {'b}i  instance {'gr}[instance arguments] [--]{'_}
     Operates on a running instance of uamp. See `{'c}uamp {'b}h {'b}i{'_}` for
@@ -431,7 +437,14 @@ fn print_config_help(color: bool) {
     Print the default configuration to stdout.
     
   {'y}--aliases{'_}
-    Print all aliases sorted alphabetically.
+    Print all aliases sorted alphabetically. If the verbosity is 1 or more, the
+    definitions of aliases will also be printed.
+
+  {'y}--verbose
+  -v{'gr}[verbosity]{'_}
+    Set the verbosity. The default verbosity is 0. If this argument is present
+    without specific verbosity the verbosity is set to 1. You may also specify
+    any other (positive or negative) verbosity.
 ",
     )
 }

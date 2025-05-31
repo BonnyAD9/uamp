@@ -1,11 +1,11 @@
 use std::io;
 
 use itertools::Itertools;
-use pareg::Pareg;
+use pareg::{Pareg, parse_arg};
 
 use crate::core::{self, Error, Result, config::default_config_path};
 
-use super::help::help_config;
+use super::{Props, help::help_config};
 
 #[derive(Debug, Clone)]
 pub enum ConfigAction {
@@ -18,6 +18,7 @@ pub enum ConfigAction {
 #[derive(Debug, Clone, Default)]
 pub struct Config {
     pub actions: Vec<ConfigAction>,
+    verbosity: Option<i32>,
 }
 
 impl Config {
@@ -40,6 +41,11 @@ impl Config {
                 }
                 "--aliases" => self.actions.push(ConfigAction::PrintAliases),
                 "--" => break,
+                "-v" | "--verbose" => self.verbosity = Some(1),
+                v if v.starts_with("-v") => {
+                    self.verbosity =
+                        Some(args.cur_manual(|a| parse_arg(&a[2..]))?);
+                }
                 _ => args.err_unknown_argument().err()?,
             }
         }
@@ -51,7 +57,11 @@ impl Config {
         Ok(())
     }
 
-    pub fn act(&self, conf: &core::config::Config) -> Result<()> {
+    pub fn act(
+        &self,
+        conf: &core::config::Config,
+        props: &Props,
+    ) -> Result<()> {
         for a in &self.actions {
             match a {
                 ConfigAction::PrintPath => {
@@ -72,8 +82,27 @@ impl Config {
                     println!();
                 }
                 ConfigAction::PrintAliases => {
-                    for a in conf.control_aliases().keys().sorted() {
-                        println!("{a}");
+                    if conf.control_aliases().is_empty() {
+                        continue;
+                    }
+                    let verbosity = self.verbosity.unwrap_or(props.verbosity);
+                    if verbosity >= 1 {
+                        let mut al =
+                            conf.control_aliases().iter().collect_vec();
+                        al.sort_by_key(|(k, _)| *k);
+                        let max_len = al
+                            .iter()
+                            .max_by_key(|(k, _)| k.len())
+                            .unwrap()
+                            .0
+                            .len();
+                        for (n, v) in al {
+                            println!("{n:>max_len$} {v}");
+                        }
+                    } else {
+                        for n in conf.control_aliases().keys().sorted() {
+                            println!("{n}");
+                        }
                     }
                 }
             }

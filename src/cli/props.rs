@@ -8,6 +8,8 @@ pub struct Props {
     pub color: bool,
     /// Determines the style of output for stdout.
     pub print_style: PrintStyle,
+    /// Verbosity. 0 is default, negative is less, positive is more.
+    pub verbosity: i32,
 }
 
 impl Default for Props {
@@ -15,6 +17,7 @@ impl Default for Props {
         Self {
             color: io::stdout().is_terminal(),
             print_style: Default::default(),
+            verbosity: 0,
         }
     }
 }

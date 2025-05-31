@@ -225,6 +225,11 @@ implementation.
 .IP \(bu 2
 \fB\fCjson\fR \- print the exact received information in json format.
 .RE
+.TP
+\fB\fC\-v\fR\fIverbosity\fP, \fB\fC\-\-verbose\fR
+Set the verbosity. The default verbosity is \fB\fC0\fR\&. If this is present without
+specific verbosity, it will be set to \fB\fC1\fR\&. The verbosity may also be set to
+any positive or negative integer (in the range of 32 bit signed integer).
 .SS Action \fB\fChelp\fR
 .PP
 \fB\fChelp\fR [\fIhelp\-section\fP] ... [\fB\fC\-\-\fR]
@@ -427,7 +432,13 @@ Print the default configuration in json format (same as the actual format of
 the configuration file).
 .TP
 \fB\fC\-\-aliases\fR
-Print all the aliases sorted alphabetically.
+Print all the aliases sorted alphabetically. If verbosity is at least 1, the
+definitions for the aliases will be also printed.
+.TP
+\fB\fC\-v\fR\fIverbosity\fP, \fB\fC\-\-verbose\fR
+Set the verbosity. The default verbosity is \fB\fC0\fR\&. If this is present without
+specific verbosity, it will be set to \fB\fC1\fR\&. The verbosity may also be set to
+any positive or negative integer (in the range of 32 bit signed integer).
 .SS Action \fB\fCshell\fR
 .PP
 \fB\fCshell\fR [\fB\fC\-h\fR] [\fB\fC\-s\fR] [\fB\fCtab\fR]
