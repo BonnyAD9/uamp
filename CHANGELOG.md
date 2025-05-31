@@ -20,6 +20,7 @@
 - Avoid printing with color when logging.
 - Escape when looking up images.
 - Fix issue where playlist stack was not properly saved and loaded.
+- Properly print errors for arguments to `-R` and `-C`.
 
 ## v0.5.9
 ### New features

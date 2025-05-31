@@ -1,6 +1,4 @@
 # TODO
-- Reorder playlist stack.
-- Properly print errors for `-R`...
 - Base for query.
 - TUI
 - Tag editor

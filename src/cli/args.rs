@@ -144,12 +144,20 @@ impl Args {
                     }
 
                     if let Some(i) = a.strip_prefix("-R") {
-                        self.run(&mut opt_iter(i))?;
+                        if let Err(Error::Pareg(e)) =
+                            self.run(&mut opt_iter(i))
+                        {
+                            return Err(args.map_err(e).into());
+                        }
                         continue;
                     }
 
                     if let Some(i) = a.strip_prefix("-C") {
-                        self.config(&mut opt_iter(i))?;
+                        if let Err(Error::Pareg(e)) =
+                            self.config(&mut opt_iter(i))
+                        {
+                            return Err(args.map_err(e).into());
+                        }
                         continue;
                     }
 
