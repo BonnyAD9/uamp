@@ -6,6 +6,8 @@
 - Support winamp way of looking up images.
 - Add option to print aliases with `uamp cfg --aliases`.
 - Add verbosity option. For now works only for `cfg --aliases`.
+- Add option to reorder the playlist stack with `rps` or
+  `reorder-playlist-stack`.
 
 ### Changes
 - Playlist add will now use playlist add policy of all playlists in the stack.

@@ -1,6 +1,10 @@
 use std::{env, fmt::Display, path::PathBuf, str::FromStr};
 
-use pareg::{ArgErrCtx, ArgError, FromArgStr, has_any_key, mval_arg, val_arg};
+use itertools::Itertools;
+use pareg::{
+    ArgErrCtx, ArgError, FromArgStr, has_any_key, mval_arg, split_arg,
+    starts_any, val_arg,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::env::AppCtrl;
@@ -32,6 +36,8 @@ pub enum DataControlMsg {
     PlayNext(Query),
     /// Restart uamp with the given binary when that binary becomes available.
     Restart(Option<PathBuf>),
+    /// Reorder the playlist stack.
+    ReorderPlaylistStack(Vec<usize>),
 }
 
 impl UampApp {
@@ -103,6 +109,9 @@ impl UampApp {
                 };
                 self.restart_path = Some(exe);
             }
+            DataControlMsg::ReorderPlaylistStack(ord) => {
+                self.player.reorder_playlist(&mut self.library, &ord)?;
+            }
         }
 
         Ok(vec![])
@@ -154,6 +163,10 @@ impl FromStr for DataControlMsg {
             v if has_any_key!(v, '=', "restart") => {
                 Ok(DataControlMsg::Restart(mval_arg(v, '=')?))
             }
+            v if starts_any!(v, "rps=", "reorder-playlist-stack=") => {
+                let (_, v) = v.split_once("=").unwrap();
+                Ok(DataControlMsg::ReorderPlaylistStack(split_arg(v, ",")?))
+            }
             v => ArgError::UnknownArgument(Box::new(ArgErrCtx::from_msg(
                 "Unknown control msg.",
                 v.to_string(),
@@ -179,6 +192,9 @@ impl Display for DataControlMsg {
             DataControlMsg::Restart(None) => write!(f, "restart"),
             DataControlMsg::Restart(Some(ft)) => {
                 write!(f, "restart={}", ft.to_string_lossy())
+            }
+            DataControlMsg::ReorderPlaylistStack(ord) => {
+                write!(f, "{}", ord.iter().map(|a| a.to_string()).join(","))
             }
         }
     }

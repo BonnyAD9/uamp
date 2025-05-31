@@ -705,6 +705,16 @@ Integrations:
   Restart the uamp instance. Without the argument, uamp will use its current
   executable. If *binary-path* is present, uamp will use its as the newly
   restarted binary of uamp.
+  
+`rps=`*order*, `reorder-playlist-stack=`*order*
+  Reorders the playlist stack according to the given order. The order is comma
+  separated list of indexes into the stack where the index 0 is the current
+  playlist. The first index in the order will be the new current playlist and
+  the nest will follow. The indexes that are not in the order will be moved to
+  the bottom of the stack without changing their relative order.
+  
+  For example the order `3,2,1,0` will reverse the top 4 playlists in the
+  stack.
 
 ## FORMATS
 

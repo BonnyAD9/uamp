@@ -663,6 +663,14 @@ fn print_control_messages_help(color: bool) {
     Restart uamp. The optional argument gives path to new uamp binary that will
     take place of the current binary. If not present, uamp will try to get the
     path to the current binary.
+    
+  {'r}rps  reorder-playlist-stack{'w}=<order>{'_}
+    Reorders the playlist stack according to the given order. The order is
+    comma separated list of indexes into the stack where the index 0 is the
+    current playlist. The first index in the order will be the new current
+    playlist and the nest will follow. The indexes that are not in the order
+    will be moved to the bottom of the stack without changing their relative
+    order.
 ",
     )
 }

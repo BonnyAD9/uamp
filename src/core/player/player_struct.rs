@@ -302,6 +302,58 @@ impl Player {
         }
     }
 
+    pub fn reorder_playlist(
+        &mut self,
+        lib: &mut Library,
+        order: &[usize],
+    ) -> Result<()> {
+        if order.is_empty() {
+            return Ok(());
+        }
+
+        let stack_len = self.playlist_stack().len() + 1;
+        if order.len() > stack_len {
+            return Error::invalid_operation().msg(format!(
+                "Playlist stack has only {stack_len} playlist but the reorder \
+                requires {} elements.",
+                order.len()
+            )).err();
+        }
+
+        if let Some(n) = order.iter().find(|a| **a >= stack_len) {
+            return Error::invalid_operation()
+                .msg(format!(
+                    "Reorder contains index out of bounds ({n}/{stack_len})"
+                ))
+                .err();
+        }
+
+        let mut order_vec = vec![];
+
+        for i in 0..stack_len {
+            if !order.contains(&(stack_len - i - 1)) {
+                order_vec.push(i);
+            }
+        }
+
+        order_vec.extend(order.iter().rev().map(|i| stack_len - i - 1));
+
+        let mut playlists = std::mem::take(self.playlist_stack_mut());
+        if let Some(t) = self.timestamp() {
+            self.playlist_mut().set_play_pos(t.current)
+        }
+        playlists.push(mem::replace(self.playlist_mut(), vec![].into()));
+
+        *self.playlist_stack_mut() = order_vec
+            .into_iter()
+            .map(|a| std::mem::take(&mut playlists[a]))
+            .collect();
+
+        self.pop_playlist(lib);
+
+        Ok(())
+    }
+
     /// Creates new player from the sender
     pub(super) fn new_default(sender: UnboundedSender<Msg>) -> Self {
         let mut res = Self {
