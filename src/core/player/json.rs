@@ -137,7 +137,7 @@ struct PlayerDataSave<'a> {
     volume: f32,
     /// The current playlist
     playlist: &'a Playlist,
-    intercept: &'a Vec<Playlist>,
+    playlist_stack: &'a Vec<Playlist>,
 }
 
 impl Player {
@@ -166,7 +166,7 @@ impl Player {
                 playlist: self.playlist(),
                 volume: self.volume(),
                 mute: self.mute(),
-                intercept: self.playlist_stack(),
+                playlist_stack: self.playlist_stack(),
             },
         )
         .map_err(|e| {

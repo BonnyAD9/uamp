@@ -17,6 +17,7 @@
 - Recognize `.webp` files as images.
 - Avoid printing with color when logging.
 - Escape when looking up images.
+- Fix issue where playlist stack was not properly saved and loaded.
 
 ## v0.5.9
 ### New features
