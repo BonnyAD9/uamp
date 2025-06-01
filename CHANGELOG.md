@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.5.11
 ### Fixes
 - Add missing tab complete
 - Properly detect that uamp is already up to date.
