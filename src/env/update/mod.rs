@@ -144,7 +144,7 @@ fn get_latest_version(
 fn is_up_to_date(latest: &(String, Option<String>), mode: &Mode) -> bool {
     match mode {
         Mode::LatestTag => {
-            config::VERSION_NUMBER == latest.1.as_ref().unwrap()
+            config::VERSION_NUMBER == &latest.1.as_ref().unwrap()[1..]
                 && config::VERSION_COMMIT == Some(&latest.0)
         }
         _ => matches!(config::VERSION_COMMIT, Some(c) if c == latest.0),

@@ -2,6 +2,7 @@
 
 ## future
 - Add missing tab complete
+- Properly detect that uamp is already up to date.
 
 ## v0.5.10
 ### New features
