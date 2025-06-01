@@ -40,6 +40,13 @@ pub fn try_update(remote: &str, mode: &Mode, manpages: bool) -> Result<bool> {
         return Ok(false);
     }
 
+    println!(
+        "Current version is {}. It will be updated to {}-{}",
+        config::VERSION_STR,
+        v.1.as_ref().map(|a| a.as_str()).unwrap_or_default(),
+        v.0
+    );
+
     update(remote, &v.0, manpages)?;
     Ok(true)
 }
