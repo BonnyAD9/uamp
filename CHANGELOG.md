@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.5.10
 ### New features
 - Add self update with `uamp update`.
 - Support winamp way of looking up images.
