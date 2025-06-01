@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## future
+### Fixes
+- Properly tab complete `update`.
+
 ## v0.5.11
 ### Fixes
 - Add missing tab complete
