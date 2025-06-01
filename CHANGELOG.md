@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## future
+- Add missing tab complete
+
 ## v0.5.10
 ### New features
 - Add self update with `uamp update`.

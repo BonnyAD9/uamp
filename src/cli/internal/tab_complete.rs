@@ -13,6 +13,7 @@ pub enum TabMode {
     Run,
     Config,
     Shell,
+    Update,
     Internal,
     InternalTabComplete,
     Help,
@@ -20,6 +21,8 @@ pub enum TabMode {
     Port,
     Color,
     Print,
+    UpdateRemote,
+    UpdateMode,
     None,
 }
 
@@ -59,6 +62,7 @@ impl TabComplete {
                     mode = TabMode::Config
                 }
                 (TabMode::Basic, "sh" | "shell") => mode = TabMode::Shell,
+                (TabMode::Basic, "update") => mode = TabMode::Update,
                 (TabMode::Basic, "internal") => mode = TabMode::Internal,
                 (
                     TabMode::Basic | TabMode::Instance | TabMode::Run,
@@ -81,6 +85,14 @@ impl TabComplete {
                 (TabMode::Basic, "--print") => {
                     mode2 = mode;
                     mode = TabMode::Print;
+                }
+                (TabMode::Update, "--remote") => {
+                    mode2 = mode;
+                    mode = TabMode::UpdateRemote;
+                }
+                (TabMode::Update, "-m" | "--mode") => {
+                    mode2 = mode;
+                    mode = TabMode::UpdateMode;
                 }
                 (TabMode::Internal, "tab-complete") => {
                     mode = TabMode::InternalTabComplete
@@ -106,6 +118,7 @@ impl TabComplete {
             TabMode::Run => run_args(conf, &self.cur, p),
             TabMode::Config => config_args(conf, &self.cur, p),
             TabMode::Shell => shell_args(conf, &self.cur, p),
+            TabMode::Update => update_args(conf, &self.cur, p),
             TabMode::Internal => internal_args(conf, &self.cur, p),
             TabMode::InternalTabComplete => {}
             TabMode::Help => help_args(conf, &self.cur, p),
@@ -113,6 +126,8 @@ impl TabComplete {
             TabMode::Port => port_args(conf, &self.cur, p),
             TabMode::Color => color_args(conf, &self.cur, p),
             TabMode::Print => print_args(conf, &self.cur, p),
+            TabMode::UpdateRemote => {},
+            TabMode::UpdateMode => update_mode_args(conf, &self.cur, p),
             TabMode::None => {}
         }
 
@@ -154,6 +169,7 @@ fn instance_args(conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
         "play=" => file_args,
         "al=" => alias_args,
         "alias=" => alias_args,
+        "restart=" => file_args,
     );
 }
 
@@ -167,6 +183,7 @@ fn run_args(conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
         "mute=" => [MUTE_ARG],
         "al=" => alias_args,
         "alias=" => alias_args,
+        "restart=" => file_args,
     );
 }
 
@@ -176,6 +193,10 @@ fn config_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
 
 fn shell_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
     select_args(SHELL_ARG, arg, p);
+}
+
+fn update_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
+    select_args(UPDATE_ARG, arg, p);
 }
 
 fn internal_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
@@ -196,6 +217,10 @@ fn color_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
 
 fn print_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
     select_args(PRINT_ARG, arg, p);
+}
+
+fn update_mode_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
+    select_args(UPDATE_MODE_ARG, arg, p);
 }
 
 fn file_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
@@ -295,6 +320,7 @@ const BASIC_ARG: &[&[&str]] = &[
     &["-R"],
     &["-C"],
     &["-H"],
+    &["-v", "--verbose"],
 ];
 
 const INSTANCE_ARG: &[&[&str]] = &[
@@ -340,6 +366,7 @@ const CONFIG_ARG: &[&[&str]] = &[
     &["-e", "--edit", "--edit-file"],
     &["-p", "--print-path"],
     &["--default"],
+    &["-v", "--verbose"],
     &["--"],
 ];
 
@@ -348,6 +375,15 @@ const SHELL_ARG: &[&[&str]] = &[
     &["-s", "--script"],
     &["tab", "tab-completion"],
     &["--"],
+];
+
+const UPDATE_ARG: &[&[&str]] = &[
+    &["-h", "-?", "--help"],
+    &["-f", "--force"],
+    &["--remote"],
+    &["--man"],
+    &["--no-man"],
+    &["-m", "--mode"],
 ];
 
 const INTERANAL_ARG: &[&[&str]] =
@@ -379,6 +415,8 @@ const ANY_CONTROL_MSG: &[&[&str]] = &[
     &["push-cur", "push-with-cur", "pc"],
     &["queue", "q"],
     &["play-next", "queue-next", "qn"],
+    &["restart"],
+    &["rps=", "reorder-playlist-stack="],
 ];
 
 const PORT_ARG: &[&[&str]] =
@@ -387,6 +425,11 @@ const PORT_ARG: &[&[&str]] =
 const COLOR_ARG: &[&[&str]] = &[&["auto"], &["always"], &["never"]];
 
 const PRINT_ARG: &[&[&str]] = &[&["pretty"], &["debug"], &["json"]];
+
+const UPDATE_MODE_ARG: &[&[&str]] = &[
+    &["tag", "latest-tag", "LatestTag"],
+    &["commit", "latest-commit", "LatestCommit"],
+];
 
 const PLAY_PAUSE_ARG: &[&[&str]] = &[&["play"], &["pause"]];
 
