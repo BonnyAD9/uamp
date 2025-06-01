@@ -5,6 +5,7 @@
 - Add missing tab complete
 - Properly detect that uamp is already up to date.
 - Properly print error when message fails to send.
+- Fix blue tint when showing images.
 
 ## v0.5.10
 ### New features

@@ -35,6 +35,6 @@ serde_json = "1.0.140"
 shell-words = "1.1.0"
 signal-hook = "0.3.18"
 signal-hook-async-std = "0.3.0"
-termal = { version =  "3.0.0", features = ["image", "raw"] }
+termal = { version =  "3.0.1", features = ["image", "raw"] }
 thiserror = "2.0.12"
 unidecode = "0.3.0"

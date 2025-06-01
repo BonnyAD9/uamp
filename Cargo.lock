@@ -1206,9 +1206,9 @@ dependencies = [
 
 [[package]]
 name = "minlin"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb89d30f525abd1fb79e894528ef6a597e40ce53bfa69d0235131ea1e09ccb7a"
+checksum = "6015182c46495fbe1e875e03e0bc6660ee6614047026cf79c0067bbfaa7ace51"
 
 [[package]]
 name = "mio"
@@ -2277,9 +2277,9 @@ dependencies = [
 
 [[package]]
 name = "termal"
-version = "3.0.0"
+version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8d323a9ff2bc62cf65572e0a40da0597e4751c6b99fd39c79705110f6293d7a"
+checksum = "7e90830464520ccfbf09c1819eafb597f8aa99ef1ecc55604a860e51a90fb5d8"
 dependencies = [
  "termal_core",
  "termal_proc",
@@ -2287,9 +2287,9 @@ dependencies = [
 
 [[package]]
 name = "termal_core"
-version = "3.0.0"
+version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "518697f712e25418c3fd8861c20a45cb105e1eb65406698b26046b3ad983f2df"
+checksum = "47526a57105113377eee737f3ba620a3ba2ddc97b270714ab0c94c313e22e4e0"
 dependencies = [
  "base64",
  "bitflags 2.9.1",
@@ -2305,9 +2305,9 @@ dependencies = [
 
 [[package]]
 name = "termal_proc"
-version = "3.0.0"
+version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1de9d713049cdf5f80a6b4392d9875ab50e1a1a95a43df6af58ef7e357b3bb8"
+checksum = "5546374abdde10af71bf0833cdac2dec6ad3acbd86cd9297c61d399377dd447c"
 dependencies = [
  "termal_core",
 ]
