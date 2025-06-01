@@ -12,18 +12,18 @@ no-self-update = []
 [dependencies]
 anyhow = "1.0.98"
 audiotags = "0.5.0"
-bitflags = { version = "2.9.0", features = [ "serde" ] }
+bitflags = { version = "2.9.1", features = [ "serde" ] }
 const_format = { version = "0.2.34", features = [ "fmt" ] }
 dirs = "6.0.0"
 edit = { version = "0.1.5", features = [ "quoted-env" ] }
 filesan = "0.2.0"
-flexi_logger = "0.30.1"
+flexi_logger = "0.30.2"
 futures = "0.3.31"
 image = "0.25.6"
 itertools = "0.14.0"
 log = "0.4.27"
 notify = "8.0.0"
-pareg ="0.9.1"
+pareg ="0.10.0"
 # pareg = { path = "../pareg" }
 place_macro = "1.0.0"
 rand = "0.9.1"
@@ -33,8 +33,8 @@ rmp-serde = "1.3.0"
 serde = "1.0.219"
 serde_json = "1.0.140"
 shell-words = "1.1.0"
-signal-hook = "0.3.17"
+signal-hook = "0.3.18"
 signal-hook-async-std = "0.3.0"
-termal = { version =  "2.1.1", features = ["image", "raw"] }
+termal = { version =  "3.0.0", features = ["image", "raw"] }
 thiserror = "2.0.12"
 unidecode = "0.3.0"
