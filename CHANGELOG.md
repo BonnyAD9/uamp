@@ -1,8 +1,10 @@
 # CHANGELOG
 
 ## future
+### Fixes
 - Add missing tab complete
 - Properly detect that uamp is already up to date.
+- Properly print error when message fails to send.
 
 ## v0.5.10
 ### New features

@@ -150,7 +150,7 @@ impl Instance {
                                 if e.kind()
                                     == std::io::ErrorKind::UnexpectedEof
                         ) => {}
-                Err(e) => eprintacln!("{e:?}"),
+                Err(e) => eprintacln!("{e}"),
                 Ok(MsgMessage::Error(e)) => {
                     eprintln!("{}", e.ctx);
                 }
