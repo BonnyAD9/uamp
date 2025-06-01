@@ -173,7 +173,7 @@ fi
 
 if [ -e "$_UAMP" ] && ! [ "$_FORCE" == yes ]; then
     error_out 'Uamp is already installed. Remove the binary at '"$_UAMP"' or
-retry with `--force`.'
+retry with `--force` or `FORCE_INSTALL=yes`.'
 fi
 
 echo "Creating temp directory..."
@@ -199,7 +199,7 @@ _GROOT=`pwd`
 echo "Checking out..."
 git fetch --tags
 if [ -z "$_TAG" ]; then
-    _TAG="`git describe --tag`"
+    _TAG="`git describe --tag --abbrev=0`"
 fi
 echo "checking out to $_ITALIC$_TAG$_RESET."
 $_GIT checkout "$_TAG"
