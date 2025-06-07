@@ -1,6 +1,9 @@
 # CHANGELOG
 
 ## future
+### New Features
+- Show next and previous tracks length.
+
 ### Fixes
 - Properly tab complete `update`.
 

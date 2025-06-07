@@ -92,11 +92,11 @@ pub fn playlist(info: &Info, color: bool) {
     /*
                                ----<< playlist >>----
 
-    1. Coldplay - Champion Of The World
-    2. Smash Mouth - Out of Sight
-    3. Alle Farben - Only Thing We Know
-    4. X Ambassadors - Eye Of The Storm
-    5. Imagine Dragons - Shots
+    1. Coldplay - Champion Of The World [3:25]
+    2. Smash Mouth - Out of Sight [2:07]
+    3. Alle Farben - Only Thing We Know [4:59]
+    4. X Ambassadors - Eye Of The Storm [0:54]
+    5. Imagine Dragons - Shots [9:56]
                                         ...
        */
 
@@ -220,9 +220,10 @@ fn print_playlist_song(song: &Song, idx: Option<usize>, color: bool) {
     let idx: Cow<str> = idx.map_or("".into(), |i| format!("{i}.").into());
     printmcln!(
         color,
-        "  {'gr}{idx} {'dc}{} {'gr}- {'dy}{}{'_}",
+        "  {'gr}{idx} {'dc}{} {'gr}- {'dy}{} {'bl}[{}]{'_}",
         song.artist(),
         song.title(),
+        duration_to_string(song.length(), true),
     );
 }
 
