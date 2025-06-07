@@ -1,5 +1,6 @@
 # TODO
-- Base for query.
+- Verbose pretty list.
+- Base for query (introduced with `,`).
 - TUI
 - Tag editor
 - Add manpage
