@@ -247,8 +247,8 @@ impl UampApp {
         let songs = query.clone_songs(
             &self.library,
             self.config.simple_sorting(),
-            self.library.iter(),
-        );
+            &self.player,
+        )?;
 
         msg.send(DataResponse::SongList(songs).into())
             .map_err(|e| e.prepend("Failed to send message."))

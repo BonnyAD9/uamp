@@ -21,7 +21,7 @@ pub enum Msg {
     /// Some simple messages.
     Control(ControlMsg),
     /// More complicated messages.
-    DataControl(DataControlMsg),
+    DataControl(Box<DataControlMsg>),
     /// Player messges handled by the player.
     Player(PlayerMsg),
     /// Dellegate the message.
@@ -43,7 +43,7 @@ impl UampApp {
         let mut res = match msg {
             Msg::PlaySong(msg) => self.play_event(msg)?,
             Msg::Control(msg) => self.control_event(ctrl, msg)?,
-            Msg::DataControl(msg) => self.data_control_event(ctrl, msg)?,
+            Msg::DataControl(msg) => self.data_control_event(ctrl, *msg)?,
             Msg::Player(msg) => self.player_event(msg),
             Msg::Delegate(d) => d.update(self, ctrl)?,
             Msg::Config(msg) => self.config_event(ctrl, msg)?,
@@ -74,6 +74,12 @@ impl From<ControlMsg> for Msg {
 
 impl From<DataControlMsg> for Msg {
     fn from(value: DataControlMsg) -> Self {
+        Self::DataControl(Box::new(value))
+    }
+}
+
+impl From<Box<DataControlMsg>> for Msg {
+    fn from(value: Box<DataControlMsg>) -> Self {
         Self::DataControl(value)
     }
 }

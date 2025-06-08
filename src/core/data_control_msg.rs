@@ -56,8 +56,8 @@ impl UampApp {
                 let songs = q.get_ids(
                     &self.library,
                     self.config.simple_sorting(),
-                    self.library.iter(),
-                );
+                    &self.player,
+                )?;
                 self.player.play_playlist(
                     &mut self.library,
                     songs.into(),
@@ -68,8 +68,8 @@ impl UampApp {
                 let songs = q.get_ids(
                     &self.library,
                     self.config.simple_sorting(),
-                    self.library.iter(),
-                );
+                    &self.player,
+                )?;
                 self.player.push_playlist(
                     &mut self.library,
                     songs.into(),
@@ -80,24 +80,24 @@ impl UampApp {
                 let songs = q.get_ids(
                     &self.library,
                     self.config.simple_sorting(),
-                    self.library.iter(),
-                );
+                    &self.player,
+                )?;
                 self.player.push_with_cur(songs.into());
             }
             DataControlMsg::Queue(q) => {
                 let songs = q.get_ids(
                     &self.library,
                     self.config.simple_sorting(),
-                    self.library.iter(),
-                );
+                    &self.player,
+                )?;
                 self.player.playlist_mut().extend(songs);
             }
             DataControlMsg::PlayNext(q) => {
                 let songs = q.get_ids(
                     &self.library,
                     self.config.simple_sorting(),
-                    self.library.iter(),
-                );
+                    &self.player,
+                )?;
                 self.player.playlist_mut().play_next(songs);
             }
             DataControlMsg::Restart(exe) => {

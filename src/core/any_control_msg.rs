@@ -15,7 +15,7 @@ pub enum AnyControlMsg {
     /// [`ControlMsg`]
     Control(ControlMsg),
     /// [`DataControlMsg`]
-    Data(DataControlMsg),
+    Data(Box<DataControlMsg>),
 }
 
 impl FromStr for AnyControlMsg {
@@ -24,9 +24,8 @@ impl FromStr for AnyControlMsg {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match ControlMsg::from_str(s) {
             Ok(r) => Ok(AnyControlMsg::Control(r)),
-            Err(ArgError::UnknownArgument(_)) => {
-                DataControlMsg::from_str(s).map(AnyControlMsg::Data)
-            }
+            Err(ArgError::UnknownArgument(_)) => DataControlMsg::from_str(s)
+                .map(|a| AnyControlMsg::Data(Box::new(a))),
             Err(e) => Err(e),
         }
     }
@@ -51,6 +50,12 @@ impl From<ControlMsg> for AnyControlMsg {
 
 impl From<DataControlMsg> for AnyControlMsg {
     fn from(value: DataControlMsg) -> Self {
+        Self::Data(Box::new(value))
+    }
+}
+
+impl From<Box<DataControlMsg>> for AnyControlMsg {
+    fn from(value: Box<DataControlMsg>) -> Self {
         Self::Data(value)
     }
 }

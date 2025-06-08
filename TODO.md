@@ -1,5 +1,4 @@
 # TODO
-- Base for query (introduced with `,`).
 - Unique filter.
 - TUI
 - Tag editor

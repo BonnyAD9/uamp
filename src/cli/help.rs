@@ -82,6 +82,10 @@ pub fn help(args: &mut Pareg, res: &mut Args) {
                 print_query_help(res.props.color, formats_header);
                 formats_header = true;
             }
+            "base" => {
+                print_base_help(res.props.color, formats_header);
+                formats_header = true;
+            }
             "filter" => {
                 print_filter_help(res.props.color, formats_header);
                 formats_header = true;
@@ -332,6 +336,9 @@ fn print_help_help(color: bool) {
 
     {'r}query{'_}
       Help for {'w bold}query{'_} format.
+      
+    {'r}base{'_}
+      Help for the format of {'w bold}base{'_}.
 
     {'r}filter{'_}
       Help for {'w bold}filter{'_} format.
@@ -723,9 +730,43 @@ fn print_query_help(color: bool, header: bool) {
         color,
         "  {'w bold}query:{'_}
     Query is just combination of filter and order. It has the form:
-      {'gr}[{'bold}<filter>{'_bold}][@[{'bold}<order>{'_bold}]]{'_}
+      {'gr}[,{'bold}<base>{'_bold}@]\
+      [{'bold}<filter>{'_bold}]\
+      [@[{'bold}<order>{'_bold}]]{'_}
 
-    See `{'c}uamp {'b}h {'w bold}filter order{'_}` for more info.
+    See `{'c}uamp {'b}h {'w bold}base filter order{'_}` for more info.
+"
+    );
+}
+
+fn print_base_help(color: bool, header: bool) {
+    if !header {
+        print_formats_header(color);
+    }
+    
+    printmcln!(
+        color,
+        "  {'w bold}base:{'_}
+    Base is the the source of songs to query. It is basically comma separated
+    list of sources of the songs:
+      {'gr}[{'bold}<source> {'_bold}[, {'bold}<source>{'_bold} [, ...]]]{'_}
+
+    The source may be any of the following:
+      {'r}lib  library{'_}
+        All songs in the main library. This is the default.
+        
+      {'r}tmp  temporary{'_}
+        All temporary songs.
+        
+      {'r}all{'_}
+        All songs.
+        
+      {'r}none{'_}
+        No songs.
+        
+      {'w}<number>{'_}
+        Playlist with the given index from the playlist stack. 0 is the current
+        playlist, 1 is the playlist after that and so on.
 "
     );
 }

@@ -275,6 +275,9 @@ The available sections are:
 `query`
   Print help for query format.
 
+`base`
+  Print help for base format.
+
 `filter`
   Print help for filter format.
 
@@ -911,11 +914,34 @@ Prefix chars meaning:
 
 ### Format query
 
-[*filter*][`@`*order*]
+[`,`*base*][*filter*][`@`*order*]
 
-Query is just combination of *filter* and *order*. Song list will be first
-filtered by *filter* and than ordered by *order*. See *Format filter* and
-*Format order* for more info.
+Query is just combination of *base*, *filter* and *order*. Song list will be
+created from sources specified in *base*. This is by default all songs in the
+main library. Than the songs are filtered by *filter* and than ordered by
+*order*. See *Format base*, *Format filter* and *Format order* for more info.
+
+### Format base
+
+[*source* [`,` *source* [`,` ...]]]
+
+Base is just comma separated list of sources for songs. The sources may be:
+
+`lib`, `library`
+  All songs in the main library. This is the default.
+
+`tmp`, `temporary`
+  All temporary songs in the library.
+
+`all`
+  All songs in the library.
+
+`none`
+  No songs.
+
+*index*
+  Playlist from the playlist stack at the *index*. 0 is the current playlist, 1
+  is the next playlist and so on.
 
 ## FILES
 

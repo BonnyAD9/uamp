@@ -4,6 +4,7 @@
 ### New Features
 - Show next and previous tracks length.
 - Support verbose pretty list.
+- Add base to the query.
 
 ### Fixes
 - Properly tab complete `update`.

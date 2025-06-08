@@ -2,6 +2,8 @@ use std::mem;
 
 use pareg::ArgError;
 
+use crate::core::query::Base;
+
 use super::{
     ComposedFilter, Query, SongOrder,
     lexer::{Lexer, LexerState, Token},
@@ -16,11 +18,9 @@ impl<'a> Parser<'a> {
     pub fn parse_composed_filter(
         s: &'a str,
     ) -> Result<ComposedFilter, ArgError> {
-        Self {
-            lex: Lexer::new(s),
-            cur: None,
-        }
-        .parse_composed_filter_inner()
+        let mut lex = Lexer::new(s);
+        lex.state = LexerState::Filter;
+        Self { lex, cur: None }.parse_composed_filter_inner()
     }
 
     pub fn parse_query(s: &'a str) -> Result<Query, ArgError> {
@@ -50,16 +50,18 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_q(&mut self) -> Result<Query, ArgError> {
+        let bases = self.parse_bases()?;
+
         let filter = self.parse_comp_filter()?;
         if !matches!(self.cur()?, Some(Token::At)) {
-            return Ok(Query::new(filter, None));
+            return Ok(Query::new(bases, filter, None));
         }
 
         self.lex.state = LexerState::Order;
         self.next()?;
 
         if matches!(self.cur()?, Some(Token::At) | None) {
-            return Ok(Query::new(filter, None));
+            return Ok(Query::new(bases, filter, None));
         }
 
         let order = self.parse_order()?;
@@ -76,7 +78,38 @@ impl<'a> Parser<'a> {
 
         self.lex.state = LexerState::Filter;
 
-        Ok(Query::new(filter, Some(order)))
+        Ok(Query::new(bases, filter, Some(order)))
+    }
+
+    fn parse_bases(&mut self) -> Result<Vec<Base>, ArgError> {
+        self.cur()?;
+        if !matches!(self.cur, Some(Token::Comma)) {
+            self.lex.state = LexerState::Filter;
+            return Ok(vec![]);
+        }
+
+        self.lex.state = LexerState::Bases;
+        let mut res = vec![];
+
+        loop {
+            self.cur()?;
+            match self.cur.take() {
+                Some(Token::Comma) => continue,
+                Some(Token::Base(b)) => res.push(b),
+                Some(Token::At) | None => {
+                    self.lex.state = LexerState::Filter;
+                    break;
+                }
+                _ => {
+                    return self
+                        .err_unexpected_token()
+                        .inline_msg("Expected base.")
+                        .err();
+                }
+            }
+        }
+
+        Ok(res)
     }
 
     fn parse_order(&mut self) -> Result<SongOrder, ArgError> {

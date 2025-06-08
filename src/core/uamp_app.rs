@@ -367,7 +367,7 @@ impl UampApp {
                         || v.kind.is_create()
                         || v.kind.is_modify())
                 {
-                    Some(Msg::DataControl(DataControlMsg::Restart(Some(path))))
+                    Some(DataControlMsg::Restart(Some(path)).into())
                 } else {
                     None
                 };

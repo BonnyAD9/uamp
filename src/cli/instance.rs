@@ -136,9 +136,8 @@ impl Instance {
             let send_time = Instant::now();
             let restarting = matches!(
                 m,
-                MsgMessage::Control(AnyControlMsg::Data(
-                    DataControlMsg::Restart(_)
-                ))
+                MsgMessage::Control(AnyControlMsg::Data(ref d)) if
+                matches!(&**d, DataControlMsg::Restart(_))
             );
             let res = self.send_message(m);
             match res {

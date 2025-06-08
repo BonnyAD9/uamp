@@ -3,9 +3,11 @@ use std::{
     ops::Range,
 };
 
-use pareg::ArgError;
+use pareg::{ArgError, ArgInto};
 
 use pareg::Result;
+
+use crate::core::query::Base;
 
 use super::{Filter, SongOrder};
 
@@ -13,7 +15,9 @@ use super::{Filter, SongOrder};
 pub enum Token {
     Order(SongOrder),
     Filter(Filter),
+    Base(Base),
     And,   // .
+    Comma, // ,
     Or,    // +
     Open,  // [, {
     Close, // ], }
@@ -21,6 +25,8 @@ pub enum Token {
 }
 
 pub enum LexerState {
+    Initial,
+    Bases,
     Filter,
     Order,
 }
@@ -42,7 +48,7 @@ impl<'a> Lexer<'a> {
             last_span: 0..0,
             data: s,
             buf: String::new(),
-            state: LexerState::Filter,
+            state: LexerState::Initial,
         }
     }
 
@@ -55,6 +61,8 @@ impl<'a> Lexer<'a> {
 
         self.last_span.start = self.original.len() - self.data.len();
         let res = match self.state {
+            LexerState::Initial => self.next_initial(),
+            LexerState::Bases => self.next_bases(),
             LexerState::Filter => self.next_filter(),
             LexerState::Order => self.next_order(),
         };
@@ -76,6 +84,37 @@ impl<'a> Lexer<'a> {
 
     pub fn original(&self) -> &'a str {
         self.original
+    }
+
+    fn next_initial(&mut self) -> Result<Option<Token>> {
+        if self.data.starts_with(',') {
+            self.next_bases()
+        } else {
+            self.next_filter()
+        }
+    }
+
+    fn next_bases(&mut self) -> Result<Option<Token>> {
+        let (i, c) = self
+            .data
+            .char_indices()
+            .find(|(_, c)| matches!(c, '@' | ','))
+            .unwrap_or((self.data.len(), 'e'));
+
+        if i == 0 {
+            self.consume(1);
+            return match c {
+                '@' => Ok(Some(Token::At)),
+                ',' => Ok(Some(Token::Comma)),
+                'e' => Ok(None),
+                _ => unreachable!(),
+            };
+        }
+
+        let res = Token::Base(self.map_err(self.data[..i].arg_into())?);
+        self.consume(i);
+
+        Ok(Some(res))
     }
 
     fn next_order(&mut self) -> Result<Option<Token>> {
@@ -241,11 +280,13 @@ impl Display for Token {
         match self {
             Token::Order(order) => write!(f, "Order({order})"),
             Token::Filter(filter) => write!(f, "Filter({filter})"),
+            Token::Base(b) => write!(f, "Base({b})"),
             Token::And => f.write_str("."),
             Token::Or => f.write_str("+"),
             Token::Open => f.write_str("{"),
             Token::Close => f.write_str("}"),
             Token::At => f.write_char('@'),
+            Token::Comma => f.write_char(','),
         }
     }
 }

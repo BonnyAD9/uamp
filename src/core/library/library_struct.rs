@@ -81,6 +81,12 @@ impl Library {
             .filter(|s| !self[s].is_deleted())
     }
 
+    pub fn iter_tmp(&self) -> impl Iterator<Item = SongId> + '_ {
+        (0..self.tmp_songs().len())
+            .map(SongId::tmp)
+            .filter(|s| !self[s].is_deleted())
+    }
+
     /// Creates clone of the library. (Works as lazily as possible)
     pub fn clone(&mut self) -> Self {
         Self {

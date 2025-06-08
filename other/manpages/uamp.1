@@ -293,6 +293,9 @@ Print help for port format.
 \fB\fCquery\fR
 Print help for query format.
 .TP
+\fB\fCbase\fR
+Print help for base format.
+.TP
 \fB\fCfilter\fR
 Print help for filter format.
 .TP
@@ -960,11 +963,33 @@ Use complex sorting.
 Use simple sorting.
 .SS Format query
 .PP
-[\fIfilter\fP][\fB\fC@\fR\fIorder\fP]
+[\fB\fC,\fR\fIbase\fP][\fIfilter\fP][\fB\fC@\fR\fIorder\fP]
 .PP
-Query is just combination of \fIfilter\fP and \fIorder\fP\&. Song list will be first
-filtered by \fIfilter\fP and than ordered by \fIorder\fP\&. See \fIFormat filter\fP and
-\fIFormat order\fP for more info.
+Query is just combination of \fIbase\fP, \fIfilter\fP and \fIorder\fP\&. Song list will be
+created from sources specified in \fIbase\fP\&. This is by default all songs in the
+main library. Than the songs are filtered by \fIfilter\fP and than ordered by
+\fIorder\fP\&. See \fIFormat base\fP, \fIFormat filter\fP and \fIFormat order\fP for more info.
+.SS Format base
+.PP
+[\fIsource\fP [\fB\fC,\fR \fIsource\fP [\fB\fC,\fR ...]]]
+.PP
+Base is just comma separated list of sources for songs. The sources may be:
+.TP
+\fB\fClib\fR, \fB\fClibrary\fR
+All songs in the main library. This is the default.
+.TP
+\fB\fCtmp\fR, \fB\fCtemporary\fR
+All temporary songs in the library.
+.TP
+\fB\fCall\fR
+All songs in the library.
+.TP
+\fB\fCnone\fR
+No songs.
+.TP
+\fIindex\fP
+Playlist from the playlist stack at the \fIindex\fP\&. 0 is the current playlist, 1
+is the next playlist and so on.
 .SH FILES
 .TP
 \fI~/.config/uamp/config.json\fP
