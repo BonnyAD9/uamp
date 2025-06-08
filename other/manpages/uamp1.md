@@ -313,6 +313,11 @@ These are options available for instance:
   same values as `--address` in the core options. If not specified, address
   from the core options will be used.
 
+`-v`*verbosity*, `--verbose`
+  Set the verbosity. The default verbosity is `0`. If this is present without
+  specific verbosity, it will be set to `1`. The verbosity may also be set to
+  any positive or negative integer (in the range of 32 bit signed integer).
+
 These are instance messages:
 
 `nfo`[`=`[`-`*before*]..[*after*]], `info`[`=`[`-`*before*]..[*after*]]
@@ -338,6 +343,8 @@ These are instance messages:
 `l`[`=`*query*], `list`[`=`*query*], `query`[`=`*query*]
   Search in all songs managed by running instance of uamp. *query* specifies
   filter for the songs and their order. See *Format query* for more info.
+  
+  The amount of printed information is affected by verbosity.
 
 `p`[`=`*audio-file*], `play`[`=`*audio-file*]
   Load the audio file given by *audio-file* as temporary song into uamp and

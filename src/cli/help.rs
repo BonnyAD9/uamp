@@ -361,6 +361,12 @@ fn print_instance_help(color: bool) {
   {'y}-a  --address {'w}<address>{'_}
     Sets address of the server of the instance.
 
+  {'y}--verbose
+  -v{'gr}[verbosity]{'_}
+    Set the verbosity. The default verbosity is 0. If this argument is present
+    without specific verbosity the verbosity is set to 1. You may also specify
+    any other (positive or negative) verbosity.
+
 {'g}Instance messages:{'_}
   Any {'g}control message{'_} (See `{'c}uamp {'b}h {'g}cmsg{'_}`) or:
 
@@ -374,7 +380,8 @@ fn print_instance_help(color: bool) {
     Same as {'r}info{'_} but will also clear the screen before printing.
 
   {'r}query  list  l{'gr}[={'bold}<query>{'_bold}]{'_}
-    Print all songs that pass the query. Without value, lists all songs. See
+    Print all songs that pass the query. Without value, lists all songs. The
+    amount of printed information is affected by verbosity. See
     `{'c}uamp {'b}h {'w bold}query{'_}` for more info.
 
   {'r}play p{'w}=<file path>{'_}

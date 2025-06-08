@@ -126,7 +126,7 @@ impl TabComplete {
             TabMode::Port => port_args(conf, &self.cur, p),
             TabMode::Color => color_args(conf, &self.cur, p),
             TabMode::Print => print_args(conf, &self.cur, p),
-            TabMode::UpdateRemote => {},
+            TabMode::UpdateRemote => {}
             TabMode::UpdateMode => update_mode_args(conf, &self.cur, p),
             TabMode::None => {}
         }

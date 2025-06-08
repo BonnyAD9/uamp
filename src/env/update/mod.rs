@@ -43,7 +43,7 @@ pub fn try_update(remote: &str, mode: &Mode, manpages: bool) -> Result<bool> {
     println!(
         "Current version is {}. It will be updated to {}-{}",
         config::VERSION_STR,
-        v.1.as_ref().map(|a| a.as_str()).unwrap_or_default(),
+        v.1.as_deref().unwrap_or_default(),
         v.0
     );
 

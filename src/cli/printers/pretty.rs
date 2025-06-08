@@ -8,6 +8,7 @@ use itertools::Itertools;
 use termal::{codes, formatmc, printmc, printmcln, raw::term_size};
 
 use crate::{
+    cli::Props,
     core::{
         config::{CacheSize, Config},
         library::Song,
@@ -157,17 +158,31 @@ pub fn footer(info: &Info, color: bool) {
     printmcln!(color, "{'gr}uamp{: >76}{'_}", info.version());
 }
 
-pub fn song_list(songs: &[Song], color: bool, send_time: Instant) {
+pub fn song_list(songs: &[Song], props: &Props, send_time: Instant) {
+    if props.verbosity >= 1 {
+        verbose_song_list(songs, props.color, send_time);
+    } else {
+        compact_song_list(songs, props.color, send_time);
+    }
+}
+
+pub fn compact_song_list(songs: &[Song], color: bool, send_time: Instant) {
     printmcln!(
         color,
-        "{'bold y}{:<30} {'c}{:<20} {'m}{:28}{'_}",
-        "Title",
-        "Artist",
-        "Album"
+        "{'bold u y}{:<30} {'c}{:<20} {'m}{:28}{'_}",
+        "TITLE",
+        "ARTIST",
+        "ALBUM"
     );
     let mut total_dur = Duration::ZERO;
-    for s in songs {
+    for s in &songs[..songs.len().saturating_sub(1)] {
         total_dur += s.length();
+        print_song(s, color);
+    }
+
+    if let Some(s) = songs.last() {
+        total_dur += s.length();
+        printmc!(color, "{'u uc8}");
         print_song(s, color);
     }
 
@@ -175,7 +190,34 @@ pub fn song_list(songs: &[Song], color: bool, send_time: Instant) {
 
     printmcln!(
         color,
-        "{'gr}{} songs ({}) in {:.4} s",
+        "{'gr ol}{} songs ({}) in {:.4} s{'_}",
+        songs.len(),
+        duration_to_string(total_dur, true),
+        elapsed.as_secs_f32(),
+    );
+}
+
+pub fn verbose_song_list(songs: &[Song], color: bool, send_time: Instant) {
+    printmcln!(
+        color,
+        "{'bold u y}{:<45} {'c}{:<35} {'m}{:<7} {'g}{:<10}{'_}",
+        "TITLE / ARTIST",
+        "ALBUM / YEAR",
+        "T / D",
+        "LEN / GEN"
+    );
+
+    let mut total_dur = Duration::ZERO;
+    for s in songs {
+        total_dur += s.length();
+        verbose_print_song(s, color);
+    }
+
+    let elapsed = Instant::now() - send_time;
+
+    printmcln!(
+        color,
+        "{'gr}{} songs ({}) in {:.4} s {'_}",
         songs.len(),
         duration_to_string(total_dur, true),
         elapsed.as_secs_f32(),
@@ -183,12 +225,34 @@ pub fn song_list(songs: &[Song], color: bool, send_time: Instant) {
 }
 
 fn print_song(s: &Song, color: bool) {
-    printmc!(color, "{'dy}");
+    printmc!(color, "{'y}");
     print_elipsised(s.title(), 30);
-    printmc!(color, " {'dc}");
+    printmc!(color, " {'c}");
     print_elipsised(s.artist(), 20);
-    printmc!(color, " {'dm}");
+    printmc!(color, " {'m}");
     print_elipsised(s.album(), 28);
+    printmcln!(color, "{'_}");
+}
+
+fn verbose_print_song(s: &Song, color: bool) {
+    printmc!(color, "{'y}");
+    print_elipsised(s.title(), 45);
+    printmc!(color, " {'c}");
+    print_elipsised(s.album(), 35);
+    printmc!(color, " {'m}");
+    print_elipsised(&s.track_str(), 7);
+    printmc!(color, " {'g}");
+    print_elipsised(&duration_to_string(s.length(), true), 10);
+    printmcln!(color, "{'_}");
+
+    printmc!(color, "{'u uc8 dy} ");
+    print_elipsised(s.artist(), 44);
+    printmc!(color, " {'dc} ");
+    print_elipsised(&s.year_str(), 34);
+    printmc!(color, " {'dm} ");
+    print_elipsised(&s.disc_str(), 6);
+    printmc!(color, " {'dg} ");
+    print_elipsised(s.genre(), 9);
     printmcln!(color, "{'_}");
 }
 

@@ -333,6 +333,11 @@ options will be used.
 Sets address for communication with running uamp instance. This may have the
 same values as \fB\fC\-\-address\fR in the core options. If not specified, address
 from the core options will be used.
+.TP
+\fB\fC\-v\fR\fIverbosity\fP, \fB\fC\-\-verbose\fR
+Set the verbosity. The default verbosity is \fB\fC0\fR\&. If this is present without
+specific verbosity, it will be set to \fB\fC1\fR\&. The verbosity may also be set to
+any positive or negative integer (in the range of 32 bit signed integer).
 .PP
 These are instance messages:
 .TP
@@ -363,6 +368,8 @@ while uamp i show; do sleep 1; done
 \fB\fCl\fR[\fB\fC=\fR\fIquery\fP], \fB\fClist\fR[\fB\fC=\fR\fIquery\fP], \fB\fCquery\fR[\fB\fC=\fR\fIquery\fP]
 Search in all songs managed by running instance of uamp. \fIquery\fP specifies
 filter for the songs and their order. See \fIFormat query\fP for more info.
+.IP
+The amount of printed information is affected by verbosity.
 .TP
 \fB\fCp\fR[\fB\fC=\fR\fIaudio\-file\fP], \fB\fCplay\fR[\fB\fC=\fR\fIaudio\-file\fP]
 Load the audio file given by \fIaudio\-file\fP as temporary song into uamp and

@@ -281,6 +281,14 @@ impl Song {
         self.year
     }
 
+    pub fn year_str(&self) -> String {
+        if self.year == i32::MAX {
+            "-".to_owned()
+        } else {
+            self.year.to_string()
+        }
+    }
+
     /// Gets the playback length of the song.
     pub fn length(&self) -> Duration {
         self.length

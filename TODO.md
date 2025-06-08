@@ -1,6 +1,6 @@
 # TODO
-- Verbose pretty list.
 - Base for query (introduced with `,`).
+- Unique filter.
 - TUI
 - Tag editor
 - Add manpage

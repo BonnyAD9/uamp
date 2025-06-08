@@ -1,4 +1,7 @@
-use std::io::{self, IsTerminal};
+use std::{
+    borrow::Cow,
+    io::{self, IsTerminal},
+};
 
 use super::printers::PrintStyle;
 
@@ -10,6 +13,18 @@ pub struct Props {
     pub print_style: PrintStyle,
     /// Verbosity. 0 is default, negative is less, positive is more.
     pub verbosity: i32,
+}
+
+impl Props {
+    pub fn with_verbosity(&self, v: Option<i32>) -> Cow<'_, Self> {
+        if let Some(v) = v {
+            let mut res = self.clone();
+            res.verbosity = v;
+            Cow::Owned(res)
+        } else {
+            Cow::Borrowed(self)
+        }
+    }
 }
 
 impl Default for Props {

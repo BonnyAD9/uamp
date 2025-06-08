@@ -3,6 +3,7 @@
 ## future
 ### New Features
 - Show next and previous tracks length.
+- Support verbose pretty list.
 
 ### Fixes
 - Properly tab complete `update`.

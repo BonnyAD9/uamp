@@ -2,7 +2,10 @@ use std::{fmt::Debug, time::Instant};
 
 use pareg::FromArg;
 
-use crate::core::{config::Config, library::Song, messenger::Info};
+use crate::{
+    cli::Props,
+    core::{config::Config, library::Song, messenger::Info},
+};
 
 use super::{debug, json, pretty};
 
@@ -23,9 +26,14 @@ impl PrintStyle {
         }
     }
 
-    pub fn song_list(&self, songs: &[Song], color: bool, send_time: Instant) {
+    pub fn song_list(
+        &self,
+        songs: &[Song],
+        props: &Props,
+        send_time: Instant,
+    ) {
         match self {
-            PrintStyle::Pretty => pretty::song_list(songs, color, send_time),
+            PrintStyle::Pretty => pretty::song_list(songs, props, send_time),
             PrintStyle::Debug => debug::song_list(songs, send_time),
             PrintStyle::Json => json::song_list(songs, send_time),
         }

@@ -6,7 +6,7 @@ use std::{
 };
 
 use log::error;
-use pareg::{Pareg, has_any_key};
+use pareg::{Pareg, has_any_key, parse_arg};
 use termal::eprintacln;
 
 use crate::core::{
@@ -32,6 +32,8 @@ pub struct Instance {
     pub port: Option<u16>,
     /// Server address of the running instance.
     pub server: Option<String>,
+    /// Verbosity override for this actoin
+    verbosity: Option<i32>,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
@@ -102,6 +104,11 @@ impl Instance {
                     self.port = Some(args.next_arg::<Port>()?.0)
                 }
                 "-a" | "--address" => self.server = Some(args.next_arg()?),
+                "-v" | "--verbose" => self.verbosity = Some(1),
+                v if v.starts_with("-v") => {
+                    self.verbosity =
+                        Some(args.cur_manual(|a| parse_arg(&a[2..]))?);
+                }
                 "--" => break,
                 _ => self.messages.push((
                     MsgMessage::Control(args.cur_arg()?),
@@ -137,7 +144,7 @@ impl Instance {
             match res {
                 Ok(MsgMessage::Success) => {}
                 Ok(MsgMessage::Data(d)) => {
-                    Self::print_data(d, conf, props, send_time, i);
+                    self.print_data(d, conf, props, send_time, i);
                 }
                 // When restarting, the restarted uamp will not answer and this
                 // error will occur. This is expected so we don't want to alert
@@ -196,6 +203,7 @@ impl Instance {
     }
 
     fn print_data(
+        &self,
         data: DataResponse,
         conf: &Config,
         props: &Props,
@@ -209,9 +217,11 @@ impl Instance {
                 props.color,
                 intention == Intention::Clear,
             ),
-            DataResponse::SongList(songs) => {
-                props.print_style.song_list(&songs, props.color, send_time)
-            }
+            DataResponse::SongList(songs) => props.print_style.song_list(
+                &songs,
+                &props.with_verbosity(self.verbosity),
+                send_time,
+            ),
         }
     }
 }
