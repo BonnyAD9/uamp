@@ -4,6 +4,7 @@ mod filter;
 mod lexer;
 mod order;
 mod parser;
+mod unique;
 
 //===========================================================================//
 //                                   Public                                  //
@@ -16,7 +17,7 @@ use pareg::{ArgError, FromArgStr};
 use parser::Parser;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{Result, player::Player};
+use crate::core::{Result, player::Player, query::unique::Unique};
 
 pub use self::{base::*, composed_filter::*, filter::*, order::*};
 
@@ -27,6 +28,7 @@ pub struct Query {
     bases: Vec<Base>,
     filter: ComposedFilter,
     sort: Option<SongOrder>,
+    unique: Option<Unique>,
 }
 
 impl Query {
@@ -34,11 +36,13 @@ impl Query {
         bases: Vec<Base>,
         filter: ComposedFilter,
         sort: Option<SongOrder>,
+        unique: Option<Unique>,
     ) -> Self {
         Self {
             bases,
             filter,
             sort,
+            unique,
         }
     }
 
@@ -47,6 +51,7 @@ impl Query {
             vec![],
             ComposedFilter::Filter(Filter::any()),
             Some(SongOrder::rng()),
+            None,
         )
     }
 
@@ -77,6 +82,10 @@ impl Query {
             s.sort(lib, &mut res[..], simple, None);
         }
 
+        if let Some(u) = self.unique {
+            u.filter_id(&mut res, lib);
+        }
+
         Ok(res)
     }
 
@@ -86,11 +95,14 @@ impl Query {
         simple: bool,
         player: &Player,
     ) -> Result<Vec<Song>> {
-        let res = self
+        let mut res = self
             .get_ids(lib, simple, player)?
             .into_iter()
             .map(|a| lib[a].clone())
             .collect_vec();
+        if let Some(u) = self.unique {
+            u.filter_song(&mut res);
+        }
         Ok(res)
     }
 }

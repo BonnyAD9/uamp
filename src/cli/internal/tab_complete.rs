@@ -332,6 +332,7 @@ const INSTANCE_ARG: &[&[&str]] = &[
     &["-h", "-?", "--help"],
     &["-p", "--port"],
     &["-a", "--address"],
+    &["-v", "--verbose"],
     &["--"],
     // ANY_CONTROL_MSG
 ];

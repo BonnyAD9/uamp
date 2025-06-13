@@ -3,11 +3,11 @@ use std::{
     ops::Range,
 };
 
-use pareg::{ArgError, ArgInto};
+use pareg::{ArgError, ArgInto, FromArg};
 
 use pareg::Result;
 
-use crate::core::query::Base;
+use crate::core::query::{Base, unique::Unique};
 
 use super::{Filter, SongOrder};
 
@@ -16,6 +16,7 @@ pub enum Token {
     Order(SongOrder),
     Filter(Filter),
     Base(Base),
+    Unique(Unique),
     And,   // .
     Comma, // ,
     Or,    // +
@@ -29,6 +30,7 @@ pub enum LexerState {
     Bases,
     Filter,
     Order,
+    Unique,
 }
 
 pub struct Lexer<'a> {
@@ -65,6 +67,7 @@ impl<'a> Lexer<'a> {
             LexerState::Bases => self.next_bases(),
             LexerState::Filter => self.next_filter(),
             LexerState::Order => self.next_order(),
+            LexerState::Unique => self.next_unique(),
         };
         self.last_span.end = self.original.len() - self.data.len();
         res
@@ -133,6 +136,12 @@ impl<'a> Lexer<'a> {
         let res = Token::Order(self.map_err(self.data[..i].parse())?);
         self.consume(i);
         Ok(Some(res))
+    }
+
+    fn next_unique(&mut self) -> Result<Option<Token>> {
+        let res = self.map_err(Unique::from_arg(self.data))?;
+        self.consume(self.data.len());
+        Ok(Some(Token::Unique(res)))
     }
 
     fn next_filter(&mut self) -> Result<Option<Token>> {
@@ -281,6 +290,7 @@ impl Display for Token {
             Token::Order(order) => write!(f, "Order({order})"),
             Token::Filter(filter) => write!(f, "Filter({filter})"),
             Token::Base(b) => write!(f, "Base({b})"),
+            Token::Unique(u) => write!(f, "Unique({u:?})"),
             Token::And => f.write_str("."),
             Token::Or => f.write_str("+"),
             Token::Open => f.write_str("{"),

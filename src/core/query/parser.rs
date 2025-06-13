@@ -54,31 +54,45 @@ impl<'a> Parser<'a> {
 
         let filter = self.parse_comp_filter()?;
         if !matches!(self.cur()?, Some(Token::At)) {
-            return Ok(Query::new(bases, filter, None));
+            return Ok(Query::new(bases, filter, None, None));
         }
 
         self.lex.state = LexerState::Order;
         self.next()?;
 
-        if matches!(self.cur()?, Some(Token::At) | None) {
-            return Ok(Query::new(bases, filter, None));
+        let order = if !matches!(self.cur()?, Some(Token::At) | None) {
+            Some(self.parse_order()?)
+        } else {
+            None
+        };
+
+        if !matches!(self.cur()?, Some(Token::At) | None) {
+            return self
+                .err_unused_input()
+                .hint("Maybe you are missing `@`.")
+                .err();
         }
 
-        let order = self.parse_order()?;
+        self.lex.state = LexerState::Unique;
 
-        match self.cur()? {
-            Some(Token::At) | None => {}
-            Some(_) => {
-                return self
-                    .err_unused_input()
-                    .hint("Maybe you are missing `@`.")
-                    .err();
-            }
+        self.next()?;
+
+        if self.cur()?.is_none() {
+            return Ok(Query::new(bases, filter, order, None));
         }
 
-        self.lex.state = LexerState::Filter;
+        let Some(Token::Unique(unique)) = self.cur.take() else {
+            return self
+                .err_unexpected_token()
+                .hint("Expected unique specifier.")
+                .err();
+        };
 
-        Ok(Query::new(bases, filter, Some(order)))
+        if self.next()?.is_some() {
+            return self.err_unused_input().err();
+        }
+
+        Ok(Query::new(bases, filter, order, Some(unique)))
     }
 
     fn parse_bases(&mut self) -> Result<Vec<Base>, ArgError> {

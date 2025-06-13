@@ -1,5 +1,6 @@
 # TODO
-- Unique filter.
+- Write documentation for unique filter (help, man)
+- Custom format for listing songs.
 - TUI
 - Tag editor
 - Add manpage

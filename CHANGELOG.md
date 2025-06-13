@@ -5,6 +5,7 @@
 - Show next and previous tracks length.
 - Support verbose pretty list.
 - Add base to the query.
+- Add option to have songs unique by something in query.
 
 ### Fixes
 - Properly tab complete `update`.

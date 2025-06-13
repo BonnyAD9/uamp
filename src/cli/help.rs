@@ -743,7 +743,7 @@ fn print_base_help(color: bool, header: bool) {
     if !header {
         print_formats_header(color);
     }
-    
+
     printmcln!(
         color,
         "  {'w bold}base:{'_}
