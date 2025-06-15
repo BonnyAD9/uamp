@@ -12,7 +12,7 @@ use crate::core::library::{Library, Song, SongId};
 
 #[derive(Debug, Copy, Clone, FromArg, Serialize, Deserialize)]
 pub enum Unique {
-    #[arg("id" | "path")]
+    #[arg("id" | "path" | "unique" | "u")]
     Songs,
     #[arg("n" | "tit" | "name")]
     Title,

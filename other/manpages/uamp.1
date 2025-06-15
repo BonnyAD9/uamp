@@ -301,6 +301,9 @@ Print help for filter format.
 .TP
 \fB\fCorder\fR
 Print help for order format.
+.TP
+\fB\fCunique\fR
+Print help for unique format.
 .SS Action \fB\fCinstance\fR
 .PP
 \fB\fCinstance\fR [\fB\fC\-h\fR] [\fB\fC\-p\fR \fIport\fP] [\fB\fC\-a\fR \fIaddress\fP] \fIinstance\-message\fP ...
@@ -963,12 +966,13 @@ Use complex sorting.
 Use simple sorting.
 .SS Format query
 .PP
-[\fB\fC,\fR\fIbase\fP][\fIfilter\fP][\fB\fC@\fR\fIorder\fP]
+[\fB\fC,\fR\fIbase\fP][\fIfilter\fP][\fB\fC@\fR\fIorder\fP[\fB\fC@\fR\fIunique\fP]]
 .PP
-Query is just combination of \fIbase\fP, \fIfilter\fP and \fIorder\fP\&. Song list will be
-created from sources specified in \fIbase\fP\&. This is by default all songs in the
-main library. Than the songs are filtered by \fIfilter\fP and than ordered by
-\fIorder\fP\&. See \fIFormat base\fP, \fIFormat filter\fP and \fIFormat order\fP for more info.
+Query is just combination of \fIbase\fP, \fIfilter\fP, \fIorder\fP and \fIunique\fP\&. Song list
+will be created from sources specified in \fIbase\fP\&. This is by default all songs
+in the main library. Than the songs are filtered by \fIfilter\fP and than ordered
+by \fIorder\fP\&. See \fIFormat base\fP, \fIFormat filter\fP, \fIFormat order\fP and
+\fIFormat unique\fP for more info.
 .SS Format base
 .PP
 [\fIsource\fP [\fB\fC,\fR \fIsource\fP [\fB\fC,\fR ...]]]
@@ -990,6 +994,39 @@ No songs.
 \fIindex\fP
 Playlist from the playlist stack at the \fIindex\fP\&. 0 is the current playlist, 1
 is the next playlist and so on.
+.SS Format unique
+.PP
+\fIunique\fP
+.PP
+Specifies that all resulting songs mus have some property unique. Songs that
+would repeat this property will be removed. The property may be:
+.TP
+\fB\fCu\fR, \fB\fCunique\fR, \fB\fCid\fR, \fB\fCpath\fR, \fB\fCsongs\fR
+Each song is unique.
+.TP
+\fB\fCn\fR, \fB\fCtit\fR, \fB\fCtitle\fR, \fB\fCname\fR
+Each song title is unique.
+.TP
+\fB\fCp\fR, \fB\fCart\fR, \fB\fCartist\fR, \fB\fCperformer\fR, \fB\fCauth\fR, \fB\fCauthor\fR
+Each artist is unique.
+.TP
+\fB\fCa\fR, \fB\fCalb\fR, \fB\fCalbum\fR
+Each album name is unique.
+.TP
+\fB\fCt\fR, \fB\fCtrk\fR, \fB\fCtrack\fR, \fB\fCtrack\-number\fR
+Each track number is unique.
+.TP
+\fB\fCd\fR, \fB\fCdisc\fR
+Each disc number is unique.
+.TP
+\fB\fCy\fR, \fB\fCyear\fR
+Each year is unique.
+.TP
+\fB\fClen\fR, \fB\fClength\fR
+Each song length is unique.
+.TP
+\fB\fCg\fR, \fB\fCgenre\fR
+Each genre is uniuqe.
 .SH FILES
 .TP
 \fI~/.config/uamp/config.json\fP

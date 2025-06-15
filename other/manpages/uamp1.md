@@ -284,6 +284,9 @@ The available sections are:
 `order`
   Print help for order format.
 
+`unique`
+  Print help for unique format.
+
 ### Action `instance`
 
 `instance` [`-h`] [`-p` *port*] [`-a` *address*] *instance-message* ...
@@ -914,12 +917,13 @@ Prefix chars meaning:
 
 ### Format query
 
-[`,`*base*][*filter*][`@`*order*]
+[`,`*base*][*filter*][`@`*order*[`@`*unique*]]
 
-Query is just combination of *base*, *filter* and *order*. Song list will be
-created from sources specified in *base*. This is by default all songs in the
-main library. Than the songs are filtered by *filter* and than ordered by
-*order*. See *Format base*, *Format filter* and *Format order* for more info.
+Query is just combination of *base*, *filter*, *order* and *unique*. Song list
+will be created from sources specified in *base*. This is by default all songs
+in the main library. Than the songs are filtered by *filter* and than ordered
+by *order*. See *Format base*, *Format filter*, *Format order* and
+*Format unique* for more info.
 
 ### Format base
 
@@ -942,6 +946,40 @@ Base is just comma separated list of sources for songs. The sources may be:
 *index*
   Playlist from the playlist stack at the *index*. 0 is the current playlist, 1
   is the next playlist and so on.
+  
+### Format unique
+
+*unique*
+
+Specifies that all resulting songs mus have some property unique. Songs that
+would repeat this property will be removed. The property may be:
+
+`u`, `unique`, `id`, `path`, `songs`
+  Each song is unique.
+
+`n`, `tit`, `title`, `name`
+  Each song title is unique.
+
+`p`, `art`, `artist`, `performer`, `auth`, `author`
+  Each artist is unique.
+
+`a`, `alb`, `album`
+  Each album name is unique.
+
+`t`, `trk`, `track`, `track-number`
+  Each track number is unique.
+
+`d`, `disc`
+  Each disc number is unique.
+
+`y`, `year`
+  Each year is unique.
+
+`len`, `length`
+  Each song length is unique.
+
+`g`, `genre`
+  Each genre is uniuqe.
 
 ## FILES
 

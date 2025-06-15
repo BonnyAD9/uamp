@@ -94,6 +94,10 @@ pub fn help(args: &mut Pareg, res: &mut Args) {
                 print_order_help(res.props.color, formats_header);
                 formats_header = true;
             }
+            "unique" => {
+                print_unique_help(res.props.color, formats_header);
+                formats_header = true;
+            }
             "--" => break,
             a => eprintacln!("{'m}warning: {'_}Invalid help option {a}"),
         }
@@ -345,6 +349,9 @@ fn print_help_help(color: bool) {
 
     {'r}order{'_}
       Help for {'w bold}order{'_} format.
+      
+    {'r}unique{'_}
+      Help for {'w bold}unique{'_} format.
 ",
     );
 }
@@ -729,12 +736,13 @@ fn print_query_help(color: bool, header: bool) {
     printmcln!(
         color,
         "  {'w bold}query:{'_}
-    Query is just combination of filter and order. It has the form:
+    Query is just combination of base, filter, order and unique filter. It has
+    the form:
       {'gr}[,{'bold}<base>{'_bold}@]\
       [{'bold}<filter>{'_bold}]\
-      [@[{'bold}<order>{'_bold}]]{'_}
+      [@[{'bold}<order>{'_bold}][@{'bold}<unique>{'_bold}]]{'_}
 
-    See `{'c}uamp {'b}h {'w bold}base filter order{'_}` for more info.
+    See `{'c}uamp {'b}h {'w bold}base filter order unique{'_}` for more info.
 "
     );
 }
@@ -786,22 +794,22 @@ fn print_filter_help(color: bool, header: bool) {
       {'r}none{'_}
         No songs pass this filter.
 
-      {'r}s an  any-name{'w}:<pattern>{'_}
+      {'r}s  an  any-name{'w}:<pattern>{'_}
         Matches all songs where either title, artist or album matches.
 
-      {'r}n tit  title  name{'w}:<pattern>{'_}
+      {'r}n  tit  title  name{'w}:<pattern>{'_}
         Matches all songs where title matches.
 
-      {'r}p art  artist  performer  auth  author{'w}:<pattern>{'_}
+      {'r}p  art  artist  performer  auth  author{'w}:<pattern>{'_}
         Matches all songs where the performer name matches.
 
-      {'r}a alb  album{'w}:<pattern>{'_}
+      {'r}a  alb  album{'w}:<pattern>{'_}
         Matches all songs where the album name matches.
 
-      {'r}t trk  track  track-number{'w}:<uint>{'_}
+      {'r}t  trk  track  track-number{'w}:<uint>{'_}
         Matches all songs with the given track number.
 
-      {'r}d disc{'w}:<uint>{'_}
+      {'r}d  disc{'w}:<uint>{'_}
         Matches all songs with the given disc number. {'w}0{'_} means no disc
         number.
 
@@ -865,28 +873,28 @@ fn print_order_help(color: bool, header: bool) {
       {'r}path{'_}
         Sort by the song path.
 
-      {'r}n tit  title  name{'_}
+      {'r}n  tit  title  name{'_}
         Sort by the song title.
 
-      {'r}p art  artist  performer  auth  author{'_}
+      {'r}p  art  artist  performer  auth  author{'_}
         Sort by the artist.
 
-      {'r}a alb  album{'_}
+      {'r}a  alb  album{'_}
         Sort by the album name.
 
-      {'r}t trk  track  track-number{'_}
+      {'r}t  trk  track  track-number{'_}
         Sort by the track number.
 
-      {'r}d disc{'_}
+      {'r}d  disc{'_}
         Sort by the disc number.
 
-      {'r}y year  date{'_}
+      {'r}y  year  date{'_}
         Sort by the release date.
 
       {'r}len  length{'_}
         Sort by the length of the song.
 
-      {'r}g genre{'_}
+      {'r}g  genre{'_}
         Sort by the genre.
 
     You can alter the sorting with one of the following options (some
@@ -898,6 +906,46 @@ fn print_order_help(color: bool, header: bool) {
 
     If the complexity of the sorting is not set, it will use the default from
     settings.
+"
+    );
+}
+
+fn print_unique_help(color: bool, header: bool) {
+    if !header {
+        print_formats_header(color);
+    }
+
+    printmcln!(
+        color,
+        "  {'w bold}unique:{'_}
+    Specifies if the resulting songs should be filtered so that only unique
+    songs will remain. It is one of the following:
+      {'r}u  unique  id  path  songs{'_}
+        Each song is unique.
+
+      {'r}n  tit  title  name{'_}
+        Each song title is unique.
+
+      {'r}p  art  artist  performer  auth  author{'_}
+        Artists will be unique.
+
+      {'r}a  alb  album{'_}
+        Album names will be unique.
+
+      {'r}t trk  track  track-number{'_}
+        Track numbers will be unique.
+
+      {'r}d disc{'_}
+        Disc number will be unique.
+      
+      {'r}y  year  date{'_}
+        Years will be unique.
+
+      {'r}len  length{'_}
+        Song lengths will be unique.
+
+      {'r}g  genre{'_}
+        Genres will be unique.
 "
     );
 }

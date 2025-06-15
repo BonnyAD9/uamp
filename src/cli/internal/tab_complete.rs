@@ -351,8 +351,10 @@ const HELP_ARG: &[&[&str]] = &[
     &["format", "formats"],
     &["port"],
     &["query"],
+    &["base"],
     &["filter"],
     &["order"],
+    &["unique"],
     &["--"],
 ];
 
