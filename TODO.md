@@ -2,8 +2,6 @@
 - Custom format for listing songs.
 - TUI
 - Tag editor
-- Add manpage
-- AUR release
 - HTTP client
 - GUI
 - Images
