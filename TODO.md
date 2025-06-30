@@ -1,4 +1,5 @@
 # TODO
+- mpris player (https://crates.io/crates/mpris-server)
 - Custom format for listing songs.
 - TUI
 - Tag editor
