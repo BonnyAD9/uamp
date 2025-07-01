@@ -20,6 +20,9 @@ pub mod messenger;
 pub mod player;
 pub mod query;
 
+#[cfg(unix)]
+pub mod mpris;
+
 pub use self::{
     alias::*, any_control_msg::*, control_function::*, control_msg::*,
     data_control_msg::*, err::*, message_delegate::*, msg::*, play_msg::*,

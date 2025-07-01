@@ -3,7 +3,7 @@ use std::{fmt::Debug, mem};
 use futures::{
     Future,
     executor::block_on,
-    future::{BoxFuture, select_all},
+    future::{LocalBoxFuture, select_all},
 };
 
 //===========================================================================//
@@ -12,7 +12,7 @@ use futures::{
 
 /// Future that can produces message and may run again in its stream.
 type MsgStreamFuture<Msg> =
-    BoxFuture<'static, (Option<Box<dyn MsgStream<Msg>>>, Msg)>;
+    LocalBoxFuture<'static, (Option<Box<dyn MsgStream<Msg>>>, Msg)>;
 
 /// Asynchronous task that can generate messages.
 pub trait MsgStream<Msg> {
@@ -24,8 +24,8 @@ pub trait MsgStream<Msg> {
 #[derive(Debug)]
 pub struct MsgGen<T, Msg, F, Fut>
 where
-    F: Fn(T) -> Fut + Send + 'static,
-    Fut: Future<Output = (Option<T>, Msg)> + Send + 'static,
+    F: Fn(T) -> Fut + 'static,
+    Fut: Future<Output = (Option<T>, Msg)> + 'static,
     Msg: 'static,
     T: 'static,
 {
@@ -40,8 +40,8 @@ pub struct Streams<Msg> {
 
 impl<T, Msg, F, Fut> MsgGen<T, Msg, F, Fut>
 where
-    F: Fn(T) -> Fut + Send,
-    Fut: Future<Output = (Option<T>, Msg)> + Send + 'static,
+    F: Fn(T) -> Fut,
+    Fut: Future<Output = (Option<T>, Msg)> + 'static,
 {
     /// Creates new message generator.
     ///
@@ -54,9 +54,8 @@ where
 
 impl<T, Msg, F, Fut> MsgStream<Msg> for MsgGen<T, Msg, F, Fut>
 where
-    F: Fn(T) -> Fut + Send,
-    Fut: Future<Output = (Option<T>, Msg)> + Send,
-    T: Send,
+    F: Fn(T) -> Fut,
+    Fut: Future<Output = (Option<T>, Msg)>,
 {
     fn next_future(mut self: Box<Self>) -> MsgStreamFuture<Msg> {
         Box::pin(async move {

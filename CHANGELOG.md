@@ -1,6 +1,9 @@
 # CHANGELOG
 
 ## future
+### New features
+- Mpris support. On linux, OS will recognize uamp as running media player.
+
 ### Fixes
 - Fix issue where some images would accidentally use default background color
   in some terminals instead of the desired color.

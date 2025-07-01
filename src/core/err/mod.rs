@@ -74,6 +74,10 @@ pub enum Error {
     /// Error from reading image.
     #[error("{0}")]
     Image(Box<ErrCtx<image::ImageError>>),
+    /// Error from mpris
+    #[cfg(unix)]
+    #[error("{0}")]
+    Mpris(Box<ErrCtx<mpris_server::zbus::Error>>),
     /// Any other error.
     #[error("{0}")]
     Other(Box<ErrCtx<anyhow::Error>>),
@@ -299,3 +303,6 @@ impl_from!(
     anyhow::Error => Other,
     image::ImageError => Image,
 );
+
+#[cfg(unix)]
+impl_from!(mpris_server::zbus::Error => Mpris);

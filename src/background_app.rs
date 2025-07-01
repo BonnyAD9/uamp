@@ -1,6 +1,10 @@
+#[cfg(unix)]
+use futures::executor::block_on;
 use futures::{StreamExt, channel::mpsc};
 use log::{error, trace};
 
+#[cfg(unix)]
+use crate::core::{config, mpris::Mpris};
 use crate::{
     core::{AnyControlMsg, Msg, Result, UampApp, config::Config},
     env::{AppCtrl, Command, MsgGen, Streams, UniqueTasks},
@@ -20,10 +24,20 @@ pub fn run_background_app(
     let mut cmd_queue = vec![];
     let (sender, reciever) = mpsc::unbounded::<Msg>();
 
+    #[cfg(unix)]
+    let server = block_on(mpris_server::LocalServer::new(
+        config::APP_ID,
+        Mpris::new(sender.clone()),
+    ))?;
+
     let mut streams = Streams::new();
     streams.add(Box::new(MsgGen::new(reciever, |mut r| async {
         let msg = r.next().await.unwrap();
         (Some(r), msg)
+    })));
+    streams.add(Box::new(MsgGen::new(server.run(), |s| async {
+        s.await;
+        unreachable!()
     })));
 
     let mut tasks = UniqueTasks::new(sender.clone());
