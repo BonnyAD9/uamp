@@ -629,9 +629,9 @@ dependencies = [
 
 [[package]]
 name = "flexi_logger"
-version = "0.30.2"
+version = "0.31.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb03342077df16d5b1400d7bed00156882846d7a479ff61a6f10594bcc3423d8"
+checksum = "759bfa52db036a2db54f0b5f0ff164efa249b3014720459c5ea4198380c529bc"
 dependencies = [
  "chrono",
  "log",
@@ -1088,9 +1088,9 @@ checksum = "03087c2bad5e1034e8cace5926dec053fb3790248370865f5117a7d0213354c8"
 
 [[package]]
 name = "libc"
-version = "0.2.172"
+version = "0.2.174"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d750af042f7ef4f724306de029d18836c26c1765a54a6a3f094cbd23a7267ffa"
+checksum = "1171693293099992e19cddea4e8b849964e9846f4acee11b3948bcc337be8776"
 
 [[package]]
 name = "libfuzzer-sys"
@@ -1483,7 +1483,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.101",
- "termal",
+ "termal 3.0.1",
  "thiserror 2.0.12",
 ]
 
@@ -2281,8 +2281,18 @@ version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7e90830464520ccfbf09c1819eafb597f8aa99ef1ecc55604a860e51a90fb5d8"
 dependencies = [
- "termal_core",
- "termal_proc",
+ "termal_core 3.0.1",
+ "termal_proc 3.0.1",
+]
+
+[[package]]
+name = "termal"
+version = "4.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "426536ad952472225b88f682223cd0fd0cc891b1a5a456e4fd334075ef0125ee"
+dependencies = [
+ "termal_core 4.0.1",
+ "termal_proc 4.0.1",
 ]
 
 [[package]]
@@ -2290,6 +2300,20 @@ name = "termal_core"
 version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "47526a57105113377eee737f3ba620a3ba2ddc97b270714ab0c94c313e22e4e0"
+dependencies = [
+ "base64",
+ "litrs",
+ "minlin",
+ "place_macro",
+ "proc-macro2",
+ "thiserror 2.0.12",
+]
+
+[[package]]
+name = "termal_core"
+version = "4.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "12b01cd477bec50f6e46dba10cc376d82cbc4829dfbda47b0bb0e7f94fac0c0c"
 dependencies = [
  "base64",
  "bitflags 2.9.1",
@@ -2309,7 +2333,16 @@ version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5546374abdde10af71bf0833cdac2dec6ad3acbd86cd9297c61d399377dd447c"
 dependencies = [
- "termal_core",
+ "termal_core 3.0.1",
+]
+
+[[package]]
+name = "termal_proc"
+version = "4.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "070a1504d666837c9cad1ef473c9f5ddd3562eee9a20572061b2be5c580b5782"
+dependencies = [
+ "termal_core 4.0.1",
 ]
 
 [[package]]
@@ -2451,7 +2484,7 @@ dependencies = [
  "shell-words",
  "signal-hook",
  "signal-hook-async-std",
- "termal",
+ "termal 4.0.1",
  "thiserror 2.0.12",
  "unidecode",
 ]

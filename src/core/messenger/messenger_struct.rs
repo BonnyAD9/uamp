@@ -48,7 +48,7 @@ impl<'a> Messenger<'a> {
                 .msg("Failed to encode message for TCP.")
         })?;
         if let Err(e) = self.writer.flush() {
-            warn!("Failed to flush message: {}", e);
+            warn!("Failed to flush message: {e}");
         }
         Ok(())
     }

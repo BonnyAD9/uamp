@@ -92,7 +92,7 @@ impl Display for ControlFunction {
             }
         }));
 
-        write!(f, "{}", body)
+        write!(f, "{body}")
     }
 }
 

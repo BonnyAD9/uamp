@@ -52,16 +52,19 @@ pub fn now_playing(info: &Info, conf: &Config, color: bool, lmc: bool) {
     let vtop = info.vtop();
     let vbot = info.vbot();
     let volume = info.volume(color);
-    let img = (color && conf.client_image_lookup())
-        .then(|| info.image(conf))
-        .unwrap_or_default();
-    let clear = lmc
-        .then(|| {
-            codes::ERASE_ALL.to_string()
-                + codes::ERASE_SCREEN
-                + codes::move_to!(0, 0)
-        })
-        .unwrap_or_default();
+    let img = if color && conf.client_image_lookup() {
+        info.image(conf)
+    } else {
+        String::new()
+    };
+
+    let clear = if lmc {
+        codes::ERASE_ALL.to_string()
+            + codes::ERASE_SCREEN
+            + codes::move_to!(0, 0)
+    } else {
+        String::new()
+    };
 
     /*
                                   Out of Sight
