@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.5.12
 ### New Features
 - Show next and previous tracks length.
 - Support verbose pretty list.
