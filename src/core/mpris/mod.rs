@@ -3,7 +3,7 @@ mod msg;
 use std::{cell::RefCell, time::Duration};
 
 use futures::{
-    SinkExt, StreamExt,
+    StreamExt,
     channel::mpsc::{self, UnboundedReceiver, UnboundedSender},
 };
 use log::error;
@@ -34,19 +34,15 @@ impl Mpris {
         }
     }
 
-    async fn send_msg(&self, msg: Msg) -> fdo::Result<()> {
+    fn send_msg(&self, msg: Msg) -> fdo::Result<()> {
         self.osend
-            .clone()
-            .send(msg)
-            .await
+            .unbounded_send(msg)
             .map_err(|e| fdo::Error::Failed(e.to_string()))
     }
 
-    async fn send_zmsg(&self, msg: Msg) -> zbus::Result<()> {
+    fn send_zmsg(&self, msg: Msg) -> zbus::Result<()> {
         self.osend
-            .clone()
-            .send(msg)
-            .await
+            .unbounded_send(msg)
             .map_err(|e| zbus::Error::Failure(e.to_string()))
     }
 
@@ -77,7 +73,7 @@ impl Mpris {
                 Ok(vec![])
             },
         );
-        self.send_msg(delegate).await?;
+        self.send_msg(delegate)?;
         let MprisMsg::PlaybackStatus(status) = self.recv().await? else {
             return Err(fdo::Error::Failed(
                 "Failed to retrieve data.".to_string(),
@@ -133,7 +129,7 @@ impl Mpris {
                 Ok(vec![])
             },
         );
-        self.send_msg(delegate).await?;
+        self.send_msg(delegate)?;
         let MprisMsg::Metadata(metadata) = self.recv().await? else {
             return Err(fdo::Error::Failed(
                 "Failed to retrieve data.".to_string(),
@@ -154,7 +150,7 @@ impl Mpris {
                 Ok(vec![])
             },
         );
-        self.send_msg(delegate).await?;
+        self.send_msg(delegate)?;
         let MprisMsg::Volume(data) = self.recv().await? else {
             return Err(fdo::Error::Failed(
                 "Failed to retrieve data.".to_string(),
@@ -182,7 +178,7 @@ impl Mpris {
                 Ok(vec![])
             },
         );
-        self.send_msg(delegate).await?;
+        self.send_msg(delegate)?;
         let MprisMsg::Position(data) = self.recv().await? else {
             return Err(fdo::Error::Failed(
                 "Failed to retrieve data.".to_string(),
@@ -198,7 +194,7 @@ impl LocalRootInterface for Mpris {
     }
 
     async fn quit(&self) -> fdo::Result<()> {
-        self.send_msg(Msg::Control(ControlMsg::Close)).await
+        self.send_msg(Msg::Control(ControlMsg::Close))
     }
 
     async fn can_quit(&self) -> fdo::Result<bool> {
@@ -259,34 +255,28 @@ impl LocalRootInterface for Mpris {
 
 impl LocalPlayerInterface for Mpris {
     async fn next(&self) -> fdo::Result<()> {
-        self.send_msg(Msg::Control(ControlMsg::NextSong(1))).await
+        self.send_msg(Msg::Control(ControlMsg::NextSong(1)))
     }
 
     async fn previous(&self) -> fdo::Result<()> {
         self.send_msg(Msg::Control(ControlMsg::PrevSong(None)))
-            .await
     }
 
     async fn pause(&self) -> fdo::Result<()> {
         self.send_msg(Msg::Control(ControlMsg::PlayPause(Some(false))))
-            .await
     }
 
     async fn play_pause(&self) -> fdo::Result<()> {
         self.send_msg(Msg::Control(ControlMsg::PlayPause(None)))
-            .await
     }
 
     async fn stop(&self) -> fdo::Result<()> {
-        self.send_msg(Msg::Control(ControlMsg::PlayPause(Some(false))))
-            .await?;
+        self.send_msg(Msg::Control(ControlMsg::PlayPause(Some(false))))?;
         self.send_msg(Msg::Control(ControlMsg::SeekTo(Duration::ZERO)))
-            .await
     }
 
     async fn play(&self) -> fdo::Result<()> {
         self.send_msg(Msg::Control(ControlMsg::PlayPause(Some(true))))
-            .await
     }
 
     async fn seek(&self, offset: Time) -> fdo::Result<()> {
@@ -296,7 +286,7 @@ impl LocalPlayerInterface for Mpris {
         } else {
             ControlMsg::Rewind(dur)
         };
-        self.send_msg(Msg::Control(msg)).await
+        self.send_msg(Msg::Control(msg))
     }
 
     async fn set_position(
@@ -358,7 +348,6 @@ impl LocalPlayerInterface for Mpris {
 
     async fn set_volume(&self, volume: Volume) -> zbus::Result<()> {
         self.send_zmsg(Msg::Control(ControlMsg::SetVolume(volume as f32)))
-            .await
     }
 
     async fn position(&self) -> fdo::Result<Time> {
