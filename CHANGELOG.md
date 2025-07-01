@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## future
+### Fixes
+- Fix issue where some images would accidentally use default background color
+  in some terminals instead of the desired color.
+
 ## v0.5.12
 ### New Features
 - Show next and previous tracks length.

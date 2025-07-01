@@ -5,7 +5,10 @@ use std::{
 
 use image::imageops::FilterType;
 use itertools::Itertools;
-use termal::{codes, formatmc, printmc, printmcln, raw::term_size};
+use termal::{
+    codes, formatmc, printmc, printmcln,
+    raw::{request, term_size},
+};
 
 use crate::{
     cli::Props,
@@ -513,14 +516,26 @@ impl Info {
 
         res += &indent[1..];
 
-        // dbg!("Texelize");
-        termal::image::push_texel_quater(
-            &img,
-            &mut res,
-            &indent,
-            Some(w),
-            Some(h),
-        );
+        let bg = request::default_bg_color(Duration::from_millis(100)).ok();
+
+        if let Some(bg) = bg {
+            termal::image::push_texel_quater_no_bg(
+                &img,
+                &mut res,
+                &indent,
+                Some(w),
+                Some(h),
+                bg.scale(),
+            );
+        } else {
+            termal::image::push_texel_quater(
+                &img,
+                &mut res,
+                &indent,
+                Some(w),
+                Some(h),
+            );
+        }
 
         res + codes::RESET + "\n"
     }
