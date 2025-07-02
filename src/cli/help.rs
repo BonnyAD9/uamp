@@ -571,6 +571,9 @@ fn print_control_messages_help(color: bool) {
         "{'g}Control messages:
   {'r}play-pause  pp{'gr}[=(play|pause)]{'_}
     Play or pause. When without argument, toggle.
+    
+  {'r}stop{'_}
+    Stops the playback. Playing will start from the start of the track.
 
   {'r}volume-up  vol-up  vu{'gr}[=<amount>]{'_}
     Increase the volume by the given amount. When without argument, increase by

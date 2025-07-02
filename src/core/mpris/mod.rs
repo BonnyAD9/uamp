@@ -12,7 +12,7 @@ use mpris_server::{
 };
 
 use crate::{
-    core::{ControlMsg, FnDelegate, Msg, Result, UampApp},
+    core::{ControlMsg, FnDelegate, Msg, Result, UampApp, player::Playback},
     env::AppCtrl,
 };
 
@@ -162,13 +162,54 @@ impl LocalPlayerInterface for Mpris {
 
     async fn set_position(
         &self,
-        _track_id: TrackId,
-        _position: Time,
+        track_id: TrackId,
+        position: Time,
     ) -> fdo::Result<()> {
-        // TODO: support this
-        Err(fdo::Error::NotSupported(
-            "uamp cannot manage track position yet.".to_string(),
-        ))
+        if position.is_negative() {
+            return Err(fdo::Error::InvalidArgs(
+                "Negative song position is not allowed.".to_string(),
+            ));
+        }
+
+        let Some(idx) = parse_track_id(&track_id) else {
+            return Err(fdo::Error::InvalidArgs(
+                "Invalid track id.".to_string(),
+            ));
+        };
+
+        let pos = Duration::from_millis(position.as_millis() as u64);
+
+        let (Some(cur), len) = self
+            .request(|app| {
+                Ok((
+                    app.player.playlist().current_idx(),
+                    app.player.timestamp().map(|a| a.total),
+                ))
+            })
+            .await?
+        else {
+            return Err(fdo::Error::InvalidArgs(
+                "Invalid track id.".to_string(),
+            ));
+        };
+
+        if cur != idx {
+            return Err(fdo::Error::InvalidArgs(
+                "Invalid track id.".to_string(),
+            ));
+        }
+
+        let Some(len) = len else {
+            return Err(fdo::Error::NotSupported("Cannot seek.".to_string()));
+        };
+
+        if pos > len {
+            return Err(fdo::Error::InvalidArgs(
+                "Cannot seek past track length".to_string(),
+            ));
+        }
+
+        self.send_msg(Msg::Control(ControlMsg::SeekTo(pos)))
     }
 
     async fn open_uri(&self, _uri: String) -> fdo::Result<()> {
@@ -179,12 +220,10 @@ impl LocalPlayerInterface for Mpris {
     }
 
     async fn playback_status(&self) -> fdo::Result<PlaybackStatus> {
-        self.request(|app| {
-            if app.player.is_playing() {
-                Ok(PlaybackStatus::Playing)
-            } else {
-                Ok(PlaybackStatus::Paused)
-            }
+        self.request(|app| match app.player.playback_state() {
+            Playback::Playing => Ok(PlaybackStatus::Playing),
+            Playback::Paused => Ok(PlaybackStatus::Paused),
+            Playback::Stopped => Ok(PlaybackStatus::Stopped),
         })
         .await
     }
@@ -218,6 +257,7 @@ impl LocalPlayerInterface for Mpris {
 
     async fn metadata(&self) -> fdo::Result<Metadata> {
         self.request(|app| {
+            let len = app.player.timestamp().map(|t| t.total);
             let Some(id) = app.player.playlist().current() else {
                 return Ok(Metadata::new());
             };
@@ -231,10 +271,15 @@ impl LocalPlayerInterface for Mpris {
             data.set_artist(song.artist_opt().map(|a| [a]));
             data.set_content_created(song.year_str_opt());
             data.set_genre(song.genre_opt().map(|g| [g]));
-            data.set_length(song.length_opt().map(time_from_dur));
+            data.set_length(len.or(song.length_opt()).map(time_from_dur));
             data.set_title(song.title_opt());
             data.set_disc_number(song.disc_opt().map(|d| d as i32));
             data.set_track_number(song.track_opt().map(|t| t as i32));
+            data.set_trackid(
+                app.player.playlist().current_idx().and_then(|pos| {
+                    TrackId::try_from(make_track_id(pos)).ok()
+                }),
+            );
 
             Ok(data)
         })
@@ -268,23 +313,34 @@ impl LocalPlayerInterface for Mpris {
     }
 
     async fn can_go_next(&self) -> fdo::Result<bool> {
-        Ok(true)
+        self.request(|app| Ok(app.player.playlist().current().is_some()))
+            .await
     }
 
     async fn can_go_previous(&self) -> fdo::Result<bool> {
-        Ok(true)
+        self.request(|app| {
+            Ok(!matches!(
+                app.player.playlist().current_idx(),
+                None | Some(0)
+            ))
+        })
+        .await
     }
 
     async fn can_play(&self) -> fdo::Result<bool> {
-        Ok(true)
+        self.request(|app| Ok(app.player.playlist().current().is_some()))
+            .await
     }
 
     async fn can_pause(&self) -> fdo::Result<bool> {
-        Ok(true)
+        self.can_play().await
     }
 
     async fn can_seek(&self) -> fdo::Result<bool> {
-        Ok(true)
+        self.request(
+            |app| Ok(app.player.playback_state() != Playback::Stopped),
+        )
+        .await
     }
 
     async fn can_control(&self) -> fdo::Result<bool> {
@@ -294,4 +350,13 @@ impl LocalPlayerInterface for Mpris {
 
 fn time_from_dur(d: Duration) -> Time {
     Time::from_millis(d.as_millis() as i64)
+}
+
+fn make_track_id(idx: usize) -> String {
+    format!("/uamp/mpris/tid/{idx}")
+}
+
+fn parse_track_id(s: &str) -> Option<usize> {
+    s.strip_prefix("/uamp/mpris/tid/")
+        .and_then(|a| a.parse().ok())
 }

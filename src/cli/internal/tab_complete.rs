@@ -396,6 +396,7 @@ const INTERANAL_ARG: &[&[&str]] =
 
 const ANY_CONTROL_MSG: &[&[&str]] = &[
     &["play-pause", "pp"],
+    &["stop"],
     &["volume-up", "vol-up", "vu"],
     &["volume-down", "vol-down", "vd"],
     &["next-song", "ns"],

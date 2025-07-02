@@ -30,6 +30,8 @@ use super::{
 pub enum ControlMsg {
     /// Toggle/set between play/pause, [`None`] to toggle, [`Some`] to set
     PlayPause(Option<bool>),
+    /// Stops the playback.
+    Stop,
     /// Jump to the Nth next song
     NextSong(usize),
     /// Jump to the Nth previous song
@@ -83,6 +85,7 @@ impl UampApp {
                 }
                 self.player.play(&mut self.library, pp)?;
             }
+            ControlMsg::Stop => self.player.stop(),
             ControlMsg::NextSong(n) => {
                 self.player.play_next(&mut self.library, n);
             }
@@ -198,6 +201,7 @@ impl Display for ControlMsg {
                     f.write_str("pp=pause")
                 }
             }
+            ControlMsg::Stop => f.write_str("stop"),
             ControlMsg::NextSong(v) => write!(f, "ns={v}"),
             ControlMsg::PrevSong(None) => f.write_str("ps"),
             ControlMsg::PrevSong(Some(v)) => write!(f, "ps={v}"),
@@ -253,6 +257,7 @@ impl FromStr for ControlMsg {
                     mval_arg::<PlayPause>(v, '=')?.map(|i| i.into()),
                 ))
             }
+            "stop" => Ok(ControlMsg::Stop),
             v if has_any_key!(v, '=', "volume-up", "vol-up", "vu") => {
                 Ok(ControlMsg::VolumeUp(mval_arg(v, '=')?))
             }

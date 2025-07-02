@@ -10,4 +10,6 @@ mod sink_wrapper;
 //                                   Public                                  //
 //===========================================================================//
 
-pub use self::{add_policy::*, player_msg::*, player_struct::*, playlist::*};
+pub use self::{
+    add_policy::*, playback::*, player_msg::*, player_struct::*, playlist::*,
+};

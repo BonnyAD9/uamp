@@ -97,6 +97,10 @@ impl Player {
         matches!(self.state, Playback::Playing)
     }
 
+    pub fn playback_state(&self) -> Playback {
+        self.state
+    }
+
     /// gets the now playing song if available
     pub fn now_playing(&self) -> Option<SongId> {
         self.playlist.current()
@@ -251,6 +255,7 @@ impl Player {
         if let Err(e) = self.inner.hard_pause() {
             warn!("Failed to hard pause: {}", e.log());
         }
+        // TODO: unload song if stopped
     }
 
     /// Gets the IDS of the songs in the playlists.

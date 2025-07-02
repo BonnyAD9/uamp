@@ -553,6 +553,11 @@ Integrations:
 
   - `play` the playback will play.
   - `pause` the playback will pause.
+  
+`stop`
+  Stop the playback.
+  
+  Song will stop playing and seek to the start.
 
 `vu`[`=`*volume*], `vol-up`[`=`*volume*], `volume-up`[`=`*volume*]
   Increases the volume by amount given by *volume*. If the amount was not given
