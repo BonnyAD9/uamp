@@ -11,6 +11,7 @@ use super::{Command, MsgStream, UniqueTasks};
 pub struct AppCtrl<'a> {
     commands: &'a mut Vec<Command>,
     tasks: &'a UniqueTasks,
+    seeked: &'a mut bool,
 }
 
 impl<'a> AppCtrl<'a> {
@@ -18,8 +19,13 @@ impl<'a> AppCtrl<'a> {
     pub fn new(
         commands: &'a mut Vec<Command>,
         tasks: &'a UniqueTasks,
+        seeked: &'a mut bool,
     ) -> Self {
-        Self { commands, tasks }
+        Self {
+            commands,
+            tasks,
+            seeked,
+        }
     }
 
     /// Add command to execute.
@@ -66,5 +72,9 @@ impl<'a> AppCtrl<'a> {
                     false
                 }
             })
+    }
+
+    pub fn set_seeked(&mut self) {
+        *self.seeked = true;
     }
 }

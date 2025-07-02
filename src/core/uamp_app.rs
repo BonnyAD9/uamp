@@ -18,10 +18,11 @@ use signal_hook_async_std::Signals;
 use crate::{
     core::{
         Error, Result,
+        library::Song,
         messenger::{self, Messenger, MsgMessage},
         msg::Msg,
     },
-    env::{AppCtrl, MsgGen},
+    env::{AppCtrl, MsgGen, State},
 };
 
 use super::{
@@ -182,6 +183,22 @@ impl UampApp {
         }
     }
 
+    pub fn get_state(&self) -> State {
+        State {
+            playback: self.player.playback_state(),
+            cur_song: self
+                .player
+                .playlist()
+                .current_idx()
+                .map(|i| (self.player.playlist()[i], i)),
+            volume: self.player.volume(),
+        }
+    }
+
+    pub fn get_song(&self, id: SongId) -> &Song {
+        &self.library[id]
+    }
+
     /// Old song ids were replaced with new valid song ids.
     pub(super) fn id_replace(&mut self, n: impl Fn(SongId, &Library) -> bool) {
         self.player_id_replace(n);
@@ -327,7 +344,7 @@ impl UampApp {
         let now = Instant::now();
 
         let up = self.library_routine();
-        self.player_routine(now, up);
+        self.player_routine(ctrl, now, up);
         errs.extend(self.config_routine(ctrl, now).err());
         errs.extend(self.restart(ctrl).err());
     }

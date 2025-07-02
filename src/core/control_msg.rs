@@ -154,18 +154,21 @@ impl UampApp {
             }
             ControlMsg::SeekTo(d) => {
                 self.player.seek_to(d)?;
+                ctrl.set_seeked();
             }
             ControlMsg::FastForward(d) => {
                 let t = d.unwrap_or(self.config.seek_jump().0);
                 self.player
                     .seek_by(t, true)
                     .map_err(|e| e.prepend("Failed to fast forward."))?;
+                ctrl.set_seeked();
             }
             ControlMsg::Rewind(d) => {
                 let t = d.unwrap_or(self.config.seek_jump().0);
                 self.player
                     .seek_by(t, false)
                     .map_err(|e| e.prepend("Failed to rewind."))?;
+                ctrl.set_seeked();
             }
             ControlMsg::SortPlaylist(ord) => {
                 self.player.playlist_mut().sort(

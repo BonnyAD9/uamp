@@ -2,9 +2,12 @@ use std::time::Instant;
 
 use raplay::PrefetchState;
 
-use crate::core::{
-    Msg, UampApp,
-    library::{Library, LibraryUpdate, SongId},
+use crate::{
+    core::{
+        Msg, UampApp,
+        library::{Library, LibraryUpdate, SongId},
+    },
+    env::AppCtrl,
 };
 
 //===========================================================================//
@@ -49,6 +52,7 @@ impl UampApp {
     /// Updates the stored song metadata based on the update level.
     pub(in crate::core) fn player_routine(
         &mut self,
+        ctrl: &mut AppCtrl,
         now: Instant,
         up: LibraryUpdate,
     ) {
@@ -62,6 +66,7 @@ impl UampApp {
             if t <= now {
                 self.player.hard_pause();
                 self.hard_pause_at = None;
+                ctrl.set_seeked();
             }
         }
     }

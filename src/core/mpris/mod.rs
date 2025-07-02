@@ -220,12 +220,8 @@ impl LocalPlayerInterface for Mpris {
     }
 
     async fn playback_status(&self) -> fdo::Result<PlaybackStatus> {
-        self.request(|app| match app.player.playback_state() {
-            Playback::Playing => Ok(PlaybackStatus::Playing),
-            Playback::Paused => Ok(PlaybackStatus::Paused),
-            Playback::Stopped => Ok(PlaybackStatus::Stopped),
-        })
-        .await
+        self.request(|app| Ok(playback(app.player.playback_state())))
+            .await
     }
 
     async fn loop_status(&self) -> fdo::Result<LoopStatus> {
@@ -256,34 +252,7 @@ impl LocalPlayerInterface for Mpris {
     }
 
     async fn metadata(&self) -> fdo::Result<Metadata> {
-        self.request(|app| {
-            let len = app.player.timestamp().map(|t| t.total);
-            let Some(id) = app.player.playlist().current() else {
-                return Ok(Metadata::new());
-            };
-            let song = &app.library[id];
-
-            let mut data = Metadata::builder()
-                .url("file://".to_string() + &song.path().to_string_lossy())
-                .build();
-
-            data.set_album(song.album_opt());
-            data.set_artist(song.artist_opt().map(|a| [a]));
-            data.set_content_created(song.year_str_opt());
-            data.set_genre(song.genre_opt().map(|g| [g]));
-            data.set_length(len.or(song.length_opt()).map(time_from_dur));
-            data.set_title(song.title_opt());
-            data.set_disc_number(song.disc_opt().map(|d| d as i32));
-            data.set_track_number(song.track_opt().map(|t| t as i32));
-            data.set_trackid(
-                app.player.playlist().current_idx().and_then(|pos| {
-                    TrackId::try_from(make_track_id(pos)).ok()
-                }),
-            );
-
-            Ok(data)
-        })
-        .await
+        self.request(|app| Ok(metadata(app))).await
     }
 
     async fn volume(&self) -> fdo::Result<Volume> {
@@ -295,13 +264,7 @@ impl LocalPlayerInterface for Mpris {
     }
 
     async fn position(&self) -> fdo::Result<Time> {
-        self.request(|app| {
-            Ok(app.player.timestamp().map(|a| a.current).map(time_from_dur))
-        })
-        .await?
-        .ok_or_else(|| {
-            fdo::Error::NotSupported("Unavailable right now".to_string())
-        })
+        self.request(|app| Ok(position(app))).await
     }
 
     async fn minimum_rate(&self) -> fdo::Result<PlaybackRate> {
@@ -346,6 +309,51 @@ impl LocalPlayerInterface for Mpris {
     async fn can_control(&self) -> fdo::Result<bool> {
         Ok(true)
     }
+}
+
+pub fn playback(pb: Playback) -> PlaybackStatus {
+    match pb {
+        Playback::Playing => PlaybackStatus::Playing,
+        Playback::Paused => PlaybackStatus::Paused,
+        Playback::Stopped => PlaybackStatus::Stopped,
+    }
+}
+
+pub fn metadata(app: &UampApp) -> Metadata {
+    let len = app.player.timestamp().map(|t| t.total);
+    let Some(id) = app.player.playlist().current() else {
+        return Metadata::new();
+    };
+    let song = &app.library[id];
+
+    let mut data = Metadata::builder()
+        .url("file://".to_string() + &song.path().to_string_lossy())
+        .build();
+
+    data.set_album(song.album_opt());
+    data.set_artist(song.artist_opt().map(|a| [a]));
+    data.set_content_created(song.year_str_opt());
+    data.set_genre(song.genre_opt().map(|g| [g]));
+    data.set_length(len.or(song.length_opt()).map(time_from_dur));
+    data.set_title(song.title_opt());
+    data.set_disc_number(song.disc_opt().map(|d| d as i32));
+    data.set_track_number(song.track_opt().map(|t| t as i32));
+    data.set_trackid(
+        app.player
+            .playlist()
+            .current_idx()
+            .and_then(|pos| TrackId::try_from(make_track_id(pos)).ok()),
+    );
+
+    data
+}
+
+pub fn position(app: &UampApp) -> Time {
+    app.player
+        .timestamp()
+        .map(|a| a.current)
+        .map(time_from_dur)
+        .unwrap_or_default()
 }
 
 fn time_from_dur(d: Duration) -> Time {
