@@ -12,7 +12,10 @@ use mpris_server::{
 };
 
 use crate::{
-    core::{ControlMsg, FnDelegate, Msg, Result, UampApp, player::Playback},
+    core::{
+        ControlMsg, FnDelegate, Msg, Result, UampApp, config::CacheSize,
+        player::Playback,
+    },
     env::AppCtrl,
 };
 
@@ -338,6 +341,10 @@ pub fn metadata(app: &UampApp) -> Metadata {
     data.set_title(song.title_opt());
     data.set_disc_number(song.disc_opt().map(|d| d as i32));
     data.set_track_number(song.track_opt().map(|t| t as i32));
+    data.set_art_url(
+        song.get_cached_path(&app.config, CacheSize::S256)
+            .map(|s| "file://".to_string() + &s.to_string_lossy()),
+    );
     data.set_trackid(
         app.player
             .playlist()

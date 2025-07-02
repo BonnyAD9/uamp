@@ -202,6 +202,18 @@ impl Song {
         Ok(img.into())
     }
 
+    pub fn get_cached_path(
+        &self,
+        conf: &Config,
+        size: CacheSize,
+    ) -> Option<PathBuf> {
+        let mut cached = conf.get_cache_cover_path(size);
+        let name = format!("{} - {}.jpg", self.artist, self.album);
+        cached.push(filesan::escape_str(&name, '_', filesan::Mode::SYSTEM));
+
+        if cached.exists() { Some(cached) } else { None }
+    }
+
     /// Constructs invalid "ghost" song.
     pub fn invalid() -> Self {
         Self {
