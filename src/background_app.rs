@@ -35,6 +35,7 @@ pub fn run_background_app(
         let msg = r.next().await.unwrap();
         (Some(r), msg)
     })));
+
     #[cfg(unix)]
     streams.add(Box::new(MsgGen::new(server.run(), |s| async {
         s.await;

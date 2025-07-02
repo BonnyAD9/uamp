@@ -303,6 +303,38 @@ impl Song {
     pub fn genre(&self) -> &str {
         &self.genre
     }
+
+    pub fn album_opt(&self) -> Option<&str> {
+        (!self.album.is_empty()).then_some(&self.album)
+    }
+
+    pub fn artist_opt(&self) -> Option<&str> {
+        (!self.artist.is_empty()).then_some(&self.artist)
+    }
+
+    pub fn year_str_opt(&self) -> Option<String> {
+        (self.year != i32::MAX).then(|| self.year_str())
+    }
+
+    pub fn genre_opt(&self) -> Option<&str> {
+        (!self.genre.is_empty()).then_some(&self.genre)
+    }
+
+    pub fn length_opt(&self) -> Option<Duration> {
+        (!self.length.is_zero()).then_some(self.length)
+    }
+
+    pub fn title_opt(&self) -> Option<&str> {
+        (!self.title.is_empty()).then_some(&self.title)
+    }
+
+    pub fn disc_opt(&self) -> Option<u32> {
+        (self.disc != u32::MAX).then_some(self.disc)
+    }
+
+    pub fn track_opt(&self) -> Option<u32> {
+        (self.track != u32::MAX).then_some(self.track)
+    }
 }
 
 //===========================================================================//
