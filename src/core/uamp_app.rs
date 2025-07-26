@@ -11,6 +11,8 @@ use std::{
 use std::{os::unix::process::CommandExt, rc::Rc};
 
 use futures::{StreamExt, channel::mpsc::UnboundedSender, executor::block_on};
+#[cfg(unix)]
+use futures::{channel::oneshot, future::select};
 use log::{error, info, trace, warn};
 use mpris_server::LocalServer;
 use notify::{INotifyWatcher, Watcher};
@@ -20,6 +22,7 @@ use crate::{
     core::{
         Error, Result, State, config,
         library::Song,
+        log_err,
         messenger::{self, Messenger, MsgMessage},
         mpris::Mpris,
         msg::Msg,
@@ -66,7 +69,7 @@ pub struct UampApp {
     pub(super) restart_path: Option<PathBuf>,
 
     #[cfg(unix)]
-    pub(super) mpris: Option<Rc<LocalServer<Mpris>>>,
+    pub(super) mpris: Option<(Rc<LocalServer<Mpris>>, oneshot::Sender<()>)>,
 
     pub(super) state: State,
 
@@ -122,24 +125,6 @@ impl UampApp {
             error!("Failed to delete old logs: {}", e.log());
         }
 
-        #[cfg(unix)]
-        let mpris = match block_on(LocalServer::new(
-            config::APP_ID,
-            Mpris::new(sender.clone()),
-        )) {
-            Ok(s) => {
-                ctrl.add_stream(MsgGen::new(s.run(), |s| async {
-                    s.await;
-                    unreachable!()
-                }));
-                Some(s)
-            }
-            Err(e) => {
-                error!("Failed to start mpris server: {e}");
-                None
-            }
-        };
-
         let mut app = UampApp {
             config: conf,
             library: lib,
@@ -156,7 +141,7 @@ impl UampApp {
             restart_path: None,
 
             #[cfg(unix)]
-            mpris: mpris.map(|a| a.into()),
+            mpris: None,
 
             state: State::default(),
 
@@ -165,6 +150,10 @@ impl UampApp {
 
         let state = app.get_state();
         app.state = state;
+
+        if app.config.system_player() {
+            app.enable_system_player(ctrl);
+        }
 
         Ok(app)
     }
@@ -215,6 +204,51 @@ impl UampApp {
     pub fn on_exit(&mut self) {
         if let Err(e) = delete_old_logs(self.config.delete_logs_after().0) {
             error!("Failed to delete old logs: {}", e.log());
+        }
+    }
+
+    pub(super) fn enable_system_player(&mut self, ctrl: &mut AppCtrl) {
+        #[cfg(unix)]
+        {
+            if self.mpris.is_some() {
+                return;
+            }
+
+            let e = LocalServer::new(
+                config::APP_ID,
+                Mpris::new(self.sender.clone()),
+            );
+            let mpris: Option<Rc<_>> =
+                log_err("Failed to start mpris player: ", block_on(e))
+                    .map(|a| a.into());
+
+            self.mpris = if let Some(s) = mpris {
+                // Cancelation channel
+                let (csend, crecv) = oneshot::channel();
+
+                ctrl.add_stream(MsgGen::new(
+                    (s.run(), crecv),
+                    |(s, crecv)| async {
+                        select(s, crecv).await;
+                        (None, None)
+                    },
+                ));
+
+                Some((s, csend))
+            } else {
+                None
+            }
+        }
+    }
+
+    pub(super) fn disable_system_player(&mut self) {
+        #[cfg(unix)]
+        {
+            dbg!("Stopping.");
+            if let Some((_, csend)) = self.mpris.take() {
+                // If this returns error, the server will already be stopped.
+                _ = csend.send(());
+            }
         }
     }
 

@@ -9,7 +9,7 @@ use crate::{
 
 impl UampApp {
     pub fn mpris_routine(&mut self, ctrl: &mut AppCtrl) {
-        let Some(mpris) = self.mpris.as_ref().map(|a| a.clone()) else {
+        let Some(mpris) = self.mpris.as_ref().map(|(a, _)| a.clone()) else {
             return;
         };
 

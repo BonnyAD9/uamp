@@ -51,9 +51,22 @@ impl UampApp {
                 .then(|| {
                     (self.config.server_address().clone(), self.config.port())
                 });
+
+                let system_player_change =
+                    conf.system_player() != self.config.system_player();
+
                 self.player.load_config(&conf);
                 conf.force_server = self.config.force_server;
                 self.config = conf;
+
+                if system_player_change {
+                    if self.config.system_player() {
+                        self.enable_system_player(ctrl);
+                    } else {
+                        self.disable_system_player();
+                    }
+                }
+
                 if let Some((adr, port)) = reload_server {
                     self.reload_server(ctrl, adr, port)
                         .map_err(|e| e.prepend("Failed to reload server."))?;

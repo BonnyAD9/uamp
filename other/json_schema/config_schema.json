@@ -169,6 +169,11 @@
             "description": "Determines remote git repository from which uamp will update.",
             "type": "string",
             "default": "https://github.com/BonnyAD9/uamp.git"
+        },
+        "system_player": {
+          "description": "If enabled, uamp will integrate with the system. Only supported on linux where this uses mpris.",
+          "type": "boolean",
+          "default": "true"
         }
     }
 }

@@ -194,6 +194,11 @@ gen_struct! {
         #[doc = "If this is true, clients will try to lookup images."]
         client_image_lookup: bool { pub, pub } => pub(super) () true,
 
+        #[doc = "If enabled, uamp will integrate with the system."]
+        #[doc = ""]
+        #[doc = "This is implemented only on linux (unix) using mpris."]
+        system_player: bool { pub, pub } => pub(super) () true,
+
         ; // fields that aren't serialized
 
         #[serde(skip_serializing, default = "default_config_path_json")]
@@ -250,6 +255,7 @@ impl Config {
             play_on_start: default_play_on_start(),
             simple_sorting: default_simple_sorting(),
             client_image_lookup: default_client_image_lookup(),
+            system_player: default_system_player(),
             force_server: false,
             change: Cell::new(true),
         }

@@ -314,6 +314,15 @@ background.
   Default value:
 
     "enable_server": true
+    
+`system_player`
+  When enabled, uamp will integrate with the system as media player.
+
+  This is currently supported only on linux where this uses mpris.
+
+  Default value:
+
+    "system_player": true
 
 ### Update
 
