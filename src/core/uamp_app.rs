@@ -355,7 +355,7 @@ impl UampApp {
 
         let stream = MsgGen::new((sig, 0), |(mut sig, cnt)| async move {
             let Some(s) = sig.next().await else {
-                return (Some((sig, cnt)), Msg::None);
+                return (Some((sig, cnt)), None);
             };
 
             if signal_hook::consts::TERM_SIGNALS.contains(&s) {
@@ -365,10 +365,10 @@ impl UampApp {
                     println!("Received 4 close signals. Exiting now.");
                     process::exit(130);
                 }
-                (Some((sig, cnt + 1)), Msg::Control(ControlMsg::Close))
+                (Some((sig, cnt + 1)), Some(Msg::Control(ControlMsg::Close)))
             } else {
                 warn!("Received unknown signal {s}");
-                (Some((sig, cnt)), Msg::None)
+                (Some((sig, cnt)), None)
             }
         });
         ctrl.add_stream(stream);

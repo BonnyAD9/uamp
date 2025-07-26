@@ -3,7 +3,7 @@ use std::mem;
 use mpris_server::{Property, Signal};
 
 use crate::{
-    core::{Msg, State, UampApp, log_err, mpris},
+    core::{State, UampApp, log_err, mpris},
     env::{AppCtrl, MsgGen},
 };
 
@@ -35,7 +35,7 @@ impl UampApp {
                     let seek = mpris.emit(Signal::Seeked { position }).await;
                     log_err("Failed to send mpris signal: ", seek);
                 }
-                (None, Msg::None)
+                (None, None)
             },
         ));
     }

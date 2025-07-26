@@ -23,7 +23,7 @@ pub fn run_background_app(
     let mut streams = Streams::new();
     streams.add(Box::new(MsgGen::new(reciever, |mut r| async {
         let msg = r.next().await.unwrap();
-        (Some(r), msg)
+        (Some(r), Some(msg))
     })));
 
     let mut tasks = UniqueTasks::new(sender.clone());
@@ -44,7 +44,7 @@ pub fn run_background_app(
             dbg!(&cmd);
             match cmd {
                 Command::Exit => break 'mainloop Ok(()),
-                Command::_AddStream(stream) => streams.add(stream),
+                Command::AddStream(stream) => streams.add(stream),
                 Command::AddTask(typ, task) => {
                     if let Err(e) = tasks.add(typ, task) {
                         error!("Failed to start task: {}", e.log());
@@ -62,6 +62,8 @@ pub fn run_background_app(
             app.task_end(&mut AppCtrl::new(&mut cmd_queue, &tasks), res);
         }
 
-        app.update(&mut AppCtrl::new(&mut cmd_queue, &tasks), msg);
+        if let Some(msg) = msg {
+            app.update(&mut AppCtrl::new(&mut cmd_queue, &tasks), msg);
+        }
     }
 }

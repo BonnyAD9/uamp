@@ -35,9 +35,9 @@ impl<'a> AppCtrl<'a> {
     /// Add asynchronous stream of messages to run.
     pub fn add_stream<S>(&mut self, s: S)
     where
-        S: MsgStream<Msg> + 'static,
+        S: MsgStream<Option<Msg>> + 'static,
     {
-        self.add(Command::_AddStream(Box::new(s)))
+        self.add(Command::AddStream(Box::new(s)))
     }
 
     /// Add task to run on a thread.
