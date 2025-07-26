@@ -445,6 +445,8 @@ impl UampApp {
                     return;
                 }
             };
+            
+            dbg!(v.kind);
 
             for path in v.paths {
                 let msg = if path == cfg

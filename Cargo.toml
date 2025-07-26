@@ -22,7 +22,7 @@ futures = "0.3.31"
 image = "0.25.6"
 itertools = "0.14.0"
 log = "0.4.27"
-notify = "8.0.0"
+notify = "8.1.0"
 pareg ="0.10.0"
 # pareg = { path = "../pareg" }
 place_macro = "1.0.0"
