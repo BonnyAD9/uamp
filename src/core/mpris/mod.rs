@@ -13,7 +13,8 @@ use mpris_server::{
 
 use crate::{
     core::{
-        ControlMsg, FnDelegate, Msg, Result, UampApp, config::CacheSize,
+        ControlMsg, FnDelegate, Msg, Result, UampApp,
+        config::{self, CacheSize},
         player::Playback,
     },
     env::AppCtrl,
@@ -96,7 +97,7 @@ impl LocalRootInterface for Mpris {
     }
 
     async fn identity(&self) -> fdo::Result<String> {
-        Ok("uamp".to_string())
+        Ok(config::APP_ID.to_string())
     }
 
     async fn desktop_entry(&self) -> fdo::Result<String> {
