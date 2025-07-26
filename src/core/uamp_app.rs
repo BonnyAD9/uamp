@@ -244,7 +244,6 @@ impl UampApp {
     pub(super) fn disable_system_player(&mut self) {
         #[cfg(unix)]
         {
-            dbg!("Stopping.");
             if let Some((_, csend)) = self.mpris.take() {
                 // If this returns error, the server will already be stopped.
                 _ = csend.send(());
@@ -446,8 +445,6 @@ impl UampApp {
                 }
             };
             
-            dbg!(v.kind);
-
             for path in v.paths {
                 let msg = if path == cfg
                     && (v.kind.is_create() || v.kind.is_modify())

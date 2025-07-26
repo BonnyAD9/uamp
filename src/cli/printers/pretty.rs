@@ -454,7 +454,7 @@ impl Info {
     }
 
     fn volume(&self, color: bool) -> String {
-        let vol = (self.volume * 100.) as u32;
+        let vol = (self.volume * 100.).round() as u32;
         if self.mute {
             match vol {
                 100.. => formatmc!(color, "m: {'strike}{vol}{'_strike}"),
