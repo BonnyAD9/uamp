@@ -1,4 +1,4 @@
-use std::{any::Any, borrow::Cow, mem, time::SystemTimeError};
+use std::{any::Any, borrow::Cow, fmt::Display, mem, time::SystemTimeError};
 
 use flexi_logger::FlexiLoggerError;
 use itertools::Itertools;
@@ -274,6 +274,19 @@ impl Error {
             Error::Other(err_ctx) => err_ctx.clone_universal(),
             Error::Multiple(v) if v.len() == 1 => v[0].clone_universal(),
             e => e.to_string().into(),
+        }
+    }
+}
+
+pub fn log_err<T, E: Display>(
+    pf: &str,
+    e: std::result::Result<T, E>,
+) -> Option<T> {
+    match e {
+        Ok(v) => Some(v),
+        Err(e) => {
+            error!("{pf}{e}");
+            None
         }
     }
 }

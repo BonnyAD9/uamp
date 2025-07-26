@@ -7,6 +7,7 @@ mod err;
 mod message_delegate;
 mod msg;
 mod play_msg;
+mod state;
 mod task_msg;
 mod uamp_app;
 
@@ -21,10 +22,10 @@ pub mod player;
 pub mod query;
 
 #[cfg(unix)]
-pub mod mpris;
+mod mpris;
 
 pub use self::{
     alias::*, any_control_msg::*, control_function::*, control_msg::*,
     data_control_msg::*, err::*, message_delegate::*, msg::*, play_msg::*,
-    task_msg::*, uamp_app::*,
+    state::*, task_msg::*, uamp_app::*,
 };

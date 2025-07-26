@@ -20,6 +20,8 @@ use crate::{
     env::AppCtrl,
 };
 
+mod app_impl;
+
 pub struct Mpris {
     osend: UnboundedSender<Msg>,
 }

@@ -8,21 +8,23 @@ use std::{
 };
 
 #[cfg(unix)]
-use std::os::unix::process::CommandExt;
+use std::{os::unix::process::CommandExt, rc::Rc};
 
-use futures::{StreamExt, channel::mpsc::UnboundedSender};
+use futures::{StreamExt, channel::mpsc::UnboundedSender, executor::block_on};
 use log::{error, info, trace, warn};
+use mpris_server::LocalServer;
 use notify::{INotifyWatcher, Watcher};
 use signal_hook_async_std::Signals;
 
 use crate::{
     core::{
-        Error, Result,
+        Error, Result, State, config,
         library::Song,
         messenger::{self, Messenger, MsgMessage},
+        mpris::Mpris,
         msg::Msg,
     },
-    env::{AppCtrl, MsgGen, State},
+    env::{AppCtrl, MsgGen},
 };
 
 use super::{
@@ -62,6 +64,11 @@ pub struct UampApp {
     pub(super) last_prev: Instant,
 
     pub(super) restart_path: Option<PathBuf>,
+
+    #[cfg(unix)]
+    pub(super) mpris: Option<Rc<LocalServer<Mpris>>>,
+
+    pub(super) state: State,
 
     _file_watch: Option<INotifyWatcher>,
 }
@@ -115,7 +122,25 @@ impl UampApp {
             error!("Failed to delete old logs: {}", e.log());
         }
 
-        Ok(UampApp {
+        #[cfg(unix)]
+        let mpris = match block_on(LocalServer::new(
+            config::APP_ID,
+            Mpris::new(sender.clone()),
+        )) {
+            Ok(s) => {
+                ctrl.add_stream(MsgGen::new(s.run(), |s| async {
+                    s.await;
+                    unreachable!()
+                }));
+                Some(s)
+            }
+            Err(e) => {
+                error!("Failed to start mpris server: {e}");
+                None
+            }
+        };
+
+        let mut app = UampApp {
             config: conf,
             library: lib,
             player,
@@ -130,8 +155,18 @@ impl UampApp {
             hard_pause_at: None,
             restart_path: None,
 
+            #[cfg(unix)]
+            mpris: mpris.map(|a| a.into()),
+
+            state: State::default(),
+
             _file_watch: config_watch,
-        })
+        };
+
+        let state = app.get_state();
+        app.state = state;
+
+        Ok(app)
     }
 
     /// Handles the message sent to uamp.
@@ -183,7 +218,7 @@ impl UampApp {
         }
     }
 
-    pub fn get_state(&self) -> State {
+    pub(super) fn get_state(&self) -> State {
         State {
             playback: self.player.playback_state(),
             cur_song: self
@@ -192,6 +227,7 @@ impl UampApp {
                 .current_idx()
                 .map(|i| (self.player.playlist()[i], i)),
             volume: self.player.volume(),
+            seeked: false,
         }
     }
 
@@ -335,7 +371,7 @@ impl UampApp {
                 (Some((sig, cnt)), Msg::None)
             }
         });
-        ctrl._add_stream(stream);
+        ctrl.add_stream(stream);
 
         Ok(())
     }
@@ -344,9 +380,11 @@ impl UampApp {
         let now = Instant::now();
 
         let up = self.library_routine();
-        self.player_routine(ctrl, now, up);
+        self.player_routine(now, up);
         errs.extend(self.config_routine(ctrl, now).err());
         errs.extend(self.restart(ctrl).err());
+        #[cfg(unix)]
+        self.mpris_routine(ctrl);
     }
 
     fn watch_files(

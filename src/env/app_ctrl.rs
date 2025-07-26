@@ -11,7 +11,6 @@ use super::{Command, MsgStream, UniqueTasks};
 pub struct AppCtrl<'a> {
     commands: &'a mut Vec<Command>,
     tasks: &'a UniqueTasks,
-    seeked: &'a mut bool,
 }
 
 impl<'a> AppCtrl<'a> {
@@ -19,13 +18,8 @@ impl<'a> AppCtrl<'a> {
     pub fn new(
         commands: &'a mut Vec<Command>,
         tasks: &'a UniqueTasks,
-        seeked: &'a mut bool,
     ) -> Self {
-        Self {
-            commands,
-            tasks,
-            seeked,
-        }
+        Self { commands, tasks }
     }
 
     /// Add command to execute.
@@ -39,7 +33,7 @@ impl<'a> AppCtrl<'a> {
     }
 
     /// Add asynchronous stream of messages to run.
-    pub fn _add_stream<S>(&mut self, s: S)
+    pub fn add_stream<S>(&mut self, s: S)
     where
         S: MsgStream<Msg> + 'static,
     {
@@ -72,9 +66,5 @@ impl<'a> AppCtrl<'a> {
                     false
                 }
             })
-    }
-
-    pub fn set_seeked(&mut self) {
-        *self.seeked = true;
     }
 }

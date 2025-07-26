@@ -22,7 +22,6 @@ futures = "0.3.31"
 image = "0.25.6"
 itertools = "0.14.0"
 log = "0.4.27"
-mpris-server = "0.9.0"
 notify = "8.0.0"
 pareg ="0.10.0"
 # pareg = { path = "../pareg" }
@@ -39,3 +38,6 @@ signal-hook-async-std = "0.3.0"
 termal = { version =  "4.0.1", features = ["image", "raw", "events"] }
 thiserror = "2.0.12"
 unidecode = "0.3.0"
+
+[target.'cfg(unix)'.dependencies]
+mpris-server = "0.9.0"
