@@ -13,11 +13,12 @@ use mpris_server::{
 
 use crate::{
     core::{
-        ControlMsg, FnDelegate, Msg, Result, UampApp,
+        ControlMsg, DataControlMsg, FnDelegate, Msg, Result, UampApp,
         config::{self, CacheSize},
         player::Playback,
     },
     env::AppCtrl,
+    ext::uri::parse_file_uri,
 };
 
 mod app_impl;
@@ -109,7 +110,7 @@ impl LocalRootInterface for Mpris {
     }
 
     async fn supported_uri_schemes(&self) -> fdo::Result<Vec<String>> {
-        Ok(vec![]) // TODO: support at least file
+        Ok(vec!["file".to_string()])
     }
 
     async fn supported_mime_types(&self) -> fdo::Result<Vec<String>> {
@@ -218,11 +219,18 @@ impl LocalPlayerInterface for Mpris {
         self.send_msg(Msg::Control(ControlMsg::SeekTo(pos)))
     }
 
-    async fn open_uri(&self, _uri: String) -> fdo::Result<()> {
-        // TODO: support this
-        Err(fdo::Error::NotSupported(
-            "uamp doesn't support opening files yet.".to_string(),
-        ))
+    async fn open_uri(&self, uri: String) -> fdo::Result<()> {
+        let (_, path) = parse_file_uri(&uri).ok_or_else(|| {
+            fdo::Error::NotSupported("Unsupported uri.".to_string())
+        })?;
+        if !path.exists() {
+            return Err(fdo::Error::InvalidArgs(format!(
+                "The given file `{}` doesn't exist.",
+                path.display()
+            )));
+        }
+        self.send_msg(DataControlMsg::PlayTmp(path.into()).into())?;
+        Ok(())
     }
 
     async fn playback_status(&self) -> fdo::Result<PlaybackStatus> {
@@ -231,7 +239,9 @@ impl LocalPlayerInterface for Mpris {
     }
 
     async fn loop_status(&self) -> fdo::Result<LoopStatus> {
-        Ok(LoopStatus::None)
+        Err(fdo::Error::NotSupported(
+            "Uamp doesn't support looping in this way.".to_string(),
+        ))
     }
 
     async fn set_loop_status(
@@ -250,7 +260,9 @@ impl LocalPlayerInterface for Mpris {
     }
 
     async fn shuffle(&self) -> fdo::Result<bool> {
-        Ok(false)
+        Err(fdo::Error::NotSupported(
+            "Uamp doesn't support shuffle in this way.".to_string(),
+        ))
     }
 
     async fn set_shuffle(&self, _shuffle: bool) -> zbus::Result<()> {
