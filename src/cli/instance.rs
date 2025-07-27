@@ -1,7 +1,6 @@
 use std::{
     mem,
     net::TcpStream,
-    path::Path,
     time::{Duration, Instant},
 };
 
@@ -10,7 +9,7 @@ use pareg::{Pareg, has_any_key, parse_arg};
 use termal::eprintacln;
 
 use crate::core::{
-    AnyControlMsg, DataControlMsg, Error, PlayMsg, Result,
+    AnyControlMsg, DataControlMsg, Error, Result,
     config::Config,
     messenger::{DataResponse, Messenger, MsgMessage, Request},
 };

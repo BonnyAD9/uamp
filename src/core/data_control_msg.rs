@@ -12,7 +12,7 @@ use pareg::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{core::Error, env::AppCtrl};
+use crate::env::AppCtrl;
 
 use super::{Alias, Msg, Result, UampApp, query::Query};
 
@@ -190,9 +190,8 @@ impl FromStr for DataControlMsg {
             }
             v if has_any_key!(v, '=', "p", "play") => {
                 Ok(DataControlMsg::PlayTmp(
-                    val_arg::<&Path>(v, '=')?.canonicalize()?.into(),
-                )
-                .into())
+                    val_arg::<&Path>(v, '=')?.canonicalize()?,
+                ))
             }
             v => ArgError::UnknownArgument(Box::new(ArgErrCtx::from_msg(
                 "Unknown control msg.",
