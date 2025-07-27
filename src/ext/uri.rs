@@ -26,3 +26,23 @@ pub fn parse_file_uri(mut uri: &str) -> Option<(&str, &Path)> {
         }
     })
 }
+
+/// Creates file uri from path. Host may be empty for local files. The path
+/// should be canonical.
+#[cfg(windows)]
+pub fn get_file_uri(mut host: &str, path: impl AsRef<Path>) -> String {
+    if host == "localhost" {
+        host = "";
+    }
+    format!("file://{host}/{}", path.as_ref().display())
+}
+
+/// Creates file uri from path. Host may be empty for local files. The path
+/// should be canonical.
+#[cfg(not(windows))]
+pub fn get_file_uri(mut host: &str, path: impl AsRef<Path>) -> String {
+    if host == "localhost" {
+        host = "";
+    }
+    format!("file://{host}{}", path.as_ref().display())
+}

@@ -18,7 +18,7 @@ use crate::{
         player::Playback,
     },
     env::AppCtrl,
-    ext::uri::parse_file_uri,
+    ext::uri::{get_file_uri, parse_file_uri},
 };
 
 mod app_impl;
@@ -345,7 +345,7 @@ pub fn metadata(app: &UampApp) -> Metadata {
     let song = &app.library[id];
 
     let mut data = Metadata::builder()
-        .url("file://".to_string() + &song.path().to_string_lossy())
+        .url(get_file_uri("", song.path()))
         .build();
 
     data.set_album(song.album_opt());
@@ -358,7 +358,7 @@ pub fn metadata(app: &UampApp) -> Metadata {
     data.set_track_number(song.track_opt().map(|t| t as i32));
     data.set_art_url(
         song.get_cached_path(&app.config, CacheSize::S256)
-            .map(|s| "file://".to_string() + &s.to_string_lossy()),
+            .map(|s| get_file_uri("", s)),
     );
     data.set_trackid(
         app.player
