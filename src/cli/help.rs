@@ -397,9 +397,6 @@ fn print_instance_help(color: bool) {
     Print all songs that pass the query. Without value, lists all songs. The
     amount of printed information is affected by verbosity. See
     `{'c}uamp {'b}h {'w bold}query{'_}` for more info.
-
-  {'r}play p{'w}=<file path>{'_}
-    Play the given file in the secondary playlist.
 ",
     );
 }
@@ -597,6 +594,9 @@ fn print_control_messages_help(color: bool) {
 
   {'r}mute{'gr}[=(true|false)]{'_}
     Mute/Unmute. When without argument, toggle.
+    
+  {'r}play p{'w}=<file path>{'_}
+    Play the given file in new playlist on top of the stack.
 
   {'r}load-songs{'gr}[=[l|r][-|e|n|m]]{'_}
     Look for new songs. This can be modifed with the load options of the form

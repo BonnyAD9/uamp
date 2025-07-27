@@ -73,23 +73,6 @@ impl Instance {
                         Intention::Clear,
                     ))
                 }
-                v if has_any_key!(v, '=', "p", "play") => {
-                    self.messages.push((
-                        PlayMsg::TmpPath(
-                            args.cur_val::<&Path>('=')?
-                                .canonicalize()
-                                .map_err(|e| {
-                                    Error::io(e).msg(format!(
-                                        "Cannot find the file `{}`",
-                                        args.cur().unwrap()
-                                    ))
-                                })?
-                                .into(),
-                        )
-                        .into(),
-                        Intention::Default,
-                    ));
-                }
                 v if has_any_key!(v, '=', "query", "list", "l") => {
                     self.messages.push((
                         Request::Query(

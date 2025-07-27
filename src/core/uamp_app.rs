@@ -444,7 +444,7 @@ impl UampApp {
                     return;
                 }
             };
-            
+
             for path in v.paths {
                 let msg = if path == cfg
                     && (v.kind.is_create() || v.kind.is_modify())

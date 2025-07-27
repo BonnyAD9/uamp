@@ -1,4 +1,9 @@
-use std::{env, fmt::Display, path::PathBuf, str::FromStr};
+use std::{
+    env,
+    fmt::Display,
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 
 use itertools::Itertools;
 use pareg::{
@@ -7,7 +12,7 @@ use pareg::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::env::AppCtrl;
+use crate::{core::Error, env::AppCtrl};
 
 use super::{Alias, Msg, Result, UampApp, query::Query};
 
@@ -38,6 +43,8 @@ pub enum DataControlMsg {
     Restart(Option<PathBuf>),
     /// Reorder the playlist stack.
     ReorderPlaylistStack(Vec<usize>),
+    /// Play song at the given path as temporary.
+    PlayTmp(PathBuf),
 }
 
 impl UampApp {
@@ -112,6 +119,20 @@ impl UampApp {
             DataControlMsg::ReorderPlaylistStack(ord) => {
                 self.player.reorder_playlist(&mut self.library, &ord)?;
             }
+            DataControlMsg::PlayTmp(path) => {
+                let id = self.library.add_tmp_path(&path).map_err(|e| {
+                    e.prepend(format!(
+                        "Failed to load song `{:?}`.",
+                        path.to_string_lossy()
+                    ))
+                })?;
+
+                self.player.push_playlist(
+                    &mut self.library,
+                    vec![id].into(),
+                    true,
+                );
+            }
         }
 
         Ok(vec![])
@@ -167,6 +188,12 @@ impl FromStr for DataControlMsg {
                 let (_, v) = v.split_once("=").unwrap();
                 Ok(DataControlMsg::ReorderPlaylistStack(split_arg(v, ",")?))
             }
+            v if has_any_key!(v, '=', "p", "play") => {
+                Ok(DataControlMsg::PlayTmp(
+                    val_arg::<&Path>(v, '=')?.canonicalize()?.into(),
+                )
+                .into())
+            }
             v => ArgError::UnknownArgument(Box::new(ArgErrCtx::from_msg(
                 "Unknown control msg.",
                 v.to_string(),
@@ -196,6 +223,7 @@ impl Display for DataControlMsg {
             DataControlMsg::ReorderPlaylistStack(ord) => {
                 write!(f, "{}", ord.iter().map(|a| a.to_string()).join(","))
             }
+            DataControlMsg::PlayTmp(p) => write!(f, "p={}", p.display()),
         }
     }
 }

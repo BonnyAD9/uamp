@@ -376,10 +376,6 @@ Search in all songs managed by running instance of uamp. \fIquery\fP specifies
 filter for the songs and their order. See \fIFormat query\fP for more info.
 .IP
 The amount of printed information is affected by verbosity.
-.TP
-\fB\fCp\fR[\fB\fC=\fR\fIaudio\-file\fP], \fB\fCplay\fR[\fB\fC=\fR\fIaudio\-file\fP]
-Load the audio file given by \fIaudio\-file\fP as temporary song into uamp and
-push it as new playlist to the playlist stack.
 .SS Action \fB\fCrun\fR
 .PP
 \fB\fCrun\fR [\fB\fC\-h\fR] [\fB\fC\-d\fR] [\fB\fC\-p\fR \fIport\fP] [\fB\fC\-a\fR \fIaddress\fP] [\fIcontrol\-message\fP] ...
@@ -584,6 +580,11 @@ Play/Pause playback. Without \fIplay\-state\fP toggles between the states.
 \fB\fCpause\fR the playback will pause.
 .RE
 .TP
+\fB\fCstop\fR
+Stop the playback.
+.IP
+Song will stop playing and seek to the start.
+.TP
 \fB\fCvu\fR[\fB\fC=\fR\fIvolume\fP], \fB\fCvol\-up\fR[\fB\fC=\fR\fIvolume\fP], \fB\fCvolume\-up\fR[\fB\fC=\fR\fIvolume\fP]
 Increases the volume by amount given by \fIvolume\fP\&. If the amount was not given
 increase by the default amount given in configuration. The actual volume is
@@ -619,6 +620,10 @@ Mute/Unmute. If \fIB\fP is not specified, toggle between the states.
 .IP \(bu 2
 \fB\fCfalse\fR \- unmute.
 .RE
+.TP
+\fB\fCp\fR[\fB\fC=\fR\fIaudio\-file\fP], \fB\fCplay\fR[\fB\fC=\fR\fIaudio\-file\fP]
+Load the audio file given by \fIaudio\-file\fP as temporary song into uamp and
+push it as new playlist to the playlist stack.
 .TP
 \fB\fCload\-songs\fR[\fB\fC=\fR[\fB\fCl\fR|\fB\fCr\fR][\fB\fC\-\fR|\fB\fCe\fR|\fB\fCn\fR|\fB\fCm\fR]]
 Load new songs to library from folders specified in configuration. The value

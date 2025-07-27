@@ -5,6 +5,10 @@
 - Mpris support. On linux, OS will recognize uamp as running media player. This
   is enabled by default and may be disabled with a new option `system_player`.
 
+### Changes
+- `play` has been made into a control message and can now be used anywhere
+  where control message is used.
+
 ### Fixes
 - Fix issue where some images would accidentally use default background color
   in some terminals instead of the desired color.

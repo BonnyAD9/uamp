@@ -352,10 +352,6 @@ These are instance messages:
   
   The amount of printed information is affected by verbosity.
 
-`p`[`=`*audio-file*], `play`[`=`*audio-file*]
-  Load the audio file given by *audio-file* as temporary song into uamp and
-  push it as new playlist to the playlist stack.
-
 ### Action `run`
 
 `run` [`-h`] [`-d`] [`-p` *port*] [`-a` *address*] [*control-message*] ...
@@ -591,6 +587,10 @@ Integrations:
 
   - `true` - mute.
   - `false` - unmute.
+
+`p`[`=`*audio-file*], `play`[`=`*audio-file*]
+  Load the audio file given by *audio-file* as temporary song into uamp and
+  push it as new playlist to the playlist stack.
 
 `load-songs`[`=`[`l`|`r`][`-`|`e`|`n`|`m`]]
   Load new songs to library from folders specified in configuration. The value
