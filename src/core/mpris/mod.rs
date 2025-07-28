@@ -329,6 +329,63 @@ impl LocalPlayerInterface for Mpris {
     }
 }
 
+// This doesn't seem to be supported by KDE so I see no point of properly
+// implementing it for my usecase. I also couldn't find anything that would
+// actually support this so I won't implement it unless I have a way of testing
+// it.
+/*impl LocalTrackListInterface for Mpris {
+    async fn get_tracks_metadata(
+        &self,
+        track_ids: Vec<TrackId>,
+    ) -> fdo::Result<Vec<Metadata>> {
+        self.request(move |app| {
+            Ok(track_ids
+                .iter()
+                .flat_map(|a| parse_track_id(a))
+                .map(|i| metadata_for(app, i))
+                .collect())
+        })
+        .await
+    }
+
+    async fn add_track(
+        &self,
+        _uri: Uri,
+        _after_track: TrackId,
+        _set_as_current: bool,
+    ) -> fdo::Result<()> {
+        Err(fdo::Error::NotSupported(
+            "Uamp doesn't support inserting tracks.".to_string(),
+        ))
+    }
+
+    async fn remove_track(&self, _track_id: TrackId) -> fdo::Result<()> {
+        Err(fdo::Error::NotSupported(
+            "Uamp doesn't support removing tracks.".to_string(),
+        ))
+    }
+
+    async fn go_to(&self, track_id: TrackId) -> fdo::Result<()> {
+        let Some(idx) = parse_track_id(&track_id) else {
+            return Err(fdo::Error::InvalidArgs(
+                "Invalid track id.".to_string(),
+            ));
+        };
+        self.send_msg(ControlMsg::PlaylistJump(idx).into())
+    }
+
+    async fn tracks(&self) -> fdo::Result<Vec<TrackId>> {
+        let len = self.request(|app| Ok(app.player.playlist().len())).await?;
+        Ok((0..len)
+            .flat_map(|i| TrackId::try_from(make_track_id(i)))
+            .collect())
+    }
+
+    async fn can_edit_tracks(&self) -> fdo::Result<bool> {
+        Ok(false)
+    }
+}*/
+
 pub fn playback(pb: Playback) -> PlaybackStatus {
     match pb {
         Playback::Playing => PlaybackStatus::Playing,
@@ -338,16 +395,25 @@ pub fn playback(pb: Playback) -> PlaybackStatus {
 }
 
 pub fn metadata(app: &UampApp) -> Metadata {
-    let len = app.player.timestamp().map(|t| t.total);
-    let Some(id) = app.player.playlist().current() else {
-        return Metadata::new();
+    app.player
+        .playlist()
+        .current_idx()
+        .map(|i| metadata_for(app, i))
+        .unwrap_or_default()
+}
+
+fn metadata_for(app: &UampApp, idx: usize) -> Metadata {
+    let mut data = Metadata::new();
+    data.set_trackid(TrackId::try_from(make_track_id(idx)).ok());
+    let len = (app.player.playlist().current_idx() == Some(idx))
+        .then(|| app.player.timestamp().map(|t| t.total))
+        .flatten();
+    let Some(id) = app.player.playlist()[..].get(idx) else {
+        return data;
     };
     let song = &app.library[id];
 
-    let mut data = Metadata::builder()
-        .url(get_file_uri("", song.path()))
-        .build();
-
+    data.set_url(Some(get_file_uri("", song.path())));
     data.set_album(song.album_opt());
     data.set_artist(song.artist_opt().map(|a| [a]));
     data.set_content_created(song.year_str_opt());
