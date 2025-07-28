@@ -6,7 +6,8 @@ Universal Advanced Music Player written in Rust.
 Uamp is a minimal music player that doesn't get in your way. It is fast,
 reliable, and powerful.
 
-Uamp currently works as playback server controled with CLI.
+Uamp currently works as playback server controled with CLI or [mpris][mpris]
+which may be integrated into your system.
 
 ## Configuration
 The configuration is saved in the efault configuration folder on your
@@ -154,3 +155,4 @@ files.
 [uamp-web]: https://bonnyad9.github.io/uamp/
 [aur]: https://aur.archlinux.org/packages/uamp
 [aur-badge]: https://img.shields.io/aur/version/uamp
+[mpris]: https://specifications.freedesktop.org/mpris-spec/latest/
