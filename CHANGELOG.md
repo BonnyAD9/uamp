@@ -13,6 +13,8 @@
 - Fix issue where some images would accidentally use default background color
   in some terminals instead of the desired color.
 - Properly round volume.
+- Config file will now stay watched even with editors that will remove it for a
+  short moment.
 
 ## v0.5.12
 ### New Features

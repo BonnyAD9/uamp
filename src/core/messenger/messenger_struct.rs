@@ -8,7 +8,7 @@ use std::{
 
 use crate::{
     core::{
-        FnDelegate, Msg, Result, UampApp, config,
+        Msg, Result, UampApp, config,
         messenger::{DataResponse, Error, ErrorKind},
         query::Query,
     },
@@ -96,15 +96,14 @@ impl UampApp {
             Err(_) => return (Some(MsgMessage::Success), Some(msg)),
         };
 
-        let delegate = Msg::delegate::<_, FnDelegate<_>>(
-            move |app: &mut UampApp, ctrl: &mut AppCtrl| {
+        let delegate =
+            Msg::fn_delegate(move |app: &mut UampApp, ctrl: &mut AppCtrl| {
                 Self::control_response(
                     app.update_err(ctrl, msg.clone()),
                     &stream,
                 )
                 .map(|_| vec![])
-            },
-        );
+            });
 
         (None, Some(delegate))
     }
@@ -149,11 +148,10 @@ impl UampApp {
             Err(e) => return e,
         };
 
-        let delegate = Msg::delegate::<_, FnDelegate<_>>(
-            move |app: &mut UampApp, _: &mut AppCtrl| {
+        let delegate =
+            Msg::fn_delegate(move |app: &mut UampApp, _: &mut AppCtrl| {
                 app.info_response(&stream, before, after)
-            },
-        );
+            });
 
         (None, Some(delegate))
     }
@@ -228,11 +226,10 @@ impl UampApp {
             Err(e) => return e,
         };
 
-        let delegate = Msg::delegate::<_, FnDelegate<_>>(
-            move |app: &mut UampApp, _: &mut AppCtrl| {
+        let delegate =
+            Msg::fn_delegate(move |app: &mut UampApp, _: &mut AppCtrl| {
                 app.query_response(&stream, &query)
-            },
-        );
+            });
 
         (None, Some(delegate))
     }

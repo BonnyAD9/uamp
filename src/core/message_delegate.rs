@@ -56,11 +56,21 @@ where
 
 impl Msg {
     /// Creates delegate message.
-    pub fn delegate<I, D>(d: I) -> Self
+    pub fn delegate<D>(d: D) -> Self
     where
         D: MessageDelegate + 'static,
-        I: Into<D>,
     {
-        Self::Delegate(Arc::new(d.into()))
+        Self::Delegate(Arc::new(d))
+    }
+
+    pub fn fn_delegate<
+        F: Fn(&mut UampApp, &mut AppCtrl) -> Result<Vec<Msg>>
+            + Send
+            + Sync
+            + 'static,
+    >(
+        d: F,
+    ) -> Self {
+        Self::delegate(FnDelegate(d))
     }
 }

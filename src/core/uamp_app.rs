@@ -73,7 +73,7 @@ pub struct UampApp {
 
     pub(super) state: State,
 
-    _file_watch: Option<INotifyWatcher>,
+    file_watch: Option<INotifyWatcher>,
 }
 
 impl UampApp {
@@ -145,7 +145,7 @@ impl UampApp {
 
             state: State::default(),
 
-            _file_watch: config_watch,
+            file_watch: config_watch,
         };
 
         let state = app.get_state();
@@ -456,6 +456,16 @@ impl UampApp {
                         || v.kind.is_modify())
                 {
                     Some(DataControlMsg::Restart(Some(path)).into())
+                } else if v.kind.is_remove() {
+                    Some(Msg::fn_delegate(move |app, _| {
+                        if let Some(ref mut watcher) = app.file_watch {
+                            watcher.watch(
+                                &path,
+                                notify::RecursiveMode::NonRecursive,
+                            )?;
+                        }
+                        Ok(vec![])
+                    }))
                 } else {
                     None
                 };

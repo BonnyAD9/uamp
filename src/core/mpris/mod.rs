@@ -13,7 +13,7 @@ use mpris_server::{
 
 use crate::{
     core::{
-        ControlMsg, DataControlMsg, FnDelegate, Msg, Result, UampApp,
+        ControlMsg, DataControlMsg, Msg, Result, UampApp,
         config::{self, CacheSize},
         player::Playback,
     },
@@ -49,15 +49,14 @@ impl Mpris {
         f: impl Fn(&mut UampApp) -> Result<T> + Send + Sync + 'static,
     ) -> fdo::Result<T> {
         let (isend, mut irecv) = mpsc::unbounded();
-        let delegate = Msg::delegate::<_, FnDelegate<_>>(
-            move |app: &mut UampApp, _: &mut AppCtrl| {
+        let delegate =
+            Msg::fn_delegate(move |app: &mut UampApp, _: &mut AppCtrl| {
                 let data = f(app)?;
                 if let Err(e) = isend.unbounded_send(data) {
                     error!("Failed to send back mpris data: {e}");
                 }
                 Ok(vec![])
-            },
-        );
+            });
         self.send_msg(delegate)?;
 
         irecv.next().await.ok_or_else(|| {
