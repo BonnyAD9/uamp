@@ -8,6 +8,8 @@
 ### Changes
 - `play` has been made into a control message and can now be used anywhere
   where control message is used.
+- In this release there were also large changes to the whole runtime (started
+  using tokio).
 
 ### Fixes
 - Fix issue where some images would accidentally use default background color
