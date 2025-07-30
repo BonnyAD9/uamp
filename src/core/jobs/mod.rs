@@ -1,11 +1,14 @@
 mod job;
 mod job_msg;
 
+use tokio_util::sync::CancellationToken;
+
 pub use self::{job::*, job_msg::*};
 
 #[derive(Debug, Default)]
 pub struct Jobs {
     unique: Job,
+    pub server: Option<CancellationToken>,
 }
 
 impl Jobs {

@@ -9,9 +9,9 @@ use crate::env::streams::Streams;
 
 pub use self::{andle::*, handle::*, msg::*};
 
-pub fn make_rt<M, E>() -> (Streams<Msg<M, E>>, Handle<M, E>) {
+pub fn make_rt<M, E: Send>() -> (Streams<Msg<M, E>>, Handle<M, E>) {
     let (send, recv) = mpsc::unbounded_channel::<Msg<M, E>>();
-    let (asend, arecv) = mpsc::unbounded_channel::<M>();
+    let (asend, arecv) = mpsc::unbounded_channel::<Amsg<M, E>>();
 
     let mut streams = Streams::new();
 
@@ -24,7 +24,7 @@ pub fn make_rt<M, E>() -> (Streams<Msg<M, E>>, Handle<M, E>) {
 
     streams.add_stream(
         stream::unfold(arecv, |mut arecv| async move {
-            arecv.recv().await.map(|a| (Msg::Msg(vec![a], None), arecv))
+            arecv.recv().await.map(|a| (a.into(), arecv))
         })
         .boxed_local(),
     );

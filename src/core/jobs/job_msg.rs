@@ -1,5 +1,3 @@
-use std::net::TcpListener;
-
 use crate::core::{
     AppCtrl, Job, Msg, Result, UampApp,
     library::{LibraryLoadResult, SongId},
@@ -8,7 +6,7 @@ use crate::core::{
 #[derive(Debug)]
 pub enum JobMsg {
     LibraryLoad(Result<Option<LibraryLoadResult>>),
-    Server(Result<TcpListener>),
+    Server(Result<()>),
     LibrarySave(Result<Vec<SongId>>),
 }
 

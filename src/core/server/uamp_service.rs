@@ -1,35 +1,32 @@
 use std::{borrow::Cow, convert::Infallible};
 
 use futures::{
-    channel::{
-        mpsc::{unbounded, UnboundedSender},
-        oneshot,
-    }, stream::{self, BoxStream, LocalBoxStream}, StreamExt
+    StreamExt,
+    stream::{self, BoxStream},
 };
 use http_body_util::StreamBody;
 use hyper::{
-    body::{Bytes, Frame, Incoming}, Method, Request, Response, Uri, Version
+    Method, Request, Response, Version,
+    body::{Bytes, Frame, Incoming},
 };
 use pareg::FromArg;
-use url::{Url, UrlQuery};
+use url::Url;
 
-use crate::{
-    core::{AnyControlMsg, Error, Msg, Result, UampApp, log_err},
-    env::AppCtrl,
-};
+use crate::core::{AnyControlMsg, Error, Msg, Result, RtAndle};
 
 type MyBody = StreamBody<BoxStream<'static, Result<Frame<Bytes>>>>;
 type MyResponse = Response<MyBody>;
 
+#[derive(Debug, Clone)]
 pub struct UampService {
-    sender: UnboundedSender<Msg>,
+    rt: RtAndle,
 }
 
 impl UampService {
-    pub fn new(sender: UnboundedSender<Msg>) -> Self {
-        Self { sender }
+    pub fn new(rt: RtAndle) -> Self {
+        Self { rt }
     }
-    
+
     pub async fn serve(
         &self,
         req: Request<Incoming>,
@@ -58,7 +55,10 @@ impl UampService {
         &self,
         req: Request<Incoming>,
     ) -> Result<MyResponse> {
-        let url = Url::parse(req.uri().query().unwrap_or_default())?;
+        let url = Url::parse(
+            &("http://localhost".to_string()
+                + req.uri().path_and_query().unwrap().as_str()),
+        )?;
         let mut msgs: Vec<Msg> = vec![];
         // This is kind of dirty solution, but it works.
         let mut buf = String::new();
@@ -72,29 +72,9 @@ impl UampService {
             msgs.push(AnyControlMsg::from_arg(&buf)?.into());
         }
 
-        self.delegate(move |app, ctrl| app.update_many(ctrl, msgs.clone()))
-            .await??;
+        self.rt.msgs(msgs);
 
         Ok(string_response("Success!"))
-    }
-
-    async fn delegate<T: Send + Sync + 'static>(
-        &self,
-        f: impl Fn(&mut UampApp, &mut AppCtrl) -> T + Send + Sync + 'static,
-    ) -> Result<T> {
-        let (send, mut recv) = unbounded::<T>();
-
-        self.sender
-            .unbounded_send(Msg::fn_delegate(move |app, ctrl| {
-                let res = f(app, ctrl);
-                log_err("Failed to send.", send.unbounded_send(res));
-                Ok(vec![])
-            }))
-            .map_err(|_| Error::Unexpected("Failed to send.".into()))?;
-
-        recv.next()
-            .await
-            .ok_or_else(|| Error::Unexpected("Failed to receive.".into()))
     }
 }
 
@@ -122,6 +102,7 @@ fn string_response(s: impl Into<Cow<'static, str>>) -> MyResponse {
     Response::builder()
         .status(200)
         .version(Version::HTTP_2)
+        .header("Content-Type", "text/plain")
         .body(string_body(s))
         .expect("Failed to generate error response. This shouldn't happen.")
 }

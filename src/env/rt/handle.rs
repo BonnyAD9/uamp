@@ -9,15 +9,15 @@ use tokio::{
 
 use crate::{
     core::log_err,
-    env::rt::{Andle, Msg},
+    env::rt::{Amsg, Andle, Msg},
 };
 
-pub struct Handle<M: 'static, E: 'static> {
+pub struct Handle<M: 'static, E: Send + 'static> {
     pub local: mpsc::UnboundedSender<Msg<M, E>>,
-    pub thread: mpsc::UnboundedSender<M>,
+    pub thread: mpsc::UnboundedSender<Amsg<M, E>>,
 }
 
-impl<M, E> Handle<M, E> {
+impl<M, E: Send> Handle<M, E> {
     pub fn send(&self, m: Msg<M, E>) {
         log_err("Failed to send message.", self.local.send(m));
     }
@@ -118,12 +118,12 @@ impl<M, E> Handle<M, E> {
         self.tasks_result(async move { vec![f.await] }).await
     }
 
-    pub fn andle(&self) -> Andle<M> {
+    pub fn andle(&self) -> Andle<M, E> {
         Andle(self.thread.clone())
     }
 }
 
-impl<M, E> Clone for Handle<M, E> {
+impl<M, E: Send> Clone for Handle<M, E> {
     fn clone(&self) -> Self {
         Self {
             local: self.local.clone(),

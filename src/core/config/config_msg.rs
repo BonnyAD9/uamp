@@ -1,9 +1,6 @@
-use std::{net::TcpStream, time::Instant};
+use std::time::Instant;
 
-use crate::core::{
-    Alias, AppCtrl, Error, Job, Msg, Result, UampApp,
-    messenger::{Messenger, MsgMessage},
-};
+use crate::core::{Alias, AppCtrl, Error, Job, Msg, Result, UampApp};
 
 use super::Config;
 
@@ -41,13 +38,10 @@ impl UampApp {
                 let mut conf = Config::from_json(path)
                     .map_err(|e| e.prepend("Failed to reload config."))?;
 
-                let reload_server = (conf.server_address()
+                let reload_server = conf.server_address()
                     != self.config.server_address()
                     || conf.port() != self.config.port()
-                    || conf.enable_server() != self.config.enable_server())
-                .then(|| {
-                    (self.config.server_address().clone(), self.config.port())
-                });
+                    || conf.enable_server() != self.config.enable_server();
 
                 let system_player_change =
                     conf.system_player() != self.config.system_player();
@@ -64,8 +58,8 @@ impl UampApp {
                     }
                 }
 
-                if let Some((adr, port)) = reload_server {
-                    self.reload_server(ctrl, adr, port)
+                if reload_server {
+                    self.reload_server(ctrl)
                         .map_err(|e| e.prepend("Failed to reload server."))?;
                 }
             }
@@ -108,21 +102,11 @@ impl UampApp {
 //===========================================================================//
 
 impl UampApp {
-    fn reload_server(
-        &mut self,
-        ctrl: &mut AppCtrl,
-        old_adr: String,
-        old_port: u16,
-    ) -> Result<()> {
-        if self.jobs.is_running(Job::SERVER) {
-            let stream = TcpStream::connect(format!("{old_adr}:{old_port}"))
-                .map_err(|e| {
-                Error::io(e)
-                    .msg("Failed to reload server.")
-                    .reason("Couldn't connect to the server.")
-            })?;
-            let mut msgr = Messenger::new(&stream);
-            msgr.send(MsgMessage::Stop)?;
+    fn reload_server(&mut self, ctrl: &mut AppCtrl) -> Result<()> {
+        if self.jobs.is_running(Job::SERVER)
+            && let Some(stop) = self.jobs.server.take()
+        {
+            stop.cancel();
         } else if self.config.should_start_server() {
             self.start_server(ctrl)?;
         }
@@ -131,17 +115,12 @@ impl UampApp {
     }
 
     pub fn shutdown_server(&mut self) -> Result<()> {
-        if !self.jobs.is_running(Job::SERVER) {
-            return Ok(());
+        if self.jobs.is_running(Job::SERVER)
+            && let Some(stop) = self.jobs.server.take()
+        {
+            stop.cancel();
+            self.config.force_server = Some(false);
         }
-
-        let stream = TcpStream::connect(format!(
-            "{}:{}",
-            self.config.server_address(),
-            self.config.port()
-        ))?;
-        let mut msgr = Messenger::new(&stream);
-        msgr.send(MsgMessage::Stop)?;
         Ok(())
     }
 }

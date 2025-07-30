@@ -526,7 +526,7 @@ impl Player {
             _ => return,
         };
 
-        rt.send(message);
+        rt.msg(message);
     }
 }
 

@@ -28,4 +28,4 @@ pub use self::{
 
 pub type AppCtrl<'a> = crate::env::AppCtrl<'a, Msg, Error>;
 pub type RtHandle = crate::env::rt::Handle<Msg, Error>;
-pub type RtAndle = crate::env::rt::Andle<Msg>;
+pub type RtAndle = crate::env::rt::Andle<Msg, Error>;

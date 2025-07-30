@@ -9,7 +9,7 @@ use crate::env::rt;
 //===========================================================================//
 
 /// Command to the UampApp environment.
-pub enum Command<M, E> {
+pub enum Command<M: 'static, E: 'static> {
     /// Request exit.
     Exit,
     AddStrem(LocalBoxStream<'static, rt::Msg<M, E>>),

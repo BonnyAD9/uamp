@@ -1,7 +1,6 @@
 use std::{
     env,
     fs::{self, DirEntry},
-    net::TcpListener,
     path::{Path, PathBuf},
     process::{self, Command},
     time::{Duration, Instant},
@@ -19,13 +18,8 @@ use tokio::signal::unix::SignalKind;
 use tokio::task::JoinHandle;
 
 use crate::core::{
-    AppCtrl, Error, Job, JobMsg, Jobs, Result, RtAndle, RtHandle, State,
-    config,
-    library::Song,
-    log_err,
-    messenger::{self, Messenger, MsgMessage},
-    mpris::Mpris,
-    msg::Msg,
+    AppCtrl, Error, Jobs, Result, RtAndle, RtHandle, State, config,
+    library::Song, log_err, mpris::Mpris, msg::Msg,
 };
 
 use super::{
@@ -312,39 +306,6 @@ impl UampApp {
         Error::multiple(res)
     }
 
-    /// Starts the tcp server.
-    pub(super) fn start_server(&mut self, ctrl: &mut AppCtrl) -> Result<()> {
-        if self.jobs.is_running(Job::SERVER) {
-            return Error::invalid_operation()
-                .msg("Failed to start server.")
-                .reason("Server is already running.")
-                .err();
-        }
-
-        let listener = TcpListener::bind(format!(
-            "{}:{}",
-            self.config.server_address(),
-            self.config.port()
-        ))?;
-
-        let rt = self.rt.andle();
-
-        let task = move || {
-            Msg::Job(JobMsg::Server(Ok(Self::server_task(listener, rt))))
-        };
-
-        ctrl.task(async move {
-            match tokio::task::spawn_blocking(task).await {
-                Ok(r) => r,
-                Err(e) => Msg::Job(JobMsg::Server(Err(e.into()))),
-            }
-        });
-
-        self.jobs.run(Job::SERVER);
-
-        Ok(())
-    }
-
     /// Starts a thread for handling signals. This is only temorary workaround
     /// until a bug is fixed and `signal_task` will work properly.
     pub(super) fn start_signals(ctrl: &mut AppCtrl) -> Result<()> {
@@ -444,7 +405,7 @@ impl UampApp {
                 };
 
                 if let Some(msg) = msg {
-                    rt.send(msg);
+                    rt.msg(msg);
                 }
             }
         })?;
@@ -455,55 +416,6 @@ impl UampApp {
         }
 
         Ok(watcher)
-    }
-
-    fn server_task(listener: TcpListener, rt: RtAndle) -> TcpListener {
-        loop {
-            let stream = listener.accept().unwrap();
-            let mut msgr = Messenger::new(&stream.0);
-
-            let rec = msgr.recieve();
-
-            let rec = match rec {
-                Ok(MsgMessage::Stop) => {
-                    println!("Stoppint tcp");
-                    return listener;
-                }
-                Ok(MsgMessage::Ping) => {
-                    if let Err(e) = msgr.send(MsgMessage::Success) {
-                        error!("Failed to respond to ping: {}", e.log());
-                    }
-                    continue;
-                }
-                Ok(m) => m,
-                Err(mut e) => {
-                    e = e.log();
-                    warn!("Failed to recieve message: {e}");
-                    if let Err(e) =
-                        msgr.send(MsgMessage::Error(messenger::Error::new(
-                            messenger::ErrorKind::DeserializeFailed,
-                            e.clone_universal(),
-                        )))
-                    {
-                        warn!("Failed to send error message: {}", e.log());
-                    }
-                    continue;
-                }
-            };
-
-            let (response, msg) = *Self::message_event(rec, &stream.0);
-            if let Some(r) = response {
-                if let Err(e) = msgr.send(r) {
-                    warn!("Failed to send response {}", e.log());
-                }
-            }
-
-            if let Some(msg) = msg {
-                rt.send(msg);
-            } else {
-                continue;
-            }
-        }
     }
 
     fn restart(&mut self, ctrl: &mut AppCtrl) -> Result<()> {

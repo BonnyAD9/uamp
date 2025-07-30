@@ -1,54 +1,96 @@
 mod uamp_service;
-mod executor;
 
-use std::net::SocketAddr;
+use futures::executor::block_on;
+use hyper::{server::conn::http1, service::service_fn};
+use hyper_util::rt::TokioIo;
+use tokio::net::TcpListener;
+use tokio_util::sync::CancellationToken;
 
-use async_std::net::TcpListener;
-use futures::{channel::{mpsc::UnboundedSender, oneshot}, executor::block_on};
-use hyper::{server::conn::http2, service::service_fn};
-
-use crate::{core::{config::Config, server::executor::Executor, Msg, Result, UampApp}, env::AppCtrl};
+use crate::core::{
+    AppCtrl, Error, Job, JobMsg, Msg, Result, RtHandle, UampApp,
+    config::Config, log_err,
+};
 
 pub use self::uamp_service::*;
 
 struct Server {
-    sender: UnboundedSender<Msg>,
+    rt: RtHandle,
     listener: TcpListener,
 }
 
 impl UampApp {
-    pub fn start_server(conf: &Config, ctrl: &mut AppCtrl, sender: UnboundedSender<Msg>) -> Result<oneshot::Sender<()>> {
-        let server = Server::new(conf, sender)?;
-        let (ssend, srecv) = oneshot::channel::<()>();
-        ctrl.add_fn_stream((server, srecv), |(server, stop)| async move {
-            if let Some((msg, stop)) = server.run(stop).await {
-                (Some((server, stop)), Some(msg))
-            } else {
-                (None, None)
-            }
-        });
-        Ok(ssend)
+    pub fn start_server(&mut self, ctrl: &mut AppCtrl) -> Result<()> {
+        if self.jobs.is_running(Job::SERVER) {
+            return Err(
+                Error::invalid_operation().msg("Server is already running.")
+            );
+        }
+
+        let cancel = CancellationToken::new();
+        let server = Server::new(&self.config, self.rt.clone())?;
+        let token = cancel.clone();
+        ctrl.task(
+            async move { Msg::Job(JobMsg::Server(server.run(token).await)) },
+        );
+        self.jobs.run(Job::SERVER);
+        self.jobs.server = Some(cancel);
+
+        Ok(())
     }
 }
 
 impl Server {
-    pub fn new(conf: &Config, sender: UnboundedSender<Msg>) -> Result<Self> {
-        let listener = block_on(TcpListener::bind(format!("{}:{}", conf.server_address(), conf.port())))?;
-        Ok(Self { sender, listener })
+    pub fn new(conf: &Config, rt: RtHandle) -> Result<Self> {
+        let listener = block_on(TcpListener::bind(format!(
+            "{}:{}",
+            conf.server_address(),
+            conf.port()
+        )))?;
+        Ok(Self { rt, listener })
     }
-    
-    async fn run(&self, stop: oneshot::Receiver<()>) -> Option<(Msg, oneshot::Receiver<()>)> {
-        // TODO: better error handling
-        let (conn, _) = self.listener.accept().await.ok()?;
-        self.sender.unbounded_send(Msg::fn_delegate(move |app, ctrl| {
-            ctrl.add_once_stream((conn.clone(), app.sender.clone()), |(conn, sender)| async move {
-                let service = UampService::new(sender.clone());
-                let _ = http2::Builder::new(Executor::new(sender.clone()))
-                    .serve_connection(conn, service_fn(async move |a| service.serve(a).await))
-                    .await;
-            });
-            Ok(vec![])
-        })).ok()?;
-        todo!()
+
+    async fn run(&self, stop: CancellationToken) -> Result<()> {
+        loop {
+            let (conn, _) = tokio::select!(
+                _ = stop.cancelled() => {
+                    dbg!("Canceled");
+                    break
+                },
+                res = self.listener.accept() => {
+                    let Some(val) = log_err("Failed to accept.", res) else {
+                        continue;
+                    };
+                    val
+                }
+            );
+
+            let service = UampService::new(self.rt.andle());
+            log_err(
+                "Failed to serve connection.",
+                http1::Builder::new()
+                    .serve_connection(
+                        TokioIo::new(conn),
+                        service_fn(move |a| {
+                            let s = service.clone();
+                            async move { s.serve(a).await }
+                        }),
+                    )
+                    .await,
+            );
+        }
+
+        dbg!("quitting");
+
+        Ok(())
+    }
+}
+
+impl<F> hyper::rt::Executor<F> for RtHandle
+where
+    F: Future + Send + 'static,
+    F::Output: Send + 'static,
+{
+    fn execute(&self, fut: F) {
+        self.spawn(fut);
     }
 }

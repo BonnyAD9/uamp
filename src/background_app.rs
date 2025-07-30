@@ -16,7 +16,7 @@ pub fn run_background_app(
     conf: Config,
     init: Vec<AnyControlMsg>,
 ) -> Result<()> {
-    let rt = runtime::Builder::new_current_thread().enable_io().build()?;
+    let rt = runtime::Builder::new_multi_thread().enable_all().build()?;
     let local = tokio::task::LocalSet::new();
     rt.block_on(local.run_until(run_bg_async(conf, init)))
 }
