@@ -81,6 +81,13 @@ pub enum Error {
     /// Any other error.
     #[error("{0}")]
     Other(Box<ErrCtx<anyhow::Error>>),
+    /// Error when handling HTTP request.
+    #[error("{1} {0}")]
+    Http(Box<ErrCtx<&'static str>>, u16),
+    #[error("{0}")]
+    Url(Box<ErrCtx<url::ParseError>>),
+    #[error("{0}")]
+    AddrParse(Box<ErrCtx<std::net::AddrParseError>>),
     #[error("{}", .0.iter().map(|a| a.to_string()).join(""))]
     Multiple(Vec<Error>),
 }
@@ -152,6 +159,18 @@ macro_rules! map_ctx {
                 *$ctx = $f;
                 Error::Image($ctx)
             }
+            Error::Http(mut $ctx, code) => {
+                *$ctx = $f;
+                Error::Http($ctx, code)
+            }
+            Error::Url(mut $ctx) => {
+                *$ctx = $f;
+                Error::Url($ctx)
+            }
+            Error::AddrParse(mut $ctx) => {
+                *$ctx = $f;
+                Error::AddrParse($ctx)
+            }
             $($($p => $pb,)*)?
             e => e,
         }
@@ -169,6 +188,10 @@ impl Error {
 
     pub fn no_stdin_pipe() -> Self {
         Self::InvalidOperation("No stdin pipe.".into())
+    }
+
+    pub fn http(code: u16, msg: &'static str) -> Self {
+        Self::Http(msg.into(), code)
     }
 
     pub fn thread_panicked(e: Option<Box<dyn Any + Send + 'static>>) -> Self {
@@ -272,6 +295,9 @@ impl Error {
             Error::Notify(err_ctx) => err_ctx.clone_universal(),
             Error::ShellWords(err_ctx) => err_ctx.clone_universal(),
             Error::Other(err_ctx) => err_ctx.clone_universal(),
+            Error::Http(err_ctx, _) => err_ctx.clone_universal(),
+            Error::Url(err_ctx) => err_ctx.clone_universal(),
+            Error::AddrParse(err_ctx) => err_ctx.clone_universal(),
             Error::Multiple(v) if v.len() == 1 => v[0].clone_universal(),
             e => e.to_string().into(),
         }
@@ -325,6 +351,8 @@ impl_from!(
     shell_words::ParseError => ShellWords,
     anyhow::Error => Other,
     image::ImageError => Image,
+    url::ParseError => Url,
+    std::net::AddrParseError => AddrParse,
 );
 
 #[cfg(unix)]

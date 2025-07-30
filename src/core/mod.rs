@@ -4,6 +4,7 @@ mod jobs;
 mod message_delegate;
 mod msg;
 mod play_msg;
+mod server;
 mod state;
 mod uamp_app;
 
