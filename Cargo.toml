@@ -33,10 +33,9 @@ rmp-serde = "1.3.0"
 serde = "1.0.219"
 serde_json = "1.0.140"
 shell-words = "1.1.0"
-signal-hook = "0.3.18"
-signal-hook-async-std = "0.3.0"
 termal = { version =  "4.0.1", features = ["image", "raw", "events"] }
 thiserror = "2.0.12"
+tokio = { version = "1.47.0", features = ["rt", "sync", "signal", "macros"] }
 unidecode = "0.3.0"
 
 [target.'cfg(unix)'.dependencies]

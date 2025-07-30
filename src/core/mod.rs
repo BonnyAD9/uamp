@@ -1,14 +1,10 @@
-mod alias;
-mod any_control_msg;
-mod control_function;
-mod control_msg;
-mod data_control_msg;
+mod control;
 mod err;
+mod jobs;
 mod message_delegate;
 mod msg;
 mod play_msg;
 mod state;
-mod task_msg;
 mod uamp_app;
 
 //===========================================================================//
@@ -25,7 +21,10 @@ pub mod query;
 mod mpris;
 
 pub use self::{
-    alias::*, any_control_msg::*, control_function::*, control_msg::*,
-    data_control_msg::*, err::*, message_delegate::*, msg::*, play_msg::*,
-    state::*, task_msg::*, uamp_app::*,
+    control::*, err::*, jobs::*, message_delegate::*, msg::*, play_msg::*,
+    state::*, uamp_app::*,
 };
+
+pub type AppCtrl<'a> = crate::env::AppCtrl<'a, Msg, Error>;
+pub type RtHandle = crate::env::rt::Handle<Msg, Error>;
+pub type RtAndle = crate::env::rt::Andle<Msg>;

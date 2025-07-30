@@ -68,7 +68,9 @@ gen_struct! {
         control_aliases: HashMap<String, ControlFunction> { pub, pub } =>
         pub(super) () {
             fn end_action(s: &str) -> AnyControlMsg {
-                DataControlMsg::SetPlaylistEndAction(Some(Alias::new(s.into()))).into()
+                DataControlMsg::SetPlaylistEndAction(Some(Alias::new(
+                    s.into()
+                ))).into()
             }
 
             [
@@ -204,7 +206,7 @@ gen_struct! {
         #[serde(skip_serializing, default = "default_config_path_json")]
         pub config_path: Option<PathBuf>,
         #[serde(skip_serializing, default)]
-        pub force_server: bool,
+        pub force_server: Option<bool>,
 
         ; // attributes for the auto field
         #[serde(skip)]
@@ -256,7 +258,7 @@ impl Config {
             simple_sorting: default_simple_sorting(),
             client_image_lookup: default_client_image_lookup(),
             system_player: default_system_player(),
-            force_server: false,
+            force_server: None,
             change: Cell::new(true),
         }
     }
@@ -268,6 +270,10 @@ impl Config {
 
     pub fn get_cache_cover_path(&self, size: CacheSize) -> PathBuf {
         self.cache_path().join(format!("cover{size}"))
+    }
+
+    pub fn should_start_server(&self) -> bool {
+        self.force_server.unwrap_or(self.enable_server())
     }
 }
 

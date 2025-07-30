@@ -1,11 +1,8 @@
 use std::{net::TcpStream, time::Instant};
 
-use crate::{
-    core::{
-        Alias, Error, Msg, Result, TaskType, UampApp,
-        messenger::{Messenger, MsgMessage},
-    },
-    env::AppCtrl,
+use crate::core::{
+    Alias, AppCtrl, Error, Job, Msg, Result, UampApp,
+    messenger::{Messenger, MsgMessage},
 };
 
 use super::Config;
@@ -117,7 +114,7 @@ impl UampApp {
         old_adr: String,
         old_port: u16,
     ) -> Result<()> {
-        if ctrl.any_task(|t| t == TaskType::Server) {
+        if self.jobs.is_running(Job::SERVER) {
             let stream = TcpStream::connect(format!("{old_adr}:{old_port}"))
                 .map_err(|e| {
                 Error::io(e)
@@ -126,10 +123,25 @@ impl UampApp {
             })?;
             let mut msgr = Messenger::new(&stream);
             msgr.send(MsgMessage::Stop)?;
-        } else if self.config.enable_server() || self.config.force_server {
-            Self::start_server(&self.config, ctrl, self.sender.clone())?;
+        } else if self.config.should_start_server() {
+            self.start_server(ctrl)?;
         }
 
+        Ok(())
+    }
+
+    pub fn shutdown_server(&mut self) -> Result<()> {
+        if !self.jobs.is_running(Job::SERVER) {
+            return Ok(());
+        }
+
+        let stream = TcpStream::connect(format!(
+            "{}:{}",
+            self.config.server_address(),
+            self.config.port()
+        ))?;
+        let mut msgr = Messenger::new(&stream);
+        msgr.send(MsgMessage::Stop)?;
         Ok(())
     }
 }

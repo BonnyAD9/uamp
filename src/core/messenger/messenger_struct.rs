@@ -6,16 +6,15 @@ use std::{
     net::TcpStream,
 };
 
-use crate::{
-    core::{
-        Msg, Result, UampApp, config,
-        messenger::{DataResponse, Error, ErrorKind},
-        query::Query,
-    },
-    env::AppCtrl,
+use crate::core::{
+    AppCtrl, Msg, Result, UampApp, config,
+    messenger::{DataResponse, Error, ErrorKind},
+    query::Query,
 };
 
 use super::{Info, MsgMessage, Request};
+
+type ReqError = Box<(Option<MsgMessage>, Option<Msg>)>;
 
 //===========================================================================//
 //                                   Public                                  //
@@ -74,38 +73,35 @@ impl UampApp {
     pub(in crate::core) fn message_event(
         msg: MsgMessage,
         stream: &TcpStream,
-    ) -> (Option<MsgMessage>, Option<Msg>) {
+    ) -> Box<(Option<MsgMessage>, Option<Msg>)> {
         match msg {
             MsgMessage::Request(r) => Self::handle_request(r, stream),
             MsgMessage::Control(msg) => Self::handle_msg(msg.into(), stream),
             MsgMessage::Play(msg) => Self::handle_msg(msg.into(), stream),
-            _ => (
+            _ => Box::new((
                 Some(MsgMessage::new_error(ErrorKind::ExpectedControl)),
                 None,
-            ),
+            )),
         }
     }
 
     fn handle_msg(
         msg: Msg,
         stream: &TcpStream,
-    ) -> (Option<MsgMessage>, Option<Msg>) {
+    ) -> Box<(Option<MsgMessage>, Option<Msg>)> {
         let stream = match Self::clone_stream(stream) {
             Ok(s) => s,
             // Fallback to simple control message without feedback.
-            Err(_) => return (Some(MsgMessage::Success), Some(msg)),
+            Err(_) => return Box::new((Some(MsgMessage::Success), Some(msg))),
         };
 
         let delegate =
             Msg::fn_delegate(move |app: &mut UampApp, ctrl: &mut AppCtrl| {
-                Self::control_response(
-                    app.update_err(ctrl, msg.clone()),
-                    &stream,
-                )
-                .map(|_| vec![])
+                Self::control_response(app.update_err(ctrl, msg), &stream)
+                    .map(|_| vec![])
             });
 
-        (None, Some(delegate))
+        Box::new((None, Some(delegate)))
     }
 
     fn control_response(r: Result<()>, stream: &TcpStream) -> Result<()> {
@@ -129,7 +125,7 @@ impl UampApp {
     fn handle_request(
         req: Request,
         stream: &TcpStream,
-    ) -> (Option<MsgMessage>, Option<Msg>) {
+    ) -> Box<(Option<MsgMessage>, Option<Msg>)> {
         match req {
             Request::Info(before, after) => {
                 Self::request_info(stream, before, after)
@@ -142,7 +138,7 @@ impl UampApp {
         stream: &TcpStream,
         before: usize,
         after: usize,
-    ) -> (Option<MsgMessage>, Option<Msg>) {
+    ) -> Box<(Option<MsgMessage>, Option<Msg>)> {
         let stream = match Self::clone_stream(stream) {
             Ok(s) => s,
             Err(e) => return e,
@@ -153,7 +149,7 @@ impl UampApp {
                 app.info_response(&stream, before, after)
             });
 
-        (None, Some(delegate))
+        Box::new((None, Some(delegate)))
     }
 
     fn info_response(
@@ -220,7 +216,7 @@ impl UampApp {
     fn query_request(
         stream: &TcpStream,
         query: Query,
-    ) -> (Option<MsgMessage>, Option<Msg>) {
+    ) -> Box<(Option<MsgMessage>, Option<Msg>)> {
         let stream = match Self::clone_stream(stream) {
             Ok(s) => s,
             Err(e) => return e,
@@ -231,7 +227,7 @@ impl UampApp {
                 app.query_response(&stream, &query)
             });
 
-        (None, Some(delegate))
+        Box::new((None, Some(delegate)))
     }
 
     fn query_response(
@@ -254,11 +250,10 @@ impl UampApp {
 
     fn clone_stream(
         stream: &TcpStream,
-    ) -> std::result::Result<TcpStream, (Option<MsgMessage>, Option<Msg>)>
-    {
+    ) -> std::result::Result<TcpStream, ReqError> {
         stream.try_clone().map_err(|e| {
             error!("Failed to clone tcp stream: {e}");
-            (
+            Box::new((
                 Some(
                     Error::new(
                         ErrorKind::InternalError,
@@ -270,7 +265,7 @@ impl UampApp {
                     .into(),
                 ),
                 None,
-            )
+            ))
         })
     }
 }

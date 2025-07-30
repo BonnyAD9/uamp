@@ -1,12 +1,11 @@
 use std::{cell::Cell, mem, time::Duration};
 
-use futures::channel::mpsc::UnboundedSender;
 use log::{error, info, warn};
 use raplay::{CallbackInfo, Timestamp};
 
 use crate::{
     core::{
-        Alias, DataControlMsg, Error, Msg, Result,
+        Alias, DataControlMsg, Error, Msg, Result, RtAndle,
         config::Config,
         library::{Library, SongId},
     },
@@ -360,7 +359,7 @@ impl Player {
     }
 
     /// Creates new player from the sender
-    pub(super) fn new_default(sender: UnboundedSender<Msg>) -> Self {
+    pub(super) fn new_default(rt: RtAndle) -> Self {
         let mut res = Self {
             playlist: Playlist::default(),
             playlist_stack: vec![],
@@ -372,7 +371,7 @@ impl Player {
             playlist_ended: false,
         };
 
-        res.init_inner(sender);
+        res.init_inner(rt);
         res
     }
 
@@ -399,10 +398,9 @@ impl Player {
     }
 
     /// Initializes the player.
-    pub(super) fn init_inner(&mut self, sender: UnboundedSender<Msg>) {
-        self.inner.on_callback(move |msg| {
-            Self::inner_callback_handler(msg, &sender)
-        });
+    pub(super) fn init_inner(&mut self, rt: RtAndle) {
+        self.inner
+            .on_callback(move |msg| Self::inner_callback_handler(msg, &rt));
 
         if self.mute {
             self.inner.set_volume(0.);
@@ -518,10 +516,7 @@ impl Player {
         }
     }
 
-    fn inner_callback_handler(
-        msg: CallbackInfo,
-        sender: &UnboundedSender<Msg>,
-    ) {
+    fn inner_callback_handler(msg: CallbackInfo, rt: &RtAndle) {
         let message = match msg {
             CallbackInfo::SourceEnded(s) => Msg::Player(PlayerMsg::SongEnd(s)),
             CallbackInfo::PrefetchTime(_) => Msg::Player(PlayerMsg::Prefetch),
@@ -531,9 +526,7 @@ impl Player {
             _ => return,
         };
 
-        if let Err(e) = sender.unbounded_send(message) {
-            error!("Failed to set callback message: {e}");
-        }
+        rt.send(message);
     }
 }
 

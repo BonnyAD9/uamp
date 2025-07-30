@@ -12,13 +12,11 @@ use pareg::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    env::AppCtrl,
+    core::{
+        AppCtrl, Error, Msg, Result, UampApp, library::LoadOpts, log_err,
+        player::AddPolicy, query::SongOrder,
+    },
     ext::{Wrap, duration_to_string},
-};
-
-use super::{
-    Error, Msg, Result, UampApp, library::LoadOpts, player::AddPolicy,
-    query::SongOrder,
 };
 
 //===========================================================================//
@@ -106,7 +104,8 @@ impl UampApp {
             }
             ControlMsg::Close => {
                 let r = self.save_all(true, ctrl).map(|_| vec![]);
-                if ctrl.any_task(|t| t.wait_before_exit()) {
+                log_err("Failed to shutdown server.", self.shutdown_server());
+                if self.jobs.any_no_close() {
                     self.pending_close = true;
                     return r;
                 }
@@ -138,11 +137,7 @@ impl UampApp {
                 self.player.set_mute(b.unwrap_or(!self.player.mute()))
             }
             ControlMsg::LoadNewSongs(opts) => {
-                match self.library.start_get_new_songs(
-                    &self.config,
-                    ctrl,
-                    opts,
-                ) {
+                match self.start_get_new_songs(ctrl, opts) {
                     Err(e) if matches!(e, Error::InvalidOperation(_)) => {
                         info!("Cannot load new songs: {}", e.log())
                     }

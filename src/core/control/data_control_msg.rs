@@ -12,9 +12,7 @@ use pareg::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::env::AppCtrl;
-
-use super::{Alias, Msg, Result, UampApp, query::Query};
+use crate::core::{Alias, AppCtrl, Msg, Result, UampApp, query::Query};
 
 //===========================================================================//
 //                                   Public                                  //

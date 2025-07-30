@@ -1,6 +1,12 @@
-use crate::core::{Msg, TaskMsg, TaskType};
+use futures::{
+    Stream,
+    stream::{self, LocalBoxStream, StreamExt},
+};
+use tokio::task::JoinHandle;
 
-use super::{Command, MsgStream, UniqueTasks};
+use crate::env::rt;
+
+use super::Command;
 
 //===========================================================================//
 //                                   Public                                  //
@@ -8,22 +14,18 @@ use super::{Command, MsgStream, UniqueTasks};
 
 /// Interface for performing actions in the environment wher UampApp runs.
 #[derive(Debug)]
-pub struct AppCtrl<'a> {
-    commands: &'a mut Vec<Command>,
-    tasks: &'a UniqueTasks,
+pub struct AppCtrl<'a, M: 'static, E: 'static> {
+    commands: &'a mut Vec<Command<M, E>>,
 }
 
-impl<'a> AppCtrl<'a> {
+impl<'a, M, E> AppCtrl<'a, M, E> {
     /// Creates new app control.
-    pub fn new(
-        commands: &'a mut Vec<Command>,
-        tasks: &'a UniqueTasks,
-    ) -> Self {
-        Self { commands, tasks }
+    pub fn new(commands: &'a mut Vec<Command<M, E>>) -> Self {
+        Self { commands }
     }
 
     /// Add command to execute.
-    pub fn add(&mut self, cmd: Command) {
+    pub fn add(&mut self, cmd: Command<M, E>) {
         self.commands.push(cmd);
     }
 
@@ -32,39 +34,69 @@ impl<'a> AppCtrl<'a> {
         self.add(Command::Exit)
     }
 
-    /// Add asynchronous stream of messages to run.
-    pub fn add_stream<S>(&mut self, s: S)
-    where
-        S: MsgStream<Option<Msg>> + 'static,
-    {
-        self.add(Command::AddStream(Box::new(s)))
+    pub fn stream_rtx(&mut self, s: LocalBoxStream<'static, rt::Msg<M, E>>) {
+        self.add(Command::AddStrem(s));
     }
 
-    /// Add task to run on a thread.
-    pub fn add_task<T>(&mut self, id: TaskType, t: T)
-    where
-        T: FnOnce() -> TaskMsg + Send + 'static,
-    {
-        self.add(Command::AddTask(id, Box::new(t)))
+    pub fn stream_rt(
+        &mut self,
+        s: impl Stream<Item = rt::Msg<M, E>> + 'static,
+    ) {
+        self.stream_rtx(s.boxed_local());
     }
 
-    /// Check if task of the given type is currently running.
-    pub fn is_task_running(&self, id: TaskType) -> bool {
-        self.tasks.has_task(id)
+    pub fn streams(&mut self, s: impl Stream<Item = Vec<M>> + 'static) {
+        self.stream_rt(s.map(|a| rt::Msg::Msg(a, None)))
     }
 
-    /// Check if any of the running tasks match the given predicate.
-    pub fn any_task<P>(&self, f: P) -> bool
-    where
-        P: Fn(TaskType) -> bool,
-    {
-        self.tasks.any(&f)
-            || self.commands.iter().any(|t| {
-                if let Command::AddTask(t, _) = t {
-                    f(*t)
-                } else {
-                    false
-                }
-            })
+    pub fn stream(&mut self, s: impl Stream<Item = M> + 'static) {
+        self.streams(s.map(|a| vec![a]))
+    }
+
+    pub fn unfold_rt<
+        T: 'static,
+        F: Future<Output = Option<(rt::Msg<M, E>, T)>> + 'static,
+    >(
+        &mut self,
+        d: T,
+        f: impl FnMut(T) -> F + 'static,
+    ) {
+        self.stream_rt(stream::unfold(d, f))
+    }
+
+    pub fn unfold<T: 'static, F: Future<Output = Option<(M, T)>> + 'static>(
+        &mut self,
+        d: T,
+        f: impl FnMut(T) -> F + 'static,
+    ) {
+        self.stream(stream::unfold(d, f))
+    }
+
+    pub fn task_rt(
+        &mut self,
+        f: impl Future<Output = rt::Msg<M, E>> + 'static,
+    ) {
+        self.unfold_rt(Some(f), |f| async move {
+            if let Some(f) = f {
+                Some((f.await, None))
+            } else {
+                None
+            }
+        })
+    }
+
+    pub fn tasks(&mut self, f: impl Future<Output = Vec<M>> + 'static) {
+        self.task_rt(async move { rt::Msg::Msg(f.await, None) })
+    }
+
+    pub fn task(&mut self, f: impl Future<Output = M> + 'static) {
+        self.tasks(async move { vec![f.await] })
+    }
+
+    pub fn spawn<T: 'static>(
+        &mut self,
+        f: impl Future<Output = T> + 'static,
+    ) -> JoinHandle<T> {
+        tokio::task::spawn_local(f)
     }
 }

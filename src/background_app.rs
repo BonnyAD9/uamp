@@ -1,9 +1,9 @@
-use futures::{StreamExt, channel::mpsc};
 use log::{error, trace};
+use tokio::runtime;
 
 use crate::{
-    core::{AnyControlMsg, Msg, Result, UampApp, config::Config},
-    env::{AppCtrl, Command, MsgGen, Streams, UniqueTasks},
+    core::{AnyControlMsg, Error, Msg, Result, UampApp, config::Config},
+    env::{AppCtrl, Command, rt},
 };
 
 //===========================================================================//
@@ -13,29 +13,29 @@ use crate::{
 /// Runs uamp as background app that must have server so that it can be
 /// controlled.
 pub fn run_background_app(
+    conf: Config,
+    init: Vec<AnyControlMsg>,
+) -> Result<()> {
+    let rt = runtime::Builder::new_current_thread().enable_io().build()?;
+    let local = tokio::task::LocalSet::new();
+    rt.block_on(local.run_until(run_bg_async(conf, init)))
+}
+
+async fn run_bg_async(
     mut conf: Config,
     init: Vec<AnyControlMsg>,
 ) -> Result<()> {
-    conf.force_server = true;
+    conf.force_server = Some(true);
     let mut cmd_queue = vec![];
-    let (sender, reciever) = mpsc::unbounded::<Msg>();
 
-    let mut streams = Streams::new();
-    streams.add(Box::new(MsgGen::new(reciever, |mut r| async {
-        let msg = r.next().await.unwrap();
-        (Some(r), Some(msg))
-    })));
+    let (mut rt, handle) = rt::make_rt::<Msg, Error>();
 
-    let mut tasks = UniqueTasks::new(sender.clone());
-
-    for m in init {
-        if let Err(e) = sender.unbounded_send(m.into()) {
-            error!("Failed to send init message: {e}");
-        }
+    if !init.is_empty() {
+        handle.msgs(init.into_iter().map(|a| a.into()).collect());
     }
 
     let mut app =
-        UampApp::new(conf, &mut AppCtrl::new(&mut cmd_queue, &tasks), sender)?;
+        UampApp::new(conf, &mut AppCtrl::new(&mut cmd_queue), handle)?;
 
     'mainloop: loop {
         for cmd in cmd_queue.drain(..) {
@@ -44,26 +44,28 @@ pub fn run_background_app(
             dbg!(&cmd);
             match cmd {
                 Command::Exit => break 'mainloop Ok(()),
-                Command::AddStream(stream) => streams.add(stream),
-                Command::AddTask(typ, task) => {
-                    if let Err(e) = tasks.add(typ, task) {
-                        error!("Failed to start task: {}", e.log());
-                    }
-                }
+                Command::AddStrem(s) => rt.add_stream(s),
             }
         }
 
-        let msg = streams.wait_one();
+        let msg = rt
+            .next()
+            .await
+            .expect("The runtime stopped. This shouldn't happen.");
 
-        for res in tasks.check() {
-            trace!("{res:?}");
-            #[cfg(debug_assertions)]
-            dbg!(&res);
-            app.task_end(&mut AppCtrl::new(&mut cmd_queue, &tasks), res);
-        }
-
-        if let Some(msg) = msg {
-            app.update(&mut AppCtrl::new(&mut cmd_queue, &tasks), msg);
+        match msg {
+            rt::Msg::Msg(msgs, rsend) => {
+                let res = app
+                    .update_many(&mut AppCtrl::new(&mut cmd_queue), msgs)
+                    .map_err(|e| e.log());
+                if let Err(ref e) = res {
+                    error!("{e}");
+                }
+                if let Some(rsend) = rsend {
+                    _ = rsend.send(res);
+                }
+            }
+            rt::Msg::AddStream(s) => rt.add_stream(s),
         }
     }
 }

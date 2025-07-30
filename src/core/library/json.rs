@@ -6,15 +6,12 @@ use std::{
 
 use log::{error, info};
 
-use crate::{
-    core::{Error, Result, TaskMsg, TaskType, config::Config, player::Player},
-    env::AppCtrl,
+use crate::core::{
+    AppCtrl, Error, Job, JobMsg, Jobs, Msg, Result, config::Config,
+    player::Player,
 };
 
-use super::{
-    Library, LibraryLoadResult, LoadOpts, Song, SongId,
-    add_new_songs::add_new_songs,
-};
+use super::{Library, Song, SongId};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -71,12 +68,13 @@ impl Library {
         conf: &Config,
         ctrl: &mut AppCtrl,
         player: &mut Player,
+        jobs: &mut Jobs,
     ) -> Result<()> {
         if !self.get_change() {
             return Ok(());
         }
 
-        if ctrl.is_task_running(TaskType::LibrarySave) {
+        if jobs.is_running(Job::LIBRARY_SAVE) {
             return Error::invalid_operation()
                 .msg("Cannot save library.")
                 .reason("Library save is already in progress.")
@@ -89,56 +87,22 @@ impl Library {
             let used = player.get_ids();
 
             let task = move || {
-                TaskMsg::LibrarySave(
+                Msg::Job(JobMsg::LibrarySave(
                     me.write_json(path, used.iter().flatten().copied()),
-                )
+                ))
             };
 
-            ctrl.add_task(TaskType::LibrarySave, task);
+            ctrl.task(async move {
+                match tokio::task::spawn_blocking(task).await {
+                    Ok(r) => r,
+                    Err(e) => Msg::Job(JobMsg::LibrarySave(Err(e.into()))),
+                }
+            });
+
+            jobs.run(Job::LIBRARY_SAVE);
         }
 
         self.set_change(false);
-
-        Ok(())
-    }
-
-    /// Loads new songs on another thread.
-    pub fn start_get_new_songs(
-        &mut self,
-        conf: &Config,
-        ctrl: &mut AppCtrl,
-        opts: LoadOpts,
-    ) -> Result<()> {
-        if ctrl.is_task_running(TaskType::LibraryLoad) {
-            return Error::invalid_operation()
-                .msg("Cannot load library.")
-                .reason("Library load is already in progress.")
-                .err();
-        }
-
-        let conf = conf.clone();
-        let songs = self.clone_songs();
-        let remove_missing =
-            opts.remove_missing.unwrap_or(conf.remove_missing_on_load());
-
-        let task = move || {
-            let mut res = LibraryLoadResult {
-                removed: false,
-                first_new: songs.len(),
-                add_policy: opts.add_to_playlist,
-                sparse_new: vec![],
-                songs: songs.into(),
-            };
-
-            add_new_songs(&mut res, &conf, remove_missing);
-
-            if res.any_change() {
-                TaskMsg::LibraryLoad(Ok(Some(res)))
-            } else {
-                TaskMsg::LibraryLoad(Ok(None))
-            }
-        };
-        ctrl.add_task(TaskType::LibraryLoad, task);
 
         Ok(())
     }

@@ -2,10 +2,7 @@ use std::mem;
 
 use mpris_server::{Property, Signal};
 
-use crate::{
-    core::{State, UampApp, log_err, mpris},
-    env::{AppCtrl, MsgGen},
-};
+use crate::core::{AppCtrl, State, UampApp, log_err, mpris};
 
 impl UampApp {
     pub fn mpris_routine(&mut self, ctrl: &mut AppCtrl) {
@@ -24,20 +21,16 @@ impl UampApp {
 
         let seek = old.seeked.then(|| mpris::position(self));
 
-        ctrl.add_stream(MsgGen::new(
-            (mpris, changes),
-            move |(mpris, changes)| async move {
-                if !changes.is_empty() {
-                    let change = mpris.properties_changed(changes).await;
-                    log_err("Failed to send mpris update: ", change);
-                }
-                if let Some(position) = seek {
-                    let seek = mpris.emit(Signal::Seeked { position }).await;
-                    log_err("Failed to send mpris signal: ", seek);
-                }
-                (None, None)
-            },
-        ));
+        ctrl.spawn(async move {
+            if !changes.is_empty() {
+                let change = mpris.properties_changed(changes).await;
+                log_err("Failed to send mpris update: ", change);
+            }
+            if let Some(position) = seek {
+                let seek = mpris.emit(Signal::Seeked { position }).await;
+                log_err("Failed to send mpris signal: ", seek);
+            }
+        });
     }
 
     fn handle_changes(&self, old: &mut State) -> Vec<Property> {

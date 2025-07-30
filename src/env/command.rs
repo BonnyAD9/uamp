@@ -1,29 +1,25 @@
 use std::fmt::Debug;
 
-use crate::core::{Msg, TaskMsg, TaskType};
+use futures::stream::LocalBoxStream;
 
-use super::MsgStream;
+use crate::env::rt;
 
 //===========================================================================//
 //                                   Public                                  //
 //===========================================================================//
 
 /// Command to the UampApp environment.
-pub enum Command {
+pub enum Command<M, E> {
     /// Request exit.
     Exit,
-    /// Add stream to run asynchronously.
-    AddStream(Box<dyn MsgStream<Option<Msg>>>),
-    /// Add task to run in parallel on a thread.
-    AddTask(TaskType, Box<dyn FnOnce() -> TaskMsg + Send + 'static>),
+    AddStrem(LocalBoxStream<'static, rt::Msg<M, E>>),
 }
 
-impl Debug for Command {
+impl<M, E> Debug for Command<M, E> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Exit => write!(f, "Exit"),
-            Self::AddStream(_) => f.debug_tuple("AddStream").finish(),
-            Self::AddTask(t, _) => f.debug_tuple("AddTask").field(t).finish(),
+            Self::AddStrem(_) => f.debug_tuple("AddStrem").finish(),
         }
     }
 }

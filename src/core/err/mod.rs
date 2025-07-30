@@ -291,6 +291,16 @@ pub fn log_err<T, E: Display>(
     }
 }
 
+impl From<tokio::task::JoinError> for Error {
+    fn from(value: tokio::task::JoinError) -> Self {
+        if value.is_panic() {
+            Self::thread_panicked(Some(value.into_panic()))
+        } else {
+            Self::Unexpected("Task was stopped.".into())
+        }
+    }
+}
+
 macro_rules! impl_from {
     ($($et:ty => $en:ident),+ $(,)?) => {
         $(

@@ -4,7 +4,7 @@ use itertools::Itertools;
 use pareg::{ArgErrCtx, ArgError};
 use serde::{Deserialize, Serialize};
 
-use super::{AnyControlMsg, Error, Msg, Result};
+use crate::core::{AnyControlMsg, Error, Msg, Result};
 
 #[derive(Clone, Debug)]
 enum FunctionComponenet {

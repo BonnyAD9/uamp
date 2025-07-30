@@ -1,8 +1,9 @@
 use std::{collections::HashSet, fmt::Debug, mem};
 
-use crate::{
-    core::{Error, Result, UampApp, player::AddPolicy},
-    env::AppCtrl,
+use crate::core::{
+    AppCtrl, Error, Job, JobMsg, Msg, Result, UampApp,
+    library::{LoadOpts, add_new_songs::add_new_songs},
+    player::AddPolicy,
 };
 
 use super::{LibraryUpdate, Song, SongId};
@@ -48,6 +49,54 @@ impl Debug for LibraryLoadResult {
 }
 
 impl UampApp {
+    /// Loads new songs on another thread.
+    pub fn start_get_new_songs(
+        &mut self,
+        ctrl: &mut AppCtrl,
+        opts: LoadOpts,
+    ) -> Result<()> {
+        if self.jobs.is_running(Job::LIBRARY_LOAD) {
+            return Error::invalid_operation()
+                .msg("Cannot load library.")
+                .reason("Library load is already in progress.")
+                .err();
+        }
+
+        let conf = self.config.clone();
+        let songs = self.library.clone_songs();
+        let remove_missing =
+            opts.remove_missing.unwrap_or(conf.remove_missing_on_load());
+
+        let task = move || {
+            let mut res = LibraryLoadResult {
+                removed: false,
+                first_new: songs.len(),
+                add_policy: opts.add_to_playlist,
+                sparse_new: vec![],
+                songs: songs.into(),
+            };
+
+            add_new_songs(&mut res, &conf, remove_missing);
+
+            if res.any_change() {
+                Msg::Job(JobMsg::LibraryLoad(Ok(Some(res))))
+            } else {
+                Msg::Job(JobMsg::LibraryLoad(Ok(None)))
+            }
+        };
+
+        self.jobs.run(Job::LIBRARY_LOAD);
+
+        ctrl.task(async move {
+            match tokio::task::spawn_blocking(task).await {
+                Ok(r) => r,
+                Err(e) => Msg::Job(JobMsg::LibraryLoad(Err(e.into()))),
+            }
+        });
+
+        Ok(())
+    }
+
     /// Finishes loading songs started with `start_get_new_songs`.
     ///
     /// This will also start to save the library to json if there is any
@@ -57,6 +106,8 @@ impl UampApp {
         ctrl: &mut AppCtrl,
         res: Option<LibraryLoadResult>,
     ) -> Result<()> {
+        self.jobs.finish(Job::LIBRARY_LOAD);
+
         let Some(mut res) = res else {
             return Ok(());
         };
@@ -93,6 +144,7 @@ impl UampApp {
             &self.config,
             ctrl,
             &mut self.player,
+            &mut self.jobs,
         ) {
             Err(Error::InvalidOperation(_)) => Ok(()),
             Err(e) => e

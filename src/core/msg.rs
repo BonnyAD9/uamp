@@ -1,7 +1,8 @@
 use core::fmt::Debug;
-use std::sync::Arc;
 
-use crate::{core::UampApp, env::AppCtrl};
+use tokio::sync::oneshot;
+
+use crate::core::{AppCtrl, Error, JobMsg, RtHandle, UampApp};
 
 use super::{
     AnyControlMsg, ControlMsg, DataControlMsg, MessageDelegate, PlayMsg,
@@ -14,7 +15,7 @@ use super::{
 
 /// Event messages in uamp
 #[allow(missing_debug_implementations)]
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub enum Msg {
     /// Play song song at the given index in the playlist.
     PlaySong(PlayMsg),
@@ -25,9 +26,10 @@ pub enum Msg {
     /// Player messges handled by the player.
     Player(PlayerMsg),
     /// Dellegate the message.
-    Delegate(Arc<dyn MessageDelegate>),
+    Delegate(Box<dyn MessageDelegate>),
     /// Message for configuration.
     Config(ConfigMsg),
+    Job(JobMsg),
     /// Nothing, just do the usual updates.
     #[default]
     None,
@@ -47,6 +49,7 @@ impl UampApp {
             Msg::Player(msg) => self.player_event(msg),
             Msg::Delegate(d) => d.update(self, ctrl)?,
             Msg::Config(msg) => self.config_event(ctrl, msg)?,
+            Msg::Job(msg) => self.job_event(ctrl, msg)?,
             Msg::None => vec![],
         };
 
@@ -102,5 +105,21 @@ impl From<PlayerMsg> for Msg {
 impl From<ConfigMsg> for Msg {
     fn from(value: ConfigMsg) -> Self {
         Msg::Config(value)
+    }
+}
+
+impl RtHandle {
+    pub async fn request<T: Send + 'static, F>(&self, f: F) -> Result<T>
+    where
+        F: FnOnce(&mut UampApp, &mut AppCtrl) -> T + 'static + Sync + Send,
+    {
+        let (rsend, rrecv) = oneshot::channel();
+        self.msg(Msg::fn_delegate(move |app, ctrl| {
+            _ = rsend.send(f(app, ctrl));
+            Ok(vec![])
+        }));
+        rrecv.await.map_err(|_| {
+            Error::Unexpected("Failed to receive data with request.".into())
+        })
     }
 }

@@ -10,28 +10,26 @@ use std::{
 #[cfg(unix)]
 use std::{os::unix::process::CommandExt, rc::Rc};
 
-use futures::{StreamExt, channel::mpsc::UnboundedSender, executor::block_on};
-#[cfg(unix)]
-use futures::{channel::oneshot, future::select};
+use futures::executor::block_on;
 use log::{error, info, trace, warn};
 use mpris_server::LocalServer;
 use notify::{INotifyWatcher, Watcher};
-use signal_hook_async_std::Signals;
+use tokio::signal::unix::SignalKind;
+#[cfg(unix)]
+use tokio::task::JoinHandle;
 
-use crate::{
-    core::{
-        Error, Result, State, config,
-        library::Song,
-        log_err,
-        messenger::{self, Messenger, MsgMessage},
-        mpris::Mpris,
-        msg::Msg,
-    },
-    env::{AppCtrl, MsgGen},
+use crate::core::{
+    AppCtrl, Error, Job, JobMsg, Jobs, Result, RtAndle, RtHandle, State,
+    config,
+    library::Song,
+    log_err,
+    messenger::{self, Messenger, MsgMessage},
+    mpris::Mpris,
+    msg::Msg,
 };
 
 use super::{
-    ControlMsg, DataControlMsg, TaskMsg, TaskType,
+    ControlMsg, DataControlMsg,
     config::{Config, ConfigMsg, default_log_dir},
     library::{Library, SongId},
     player::Player,
@@ -52,7 +50,10 @@ pub struct UampApp {
 
     /// Sender for async messages to be synchronized with the main message
     /// handler
-    pub(super) sender: UnboundedSender<Msg>,
+    pub(super) rt: RtHandle,
+
+    /// Running blocking jobs.
+    pub(super) jobs: Jobs,
 
     /// Messages that can be processed only if there are no running processes
     pub(super) pending_close: bool,
@@ -69,7 +70,7 @@ pub struct UampApp {
     pub(super) restart_path: Option<PathBuf>,
 
     #[cfg(unix)]
-    pub(super) mpris: Option<(Rc<LocalServer<Mpris>>, oneshot::Sender<()>)>,
+    pub(super) mpris: Option<(Rc<LocalServer<Mpris>>, JoinHandle<()>)>,
 
     pub(super) state: State,
 
@@ -81,36 +82,24 @@ impl UampApp {
     pub fn new(
         conf: Config,
         ctrl: &mut AppCtrl,
-        sender: UnboundedSender<Msg>,
+        rt: RtHandle,
     ) -> Result<Self> {
         let mut lib = Library::from_config(&conf);
 
-        if conf.update_library_on_start() {
-            lib.start_get_new_songs(&conf, ctrl, Default::default())?;
-        }
-
-        let mut player = Player::from_config(&mut lib, sender.clone(), &conf);
+        let mut player = Player::from_config(&mut lib, rt.andle(), &conf);
         player.load_config(&conf);
         player.retain(|s| !lib[s].is_deleted());
 
-        if conf.enable_server() || conf.force_server {
-            Self::start_server(&conf, ctrl, sender.clone())?;
-        }
-
         // Signal stream is broken with receiver stream.
         //Self::signal_task(ctrl)?;
-        Self::start_signal_thread(ctrl, sender.clone())?;
+        Self::start_signals(ctrl)?;
 
         if conf.play_on_start() {
-            if let Err(e) = sender.unbounded_send(Msg::Control(
-                ControlMsg::PlayPause(Some(true)),
-            )) {
-                error!("Failed to send message to play on startup: {e}");
-            }
+            rt.msg(ControlMsg::PlayPause(Some(true)).into());
         }
 
         let config_watch = if let Some(path) = &conf.config_path {
-            match Self::watch_files(sender.clone(), path.as_path()) {
+            match Self::watch_files(rt.andle(), path.as_path()) {
                 Ok(r) => Some(r),
                 Err(e) => {
                     error!("Failed to watch config file: {}", e.log());
@@ -130,7 +119,8 @@ impl UampApp {
             library: lib,
             player,
 
-            sender,
+            rt,
+            jobs: Jobs::default(),
 
             pending_close: false,
 
@@ -147,6 +137,14 @@ impl UampApp {
 
             file_watch: config_watch,
         };
+
+        if app.config.update_library_on_start() {
+            app.start_get_new_songs(ctrl, Default::default())?;
+        }
+
+        if app.config.should_start_server() {
+            app.start_server(ctrl)?;
+        }
 
         let state = app.get_state();
         app.state = state;
@@ -171,14 +169,17 @@ impl UampApp {
         ctrl: &mut AppCtrl,
         message: Msg,
     ) -> Result<()> {
-        trace!("{message:?}");
-        #[cfg(debug_assertions)]
-        dbg!(&message);
+        self.update_many(ctrl, vec![message])
+    }
 
-        let mut msgs = self.msg_event(ctrl, message)?;
-        if msgs.len() == 1 {
-            return self.update_err(ctrl, msgs.pop().unwrap());
-        }
+    pub fn update_many(
+        &mut self,
+        ctrl: &mut AppCtrl,
+        mut msgs: Vec<Msg>,
+    ) -> Result<()> {
+        trace!("{msgs:?}");
+        #[cfg(debug_assertions)]
+        dbg!(&msgs);
 
         msgs.reverse();
         let mut errs = vec![];
@@ -190,7 +191,7 @@ impl UampApp {
             }
         }
 
-        if self.pending_close && !ctrl.any_task(|t| t.wait_before_exit()) {
+        if self.pending_close && !self.jobs.any_no_close() {
             self.pending_close = false;
             return self.update_err(ctrl, Msg::Control(ControlMsg::Close));
         }
@@ -214,27 +215,15 @@ impl UampApp {
                 return;
             }
 
-            let e = LocalServer::new(
-                config::APP_ID,
-                Mpris::new(self.sender.clone()),
-            );
+            let e =
+                LocalServer::new(config::APP_ID, Mpris::new(self.rt.clone()));
             let mpris: Option<Rc<_>> =
                 log_err("Failed to start mpris player: ", block_on(e))
                     .map(|a| a.into());
 
             self.mpris = if let Some(s) = mpris {
-                // Cancelation channel
-                let (csend, crecv) = oneshot::channel();
-
-                ctrl.add_stream(MsgGen::new(
-                    (s.run(), crecv),
-                    |(s, crecv)| async {
-                        select(s, crecv).await;
-                        (None, None)
-                    },
-                ));
-
-                Some((s, csend))
+                let task = s.run();
+                Some((s, ctrl.spawn(task)))
             } else {
                 None
             }
@@ -244,9 +233,8 @@ impl UampApp {
     pub(super) fn disable_system_player(&mut self) {
         #[cfg(unix)]
         {
-            if let Some((_, csend)) = self.mpris.take() {
-                // If this returns error, the server will already be stopped.
-                _ = csend.send(());
+            if let Some((_, h)) = self.mpris.take() {
+                h.abort();
             }
         }
     }
@@ -284,6 +272,7 @@ impl UampApp {
             &self.config,
             ctrl,
             &mut self.player,
+            &mut self.jobs,
         ) {
             Err(Error::InvalidOperation(_)) => {}
             Err(e) => res.push(e.prepend("Failed to start library save.")),
@@ -324,12 +313,8 @@ impl UampApp {
     }
 
     /// Starts the tcp server.
-    pub(super) fn start_server(
-        conf: &Config,
-        ctrl: &mut AppCtrl,
-        sender: UnboundedSender<Msg>,
-    ) -> Result<()> {
-        if ctrl.is_task_running(TaskType::Server) {
+    pub(super) fn start_server(&mut self, ctrl: &mut AppCtrl) -> Result<()> {
+        if self.jobs.is_running(Job::SERVER) {
             return Error::invalid_operation()
                 .msg("Failed to start server.")
                 .reason("Server is already running.")
@@ -338,41 +323,58 @@ impl UampApp {
 
         let listener = TcpListener::bind(format!(
             "{}:{}",
-            conf.server_address(),
-            conf.port()
+            self.config.server_address(),
+            self.config.port()
         ))?;
 
-        let task =
-            move || TaskMsg::Server(Ok(Self::server_task(listener, sender)));
-        ctrl.add_task(TaskType::Server, task);
+        let rt = self.rt.andle();
+
+        let task = move || {
+            Msg::Job(JobMsg::Server(Ok(Self::server_task(listener, rt))))
+        };
+
+        ctrl.task(async move {
+            match tokio::task::spawn_blocking(task).await {
+                Ok(r) => r,
+                Err(e) => Msg::Job(JobMsg::Server(Err(e.into()))),
+            }
+        });
+
+        self.jobs.run(Job::SERVER);
 
         Ok(())
     }
 
     /// Starts a thread for handling signals. This is only temorary workaround
     /// until a bug is fixed and `signal_task` will work properly.
-    pub(super) fn start_signal_thread(
-        ctrl: &mut AppCtrl,
-        sender: UnboundedSender<Msg>,
-    ) -> Result<()> {
-        if ctrl.is_task_running(TaskType::Signals) {
-            return Error::invalid_operation()
-                .msg("Failed to start signals thread.")
-                .reason("Signals thread is already running.")
-                .err();
-        }
-
-        let signals = signal_hook::iterator::Signals::new(
-            signal_hook::consts::TERM_SIGNALS,
-        )?;
-
-        let task = move || {
-            TaskMsg::Signals({
-                Self::signal_thread(sender, signals);
-                Ok(())
-            })
-        };
-        ctrl.add_task(TaskType::Signals, task);
+    pub(super) fn start_signals(ctrl: &mut AppCtrl) -> Result<()> {
+        #[cfg(unix)]
+        let sigs = (
+            tokio::signal::unix::signal(SignalKind::interrupt())?,
+            tokio::signal::unix::signal(SignalKind::quit())?,
+            tokio::signal::unix::signal(SignalKind::terminate())?,
+        );
+        #[cfg(windows)]
+        let sigs = ();
+        ctrl.unfold((0, sigs), |(mut n, mut sigs)| async move {
+            #[cfg(windows)]
+            tokio::signal::ctrl_c().await.unwrap();
+            #[cfg(unix)]
+            {
+                tokio::select!(
+                    _ = sigs.0.recv() => {}
+                    _ = sigs.1.recv() => {}
+                    _ = sigs.2.recv() => {}
+                );
+            }
+            n += 1;
+            if n == 4 {
+                warn!("Received 4 close signals. Exiting now.");
+                println!("Received 4 close signals. Exiting now.");
+                process::exit(130);
+            }
+            Some((Msg::Control(ControlMsg::Close), (n, sigs)))
+        });
 
         Ok(())
     }
@@ -383,32 +385,6 @@ impl UampApp {
 //===========================================================================//
 
 impl UampApp {
-    fn _signal_task(ctrl: &mut AppCtrl) -> Result<()> {
-        let sig = Signals::new(signal_hook::consts::TERM_SIGNALS)?;
-
-        let stream = MsgGen::new((sig, 0), |(mut sig, cnt)| async move {
-            let Some(s) = sig.next().await else {
-                return (Some((sig, cnt)), None);
-            };
-
-            if signal_hook::consts::TERM_SIGNALS.contains(&s) {
-                // fourth close request will force the exit
-                if cnt + 1 == 4 {
-                    warn!("Received 4 close signals. Exiting now.");
-                    println!("Received 4 close signals. Exiting now.");
-                    process::exit(130);
-                }
-                (Some((sig, cnt + 1)), Some(Msg::Control(ControlMsg::Close)))
-            } else {
-                warn!("Received unknown signal {s}");
-                (Some((sig, cnt)), None)
-            }
-        });
-        ctrl.add_stream(stream);
-
-        Ok(())
-    }
-
     fn routine(&mut self, errs: &mut Vec<Error>, ctrl: &mut AppCtrl) {
         let now = Instant::now();
 
@@ -420,10 +396,7 @@ impl UampApp {
         self.mpris_routine(ctrl);
     }
 
-    fn watch_files(
-        sender: UnboundedSender<Msg>,
-        config_path: &Path,
-    ) -> Result<INotifyWatcher> {
+    fn watch_files(rt: RtAndle, config_path: &Path) -> Result<INotifyWatcher> {
         let cfg = config_path.to_owned();
 
         let executable_path = match env::current_exe() {
@@ -471,9 +444,7 @@ impl UampApp {
                 };
 
                 if let Some(msg) = msg {
-                    if let Err(e) = sender.unbounded_send(msg) {
-                        error!("Failed to send message: {e}");
-                    }
+                    rt.send(msg);
                 }
             }
         })?;
@@ -486,10 +457,7 @@ impl UampApp {
         Ok(watcher)
     }
 
-    fn server_task(
-        listener: TcpListener,
-        sender: UnboundedSender<Msg>,
-    ) -> TcpListener {
+    fn server_task(listener: TcpListener, rt: RtAndle) -> TcpListener {
         loop {
             let stream = listener.accept().unwrap();
             let mut msgr = Messenger::new(&stream.0);
@@ -498,6 +466,7 @@ impl UampApp {
 
             let rec = match rec {
                 Ok(MsgMessage::Stop) => {
+                    println!("Stoppint tcp");
                     return listener;
                 }
                 Ok(MsgMessage::Ping) => {
@@ -522,7 +491,7 @@ impl UampApp {
                 }
             };
 
-            let (response, msg) = Self::message_event(rec, &stream.0);
+            let (response, msg) = *Self::message_event(rec, &stream.0);
             if let Some(r) = response {
                 if let Err(e) = msgr.send(r) {
                     warn!("Failed to send response {}", e.log());
@@ -530,37 +499,9 @@ impl UampApp {
             }
 
             if let Some(msg) = msg {
-                if let Err(e) = sender.unbounded_send(msg) {
-                    warn!("Failed to send message: {e}");
-                }
+                rt.send(msg);
             } else {
                 continue;
-            }
-        }
-    }
-
-    fn signal_thread(
-        sender: UnboundedSender<Msg>,
-        mut signals: signal_hook::iterator::Signals,
-    ) {
-        let mut cnt = 0;
-
-        for sig in &mut signals {
-            if signal_hook::consts::TERM_SIGNALS.contains(&sig) {
-                cnt += 1;
-                // fourth close request will force the exit
-                if cnt == 4 {
-                    warn!("Received 4 close signals. Exiting now.");
-                    println!("Received 4 close signals. Exiting now.");
-                    process::exit(130);
-                }
-                if let Err(e) =
-                    sender.unbounded_send(Msg::Control(ControlMsg::Close))
-                {
-                    error!("Failed to send close message: {e}");
-                }
-            } else {
-                warn!("Received unknown signal {sig}");
             }
         }
     }

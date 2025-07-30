@@ -3,12 +3,11 @@ use std::{
     path::Path,
 };
 
-use futures::channel::mpsc::UnboundedSender;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 
 use crate::core::{
-    Error, Msg, Result, config::Config, library::Library,
+    Error, Result, RtAndle, config::Config, library::Library,
     player::default_volume,
 };
 
@@ -21,15 +20,11 @@ use super::{Player, Playlist, playback::Playback, sink_wrapper::SinkWrapper};
 impl Player {
     /// Loads the playback state from json based on the config, returns default
     /// [`Player`] on fail.
-    pub fn from_config(
-        lib: &mut Library,
-        sender: UnboundedSender<Msg>,
-        conf: &Config,
-    ) -> Self {
+    pub fn from_config(lib: &mut Library, rt: RtAndle, conf: &Config) -> Self {
         if let Some(p) = conf.player_path() {
-            Self::from_json(lib, sender, p)
+            Self::from_json(lib, rt, p)
         } else {
-            Self::new_default(sender)
+            Self::new_default(rt)
         }
     }
 
@@ -59,7 +54,7 @@ impl Player {
     /// [`Player`] on fail
     pub fn from_json(
         lib: &mut Library,
-        sender: UnboundedSender<Msg>,
+        rt: RtAndle,
         path: impl AsRef<Path>,
     ) -> Self {
         let mut data = if let Ok(file) = File::open(path.as_ref()) {
@@ -87,7 +82,7 @@ impl Player {
             true,
         );
 
-        res.init_inner(sender);
+        res.init_inner(rt);
         if let Some(p) = play_pos {
             if let Err(e) = res.play(lib, false).and_then(|_| res.seek_to(p)) {
                 error!("{}", e.log());

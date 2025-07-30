@@ -1,10 +1,5 @@
 use std::time::Duration;
 
-use futures::{
-    StreamExt,
-    channel::mpsc::{self, UnboundedSender},
-};
-use log::error;
 use mpris_server::{
     LocalPlayerInterface, LocalRootInterface, LoopStatus, Metadata,
     PlaybackRate, PlaybackStatus, Time, TrackId, Volume,
@@ -13,55 +8,51 @@ use mpris_server::{
 
 use crate::{
     core::{
-        ControlMsg, DataControlMsg, Msg, Result, UampApp,
+        ControlMsg, DataControlMsg, Msg, Result, RtHandle, UampApp,
         config::{self, CacheSize},
         player::Playback,
     },
-    env::AppCtrl,
     ext::uri::{get_file_uri, parse_file_uri},
 };
 
 mod app_impl;
 
 pub struct Mpris {
-    osend: UnboundedSender<Msg>,
+    rt: RtHandle,
 }
 
 impl Mpris {
-    pub fn new(osend: UnboundedSender<Msg>) -> Self {
-        Self { osend }
+    pub fn new(rt: RtHandle) -> Self {
+        Self { rt }
     }
 
-    fn send_msg(&self, msg: Msg) -> fdo::Result<()> {
-        self.osend
-            .unbounded_send(msg)
-            .map_err(|e| fdo::Error::Failed(e.to_string()))
+    async fn send_msg(&self, msg: Msg) -> fdo::Result<()> {
+        self.send_msgs(vec![msg]).await
     }
 
-    fn send_zmsg(&self, msg: Msg) -> zbus::Result<()> {
-        self.osend
-            .unbounded_send(msg)
-            .map_err(|e| zbus::Error::Failure(e.to_string()))
+    async fn send_msgs(&self, msgs: Vec<Msg>) -> fdo::Result<()> {
+        self.rt
+            .msgs_result(msgs)
+            .await
+            .map_err(|e| fdo::Error::Failed(e.log().to_string()))
+    }
+
+    async fn send_zmsg(&self, msg: Msg) -> zbus::Result<()> {
+        self.rt
+            .msg_result(msg)
+            .await
+            .map_err(|e| zbus::Error::Failure(e.log().to_string()))
     }
 
     async fn request<T: Send + 'static>(
         &self,
-        f: impl Fn(&mut UampApp) -> Result<T> + Send + Sync + 'static,
+        f: impl FnOnce(&mut UampApp) -> Result<T> + Send + Sync + 'static,
     ) -> fdo::Result<T> {
-        let (isend, mut irecv) = mpsc::unbounded();
-        let delegate =
-            Msg::fn_delegate(move |app: &mut UampApp, _: &mut AppCtrl| {
-                let data = f(app)?;
-                if let Err(e) = isend.unbounded_send(data) {
-                    error!("Failed to send back mpris data: {e}");
-                }
-                Ok(vec![])
-            });
-        self.send_msg(delegate)?;
-
-        irecv.next().await.ok_or_else(|| {
-            fdo::Error::Failed("Failed to retrieve data.".to_string())
-        })
+        self.rt
+            .request(|app, _| f(app))
+            .await
+            .map_err(|e| fdo::Error::Failed(e.log().to_string()))?
+            .map_err(|e| fdo::Error::Failed(e.log().to_string()))
     }
 }
 
@@ -71,7 +62,7 @@ impl LocalRootInterface for Mpris {
     }
 
     async fn quit(&self) -> fdo::Result<()> {
-        self.send_msg(Msg::Control(ControlMsg::Close))
+        self.send_msg(Msg::Control(ControlMsg::Close)).await
     }
 
     async fn can_quit(&self) -> fdo::Result<bool> {
@@ -132,28 +123,35 @@ impl LocalRootInterface for Mpris {
 
 impl LocalPlayerInterface for Mpris {
     async fn next(&self) -> fdo::Result<()> {
-        self.send_msg(Msg::Control(ControlMsg::NextSong(1)))
+        self.send_msg(Msg::Control(ControlMsg::NextSong(1))).await
     }
 
     async fn previous(&self) -> fdo::Result<()> {
         self.send_msg(Msg::Control(ControlMsg::PrevSong(None)))
+            .await
     }
 
     async fn pause(&self) -> fdo::Result<()> {
         self.send_msg(Msg::Control(ControlMsg::PlayPause(Some(false))))
+            .await
     }
 
     async fn play_pause(&self) -> fdo::Result<()> {
         self.send_msg(Msg::Control(ControlMsg::PlayPause(None)))
+            .await
     }
 
     async fn stop(&self) -> fdo::Result<()> {
-        self.send_msg(Msg::Control(ControlMsg::PlayPause(Some(false))))?;
-        self.send_msg(Msg::Control(ControlMsg::SeekTo(Duration::ZERO)))
+        self.send_msgs(vec![
+            Msg::Control(ControlMsg::PlayPause(Some(false))),
+            Msg::Control(ControlMsg::SeekTo(Duration::ZERO)),
+        ])
+        .await
     }
 
     async fn play(&self) -> fdo::Result<()> {
         self.send_msg(Msg::Control(ControlMsg::PlayPause(Some(true))))
+            .await
     }
 
     async fn seek(&self, offset: Time) -> fdo::Result<()> {
@@ -163,7 +161,7 @@ impl LocalPlayerInterface for Mpris {
         } else {
             ControlMsg::Rewind(dur)
         };
-        self.send_msg(Msg::Control(msg))
+        self.send_msg(Msg::Control(msg)).await
     }
 
     async fn set_position(
@@ -215,7 +213,7 @@ impl LocalPlayerInterface for Mpris {
             ));
         }
 
-        self.send_msg(Msg::Control(ControlMsg::SeekTo(pos)))
+        self.send_msg(Msg::Control(ControlMsg::SeekTo(pos))).await
     }
 
     async fn open_uri(&self, uri: String) -> fdo::Result<()> {
@@ -228,8 +226,8 @@ impl LocalPlayerInterface for Mpris {
                 path.display()
             )));
         }
-        self.send_msg(DataControlMsg::PlayTmp(path.into()).into())?;
-        Ok(())
+        self.send_msg(DataControlMsg::PlayTmp(path.into()).into())
+            .await
     }
 
     async fn playback_status(&self) -> fdo::Result<PlaybackStatus> {
@@ -278,6 +276,7 @@ impl LocalPlayerInterface for Mpris {
 
     async fn set_volume(&self, volume: Volume) -> zbus::Result<()> {
         self.send_zmsg(Msg::Control(ControlMsg::SetVolume(volume as f32)))
+            .await
     }
 
     async fn position(&self) -> fdo::Result<Time> {

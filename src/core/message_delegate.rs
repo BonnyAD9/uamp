@@ -1,6 +1,6 @@
-use std::{fmt::Debug, sync::Arc};
+use std::fmt::Debug;
 
-use crate::env::AppCtrl;
+use crate::core::AppCtrl;
 
 use super::{Msg, Result, UampApp};
 
@@ -12,7 +12,7 @@ use super::{Msg, Result, UampApp};
 pub trait MessageDelegate: Sync + Send + Debug {
     /// Action that this message does.
     fn update(
-        &self,
+        self: Box<Self>,
         app: &mut UampApp,
         ctrl: &mut AppCtrl,
     ) -> Result<Vec<Msg>>;
@@ -21,14 +21,14 @@ pub trait MessageDelegate: Sync + Send + Debug {
 /// Wrapper to implement [`MessageDelegate`] for closures.
 pub struct FnDelegate<T>(T)
 where
-    T: Sync + Send + Fn(&mut UampApp, &mut AppCtrl) -> Result<Vec<Msg>>;
+    T: Sync + Send + FnOnce(&mut UampApp, &mut AppCtrl) -> Result<Vec<Msg>>;
 
 impl<T> MessageDelegate for FnDelegate<T>
 where
-    T: Sync + Send + Fn(&mut UampApp, &mut AppCtrl) -> Result<Vec<Msg>>,
+    T: Sync + Send + FnOnce(&mut UampApp, &mut AppCtrl) -> Result<Vec<Msg>>,
 {
     fn update(
-        &self,
+        self: Box<Self>,
         app: &mut UampApp,
         ctrl: &mut AppCtrl,
     ) -> Result<Vec<Msg>> {
@@ -38,7 +38,7 @@ where
 
 impl<T> Debug for FnDelegate<T>
 where
-    T: Sync + Send + Fn(&mut UampApp, &mut AppCtrl) -> Result<Vec<Msg>>,
+    T: Sync + Send + FnOnce(&mut UampApp, &mut AppCtrl) -> Result<Vec<Msg>>,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("FnDelegate").finish()
@@ -47,7 +47,7 @@ where
 
 impl<T> From<T> for FnDelegate<T>
 where
-    T: Sync + Send + Fn(&mut UampApp, &mut AppCtrl) -> Result<Vec<Msg>>,
+    T: Sync + Send + FnOnce(&mut UampApp, &mut AppCtrl) -> Result<Vec<Msg>>,
 {
     fn from(value: T) -> Self {
         Self(value)
@@ -60,11 +60,11 @@ impl Msg {
     where
         D: MessageDelegate + 'static,
     {
-        Self::Delegate(Arc::new(d))
+        Self::Delegate(Box::new(d))
     }
 
     pub fn fn_delegate<
-        F: Fn(&mut UampApp, &mut AppCtrl) -> Result<Vec<Msg>>
+        F: FnOnce(&mut UampApp, &mut AppCtrl) -> Result<Vec<Msg>>
             + Send
             + Sync
             + 'static,

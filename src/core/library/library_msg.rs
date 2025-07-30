@@ -1,6 +1,6 @@
 use std::mem;
 
-use crate::core::{Result, UampApp};
+use crate::core::{Job, Result, UampApp};
 
 use super::{LibraryUpdate, SongId};
 
@@ -11,6 +11,8 @@ impl UampApp {
         &mut self,
         res: Result<Vec<SongId>>,
     ) -> Result<()> {
+        self.jobs.finish(Job::LIBRARY_SAVE);
+
         match res {
             Ok(free) => {
                 self.library.remove_free_tmp_songs(&free);
