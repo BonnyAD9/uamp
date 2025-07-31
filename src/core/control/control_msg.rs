@@ -104,7 +104,7 @@ impl UampApp {
             }
             ControlMsg::Close => {
                 let r = self.save_all(true, ctrl).map(|_| vec![]);
-                log_err("Failed to shutdown server.", self.shutdown_server());
+                self.shutdown_server();
                 if self.jobs.any_no_close() {
                     self.pending_close = true;
                     return r;

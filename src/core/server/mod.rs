@@ -52,10 +52,7 @@ impl Server {
     async fn run(&self, stop: CancellationToken) -> Result<()> {
         loop {
             let (conn, _) = tokio::select!(
-                _ = stop.cancelled() => {
-                    dbg!("Canceled");
-                    break
-                },
+                _ = stop.cancelled() => break,
                 res = self.listener.accept() => {
                     let Some(val) = log_err("Failed to accept.", res) else {
                         continue;
@@ -65,21 +62,14 @@ impl Server {
             );
 
             let service = UampService::new(self.rt.andle());
-            log_err(
-                "Failed to serve connection.",
-                http1::Builder::new()
-                    .serve_connection(
-                        TokioIo::new(conn),
-                        service_fn(move |a| {
-                            let s = service.clone();
-                            async move { s.serve(a).await }
-                        }),
-                    )
-                    .await,
-            );
+            self.rt.spawn(http1::Builder::new().serve_connection(
+                TokioIo::new(conn),
+                service_fn(move |a| {
+                    let s = service.clone();
+                    async move { s.serve(a).await }
+                }),
+            ));
         }
-
-        dbg!("quitting");
 
         Ok(())
     }

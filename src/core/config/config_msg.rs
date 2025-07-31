@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{net::TcpStream, time::Instant};
 
 use crate::core::{Alias, AppCtrl, Error, Job, Msg, Result, UampApp};
 
@@ -103,10 +103,8 @@ impl UampApp {
 
 impl UampApp {
     fn reload_server(&mut self, ctrl: &mut AppCtrl) -> Result<()> {
-        if self.jobs.is_running(Job::SERVER)
-            && let Some(stop) = self.jobs.server.take()
-        {
-            stop.cancel();
+        if self.jobs.is_running(Job::SERVER) {
+            self.stop_server();
         } else if self.config.should_start_server() {
             self.start_server(ctrl)?;
         }
@@ -114,13 +112,16 @@ impl UampApp {
         Ok(())
     }
 
-    pub fn shutdown_server(&mut self) -> Result<()> {
+    pub fn shutdown_server(&mut self) {
+        self.stop_server();
+        self.config.force_server = Some(false);
+    }
+
+    pub fn stop_server(&mut self) {
         if self.jobs.is_running(Job::SERVER)
             && let Some(stop) = self.jobs.server.take()
         {
             stop.cancel();
-            self.config.force_server = Some(false);
         }
-        Ok(())
     }
 }
