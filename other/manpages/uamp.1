@@ -1073,16 +1073,16 @@ Used for receiving control messages. The control messages are passed as query
 and their syntax is very simmilar to the CLI syntax.
 .IP
 For example the command \fB\fCuamp i pp q=a:clancy@a\fR is equivalent to HTTP GET
-request \fB\fC/api/ctrl?pp=&q=a%3Aclancy%40a\fR\&. Note that empty values must still
-have the \fB\fC=\fR and that the values must be properly url encoded.
+request \fB\fC/api/ctrl?pp&q=a%3Aclancy%40a\fR\&. Note that the values must be
+properly url encoded.
 .TP
 \fB\fC/api/req\fR
 Used for one time requests for information. Again, the the syntax is very
 simmilar to the cli sintax.
 .IP
 For example the command \fB\fCuamp i info l=a:clancy@a\fR is equivalent to HTTP GET
-request \fB\fC/api/req?info=,l=a%3Aclancy%40a\fR\&. Note that empty value must still
-have the \fB\fC=\fR and that the values must be properly url encoded.
+request \fB\fC/api/req?info&l=a%3Aclancy%40a\fR\&. Note that the values must be
+properly url encoded.
 .IP
 The server will reply with json same as the would be outputed with \fB\fC\-\-json\fR
 except that it will not send the version and all the responses will be in an

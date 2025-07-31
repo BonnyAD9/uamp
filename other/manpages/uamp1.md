@@ -1028,16 +1028,16 @@ currently two endpoints:
   and their syntax is very simmilar to the CLI syntax.
   
   For example the command `uamp i pp q=a:clancy@a` is equivalent to HTTP GET
-  request `/api/ctrl?pp=&q=a%3Aclancy%40a`. Note that empty values must still
-  have the `=` and that the values must be properly url encoded.
+  request `/api/ctrl?pp&q=a%3Aclancy%40a`. Note that the values must be
+  properly url encoded.
   
 `/api/req`
   Used for one time requests for information. Again, the the syntax is very
   simmilar to the cli sintax.
   
   For example the command `uamp i info l=a:clancy@a` is equivalent to HTTP GET
-  request `/api/req?info=,l=a%3Aclancy%40a`. Note that empty value must still
-  have the `=` and that the values must be properly url encoded.
+  request `/api/req?info&l=a%3Aclancy%40a`. Note that the values must be
+  properly url encoded.
   
   The server will reply with json same as the would be outputed with `--json`
   except that it will not send the version and all the responses will be in an
