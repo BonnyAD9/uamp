@@ -138,7 +138,8 @@ These are the core options:
 Show short (basic) help for uamp.
 .TP
 \fB\fC\-p\fR \fIport\fP, \fB\fC\-\-port\fR \fIport\fP
-Set port to be used for communication with other instances of uamp.
+Set port for http server which is used for communication with other instances
+of uamp.
 .IP
 \fIport\fP may be:
 .RS
@@ -155,7 +156,8 @@ of uamp.
 .RE
 .TP
 \fB\fC\-a\fR \fIaddress\fP, \fB\fC\-\-address\fR \fIaddress\fP
-Set address used for communication with other instances of uamp.
+Set address used for http server which is used for communication with other
+instances of uamp.
 .IP
 This may be any IPv4, IPv6 or DNS address.
 .IP
@@ -313,7 +315,7 @@ Print help for unique format.
 \fIcontrol\-message\fP ... [\fB\fC\-\-\fR]
 .PP
 Instance action will communicate with running instance of uamp. It will send
-messages over TCP to running uamp server. It supports every \fIcontrol\-message\fP
+messages over HTTP to running uamp server. It supports every \fIcontrol\-message\fP
 and some additional messages specific to \fB\fCinstance\fR action.
 .PP
 For \fIcontrol\-message\fPs see \fIMessage control\fP\&.
@@ -382,7 +384,7 @@ The amount of printed information is affected by verbosity.
 [\fB\fC\-\-\fR]
 .PP
 Run new instance of uamp server. The instance must have unique combination of
-port and address so that it can create TCP server. The control messages will
+port and address so that it can create HTTP server. The control messages will
 run on the server when it starts.
 .PP
 If either port or address is specified (here or in the core options), the new
@@ -406,13 +408,13 @@ server will not start.
 Run uamp in background as detached process.
 .TP
 \fB\fC\-p\fR \fIport\fP, \fB\fC\-\-port\fR \fIport\fP
-Set port for server of the new instance. The new instance will not save
-cafiguration or load it when it updates to preserve different configuration
-in both places.
+Set port for the HTTP server of the new instance. The new instance will not
+save cafiguration or load it when it updates to preserve different
+configuration in both places.
 .TP
 \fB\fC\-a\fR \fIaddress\fP, \fB\fC\-\-address\fR \fIaddress\fP
-Set address for the server of the new instance. The new instance will not
-save cafiguration or load it when it updates to preserve different
+Set address for the HTTP server of the new instance. The new instance will
+not save cafiguration or load it when it updates to preserve different
 configuration in both places.
 .SS Action \fB\fCconfig\fR
 .PP
@@ -1060,6 +1062,34 @@ on performance of uamp, and uamp will likely generate the images again.
 \fBpath to uamp\fP
 Uamp will watch its ouwn executable. If it is updated, uamp will restart
 itself.
+.SH HTTP server
+.PP
+The HTTP server is primarly used for uamp to comunicate with running instances.
+But the api is made to be usable also by other programs or manually. There are
+currently two endpoints:
+.TP
+\fB\fC/api/ctrl\fR
+Used for receiving control messages. The control messages are passed as query
+and their syntax is very simmilar to the CLI syntax.
+.IP
+For example the command \fB\fCuamp i pp q=a:clancy@a\fR is equivalent to HTTP GET
+request \fB\fC/api/ctrl?pp=&q=a%3Aclancy%40a\fR\&. Note that empty values must still
+have the \fB\fC=\fR and that the values must be properly url encoded.
+.TP
+\fB\fC/api/req\fR
+Used for one time requests for information. Again, the the syntax is very
+simmilar to the cli sintax.
+.IP
+For example the command \fB\fCuamp i info l=a:clancy@a\fR is equivalent to HTTP GET
+request \fB\fC/api/req?info=,l=a%3Aclancy%40a\fR\&. Note that empty value must still
+have the \fB\fC=\fR and that the values must be properly url encoded.
+.IP
+The server will reply with json same as the would be outputed with \fB\fC\-\-json\fR
+except that it will not send the version and all the responses will be in an
+array (even if it is only one response). Additionaly if only some of the
+responses will fail to be fulfiled, there may be error response in its place.
+The array with responses have the responses in the same order as the
+requested data.
 .SH ENVIRONMENT
 .TP
 \fB\fCRUST_LOG\fR
@@ -1081,12 +1111,12 @@ When this is set to \fB\fC0\fR, uamp will print whole backtrace when panics.
 Invalid command line arguments are reported with user friendly message
 describing the problem and highlighting the incorrect argument.
 .PP
-Uamp will fail to start new instance of server if the combination of address
-and port is unavailable. If you are using the defaults, it is possible that
-instance of uamp is already running and using that address and port.
+Uamp will fail to start new instance of HTTP server if the combination of
+address and port is unavailable. If you are using the defaults, it is possible
+that instance of uamp is already running and using that address and port.
 .PP
 Uamp will fail to communicate with existing instance if it will fail to connect
-to that instance TCP server. This may be because there is no running instance
+to that instance HTTP server. This may be because there is no running instance
 of uamp, or the port and address of the instance is different than what was
 uamp trying to connect to.
 .SH EXAMPLES

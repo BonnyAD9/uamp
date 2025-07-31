@@ -136,7 +136,8 @@ These are the core options:
   Show short (basic) help for uamp.
 
 `-p` *port*, `--port` *port*
-  Set port to be used for communication with other instances of uamp.
+  Set port for http server which is used for communication with other instances
+  of uamp.
 
   *port* may be:
 
@@ -148,7 +149,8 @@ These are the core options:
     of uamp.
 
 `-a` *address*, `--address` *address*
-  Set address used for communication with other instances of uamp.
+  Set address used for http server which is used for communication with other
+  instances of uamp.
 
   This may be any IPv4, IPv6 or DNS address.
 
@@ -296,7 +298,7 @@ The available sections are:
 *control-message* ... [`--`]
 
 Instance action will communicate with running instance of uamp. It will send
-messages over TCP to running uamp server. It supports every *control-message*
+messages over HTTP to running uamp server. It supports every *control-message*
 and some additional messages specific to `instance` action.
 
 For *control-message*s see *Message control*.
@@ -358,7 +360,7 @@ These are instance messages:
 [`--`]
 
 Run new instance of uamp server. The instance must have unique combination of
-port and address so that it can create TCP server. The control messages will
+port and address so that it can create HTTP server. The control messages will
 run on the server when it starts.
 
 If either port or address is specified (here or in the core options), the new
@@ -382,13 +384,13 @@ Run action accepts the following options:
   Run uamp in background as detached process.
 
 `-p` *port*, `--port` *port*
-  Set port for server of the new instance. The new instance will not save
-  cafiguration or load it when it updates to preserve different configuration
-  in both places.
+  Set port for the HTTP server of the new instance. The new instance will not
+  save cafiguration or load it when it updates to preserve different
+  configuration in both places.
 
 `-a` *address*, `--address` *address*
-  Set address for the server of the new instance. The new instance will not
-  save cafiguration or load it when it updates to preserve different
+  Set address for the HTTP server of the new instance. The new instance will
+  not save cafiguration or load it when it updates to preserve different
   configuration in both places.
 
 ### Action `config`
@@ -1015,6 +1017,35 @@ would repeat this property will be removed. The property may be:
   Uamp will watch its ouwn executable. If it is updated, uamp will restart
   itself.
 
+## HTTP server
+
+The HTTP server is primarly used for uamp to comunicate with running instances.
+But the api is made to be usable also by other programs or manually. There are
+currently two endpoints:
+
+`/api/ctrl`
+  Used for receiving control messages. The control messages are passed as query
+  and their syntax is very simmilar to the CLI syntax.
+  
+  For example the command `uamp i pp q=a:clancy@a` is equivalent to HTTP GET
+  request `/api/ctrl?pp=&q=a%3Aclancy%40a`. Note that empty values must still
+  have the `=` and that the values must be properly url encoded.
+  
+`/api/req`
+  Used for one time requests for information. Again, the the syntax is very
+  simmilar to the cli sintax.
+  
+  For example the command `uamp i info l=a:clancy@a` is equivalent to HTTP GET
+  request `/api/req?info=,l=a%3Aclancy%40a`. Note that empty value must still
+  have the `=` and that the values must be properly url encoded.
+  
+  The server will reply with json same as the would be outputed with `--json`
+  except that it will not send the version and all the responses will be in an
+  array (even if it is only one response). Additionaly if only some of the
+  responses will fail to be fulfiled, there may be error response in its place.
+  The array with responses have the responses in the same order as the
+  requested data.
+
 ## ENVIRONMENT
 
 `RUST_LOG`
@@ -1037,12 +1068,12 @@ would repeat this property will be removed. The property may be:
 Invalid command line arguments are reported with user friendly message
 describing the problem and highlighting the incorrect argument.
 
-Uamp will fail to start new instance of server if the combination of address
-and port is unavailable. If you are using the defaults, it is possible that
-instance of uamp is already running and using that address and port.
+Uamp will fail to start new instance of HTTP server if the combination of
+address and port is unavailable. If you are using the defaults, it is possible
+that instance of uamp is already running and using that address and port.
 
 Uamp will fail to communicate with existing instance if it will fail to connect
-to that instance TCP server. This may be because there is no running instance
+to that instance HTTP server. This may be because there is no running instance
 of uamp, or the port and address of the instance is different than what was
 uamp trying to connect to.
 
