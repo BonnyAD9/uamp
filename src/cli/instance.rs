@@ -1,17 +1,11 @@
-use std::{
-    mem,
-    net::TcpStream,
-    time::{Duration, Instant},
-};
+use std::{mem, time::Instant};
 
-use log::error;
 use pareg::{Pareg, has_any_key, parse_arg};
-use termal::eprintacln;
 
 use crate::core::{
-    AnyControlMsg, DataControlMsg, Error, Result,
+    Result,
     config::Config,
-    messenger::{DataResponse, Messenger, MsgMessage, Request},
+    server::{ReqMsg, SndMsg, client::Client},
 };
 
 use super::{
@@ -26,7 +20,7 @@ use super::{
 #[derive(Default, Debug)]
 pub struct Instance {
     /// Messages to send to a running instance.
-    pub messages: Vec<(MsgMessage, Intention)>,
+    pub messages: Vec<(SndMsg, Intention)>,
     /// Port number of the server of the running instance.
     pub port: Option<u16>,
     /// Server address of the running instance.
@@ -59,7 +53,7 @@ impl Instance {
                         .cur_mval::<PlaylistRange>('=')?
                         .unwrap_or(PlaylistRange(1, 3));
                     self.messages.push((
-                        Request::Info(s.0, s.1).into(),
+                        ReqMsg::Info(s.0, s.1).into(),
                         Intention::Default,
                     ))
                 }
@@ -68,16 +62,14 @@ impl Instance {
                         .cur_mval::<PlaylistRange>('=')?
                         .unwrap_or(PlaylistRange(1, 3));
                     self.messages.push((
-                        Request::Info(s.0, s.1).into(),
+                        ReqMsg::Info(s.0, s.1).into(),
                         Intention::Clear,
                     ))
                 }
                 v if has_any_key!(v, '=', "query", "list", "l") => {
                     self.messages.push((
-                        Request::Query(
-                            args.cur_mval('=')?.unwrap_or_default(),
-                        )
-                        .into(),
+                        ReqMsg::Query(args.cur_mval('=')?.unwrap_or_default())
+                            .into(),
                         Intention::Default,
                     ));
                 }
@@ -92,117 +84,58 @@ impl Instance {
                         Some(args.cur_manual(|a| parse_arg(&a[2..]))?);
                 }
                 "--" => break,
-                _ => self.messages.push((
-                    MsgMessage::Control(args.cur_arg()?),
-                    Intention::Default,
-                )),
+                _ => self
+                    .messages
+                    .push((SndMsg::Ctrl(args.cur_arg()?), Intention::Default)),
             }
         }
 
         Ok(())
     }
 
-    /// Sends the messages to the running instance.
-    ///
-    /// # Errors
-    /// - There is no running instance of uamp with the server address and
-    ///   port.
-    pub fn send(mut self, conf: &Config, props: &Props) -> Result<()> {
-        self.port = self.port.or(Some(conf.port()));
-        self.server = self
+    pub fn send(self, conf: &Config, props: &Props) -> Result<()> {
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_io()
+            .build()?;
+        let local = tokio::task::LocalSet::new();
+        rt.block_on(local.run_until(self.send_inner(conf, props)))
+    }
+
+    async fn send_inner(mut self, conf: &Config, props: &Props) -> Result<()> {
+        let server = self
             .server
             .take()
-            .or_else(|| Some(conf.server_address().to_owned()));
+            .unwrap_or_else(|| conf.server_address().to_owned());
+        let port = self.port.unwrap_or(conf.port());
+
+        let mut client = Client::connect(format!("{server}:{port}")).await?;
+
+        // TODO: aggregate same type of messages
 
         for (m, i) in mem::take(&mut self.messages) {
             let send_time = Instant::now();
-            let restarting = matches!(
-                m,
-                MsgMessage::Control(AnyControlMsg::Data(ref d)) if
-                matches!(&**d, DataControlMsg::Restart(_))
-            );
-            let res = self.send_message(m);
-            match res {
-                Ok(MsgMessage::Success) => {}
-                Ok(MsgMessage::Data(d)) => {
-                    self.print_data(d, conf, props, send_time, i);
+            match m {
+                SndMsg::Ctrl(c) => client.send_ctrl(&[c]).await?,
+                SndMsg::Req(ReqMsg::Info(b, a)) => {
+                    let info = client.req_info(b, a).await?;
+                    props.print_style.info(
+                        &info,
+                        conf,
+                        props.color,
+                        i == Intention::Clear,
+                    );
                 }
-                // When restarting, the restarted uamp will not answer and this
-                // error will occur. This is expected so we don't want to alert
-                // the user.
-                Err(Error::SerdeRmpDecode(e))
-                    if restarting
-                        && matches!(
-                            e.inner(),
-                            rmp_serde::decode::Error::InvalidMarkerRead(e)
-                                if e.kind()
-                                    == std::io::ErrorKind::UnexpectedEof
-                        ) => {}
-                Err(e) => eprintacln!("{e}"),
-                Ok(MsgMessage::Error(e)) => {
-                    eprintln!("{}", e.ctx);
-                }
-                Ok(r) => {
-                    eprintacln!("{'r}error: {'_}Unexpected response: {r:?}");
+                SndMsg::Req(ReqMsg::Query(q)) => {
+                    let songs = client.req_query(&q).await?;
+                    props.print_style.song_list(
+                        &songs,
+                        &props.with_verbosity(self.verbosity),
+                        send_time,
+                    );
                 }
             }
         }
 
         Ok(())
-    }
-}
-
-//===========================================================================//
-//                                  Private                                  //
-//===========================================================================//
-
-impl Instance {
-    fn send_message(&self, msg: MsgMessage) -> Result<MsgMessage> {
-        assert!(self.server.is_some());
-        assert!(self.port.is_some());
-
-        let stream = TcpStream::connect(format!(
-            "{}:{}",
-            self.server.as_ref().unwrap(),
-            self.port.unwrap(),
-        ))
-        .map_err(|e| {
-            Error::io(e)
-                .msg("Failed to connect to uamp.")
-                .hint("Is uamp server running?")
-        })?;
-        if let Err(e) = stream.set_read_timeout(Some(Duration::from_secs(5))) {
-            eprintln!("Failed to set TCP timeout: {e}");
-            error!("Failed to set TCP timeout: {e}");
-        }
-
-        let mut msgr = Messenger::new(&stream);
-
-        msgr.send(msg)?;
-
-        msgr.recieve()
-    }
-
-    fn print_data(
-        &self,
-        data: DataResponse,
-        conf: &Config,
-        props: &Props,
-        send_time: Instant,
-        intention: Intention,
-    ) {
-        match data {
-            DataResponse::Info(i) => props.print_style.info(
-                &i,
-                conf,
-                props.color,
-                intention == Intention::Clear,
-            ),
-            DataResponse::SongList(songs) => props.print_style.song_list(
-                &songs,
-                &props.with_verbosity(self.verbosity),
-                send_time,
-            ),
-        }
     }
 }

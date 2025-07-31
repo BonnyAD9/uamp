@@ -4,7 +4,6 @@ mod jobs;
 mod message_delegate;
 mod msg;
 mod play_msg;
-mod server;
 mod state;
 mod uamp_app;
 
@@ -14,9 +13,9 @@ mod uamp_app;
 
 pub mod config;
 pub mod library;
-pub mod messenger;
 pub mod player;
 pub mod query;
+pub mod server;
 
 #[cfg(unix)]
 mod mpris;

@@ -15,7 +15,7 @@ use crate::{
     core::{
         config::{CacheSize, Config},
         library::Song,
-        messenger::Info,
+        server::Info,
     },
     ext::duration_to_string,
 };

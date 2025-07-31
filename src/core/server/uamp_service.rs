@@ -46,7 +46,7 @@ impl UampService {
     async fn serve_inner(&self, req: Request<Incoming>) -> Result<MyResponse> {
         match *req.method() {
             Method::GET => self.serve_get(req).await,
-            _ => Err(Error::http(405, "Unknown method.")),
+            _ => Err(Error::http(405, "Unknown method.".to_string())),
         }
     }
 
@@ -54,7 +54,7 @@ impl UampService {
         match req.uri().path() {
             "/api/ctrl" => self.handle_ctrl_api(req).await,
             "/api/req" => self.handle_req_api(req).await,
-            _ => Err(Error::http(404, "Unknown api endpoint.")),
+            _ => Err(Error::http(404, "Unknown api endpoint.".to_string())),
         }
     }
 

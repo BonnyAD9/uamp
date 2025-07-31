@@ -83,11 +83,15 @@ pub enum Error {
     Other(Box<ErrCtx<anyhow::Error>>),
     /// Error when handling HTTP request.
     #[error("{1} {0}")]
-    Http(Box<ErrCtx<&'static str>>, u16),
+    Http(Box<ErrCtx<String>>, u16),
     #[error("{0}")]
     Url(Box<ErrCtx<url::ParseError>>),
     #[error("{0}")]
     AddrParse(Box<ErrCtx<std::net::AddrParseError>>),
+    #[error("{0}")]
+    Hyper(Box<ErrCtx<hyper::Error>>),
+    #[error("{0}")]
+    HyperHttp(Box<ErrCtx<hyper::http::Error>>),
     #[error("{}", .0.iter().map(|a| a.to_string()).join(""))]
     Multiple(Vec<Error>),
 }
@@ -171,6 +175,14 @@ macro_rules! map_ctx {
                 *$ctx = $f;
                 Error::AddrParse($ctx)
             }
+            Error::Hyper(mut $ctx) => {
+                *$ctx = $f;
+                Error::Hyper($ctx)
+            }
+            Error::HyperHttp(mut $ctx) => {
+                *$ctx = $f;
+                Error::HyperHttp($ctx)
+            }
             $($($p => $pb,)*)?
             e => e,
         }
@@ -190,7 +202,7 @@ impl Error {
         Self::InvalidOperation("No stdin pipe.".into())
     }
 
-    pub fn http(code: u16, msg: &'static str) -> Self {
+    pub fn http(code: u16, msg: String) -> Self {
         Self::Http(msg.into(), code)
     }
 
@@ -298,6 +310,8 @@ impl Error {
             Error::Http(err_ctx, _) => err_ctx.clone_universal(),
             Error::Url(err_ctx) => err_ctx.clone_universal(),
             Error::AddrParse(err_ctx) => err_ctx.clone_universal(),
+            Error::Hyper(err_ctx) => err_ctx.clone_universal(),
+            Error::HyperHttp(err_ctx) => err_ctx.clone_universal(),
             Error::Multiple(v) if v.len() == 1 => v[0].clone_universal(),
             e => e.to_string().into(),
         }
@@ -353,6 +367,8 @@ impl_from!(
     image::ImageError => Image,
     url::ParseError => Url,
     std::net::AddrParseError => AddrParse,
+    hyper::Error => Hyper,
+    hyper::http::Error => HyperHttp,
 );
 
 #[cfg(unix)]

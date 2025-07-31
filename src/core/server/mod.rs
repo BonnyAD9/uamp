@@ -1,6 +1,7 @@
 mod info;
 mod rep_msg;
 mod req_msg;
+mod snd_msg;
 mod uamp_service;
 
 use futures::executor::block_on;
@@ -14,7 +15,9 @@ use crate::core::{
     config::Config, log_err,
 };
 
-pub use self::{info::*, rep_msg::*, req_msg::*, uamp_service::*};
+pub mod client;
+
+pub use self::{info::*, rep_msg::*, req_msg::*, snd_msg::*, uamp_service::*};
 
 struct Server {
     rt: RtHandle,

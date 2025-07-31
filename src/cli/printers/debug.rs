@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use crate::{
     cli::printers::ser,
-    core::{library::Song, messenger::Info},
+    core::{library::Song, server::Info},
 };
 
 pub fn info(info: &Info) {

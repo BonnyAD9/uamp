@@ -4,7 +4,7 @@ use pareg::FromArg;
 
 use crate::{
     cli::Props,
-    core::{config::Config, library::Song, messenger::Info},
+    core::{config::Config, library::Song, server::Info},
 };
 
 use super::{debug, json, pretty};
