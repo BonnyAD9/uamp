@@ -146,13 +146,13 @@ impl UampApp {
 
         let delegate =
             Msg::fn_delegate(move |app: &mut UampApp, _: &mut AppCtrl| {
-                app.info_response(&stream, before, after)
+                Ok(vec![]) // app.info_response(&stream, before, after)
             });
 
         Box::new((None, Some(delegate)))
     }
 
-    fn info_response(
+    /*fn info_response(
         &mut self,
         stream: &TcpStream,
         before: usize,
@@ -211,7 +211,7 @@ impl UampApp {
         msg.send(DataResponse::Info(Box::new(info)).into())
             .map_err(|e| e.prepend("Failed to send message."))
             .map(|_| vec![])
-    }
+    }*/
 
     fn query_request(
         stream: &TcpStream,
@@ -224,13 +224,13 @@ impl UampApp {
 
         let delegate =
             Msg::fn_delegate(move |app: &mut UampApp, _: &mut AppCtrl| {
-                app.query_response(&stream, &query)
+                Ok(vec![]) // app.query_response(&stream, &query)
             });
 
         Box::new((None, Some(delegate)))
     }
 
-    fn query_response(
+    /*fn query_response(
         &mut self,
         stream: &TcpStream,
         query: &Query,
@@ -246,7 +246,7 @@ impl UampApp {
         msg.send(DataResponse::SongList(songs).into())
             .map_err(|e| e.prepend("Failed to send message."))
             .map(|_| vec![])
-    }
+    }*/
 
     fn clone_stream(
         stream: &TcpStream,

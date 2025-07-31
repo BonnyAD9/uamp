@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::{
-        AppCtrl, Error, Msg, Result, UampApp, library::LoadOpts, log_err,
+        AppCtrl, Error, Msg, Result, UampApp, library::LoadOpts,
         player::AddPolicy, query::SongOrder,
     },
     ext::{Wrap, duration_to_string},

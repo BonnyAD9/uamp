@@ -1,3 +1,6 @@
+mod info;
+mod rep_msg;
+mod req_msg;
 mod uamp_service;
 
 use futures::executor::block_on;
@@ -11,7 +14,7 @@ use crate::core::{
     config::Config, log_err,
 };
 
-pub use self::uamp_service::*;
+pub use self::{info::*, rep_msg::*, req_msg::*, uamp_service::*};
 
 struct Server {
     rt: RtHandle,
@@ -72,15 +75,5 @@ impl Server {
         }
 
         Ok(())
-    }
-}
-
-impl<F> hyper::rt::Executor<F> for RtHandle
-where
-    F: Future + Send + 'static,
-    F::Output: Send + 'static,
-{
-    fn execute(&self, fut: F) {
-        self.spawn(fut);
     }
 }

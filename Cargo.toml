@@ -20,7 +20,7 @@ filesan = "0.2.0"
 flexi_logger = "0.31.2"
 futures = "0.3.31"
 http-body-util = "0.1.3"
-hyper = { version = "1.6.0", features = ["client", "server", "http2", "http1"] }
+hyper = { version = "1.6.0", features = ["client", "server", "http1"] }
 hyper-util = { version = "0.1.16", features = ["tokio"] }
 image = "0.25.6"
 itertools = "0.14.0"

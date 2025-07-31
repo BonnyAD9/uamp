@@ -2,7 +2,7 @@ use core::fmt::Debug;
 
 use tokio::sync::oneshot;
 
-use crate::core::{AppCtrl, Error, JobMsg, RtHandle, UampApp};
+use crate::core::{AppCtrl, Error, JobMsg, RtAndle, RtHandle, UampApp};
 
 use super::{
     AnyControlMsg, ControlMsg, DataControlMsg, MessageDelegate, PlayMsg,
@@ -109,6 +109,22 @@ impl From<ConfigMsg> for Msg {
 }
 
 impl RtHandle {
+    pub async fn request<T: Send + 'static, F>(&self, f: F) -> Result<T>
+    where
+        F: FnOnce(&mut UampApp, &mut AppCtrl) -> T + 'static + Sync + Send,
+    {
+        let (rsend, rrecv) = oneshot::channel();
+        self.msg(Msg::fn_delegate(move |app, ctrl| {
+            _ = rsend.send(f(app, ctrl));
+            Ok(vec![])
+        }));
+        rrecv.await.map_err(|_| {
+            Error::Unexpected("Failed to receive data with request.".into())
+        })
+    }
+}
+
+impl RtAndle {
     pub async fn request<T: Send + 'static, F>(&self, f: F) -> Result<T>
     where
         F: FnOnce(&mut UampApp, &mut AppCtrl) -> T + 'static + Sync + Send,

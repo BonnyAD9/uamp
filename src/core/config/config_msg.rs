@@ -1,4 +1,4 @@
-use std::{net::TcpStream, time::Instant};
+use std::time::Instant;
 
 use crate::core::{Alias, AppCtrl, Error, Job, Msg, Result, UampApp};
 

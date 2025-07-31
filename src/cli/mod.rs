@@ -18,6 +18,6 @@ mod update;
 //===========================================================================//
 
 pub use self::{
-    action::*, args::*, config::*, instance::*, man::*, props::*, run::*,
-    shell::*, update::*,
+    action::*, args::*, config::*, instance::*, man::*, playlist_range::*,
+    props::*, run::*, shell::*, update::*,
 };
