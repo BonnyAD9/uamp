@@ -10,6 +10,7 @@
   where control message is used.
 - In this release there were also large changes to the whole runtime (started
   using tokio).
+- The server is now http server.
 
 ### Fixes
 - Fix issue where some images would accidentally use default background color
