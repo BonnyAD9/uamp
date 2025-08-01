@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## future
+### Fixes
+- Fix order of `a` and `b` when requesting with `uam i nfo=a..b`.
+
 ## v0.5.13
 ### New features
 - Mpris support. On linux, OS will recognize uamp as running media player. This
