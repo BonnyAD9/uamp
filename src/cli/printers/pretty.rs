@@ -470,7 +470,6 @@ impl Info {
         const IMG_CHAR_WIDTH: usize = 60;
         const DEFAULT_CHAR_RATIO: f32 = 0.5;
 
-        // dbg!("Lookup");
         let mut res = String::new();
         let Some(s) = &self.now_playing else {
             return res;
@@ -503,7 +502,6 @@ impl Info {
                 as usize;
         }
 
-        // dbg!("Resize");
         let img = image::imageops::resize(
             &img,
             w as u32 * 2,
@@ -516,7 +514,12 @@ impl Info {
 
         res += &indent[1..];
 
+        // Getting this is just best effort for getting best quality in all
+        // cases. Something here fails, it is no real problem.
         let bg = request::default_bg_color(Duration::from_millis(100)).ok();
+        if bg.is_some() {
+            _ = request::status_report(Duration::from_millis(100), false);
+        }
 
         if let Some(bg) = bg {
             termal::image::push_texel_quater_no_bg(

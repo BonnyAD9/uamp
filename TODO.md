@@ -8,7 +8,6 @@
 - Grououping by albums and artists
 
 # known issues
-- Sometimes the response of terminal backgroun color escapes raw mode.
 - `uamp i ns ps` will error.
 - When playing some flac files, log will show error with end of stream. This is
   bug has been fixed in symphona, but it is not yet released.
