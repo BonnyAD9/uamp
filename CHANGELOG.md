@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.5.13
 ### New features
 - Mpris support. On linux, OS will recognize uamp as running media player. This
   is enabled by default and may be disabled with a new option `system_player`.
