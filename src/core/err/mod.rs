@@ -50,12 +50,6 @@ pub enum Error {
     /// Serde json error
     #[error("{0}")]
     SerdeJson(Box<ErrCtx<serde_json::Error>>),
-    /// Rmp error while encoding
-    #[error("{0}")]
-    SerdeRmpEncode(Box<ErrCtx<rmp_serde::encode::Error>>),
-    /// Rmp error while decoding
-    #[error("{0}")]
-    SerdeRmpDecode(Box<ErrCtx<rmp_serde::decode::Error>>),
     /// The logger returned error (oops :|| ).
     #[error("{0}")]
     Logger(Box<ErrCtx<FlexiLoggerError>>),
@@ -130,14 +124,6 @@ macro_rules! map_ctx {
             Error::SerdeJson(mut $ctx) => {
                 *$ctx = $f;
                 Error::SerdeJson($ctx)
-            }
-            Error::SerdeRmpDecode(mut $ctx) => {
-                *$ctx = $f;
-                Error::SerdeRmpDecode($ctx)
-            }
-            Error::SerdeRmpEncode(mut $ctx) => {
-                *$ctx = $f;
-                Error::SerdeRmpEncode($ctx)
             }
             Error::Logger(mut $ctx) => {
                 *$ctx = $f;
@@ -299,8 +285,6 @@ impl Error {
             Error::AudioTag(err_ctx) => err_ctx.clone_universal(),
             Error::Raplay(err_ctx) => err_ctx.clone_universal(),
             Error::SerdeJson(err_ctx) => err_ctx.clone_universal(),
-            Error::SerdeRmpEncode(err_ctx) => err_ctx.clone_universal(),
-            Error::SerdeRmpDecode(err_ctx) => err_ctx.clone_universal(),
             Error::Logger(err_ctx) => err_ctx.clone_universal(),
             Error::Io(err_ctx) => err_ctx.clone_universal(),
             Error::Time(err_ctx) => err_ctx.clone_universal(),
@@ -357,8 +341,6 @@ impl_from!(
     audiotags::Error => AudioTag,
     raplay::Error => Raplay,
     serde_json::Error => SerdeJson,
-    // rmp_serde::encode::Error => SerdeRmpEncode,
-    // rmp_serde::decode::Error => SerdeRmpDecode,
     std::io::Error => Io,
     SystemTimeError => Time,
     notify::Error => Notify,

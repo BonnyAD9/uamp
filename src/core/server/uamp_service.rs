@@ -204,7 +204,6 @@ fn err_response(err: Error) -> MyResponse {
         Error::InvalidOperation(_)
         | Error::Pareg(_)
         | Error::SerdeJson(_)
-        | Error::SerdeRmpDecode(_)
         | Error::ShellWords(_) => 400,
         Error::NotFound(_) => 404,
         _ => 500,

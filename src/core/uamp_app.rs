@@ -1,5 +1,9 @@
 use std::{
-    env, fs::{self, DirEntry}, path::{Path, PathBuf}, process::{self, Command}, time::{Duration, Instant}
+    env,
+    fs::{self, DirEntry},
+    path::{Path, PathBuf},
+    process::{self, Command},
+    time::{Duration, Instant},
 };
 
 #[cfg(unix)]
