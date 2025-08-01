@@ -48,6 +48,7 @@ impl Client {
             .header(hyper::header::HOST, url.authority())
             .body(Full::new(Bytes::new()))?;
 
+        self.sender.ready().await?;
         let res = self.sender.send_request(req).await?;
 
         if res.status().is_success() {
@@ -71,6 +72,7 @@ impl Client {
             .header(hyper::header::HOST, url.authority())
             .body(Full::new(Bytes::new()))?;
 
+        self.sender.ready().await?;
         let res = self.sender.send_request(req).await?;
 
         if !res.status().is_success() {
@@ -108,6 +110,7 @@ impl Client {
             .header(hyper::header::HOST, url.authority())
             .body(Full::new(Bytes::new()))?;
 
+        self.sender.ready().await?;
         let res = self.sender.send_request(req).await?;
 
         if !res.status().is_success() {

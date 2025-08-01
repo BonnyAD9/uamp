@@ -8,6 +8,7 @@
 - Fix order of `a` and `b` when requesting with `uam i nfo=a..b`.
 - Watch exe even if configuration is not watched.
 - Fix `i nfo` and `i show` poluting stdin.
+- Properly wait for connection to be ready before sending messages over HTTP.
 
 ## v0.5.13
 ### New features
