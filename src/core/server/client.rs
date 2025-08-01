@@ -63,7 +63,7 @@ impl Client {
     pub async fn req_info(&mut self, b: usize, a: usize) -> Result<Box<Info>> {
         let url = Url::parse_with_params(
             &("http://".to_string() + &self.authority + "/api/req"),
-            &[("nfo", format!("-{a}..{b}"))],
+            &[("nfo", format!("-{b}..{a}"))],
         )?;
 
         let req = Request::builder()
