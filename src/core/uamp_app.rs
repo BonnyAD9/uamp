@@ -1,7 +1,7 @@
 use std::{
     env,
     fs::{self, DirEntry},
-    path::{Path, PathBuf},
+    path::PathBuf,
     process::{self, Command},
     time::{Duration, Instant},
 };
@@ -10,6 +10,7 @@ use std::{
 use std::{os::unix::process::CommandExt, rc::Rc};
 
 use futures::executor::block_on;
+use itertools::Itertools;
 use log::{error, info, trace, warn};
 use mpris_server::LocalServer;
 use notify::{INotifyWatcher, Watcher};
@@ -92,17 +93,11 @@ impl UampApp {
             rt.msg(ControlMsg::PlayPause(Some(true)).into());
         }
 
-        let config_watch = if let Some(path) = &conf.config_path {
-            match Self::watch_files(rt.andle(), path.as_path()) {
-                Ok(r) => Some(r),
-                Err(e) => {
-                    error!("Failed to watch config file: {}", e.log());
-                    None
-                }
-            }
-        } else {
-            None
-        };
+        let config_watch = log_err(
+            "Failed to watch config file: {}",
+            Self::watch_files(rt.andle(), &conf),
+        )
+        .flatten();
 
         if let Err(e) = delete_old_logs(conf.delete_logs_after().0) {
             error!("Failed to delete old logs: {}", e.log());
@@ -357,18 +352,33 @@ impl UampApp {
         self.mpris_routine(ctrl);
     }
 
-    fn watch_files(rt: RtAndle, config_path: &Path) -> Result<INotifyWatcher> {
-        let cfg = config_path.to_owned();
+    fn watch_files(
+        rt: RtAndle,
+        conf: &Config,
+    ) -> Result<Option<INotifyWatcher>> {
+        let config_path = conf.config_path.as_ref();
 
-        let executable_path = match env::current_exe() {
-            Err(e) => {
-                error!("Failed to retrieve current executable path: {e}");
-                None
-            }
-            Ok(p) => Some(p),
-        };
+        let executable_path = conf
+            .auto_restart()
+            .then(|| match env::current_exe() {
+                Err(e) => {
+                    error!("Failed to retrieve current executable path: {e}");
+                    None
+                }
+                Ok(p) => Some(p),
+            })
+            .flatten();
 
         let exe = executable_path.clone().unwrap_or_default();
+        let cfg = config_path.cloned().unwrap_or_default();
+
+        let to_watch = [config_path, executable_path.as_ref()]
+            .into_iter()
+            .flatten()
+            .collect_vec();
+        if to_watch.is_empty() {
+            return Ok(None);
+        }
 
         let mut watcher = notify::recommended_watcher(move |res| {
             let v: notify::Event = match res {
@@ -410,12 +420,11 @@ impl UampApp {
             }
         })?;
 
-        watcher.watch(config_path, notify::RecursiveMode::NonRecursive)?;
-        if let Some(p) = executable_path {
-            watcher.watch(&p, notify::RecursiveMode::NonRecursive)?;
+        for p in to_watch {
+            watcher.watch(p, notify::RecursiveMode::NonRecursive)?;
         }
 
-        Ok(watcher)
+        Ok(Some(watcher))
     }
 
     fn restart(&mut self, ctrl: &mut AppCtrl) -> Result<()> {

@@ -1,8 +1,12 @@
 # CHANGELOG
 
 ## future
+### New features
+- Allow disabling watchin of exe with `"auto_restart": false`.
+
 ### Fixes
 - Fix order of `a` and `b` when requesting with `uam i nfo=a..b`.
+- Watch exe even if configuration is not watched.
 
 ## v0.5.13
 ### New features

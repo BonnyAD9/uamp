@@ -285,7 +285,7 @@ This section contains options related to the server created by uamp running in
 background.
 
 `server_address`
-  Uamp creates TCP server for communication across uamp instances. This is the
+  Uamp creates HTTP server for communication across uamp instances. This is the
   way that you can control uamp that is running in background using terminal
   commands. This is the address of that server. The instance that runs the
   player (e.g. in background) will create server at this address. Instances
@@ -302,7 +302,7 @@ background.
 
   The default value is:
 
-    "port": "33284"
+    "port": "8267"
 
 `enable_server`
   Currently uamp has no UI and so the TCP server is necessary. This mode will
@@ -347,6 +347,15 @@ This section controls options related to uamp self update.
   Default value:
 
     "update_remote": "https://github.com/BonnyAD9/uamp.git"
+
+`auto_restart`
+  Uamp will automatically restart running instance if it detects that the it
+  updated (binary has changed). This setting can be used to disable this
+  feature.
+
+  Default value:
+
+    "auto_restart": true
 
 ### Other
 
@@ -524,9 +533,9 @@ The default configuration may be on a linux system:
     "control_aliases": {
         "pcont": "pop 'pp=play'",
         "endless-mix": "'sp=any@rng' 'pj=0' 'pp=play' 'pap=m' 'spea=endless-mix'",
+        "repeat-once": "'pj=0' 'pp=play' spea",
         "repeat": "'pj=0' 'pp=play' 'spea=repeat'",
-        "palb": "{name}:'push=a:${name}@+a' 'pp=play' 'spea=pcont'",
-        "repeat-once": "'pj=0' 'pp=play' spea"
+        "palb": "{name}:'push=a:${name}@+a' 'pp=play' 'spea=pcont'"
     },
     "default_playlist_end_action": null,
     "update_mode": "LatestTag",
@@ -547,7 +556,9 @@ The default configuration may be on a linux system:
     "delete_logs_after": "3d00:00",
     "enable_server": true,
     "previous_timeout": null,
-    "client_image_lookup": true
+    "client_image_lookup": true,
+    "system_player": true,
+    "auto_restart": true
 }
 ```
 

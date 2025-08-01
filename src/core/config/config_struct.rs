@@ -201,6 +201,10 @@ gen_struct! {
         #[doc = "This is implemented only on linux (unix) using mpris."]
         system_player: bool { pub, pub } => pub(super) () true,
 
+        #[doc = "If true, uamp will automatically restart when its binary"]
+        #[doc = "changes."]
+        auto_restart: bool { pub, pub } => pub(super) () true,
+
         ; // fields that aren't serialized
 
         #[serde(skip_serializing, default = "default_config_path_json")]
@@ -258,6 +262,7 @@ impl Config {
             simple_sorting: default_simple_sorting(),
             client_image_lookup: default_client_image_lookup(),
             system_player: default_system_player(),
+            auto_restart: default_auto_restart(),
             force_server: None,
             change: Cell::new(true),
         }
