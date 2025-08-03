@@ -1,0 +1,215 @@
+:root {
+    --bg: #1b1b1b;
+    --bg-lighter: #303030;
+    --bg-light: #252525;
+    --bg-dark: #151515;
+    --bg-trans: #25252599;
+    --primary: #3acbaf;
+    --fg: #eee;
+    --fg-sec: #888888;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    background-color: var(--bg);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+}
+
+.wrapper {
+    display: flex;
+    overflow: hidden;
+    height: 100vh;
+}
+
+.menu {
+    width: 200px;
+    height: 100%;
+    background-color: var(--bg-dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 5px;
+    color: var(--fg);
+}
+
+.menu img {
+    max-width: 50px;
+    object-fit: contain;
+}
+
+.wrapper-songs {
+    width: 100%;
+    padding: 5px;
+    overflow-y: auto;
+}
+
+table.songs {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 65px;
+}
+
+table.songs thead {
+    border-bottom: 2px solid #333;
+    background-color: var(--bg);
+}
+
+table.songs th {
+    color: #888;
+    font-weight: normal;
+    text-align: left;
+}
+
+table.songs tr:not(:first-child) {
+    border-top: 1px solid var(--bg-light);
+}
+
+table.songs td {
+    padding: 5px 0;
+    line-height: 17px;
+}
+
+table.songs td>p {
+    color: var(--fg);
+    font-size: 15px;
+}
+
+table.songs td>span {
+    color: var(--fg-sec);
+    font-size: 11px;
+}
+
+table.songs td.active {
+    color: var(--primary);
+}
+
+section.bar {
+    position: fixed;
+    bottom: 8px;
+    left: 8px;
+    width: calc(100% - 16px);
+    height: 60px;
+    background-color: var(--bg-trans);
+    backdrop-filter: blur(5px);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+section.bar>.bar-wrapper {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    position: relative;
+    padding: 2px 10px;
+}
+
+section.bar .slider {
+    width: 100%;
+    height: 4px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: #303030;
+    border-radius: 3px;
+}
+
+section.bar .slider>hr {
+    width: 36%;
+    border: 2px solid var(--primary);
+    border-radius: 2px;
+}
+
+section.bar .info {
+    display: flex;
+    align-items: center;
+}
+
+section.bar .info>.pic {
+    width: 68px;
+    height: 68px;
+    padding: 5px;
+}
+
+section.bar .info>.pic img {
+    max-width: 58px;
+    max-height: 58px;
+    object-fit: contain;
+    border-radius: 3px;
+}
+
+section.bar .info>.title h3 {
+    font-size: 15px;
+    font-weight: normal;
+    color: #fff;
+}
+
+section.bar .info>.title h4 {
+    font-size: 11px;
+    font-weight: normal;
+    color: #aaa;
+}
+
+section.bar .controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+section.bar .controls img {
+    width: 20px;
+    height: 20px;
+}
+
+section.bar .controls #play {
+    width: 30px;
+    height: 30px;
+    padding: 5px 0;
+    object-fit: contain;
+}
+
+section.bar .volume {
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    gap: 10px;
+    color: var(--fg);
+    margin-right: 5px;
+}
+
+section.bar .volume img {
+    max-width: 18px;
+    max-height: 18px;
+}
+
+section.bar .volume p {
+    font-size: 15px;
+    padding-bottom: 2px;
+}
+
+section.bar .volume>.volume-slider {
+    width: 90px;
+    height: 4px;
+    background-color: var(--bg-lighter);
+
+    border-radius: 2px;
+}
+
+section.bar .volume>.volume-slider hr {
+    width: 16%;
+    border: 2px solid var(--primary);
+    border-radius: 2px;
+}
