@@ -17,7 +17,10 @@ use tokio_util::sync::CancellationToken;
 
 use crate::core::{
     AppCtrl, Error, Job, JobMsg, Msg, Result, RtHandle, UampApp,
-    config::Config, log_err, server::sub::SetPlaylist,
+    config::Config,
+    library::SongId,
+    log_err,
+    server::sub::{PlayTmp, SetPlaylist},
 };
 
 pub mod client;
@@ -76,6 +79,16 @@ impl UampApp {
             && let Some(ts) = self.player.timestamp()
         {
             _ = snd.send(SubMsg::Seek(ts));
+        }
+    }
+
+    pub fn client_update_tmp_song(&mut self, id: SongId) {
+        if let Some((ref snd, _)) = self.jobs.server {
+            _ = snd.send(SubMsg::PlayTmp(PlayTmp::new(
+                self.library[id].clone().into(),
+                id,
+                &mut self.player,
+            )));
         }
     }
 }

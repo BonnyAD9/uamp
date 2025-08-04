@@ -1,8 +1,15 @@
+use std::sync::Arc;
+
 use raplay::Timestamp;
 use serde::Serialize;
 
 use crate::core::{
-    player::{AddPolicy, Playback}, server::sub::{PlaylistJump, SetAll, SetPlaylist}, Alias, Result
+    Alias, Result,
+    library::SongId,
+    player::{AddPolicy, Playback},
+    server::sub::{
+        PlayTmp, PlaylistJump, ReorderPlaylistStack, SetAll, SetPlaylist,
+    },
 };
 
 #[derive(Debug, Clone)]
@@ -33,6 +40,22 @@ pub enum SubMsg {
     SetPlaylistEndAction(Option<Alias>),
     // Pushes playlist to the playlist stack
     PushPlaylist(SetPlaylist),
+    // Moves the current song to the start of the new playlist. The new
+    // playlist in this message aleady contains the moved song.
+    PushPlaylistWithCur(SetPlaylist),
+    // Append the songs to the end of the current playlist
+    Queue(Arc<Vec<SongId>>),
+    // Insert the songs into the playlist after the current song
+    PlayNext(Arc<Vec<SongId>>),
+    // Uamp is about to restart
+    Restarting,
+    // Reorders playlist stack. First item in the vector is the top of the
+    // queue. Index 0 is the top of the queue. Indexes not present will stay in
+    // their relative order at the end of the stack.
+    ReorderPlaylistStack(ReorderPlaylistStack),
+    // Play temporary song. The new song is added with temporary id as new
+    // playlist on top of the stack.
+    PlayTmp(PlayTmp),
 }
 
 impl SubMsg {
@@ -51,8 +74,20 @@ impl SubMsg {
             Self::SetPlaylistAddPolicy(d) => {
                 make_event("set-playlist-add-policy", d)
             }
-            Self::SetPlaylistEndAction(d) => make_event("set-playlist-end-action", d),
+            Self::SetPlaylistEndAction(d) => {
+                make_event("set-playlist-end-action", d)
+            }
             Self::PushPlaylist(d) => make_event("push-playlist", d),
+            Self::PushPlaylistWithCur(d) => {
+                make_event("push-playlist-with-cur", d)
+            }
+            Self::Queue(d) => make_event("queue", d),
+            Self::PlayNext(d) => make_event("play-next", d),
+            Self::Restarting => Ok("event: restarting\n\n".to_string()),
+            Self::ReorderPlaylistStack(d) => {
+                make_event("reorder-playlist-stack", d)
+            }
+            Self::PlayTmp(d) => make_event("play-tmp", d),
         }
     }
 }
