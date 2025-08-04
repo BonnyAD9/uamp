@@ -91,7 +91,7 @@
                 >
                 <img 
                     src="/assets/svg/play.svg" 
-                    onclick="AppSingleton.get().togglePlaying()" 
+                    onclick="apiCtrl('pp')" 
                     id="play"
                 >
                 <img 
@@ -104,7 +104,7 @@
             <div class="volume">
                 <img 
                     src="/assets/svg/volume_1.svg" 
-                    onclick="AppSingleton.get().toggleMute()"
+                    onclick="apiCtrl('mute')"
                 >
                 <p id="volumeValue">69</p>
                 <input type="range" min="0" max="100" id="volumeSlider">
