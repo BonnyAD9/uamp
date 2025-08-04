@@ -12,7 +12,7 @@ use pareg::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::core::{Alias, AppCtrl, Msg, Result, UampApp, query::Query};
+use crate::core::{query::Query, server::SubMsg, Alias, AppCtrl, Msg, Result, UampApp};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -55,7 +55,8 @@ impl UampApp {
         match msg {
             DataControlMsg::Alias(name) => return self.invoke_alias(&name),
             DataControlMsg::SetPlaylistEndAction(act) => {
-                self.player.playlist_mut().on_end = act;
+                self.player.playlist_mut().on_end = act.clone();
+                self.client_update(SubMsg::SetPlaylistEndAction(act));
             }
             DataControlMsg::SetPlaylist(q) => {
                 let songs = q.get_ids(
@@ -68,6 +69,7 @@ impl UampApp {
                     songs.into(),
                     false,
                 );
+                self.client_update_set_playlist(SubMsg::SetPlaylist);
             }
             DataControlMsg::PushPlaylist(q) => {
                 let songs = q.get_ids(
@@ -80,6 +82,7 @@ impl UampApp {
                     songs.into(),
                     false,
                 );
+                self.client_update_set_playlist(SubMsg::PushPlaylist);
             }
             DataControlMsg::PushPlaylistAndCur(q) => {
                 let songs = q.get_ids(

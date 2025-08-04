@@ -2,9 +2,7 @@ use raplay::Timestamp;
 use serde::Serialize;
 
 use crate::core::{
-    Result,
-    player::{AddPolicy, Playback},
-    server::sub::{PlaylistJump, SetAll, SetPlaylist},
+    player::{AddPolicy, Playback}, server::sub::{PlaylistJump, SetAll, SetPlaylist}, Alias, Result
 };
 
 #[derive(Debug, Clone)]
@@ -31,6 +29,10 @@ pub enum SubMsg {
     PopSetPlaylist(SetPlaylist),
     // Sets the playlis add policy of the current playlist
     SetPlaylistAddPolicy(AddPolicy),
+    // Sets the playlist end action
+    SetPlaylistEndAction(Option<Alias>),
+    // Pushes playlist to the playlist stack
+    PushPlaylist(SetPlaylist),
 }
 
 impl SubMsg {
@@ -49,6 +51,8 @@ impl SubMsg {
             Self::SetPlaylistAddPolicy(d) => {
                 make_event("set-playlist-add-policy", d)
             }
+            Self::SetPlaylistEndAction(d) => make_event("set-playlist-end-action", d),
+            Self::PushPlaylist(d) => make_event("push-playlist", d),
         }
     }
 }
