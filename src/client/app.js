@@ -6,12 +6,10 @@ const songTemplate = document.getElementById('song-template');
 
 const volumeSlider = document.getElementById('volumeSlider');
 const volumeValue = document.getElementById('volumeValue');
+const volumeIcon = document.querySelector('.volume img');
 volumeSlider.addEventListener('input', () => {
     const value = volumeSlider.value;
-    volumeValue.textContent = value;
-    volumeSlider.style.background =
-        `linear-gradient(to right, var(--primary) ${value}%,` + `
-        var(--bg-lighter) ${value}%)`;
+    AppSingleton.get().updateVolume(value / 100);
     apiCtrl(`v=${value / 100}`);
 });
 
@@ -20,13 +18,30 @@ class App {
         this.library = eventData.library;
         this.player = eventData.player;
         this.position = eventData.position;
+
+        console.log(this.player.state);
+        console.log(this.isPlaying());
     }
 
     togglePlaying() {
-        const playing = !this.isPlaying();
-        this.player.state = playing ? 'Playing' : 'Paused';
-        this.#updatePlayBtn(playing);
-        apiCtrl('pp');
+        apiCtrl('pp').then(res => {
+            if (res == 'Success!') {
+                console.log(this.isPlaying());
+                const playing = !this.isPlaying();
+                this.player.state = playing ? 'Playing' : 'Paused';
+                console.log(playing, this.player.state);
+                this.updatePlayBtn(playing);
+            }
+        });
+    }
+
+    toggleMute() {
+        apiCtrl('mute').then(res => {
+            if (res == 'Success!') {
+                this.player.mute = !this.player.mute;
+                this.updateVolume(this.player.volume);
+            }
+        });
     }
 
     isPlaying() {
@@ -54,7 +69,7 @@ class App {
             const song = this.library.songs[i];
             if (song.deleted === true) continue;
 
-            const row = this.#getSongRow(song);
+            const row = this.getSongRow(song);
             if (i === current)
                 row.classList.add('active');
             songsElement.appendChild(row);
@@ -68,7 +83,7 @@ class App {
             const song = this.library.songs[this.player.playlist.songs[i]];
             if (song.deleted === true) continue;
 
-            const row = this.#getSongRow(song);
+            const row = this.getSongRow(song);
             if (i === playing)
                 row.classList.add('active');
             playlistElement.appendChild(row);
@@ -76,23 +91,23 @@ class App {
     }
 
     updateAll() {
-        this.#updateCurrent(this.getPlaying());
-        this.#updateVolume();
-        this.#updatePlayBtn(this.isPlaying());
+        this.updateCurrent(this.getPlaying());
+        this.updateVolume(this.player.volume);
+        this.updatePlayBtn(this.isPlaying());
     }
 
-    #formatDuration(duration) {
+    formatDuration(duration) {
         const minutes = Math.floor(duration.secs / 60);
         const seconds = duration.secs % 60;
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
 
-    #updatePlayBtn(playing) {
-        const icon = playing ? 'pause.svg' : 'play.svg';
-        document.getElementById('play').src = '../../assets/svg/' + icon;
+    updatePlayBtn(playing) {
+        const icon = playing ? 'play.svg' : 'pause.svg';
+        document.getElementById('play').src = '/assets/svg/' + icon;
     }
 
-    #updateCurrent(song) {
+    updateCurrent(song) {
         const title = document.querySelector('.info .title h3');
         if (song === null) {
             title.textContent = 'Not Playing';
@@ -102,13 +117,18 @@ class App {
         document.querySelector('.info .title h4').textContent = song.artist;
     }
 
-    #updateVolume() {
-        const volume = this.player.volume * 100;
-        volumeSlider.value = volume;
-        volumeValue.textContent = volume;
+    updateVolume(volume) {
+        this.player.volume = volume;
+        const perVolume = Math.round(volume * 100);
+        volumeSlider.value = perVolume;
+        volumeValue.textContent = perVolume;
+
+        const level = Math.ceil(volume * 4);
+        let icon = `${this.player.mute ? 'no_' : ''}volume_${level}.svg`;
+        volumeIcon.src = `/assets/svg/${icon}`;
     }
 
-    #getSongRow(song) {
+    getSongRow(song) {
         const cloned = songTemplate.content.cloneNode(true);
         const row = cloned.querySelector('tr');
         row.addEventListener('click', () => this.playSong(i));
@@ -118,22 +138,12 @@ class App {
         row.querySelector('.album').textContent = song.album;
         row.querySelector('.year').textContent = song.year;
         row.querySelector('.length').textContent =
-            this.#formatDuration(song.length);
+            this.formatDuration(song.length);
         row.querySelector('.genre').textContent = song.genre;
 
         return row;
     }
 }
-
-var app = null;
-
-const eventSource = new EventSource(`/api/sub`);
-eventSource.addEventListener('set-all', e => {
-    app = new App(JSON.parse(e.data));
-    app.displaySongs();
-    app.displayPlaylist();
-    app.updateAll();
-});
 
 const navs = document.querySelectorAll('nav p');
 const screens = document.querySelectorAll('.screen');
@@ -154,14 +164,12 @@ navs.forEach(item => {
 });
 
 function apiCtrl(query) {
-    fetch(`${API_URL}/ctrl?${query}`)
+    return fetch(`${API_URL}/ctrl?${query}`)
         .then(res => {
             if (!res.ok) {
                 throw new Error(`HTTP error! status: ${res.status}`);
             }
             return res.text();
-        }).then(data => {
-            console.log(data);
         }).catch(error => {
             console.error('Fetch error:', error);
         });
