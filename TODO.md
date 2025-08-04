@@ -8,7 +8,8 @@
 - Grououping by albums and artists
 
 # known issues
-- mpris seek not properly notified.
+- mpris seek not properly notified (Can't reproduce, will see in next release
+  if it is still issue. If yes, doesn't seem to be uamp related.)
 - When playing some flac files, log will show error with end of stream. This is
   bug has been fixed in symphona, but it is not yet released.
 - When output device doesn't support required sample rate, aliasing may occur.
