@@ -2,6 +2,8 @@ use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 
+use crate::core::server::SubMsg;
+
 use super::{Msg, Result, UampApp, library::SongId, player::Playlist};
 
 //===========================================================================//
@@ -28,6 +30,7 @@ impl UampApp {
                     Playlist::new(songs, index),
                     true,
                 );
+                self.client_update_set_playlist(SubMsg::SetPlaylist);
             }
         }
 
