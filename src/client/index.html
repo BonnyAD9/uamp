@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="style.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/assets/svg/icon.svg">
     <title>uamp</title>
 </head>
 
@@ -12,7 +13,7 @@
     <div class="wrapper">
         <section class="menu">
             <div class="logo">
-                <img src="../../assets/svg/icon.svg" alt="uamp logo">
+                <img src="/assets/svg/icon.svg" alt="uamp logo">
                 <h1>Uamp</h1>
             </div>
 
@@ -83,13 +84,28 @@
             </div>
 
             <div class="controls">
-                <img src="../../assets/svg/previous.svg" onclick="apiCtrl('ps')" id="prev">
-                <img src="../../assets/svg/play.svg" onclick="app.togglePlaying()" id="play">
-                <img src="../../assets/svg/next.svg" onclick="apiCtrl('ns')" id="next">
+                <img 
+                    src="/assets/svg/previous.svg" 
+                    onclick="apiCtrl('ps')" 
+                    id="prev"
+                >
+                <img 
+                    src="/assets/svg/play.svg" 
+                    onclick="AppSingleton.get().togglePlaying()" 
+                    id="play"
+                >
+                <img 
+                    src="/assets/svg/next.svg" 
+                    onclick="apiCtrl('ns')" 
+                    id="next"
+                >
             </div>
 
             <div class="volume">
-                <img src="../../assets/svg/volume_1.svg">
+                <img 
+                    src="/assets/svg/volume_1.svg" 
+                    onclick="AppSingleton.get().toggleMute()"
+                >
                 <p id="volumeValue">69</p>
                 <input type="range" min="0" max="100" id="volumeSlider">
             </div>
@@ -114,6 +130,7 @@
     </template>
 </body>
 
+<script src="events.js"></script>
 <script src="app.js"></script>
 <script src="settings.js"></script>
 
