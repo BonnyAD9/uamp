@@ -63,6 +63,12 @@ pub fn default_cache_dir() -> PathBuf {
     d
 }
 
+pub fn default_http_client_path() -> PathBuf {
+    let mut d = get_uamp_dir(dirs::data_local_dir());
+    d.push("app");
+    d
+}
+
 /// Gets the default path to json configuration, it is different when debugging
 pub fn default_config_path() -> PathBuf {
     default_config_dir().join("config.json")

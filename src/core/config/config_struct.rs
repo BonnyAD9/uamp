@@ -4,7 +4,7 @@ use std::{cell::Cell, collections::HashMap, path::PathBuf, time::Duration};
 use crate::{
     core::{
         Alias, AnyControlMsg, ControlFunction, ControlMsg, DataControlMsg,
-        player::AddPolicy, query::Query,
+        config::default_http_client_path, player::AddPolicy, query::Query,
     },
     env::update,
     ext::Wrap,
@@ -119,6 +119,10 @@ gen_struct! {
         #[doc = "Determines the repository fro which uamp will update."]
         update_remote: String { pub, pub } => pub(super) () {
             update::DEFAULT_REMOTE.to_owned()
+        },
+
+        http_client: PathBuf { pub, pub } => pub(super) () {
+            default_http_client_path()
         },
 
         ; // fields passed by value:
@@ -264,6 +268,7 @@ impl Config {
             system_player: default_system_player(),
             auto_restart: default_auto_restart(),
             force_server: None,
+            http_client: default_http_client(),
             change: Cell::new(true),
         }
     }

@@ -1,4 +1,10 @@
-use std::{borrow::Cow, convert::Infallible};
+use std::{
+    borrow::Cow,
+    convert::Infallible,
+    fs::File,
+    io::{BufReader, Read},
+    path::{Path, PathBuf},
+};
 
 use futures::{
     StreamExt,
@@ -28,11 +34,16 @@ type MyResponse = Response<MyBody>;
 pub struct UampService {
     rt: RtAndle,
     brcs: broadcast::WeakSender<SubMsg>,
+    app_path: PathBuf,
 }
 
 impl UampService {
-    pub fn new(rt: RtAndle, brcs: broadcast::WeakSender<SubMsg>) -> Self {
-        Self { rt, brcs }
+    pub fn new(
+        rt: RtAndle,
+        brcs: broadcast::WeakSender<SubMsg>,
+        app_path: PathBuf,
+    ) -> Self {
+        Self { rt, brcs, app_path }
     }
 
     pub async fn serve(
@@ -53,10 +64,26 @@ impl UampService {
     }
 
     async fn serve_get(&self, req: Request<Incoming>) -> Result<MyResponse> {
-        match req.uri().path() {
+        let headers = req.headers();
+        let path = if let Some(re) = headers.get("Referer") {
+            join_paths(
+                Url::parse(re.to_str().map_err(|_| {
+                    Error::http(400, "Invalid referer encoding.".into())
+                })?)?
+                .path(),
+                req.uri().path(),
+            )
+        } else {
+            req.uri().path().to_string()
+        };
+        dbg!(&path);
+        match path.as_str() {
             "/api/ctrl" => self.handle_ctrl_api(req).await,
             "/api/req" => self.handle_req_api(req).await,
             "/api/sub" => self.handle_sub_api(req).await,
+            v if v.starts_with("/app") => {
+                self.handle_app(v.strip_prefix("/app").unwrap()).await
+            }
             _ => Err(Error::http(404, "Unknown api endpoint.".to_string())),
         }
     }
@@ -129,6 +156,17 @@ impl UampService {
         };
         let srv = SseService::new(s.subscribe(), self.rt.clone());
         Ok(sse_response(srv))
+    }
+
+    async fn handle_app(&self, mut path: &str) -> Result<MyResponse> {
+        path = path.strip_prefix("/").unwrap_or(path);
+        if path.is_empty() {
+            path = "index.html";
+        }
+        let path = self.app_path.join(path);
+        // TODO: disallow .. in path
+        dbg!(&path);
+        file_response(path)
     }
 
     async fn make_req(&self, k: &str, v: &str) -> Result<RepMsg> {
@@ -264,6 +302,17 @@ fn sse_response(s: SseService) -> MyResponse {
         .expect("Failet to generate sse response. This shouldn't happen.")
 }
 
+fn file_response(p: impl AsRef<Path>) -> Result<MyResponse> {
+    let mut res = vec![];
+    BufReader::new(File::open(p.as_ref())?).read_to_end(&mut res)?;
+    let mime = mime_guess::from_path(p).first_or_octet_stream();
+    Ok(Response::builder()
+        .status(200)
+        .header("Content-Type", mime.essence_str())
+        .body(byte_body(res))
+        .expect("Failed to generate file response. This shouldn't happen."))
+}
+
 fn string_body(s: impl Into<Cow<'static, str>>) -> MyBody {
     let s = s.into();
     StreamBody::new(
@@ -279,13 +328,27 @@ fn string_body(s: impl Into<Cow<'static, str>>) -> MyBody {
 
 fn json_body(s: &impl Serialize) -> Result<MyBody> {
     let data = serde_json::to_vec(s)?;
-    Ok(StreamBody::new(
-        stream::once(async move { Ok(Frame::data(data.into())) }).boxed(),
-    ))
+    Ok(byte_body(data))
+}
+
+fn byte_body(b: Vec<u8>) -> MyBody {
+    StreamBody::new(
+        stream::once(async move { Ok(Frame::data(b.into())) }).boxed(),
+    )
 }
 
 fn uri_to_url(uri: &Uri) -> Result<Url> {
     Ok(Url::parse(
         &("http://dummy".to_string() + uri.path_and_query().unwrap().as_str()),
     )?)
+}
+
+fn join_paths(a: impl AsRef<str>, b: impl AsRef<str>) -> String {
+    let a = a.as_ref();
+    let b = b.as_ref();
+    match (a.ends_with('/'), b.starts_with('/')) {
+        (true, true) => a.to_string() + &b[1..],
+        (false, false) => a.to_string() + "/" + b,
+        _ => a.to_string() + b,
+    }
 }

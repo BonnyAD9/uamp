@@ -7,6 +7,8 @@ mod sub;
 mod sub_msg;
 mod uamp_service;
 
+use std::path::PathBuf;
+
 use futures::executor::block_on;
 use hyper::{server::conn::http1, service::service_fn};
 use hyper_util::rt::TokioIo;
@@ -29,6 +31,7 @@ const MAX_BROADCAST_CAPACITY: usize = 16;
 struct Server {
     rt: RtHandle,
     listener: TcpListener,
+    app_path: PathBuf,
 }
 
 impl UampApp {
@@ -61,7 +64,11 @@ impl Server {
             conf.server_address(),
             conf.port()
         )))?;
-        Ok(Self { rt, listener })
+        Ok(Self {
+            rt,
+            listener,
+            app_path: conf.http_client().clone(),
+        })
     }
 
     async fn run(
@@ -80,7 +87,11 @@ impl Server {
                 }
             );
 
-            let service = UampService::new(self.rt.andle(), brcs.clone());
+            let service = UampService::new(
+                self.rt.andle(),
+                brcs.clone(),
+                self.app_path.clone(),
+            );
             self.rt.spawn(http1::Builder::new().serve_connection(
                 TokioIo::new(conn),
                 service_fn(move |a| {
