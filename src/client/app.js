@@ -1,5 +1,3 @@
-const API_URL = 'http://localhost:8267/api';
-
 const songsElement = document.querySelector('#library .songs tbody');
 const playlistElement = document.querySelector('#playlist .songs tbody');
 const songTemplate = document.getElementById('song-template');
@@ -164,7 +162,7 @@ navs.forEach(item => {
 });
 
 function apiCtrl(query) {
-    return fetch(`${API_URL}/ctrl?${query}`)
+    return fetch(`/api/ctrl?${query}`)
         .then(res => {
             if (!res.ok) {
                 throw new Error(`HTTP error! status: ${res.status}`);
