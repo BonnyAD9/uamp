@@ -58,7 +58,7 @@ fn guard_error(res: Result<String>) -> String {
         Ok(m) => m,
         Err(e) => format!(
             "event: error\ndata: {}\n\n",
-            e.to_string().replace('\n', "\ndata: ")
+            e.log().to_string().replace('\n', "\ndata: ")
         ),
     }
 }
