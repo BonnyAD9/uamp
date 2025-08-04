@@ -9,6 +9,7 @@ navs.forEach(item => {
         item.classList.add('active');
 
         const targetId = item.dataset.screen;
+        console.log(targetId);
         for (let screen of screens) {
             screen.classList.remove('active');
             if (screen.id == targetId) {
