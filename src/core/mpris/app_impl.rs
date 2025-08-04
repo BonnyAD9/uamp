@@ -1,4 +1,4 @@
-use std::{io::ErrorKind, mem, rc::Rc};
+use std::{io::ErrorKind, rc::Rc};
 
 use futures::executor::block_on;
 use log::info;
@@ -45,13 +45,10 @@ impl UampApp {
         }
     }
 
-    pub fn mpris_routine(&mut self, ctrl: &mut AppCtrl) {
+    pub fn mpris_routine(&mut self, ctrl: &mut AppCtrl, mut old: State) {
         let Some((mpris, cancel)) = self.jobs.system_player.clone() else {
             return;
         };
-
-        let mut old = self.get_state();
-        old = mem::replace(&mut self.state, old);
 
         let changes = self.handle_changes(&mut old);
 

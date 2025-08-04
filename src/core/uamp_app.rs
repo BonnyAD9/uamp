@@ -3,6 +3,7 @@ use std::os::unix::process::CommandExt;
 use std::{
     env,
     fs::{self, DirEntry},
+    mem,
     path::PathBuf,
     process::{self, Command},
     time::{Duration, Instant},
@@ -316,8 +317,11 @@ impl UampApp {
         self.player_routine(now, up);
         errs.extend(self.config_routine(ctrl, now).err());
         errs.extend(self.restart(ctrl).err());
+
+        let old = self.get_state();
+        let old = mem::replace(&mut self.state, old);
         #[cfg(unix)]
-        self.mpris_routine(ctrl);
+        self.mpris_routine(ctrl, old);
     }
 
     fn watch_files(

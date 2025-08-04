@@ -1,5 +1,6 @@
 use std::{cell::Cell, mem, time::Duration};
 
+use itertools::Itertools;
 use log::{error, info, warn};
 use raplay::{CallbackInfo, Timestamp};
 
@@ -8,6 +9,7 @@ use crate::{
         Alias, DataControlMsg, Error, Msg, Result, RtAndle,
         config::Config,
         library::{Library, SongId},
+        server::sub,
     },
     ext::AlcVec,
     gen_struct,
@@ -356,6 +358,27 @@ impl Player {
         self.pop_playlist(lib);
 
         Ok(())
+    }
+
+    pub fn get_sub(&mut self) -> sub::Player {
+        // These operations doesn't actually mutate the data, just the way they
+        // are stored (AlcVec).
+        sub::Player {
+            playlist: self.sub_playlist(),
+            playlist_stack: self
+                .playlist_stack
+                .iter_mut()
+                .map(sub::Playlist::new)
+                .collect_vec()
+                .into(),
+            volume: self.volume(),
+            mute: self.mute(),
+            state: self.state,
+        }
+    }
+
+    pub fn sub_playlist(&mut self) -> sub::Playlist {
+        sub::Playlist::new(&mut self.playlist)
     }
 
     /// Creates new player from the sender

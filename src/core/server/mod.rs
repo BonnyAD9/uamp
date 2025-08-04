@@ -3,7 +3,7 @@ mod rep_msg;
 mod req_msg;
 mod snd_msg;
 mod sse_service;
-mod sub;
+pub mod sub;
 mod sub_msg;
 mod uamp_service;
 
@@ -54,6 +54,12 @@ impl UampApp {
         self.jobs.server = Some((sub_broadcast, cancel));
 
         Ok(())
+    }
+
+    pub fn client_update(&mut self, msg: SubMsg) {
+        if let Some((ref snd, _)) = self.jobs.server {
+            _ = snd.send(msg);
+        }
     }
 }
 
