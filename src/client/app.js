@@ -19,6 +19,17 @@ navs.forEach(item => {
     });
 });
 
+const volumeSlider = document.getElementById('volumeSlider');
+const volumeValue = document.getElementById('volumeValue');
+volumeSlider.addEventListener('input', () => {
+    const value = volumeSlider.value;
+    volumeValue.textContent = value;
+    volumeSlider.style.background =
+        `linear-gradient(to right, var(--primary) ${value}%,` + `
+        var(--bg-lighter) ${value}%)`;
+    apiCtrl(`v=${value / 100}`);
+});
+
 function apiCtrl(query) {
     fetch(`${API_URL}/ctrl?${query}`)
         .then(res => {
