@@ -1,3 +1,5 @@
+#[cfg(unix)]
+use std::os::unix::process::CommandExt;
 use std::{
     env,
     fs::{self, DirEntry},
@@ -6,21 +8,14 @@ use std::{
     time::{Duration, Instant},
 };
 
-#[cfg(unix)]
-use std::{os::unix::process::CommandExt, rc::Rc};
-
-use futures::executor::block_on;
 use itertools::Itertools;
 use log::{error, info, trace, warn};
-use mpris_server::LocalServer;
 use notify::{INotifyWatcher, Watcher};
 use tokio::signal::unix::SignalKind;
-#[cfg(unix)]
-use tokio::task::JoinHandle;
 
 use crate::core::{
-    AppCtrl, Error, Jobs, Result, RtAndle, RtHandle, State, config,
-    library::Song, log_err, mpris::Mpris, msg::Msg,
+    AppCtrl, Error, Jobs, Result, RtAndle, RtHandle, State, library::Song,
+    log_err, msg::Msg,
 };
 
 use super::{
@@ -63,9 +58,6 @@ pub struct UampApp {
     pub(super) last_prev: Instant,
 
     pub(super) restart_path: Option<PathBuf>,
-
-    #[cfg(unix)]
-    pub(super) mpris: Option<(Rc<LocalServer<Mpris>>, JoinHandle<()>)>,
 
     pub(super) state: State,
 
@@ -118,9 +110,6 @@ impl UampApp {
 
             hard_pause_at: None,
             restart_path: None,
-
-            #[cfg(unix)]
-            mpris: None,
 
             state: State::default(),
 
@@ -199,33 +188,12 @@ impl UampApp {
 
     pub(super) fn enable_system_player(&mut self, ctrl: &mut AppCtrl) {
         #[cfg(unix)]
-        {
-            if self.mpris.is_some() {
-                return;
-            }
-
-            let e =
-                LocalServer::new(config::APP_ID, Mpris::new(self.rt.clone()));
-            let mpris: Option<Rc<_>> =
-                log_err("Failed to start mpris player: ", block_on(e))
-                    .map(|a| a.into());
-
-            self.mpris = if let Some(s) = mpris {
-                let task = s.run();
-                Some((s, ctrl.spawn(task)))
-            } else {
-                None
-            }
-        }
+        self.start_mpris(ctrl);
     }
 
     pub(super) fn disable_system_player(&mut self) {
         #[cfg(unix)]
-        {
-            if let Some((_, h)) = self.mpris.take() {
-                h.abort();
-            }
-        }
+        self.stop_mpris();
     }
 
     pub(super) fn get_state(&self) -> State {

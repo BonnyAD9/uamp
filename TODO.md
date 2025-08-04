@@ -8,8 +8,6 @@
 - Grououping by albums and artists
 
 # known issues
-- `ERROR [uamp::core::err] Failed to send mpris update: I/O error: Broken pipe (os error 32)`
-  `ERROR [uamp::core::err] Failed to send mpris signal: I/O error: Broken pipe (os error 32)`
 - mpris seek not properly notified.
 - When playing some flac files, log will show error with end of stream. This is
   bug has been fixed in symphona, but it is not yet released.

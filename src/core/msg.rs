@@ -108,6 +108,12 @@ impl From<ConfigMsg> for Msg {
     }
 }
 
+impl From<JobMsg> for Msg {
+    fn from(value: JobMsg) -> Self {
+        Msg::Job(value)
+    }
+}
+
 impl RtHandle {
     pub async fn request<T: Send + 'static, F>(&self, f: F) -> Result<T>
     where

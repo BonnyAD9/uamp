@@ -8,6 +8,7 @@ pub enum JobMsg {
     LibraryLoad(Result<Option<LibraryLoadResult>>),
     Server(Result<()>),
     LibrarySave(Result<Vec<SongId>>),
+    SystemPlayer,
 }
 
 impl UampApp {
@@ -29,6 +30,12 @@ impl UampApp {
                 self.jobs.finish(Job::SERVER);
                 if self.config.should_start_server() {
                     self.start_server(ctrl)?;
+                }
+            }
+            JobMsg::SystemPlayer => {
+                self.jobs.finish(Job::SYSTEM_PLAYER);
+                if self.config.system_player() {
+                    self.enable_system_player(ctrl);
                 }
             }
         }

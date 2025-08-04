@@ -1,12 +1,52 @@
-use std::mem;
+use std::{io::ErrorKind, mem, rc::Rc};
 
-use mpris_server::{Property, Signal};
+use futures::executor::block_on;
+use log::info;
+use mpris_server::{LocalServer, Property, Signal, zbus};
+use tokio::select;
+use tokio_util::sync::CancellationToken;
 
-use crate::core::{AppCtrl, State, UampApp, log_err, mpris};
+use crate::core::{
+    AppCtrl, Job, JobMsg, State, UampApp, config, log_err,
+    mpris::{self, Mpris},
+};
 
 impl UampApp {
+    pub fn start_mpris(&mut self, ctrl: &mut AppCtrl) {
+        if self.jobs.is_running(Job::SYSTEM_PLAYER) {
+            return;
+        }
+
+        let e = LocalServer::new(config::APP_ID, Mpris::new(self.rt.clone()));
+        let mpris: Option<Rc<_>> =
+            log_err("Failed to start mpris player: ", block_on(e))
+                .map(|a| a.into());
+
+        self.jobs.system_player = if let Some(s) = mpris {
+            let cancel = CancellationToken::new();
+            let task = s.run();
+            let token = cancel.clone();
+            ctrl.task(async move {
+                select!(
+                    _ = task => unreachable!(),
+                    _ = cancel.cancelled() => JobMsg::SystemPlayer.into(),
+                )
+            });
+            self.jobs.run(Job::SYSTEM_PLAYER);
+            Some((s, token))
+        } else {
+            None
+        }
+    }
+
+    pub fn stop_mpris(&mut self) {
+        if let Some((_, cancel)) = self.jobs.system_player.take() {
+            cancel.cancel();
+        }
+    }
+
     pub fn mpris_routine(&mut self, ctrl: &mut AppCtrl) {
-        let Some(mpris) = self.mpris.as_ref().map(|(a, _)| a.clone()) else {
+        let Some((mpris, cancel)) = self.jobs.system_player.clone() else {
             return;
         };
 
@@ -22,13 +62,21 @@ impl UampApp {
         let seek = old.seeked.then(|| mpris::position(self));
 
         ctrl.spawn(async move {
+            let mut restart = false;
             if !changes.is_empty() {
                 let change = mpris.properties_changed(changes).await;
+                restart |= should_restart(&change);
                 log_err("Failed to send mpris update: ", change);
             }
             if let Some(position) = seek {
                 let seek = mpris.emit(Signal::Seeked { position }).await;
+                restart |= should_restart(&seek);
                 log_err("Failed to send mpris signal: ", seek);
+            }
+
+            if restart {
+                info!("Restarting MPRIS server.");
+                cancel.cancel();
             }
         });
     }
@@ -88,4 +136,8 @@ impl UampApp {
 
         properties
     }
+}
+
+fn should_restart(err: &zbus::Result<()>) -> bool {
+    matches!(err, Err(zbus::Error::InputOutput(e)) if e.kind() == ErrorKind::BrokenPipe)
 }

@@ -10,6 +10,7 @@
 - Fix `i nfo` and `i show` poluting stdin.
 - Properly wait for connection to be ready before sending messages over HTTP.
 - Empty query wasn't properly converted back to string.
+- Restart MPRIS server on broken pipe.
 
 ## v0.5.13
 ### New features
