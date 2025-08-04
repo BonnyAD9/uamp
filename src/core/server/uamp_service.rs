@@ -6,7 +6,7 @@ use futures::{
 };
 use http_body_util::StreamBody;
 use hyper::{
-    Method, Request, Response, Uri, Version,
+    Method, Request, Response, Uri,
     body::{Bytes, Frame, Incoming},
 };
 use pareg::FromArg;
