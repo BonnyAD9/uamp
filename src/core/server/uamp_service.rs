@@ -152,8 +152,14 @@ impl UampService {
         if path.is_empty() {
             path = "index.html";
         }
+        let path = Path::new(&path);
+        if path.components().any(|c| c.as_os_str() == "..") {
+            return Err(Error::http(
+                403,
+                "Relative `..` is disallowed.".into(),
+            ));
+        }
         let path = self.app_path.join(path);
-        // TODO: disallow .. in path
         file_response(path)
     }
 
