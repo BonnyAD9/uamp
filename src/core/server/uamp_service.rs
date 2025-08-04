@@ -213,7 +213,6 @@ fn err_response(err: Error) -> MyResponse {
 
     Response::builder()
         .status(code)
-        .version(Version::HTTP_2)
         .body(string_body(msg))
         .expect("Failed to generate error response. This shouldn't happen.")
 }
@@ -221,7 +220,6 @@ fn err_response(err: Error) -> MyResponse {
 fn string_response(s: impl Into<Cow<'static, str>>) -> MyResponse {
     Response::builder()
         .status(200)
-        .version(Version::HTTP_2)
         .header("Content-Type", "text/plain")
         .body(string_body(s))
         .expect("Failed to generate string response. This shouldn't happen.")
@@ -230,7 +228,6 @@ fn string_response(s: impl Into<Cow<'static, str>>) -> MyResponse {
 fn json_response(s: &impl Serialize) -> Result<MyResponse> {
     Ok(Response::builder()
         .status(200)
-        .version(Version::HTTP_2)
         .header("Content-Type", "application/json")
         .body(json_body(s)?)
         .expect("Failed to generate json response. This shouldn't happen."))

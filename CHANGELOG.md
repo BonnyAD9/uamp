@@ -11,6 +11,7 @@
 - Properly wait for connection to be ready before sending messages over HTTP.
 - Empty query wasn't properly converted back to string.
 - Restart MPRIS server on broken pipe.
+- Properly use HTTP1.1 instead of some accidental HTTP2 headers.
 
 ## v0.5.13
 ### New features
