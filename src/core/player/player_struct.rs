@@ -70,7 +70,9 @@ impl Player {
     ///   result in distorted audio). It is on square root scale.
     pub fn set_volume(&mut self, volume: f32) {
         self.volume_set(volume);
-        self.inner.set_volume(volume);
+        if !self.mute() {
+            self.inner.set_volume(volume);
+        }
     }
 
     /// Mute/Unmute.

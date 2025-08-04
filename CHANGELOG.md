@@ -12,6 +12,7 @@
 - Empty query wasn't properly converted back to string.
 - Restart MPRIS server on broken pipe.
 - Properly use HTTP1.1 instead of some accidental HTTP2 headers.
+- Dont unmute on volume change.
 - Partially fix: when playlist ends with no end action, it cycles its songs.
   Full fix requires new version of raplay which is not yet released.
 - Properly shutdown connections when server stops.
