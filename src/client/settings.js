@@ -27,12 +27,9 @@ function applyThemeColor(color) {
 }
 
 function applyFloatingBar(floating) {
-    console.log(floating);
     if (floating == true) {
-        console.log('floating');
         bar.classList.add('floating');
     } else {
-        console.log('not floating');
         bar.classList.remove('floating');
     }
 }

@@ -1,5 +1,140 @@
 const API_URL = 'http://localhost:8267/api';
 
+const songsElement = document.querySelector('#library .songs tbody');
+const playlistElement = document.querySelector('#playlist .songs tbody');
+const songTemplate = document.getElementById('song-template');
+
+const volumeSlider = document.getElementById('volumeSlider');
+const volumeValue = document.getElementById('volumeValue');
+volumeSlider.addEventListener('input', () => {
+    const value = volumeSlider.value;
+    volumeValue.textContent = value;
+    volumeSlider.style.background =
+        `linear-gradient(to right, var(--primary) ${value}%,` + `
+        var(--bg-lighter) ${value}%)`;
+    apiCtrl(`v=${value / 100}`);
+});
+
+class App {
+    constructor(eventData) {
+        this.library = eventData.library;
+        this.player = eventData.player;
+        this.position = eventData.position;
+    }
+
+    togglePlaying() {
+        const playing = !this.isPlaying();
+        this.player.state = playing ? 'Playing' : 'Paused';
+        this.#updatePlayBtn(playing);
+        apiCtrl('pp');
+    }
+
+    isPlaying() {
+        return this.player.state === 'Playing';
+    }
+
+    getPlaying() {
+        const playing = this.player.playlist.current;
+        if (playing === null) return null;
+
+        const current = this.player.playlist.songs[playing];
+        return this.library.songs[current];
+    }
+
+    playSong(index) {
+        console.log(index);
+    }
+
+    displaySongs() {
+        const playing = this.player.playlist.current;
+        const current = playing ? this.player.playlist.songs[playing] : null;
+
+        songsElement.innerHTML = '';
+        for (let i = 0; i < this.library.songs.length; i++) {
+            const song = this.library.songs[i];
+            if (song.deleted === true) continue;
+
+            const row = this.#getSongRow(song);
+            if (i === current)
+                row.classList.add('active');
+            songsElement.appendChild(row);
+        }
+    }
+
+    displayPlaylist() {
+        const playing = this.player.playlist.current;
+        playlistElement.innerHtml = '';
+        for (let i = 0; i < this.player.playlist.songs.length; i++) {
+            const song = this.library.songs[this.player.playlist.songs[i]];
+            if (song.deleted === true) continue;
+
+            const row = this.#getSongRow(song);
+            if (i === playing)
+                row.classList.add('active');
+            playlistElement.appendChild(row);
+        }
+    }
+
+    updateAll() {
+        this.#updateCurrent(this.getPlaying());
+        this.#updateVolume();
+        this.#updatePlayBtn(this.isPlaying());
+    }
+
+    #formatDuration(duration) {
+        const minutes = Math.floor(duration.secs / 60);
+        const seconds = duration.secs % 60;
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    #updatePlayBtn(playing) {
+        const icon = playing ? 'pause.svg' : 'play.svg';
+        document.getElementById('play').src = '../../assets/svg/' + icon;
+    }
+
+    #updateCurrent(song) {
+        const title = document.querySelector('.info .title h3');
+        if (song === null) {
+            title.textContent = 'Not Playing';
+            return;
+        }
+        title.textContent = song.title;
+        document.querySelector('.info .title h4').textContent = song.artist;
+    }
+
+    #updateVolume() {
+        const volume = this.player.volume * 100;
+        volumeSlider.value = volume;
+        volumeValue.textContent = volume;
+    }
+
+    #getSongRow(song) {
+        const cloned = songTemplate.content.cloneNode(true);
+        const row = cloned.querySelector('tr');
+        row.addEventListener('click', () => this.playSong(i));
+
+        row.querySelector('.title').textContent = song.title;
+        row.querySelector('.author').textContent = song.artist;
+        row.querySelector('.album').textContent = song.album;
+        row.querySelector('.year').textContent = song.year;
+        row.querySelector('.length').textContent =
+            this.#formatDuration(song.length);
+        row.querySelector('.genre').textContent = song.genre;
+
+        return row;
+    }
+}
+
+var app = null;
+
+const eventSource = new EventSource(`/api/sub`);
+eventSource.addEventListener('set-all', e => {
+    app = new App(JSON.parse(e.data));
+    app.displaySongs();
+    app.displayPlaylist();
+    app.updateAll();
+});
+
 const navs = document.querySelectorAll('nav p');
 const screens = document.querySelectorAll('.screen');
 
@@ -16,17 +151,6 @@ navs.forEach(item => {
             }
         }
     });
-});
-
-const volumeSlider = document.getElementById('volumeSlider');
-const volumeValue = document.getElementById('volumeValue');
-volumeSlider.addEventListener('input', () => {
-    const value = volumeSlider.value;
-    volumeValue.textContent = value;
-    volumeSlider.style.background =
-        `linear-gradient(to right, var(--primary) ${value}%,` + `
-        var(--bg-lighter) ${value}%)`;
-    apiCtrl(`v=${value / 100}`);
 });
 
 function apiCtrl(query) {
