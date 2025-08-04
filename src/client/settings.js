@@ -11,8 +11,9 @@ colorInput.addEventListener('input', () => {
 
 const floatingBarInput = document.getElementById('floatingBar');
 const bar = document.querySelector('section.bar');
-const floatingBar = getCookie('floatingBar') ?? true;
-floatingBarInput.checked = floatingBarInput;
+const floatingBarVal = getCookie('floatingBar') ?? 'true';
+const floatingBar = floatingBarVal === 'true';
+floatingBarInput.checked = floatingBar;
 applyFloatingBar(floatingBar);
 
 floatingBarInput.addEventListener('change', () => {
@@ -26,9 +27,12 @@ function applyThemeColor(color) {
 }
 
 function applyFloatingBar(floating) {
-    if (floating) {
+    console.log(floating);
+    if (floating == true) {
+        console.log('floating');
         bar.classList.add('floating');
     } else {
+        console.log('not floating');
         bar.classList.remove('floating');
     }
 }
