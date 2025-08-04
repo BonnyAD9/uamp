@@ -1,7 +1,7 @@
 use tokio::sync::broadcast;
 
 use crate::core::{
-    Error, Result, RtAndle,
+    RtAndle,
     server::{SubMsg, sub::SetAll},
 };
 
@@ -18,7 +18,7 @@ impl SseService {
         }
     }
 
-    pub async fn next(&mut self) -> String {
+    pub async fn next(&mut self) -> Option<String> {
         if let Some(init) = self.init.take() {
             Self::init(init).await
         } else {
@@ -26,39 +26,15 @@ impl SseService {
         }
     }
 
-    async fn init(rt: RtAndle) -> String {
-        guard_error(Self::init_inner(rt).await)
-    }
-
-    async fn init_inner(rt: RtAndle) -> Result<String> {
+    async fn init(rt: RtAndle) -> Option<String> {
         rt.request(|app, _| SubMsg::SetAll(SetAll::new(app)))
-            .await?
-            .event()
-    }
-
-    async fn next_inner(&mut self) -> String {
-        guard_error(self.next_res().await)
-    }
-
-    async fn next_res(&mut self) -> Result<String> {
-        self.rec
-            .recv()
             .await
-            .map_err(|_| {
-                Error::Unexpected(
-                    "Event stream has been closed by uamp.".into(),
-                )
-            })?
+            .ok()?
             .event()
+            .ok()
     }
-}
 
-fn guard_error(res: Result<String>) -> String {
-    match res {
-        Ok(m) => m,
-        Err(e) => format!(
-            "event: error\ndata: {}\n\n",
-            e.log().to_string().replace('\n', "\ndata: ")
-        ),
+    async fn next_inner(&mut self) -> Option<String> {
+        self.rec.recv().await.ok()?.event().ok()
     }
 }

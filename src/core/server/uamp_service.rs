@@ -141,7 +141,7 @@ impl UampService {
         _: Request<Incoming>,
     ) -> Result<MyResponse> {
         let Some(s) = self.brcs.upgrade() else {
-            return Err(Error::http(500, "No event source.".into()));
+            return Err(Error::http(204, "No event source.".into()));
         };
         let srv = SseService::new(s.subscribe(), self.rt.clone());
         Ok(sse_response(srv))
@@ -289,7 +289,7 @@ fn sse_response(s: SseService) -> MyResponse {
         .header("Connection", "keep-alive")
         .body(StreamBody::new(
             stream::unfold(s, |mut s| async move {
-                let data = Ok(Frame::data(s.next().await.into()));
+                let data = Ok(Frame::data(s.next().await?.into()));
                 Some((data, s))
             })
             .boxed(),
