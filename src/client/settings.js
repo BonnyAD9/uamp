@@ -12,7 +12,7 @@ colorInput.addEventListener('input', () => {
 const floatingBarInput = document.getElementById('floatingBar');
 const bar = document.querySelector('section.bar');
 const floatingBar = getCookie('floatingBar') ?? true;
-floatingBarInput.value = floatingBarInput;
+floatingBarInput.checked = floatingBarInput;
 applyFloatingBar(floatingBar);
 
 floatingBarInput.addEventListener('change', () => {
