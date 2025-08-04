@@ -2,7 +2,7 @@ use std::{
     borrow::Cow,
     convert::Infallible,
     fs::File,
-    io::{BufReader, Read},
+    io::{BufReader, ErrorKind, Read},
     path::{Path, PathBuf},
 };
 
@@ -73,7 +73,7 @@ impl UampService {
                 self.handle_app(v.strip_prefix("/app").unwrap()).await
             }
             (v, Some("/app" | "/app/")) => self.handle_app(v).await,
-            _ => Err(Error::http(404, "Unknown api endpoint.".to_string())),
+            _ => Err(Error::http(404, "Unknown endpoint.".to_string())),
         }
     }
 
@@ -252,6 +252,7 @@ fn err_response(err: Error) -> MyResponse {
         | Error::SerdeJson(_)
         | Error::ShellWords(_) => 400,
         Error::NotFound(_) => 404,
+        Error::Io(ref e) if e.inner().kind() == ErrorKind::NotFound => 404,
         Error::Http(_, c) => c,
         _ => 500,
     };
