@@ -1,10 +1,12 @@
 :root {
     --bg: #1b1b1b;
+    --bg-trans: #1b1b1b99;
     --bg-lighter: #303030;
     --bg-light: #252525;
+    --bg-light-trans: #25252599;
     --bg-dark: #151515;
-    --bg-trans: #25252599;
     --primary: #3acbaf;
+    /* --primary: #dddd55; */
     --fg: #eee;
     --fg-sec: #888888;
 }
@@ -32,25 +34,65 @@ body {
     height: 100vh;
 }
 
-.menu {
+section.menu {
     width: 200px;
     height: 100%;
     background-color: var(--bg-dark);
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 5px;
+    padding: 5px 10px;
     color: var(--fg);
 }
 
-.menu img {
+section.menu .logo {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+section.menu .logo h1 {
+    font-size: 26px;
+}
+
+section.menu .logo img {
     max-width: 50px;
     object-fit: contain;
 }
 
+section.menu nav {
+    margin-top: 15px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+section.menu nav p {
+    padding-left: 15px;
+    position: relative;
+    height: 25px;
+    padding-top: 1px;
+    font-size: 15px;
+}
+
+section.menu nav p.active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 4px;
+    background-color: var(--primary);
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 1;
+}
+
 .wrapper-songs {
     width: 100%;
-    padding: 5px;
+    padding: 0px 5px 5px 5px;
     overflow-y: auto;
 }
 
@@ -61,18 +103,42 @@ table.songs {
 }
 
 table.songs thead {
-    border-bottom: 2px solid #333;
-    background-color: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: var(--bg-trans);
+    backdrop-filter: blur(5px);
+    border-bottom: none;
+}
+
+table.songs thead::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--bg-light);
+    pointer-events: none;
+    z-index: 11;
 }
 
 table.songs th {
     color: #888;
     font-weight: normal;
     text-align: left;
+    text-transform: uppercase;
+    font-size: 11px;
+    padding-top: 5px;
+    padding-bottom: 3px;
 }
 
 table.songs tr:not(:first-child) {
     border-top: 1px solid var(--bg-light);
+}
+
+table.songs tr.active p {
+    color: var(--primary)
 }
 
 table.songs td {
@@ -88,23 +154,26 @@ table.songs td>p {
 table.songs td>span {
     color: var(--fg-sec);
     font-size: 11px;
-}
-
-table.songs td.active {
-    color: var(--primary);
+    padding-left: 3px;
 }
 
 section.bar {
     position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background-color: var(--bg-light-trans);
+    backdrop-filter: blur(5px);
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+section.bar.floating {
     bottom: 8px;
     left: 8px;
     width: calc(100% - 16px);
-    height: 60px;
-    background-color: var(--bg-trans);
-    backdrop-filter: blur(5px);
     border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
 section.bar>.bar-wrapper {
@@ -161,6 +230,7 @@ section.bar .info>.title h4 {
     font-size: 11px;
     font-weight: normal;
     color: #aaa;
+    padding-left: 3px;
 }
 
 section.bar .controls {

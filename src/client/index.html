@@ -10,10 +10,17 @@
 
 <body>
     <div class="wrapper">
-        <div class="menu">
-            <p>Library</p>
-            <p>Playlist</p>
-        </div>
+        <section class="menu">
+            <div class="logo">
+                <img src="../../assets/svg/icon.svg" alt="uamp logo">
+                <h1>Uamp</h1>
+            </div>
+
+            <nav>
+                <p class="active">Library</p>
+                <p>Playlist</p>
+            </nav>
+        </section>
         <div class="wrapper-songs">
             <table class="songs">
                 <thead>
@@ -36,7 +43,7 @@
                             <span>Alternative</span>
                         </td>
                     </tr>
-                    <tr>
+                    <tr class="active">
                         <td>
                             <p>Choker</p>
                             <span>Twenty One Pilots<span>
@@ -390,7 +397,7 @@
         </div>
     </div>
 
-    <section class="bar">
+    <section class="bar floating">
         <div class="bar-wrapper">
             <div class="slider">
                 <hr />
@@ -403,9 +410,9 @@
             </div>
 
             <div class="controls">
-                <img id="prev" src="../../assets/svg/previous.svg">
-                <img id="play" src="../../assets/svg/play.svg">
-                <img id="next" src="../../assets/svg/next.svg">
+                <img src="../../assets/svg/previous.svg" onclick="apiCtrl('ps')" id="prev">
+                <img src="../../assets/svg/play.svg" onclick="apiCtrl('pp')" id="play">
+                <img src="../../assets/svg/next.svg" onclick="apiCtrl('ns')" id="next">
             </div>
 
             <div class="volume">
@@ -418,5 +425,7 @@
         </div>
     </section>
 </body>
+
+<script src="app.js"></script>
 
 </html>
