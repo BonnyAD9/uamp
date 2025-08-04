@@ -164,6 +164,10 @@ table.songs tr.active p {
     color: var(--primary)
 }
 
+table.songs tr {
+    cursor: pointer;
+}
+
 table.songs td {
     padding: 5px 0;
     line-height: 17px;
