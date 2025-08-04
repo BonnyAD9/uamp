@@ -6,9 +6,7 @@ const volumeSlider = document.getElementById('volumeSlider');
 const volumeValue = document.getElementById('volumeValue');
 const volumeIcon = document.querySelector('.volume img');
 volumeSlider.addEventListener('input', () => {
-    const value = volumeSlider.value;
-    AppSingleton.get().updateVolume(value / 100);
-    apiCtrl(`v=${value / 100}`);
+    apiCtrl(`v=${volumeSlider.value / 100}`);
 });
 
 class App {
@@ -16,30 +14,6 @@ class App {
         this.library = eventData.library;
         this.player = eventData.player;
         this.position = eventData.position;
-
-        console.log(this.player.state);
-        console.log(this.isPlaying());
-    }
-
-    togglePlaying() {
-        apiCtrl('pp').then(res => {
-            if (res == 'Success!') {
-                console.log(this.isPlaying());
-                const playing = !this.isPlaying();
-                this.player.state = playing ? 'Playing' : 'Paused';
-                console.log(playing, this.player.state);
-                this.updatePlayBtn(playing);
-            }
-        });
-    }
-
-    toggleMute() {
-        apiCtrl('mute').then(res => {
-            if (res == 'Success!') {
-                this.player.mute = !this.player.mute;
-                this.updateVolume(this.player.volume);
-            }
-        });
     }
 
     isPlaying() {
@@ -74,6 +48,13 @@ class App {
         }
     }
 
+    updateSongs() {
+        const playing = this.player.playlist.current;
+        const current = playing ? this.player.playlist.songs[playing] : null;
+        const rows = document.querySelectorAll('#library .songs tbody tr');
+        this.highlightPlaying(current, rows)
+    }
+
     displayPlaylist() {
         const playing = this.player.playlist.current;
         playlistElement.innerHtml = '';
@@ -85,6 +66,21 @@ class App {
             if (i === playing)
                 row.classList.add('active');
             playlistElement.appendChild(row);
+        }
+    }
+
+    updatePlaylist() {
+        const playing = this.player.playlist.current;
+        const rows = document.querySelectorAll('#playlist .songs tbody tr');
+        this.highlightPlaying(playing, rows);
+    }
+
+    highlightPlaying(index, rows) {
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            row.classList.remove('active');
+            if (index === i)
+                row.classList.add('active');
         }
     }
 
@@ -101,7 +97,7 @@ class App {
     }
 
     updatePlayBtn(playing) {
-        const icon = playing ? 'play.svg' : 'pause.svg';
+        const icon = playing ? 'pause.svg' : 'play.svg';
         document.getElementById('play').src = '/assets/svg/' + icon;
     }
 
@@ -113,6 +109,9 @@ class App {
         }
         title.textContent = song.title;
         document.querySelector('.info .title h4').textContent = song.artist;
+
+        this.updateSongs();
+        this.updatePlaylist();
     }
 
     updateVolume(volume) {
