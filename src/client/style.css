@@ -190,6 +190,7 @@ section.bar {
     backdrop-filter: blur(5px);
     overflow: hidden;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    transition: .2s ease;
 }
 
 section.bar.floating {
@@ -307,10 +308,11 @@ section.bar .volume>.volume-slider hr {
     border-radius: 2px;
 }
 
-section#settings {
+section#settings>div {
     display: flex;
+    width: 100%;
     flex-direction: column;
-    gap: 5px;
+    gap: 10px;
     font-size: 15px;
 }
 
@@ -320,20 +322,20 @@ section#settings {
     align-items: center;
 }
 
-.switch {
+label.switch {
     position: relative;
     display: inline-block;
     width: 40px;
     height: 20px;
 }
 
-.switch input {
+label.switch input {
     opacity: 0;
     width: 0;
     height: 0;
 }
 
-.slider {
+label.switch>.slider {
     position: absolute;
     cursor: pointer;
     top: 0;
@@ -346,7 +348,7 @@ section#settings {
     transition: .4s;
 }
 
-.slider:before {
+label.switch>.slider:before {
     position: absolute;
     content: "";
     height: 14px;
