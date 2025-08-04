@@ -27,7 +27,7 @@ gen_struct! {
     pub Player {
         // Reference
         playlist: Playlist { pub, pub },
-        playlist_stack: Vec<Playlist> { pub, pri },
+        playlist_stack: Vec<Playlist> { pub, pub },
         ; // value
         volume: f32 { pub, pri },
         mute: bool { pub, pri },

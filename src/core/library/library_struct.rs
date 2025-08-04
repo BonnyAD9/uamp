@@ -56,6 +56,10 @@ impl Library {
         self.songs.clone()
     }
 
+    pub fn clone_tmp_songs(&mut self) -> AlcVec<Song> {
+        self.tmp_songs.clone()
+    }
+
     /// Change the library update state. Call this when you change some data in
     /// the library - it will eventually propagate the change.
     pub fn update(&mut self, up: LibraryUpdate) {

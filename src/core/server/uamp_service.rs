@@ -11,13 +11,14 @@ use hyper::{
 };
 use pareg::FromArg;
 use serde::Serialize;
+use tokio::sync::broadcast;
 use url::Url;
 
 use crate::core::{
     AnyControlMsg, Error, Msg, Result, RtAndle, UampApp, config,
     library::Song,
     query::Query,
-    server::{Info, RepMsg, ReqMsg},
+    server::{Info, RepMsg, ReqMsg, SubMsg, sse_service::SseService},
 };
 
 type MyBody = StreamBody<BoxStream<'static, Result<Frame<Bytes>>>>;
@@ -26,11 +27,12 @@ type MyResponse = Response<MyBody>;
 #[derive(Debug, Clone)]
 pub struct UampService {
     rt: RtAndle,
+    brcs: broadcast::WeakSender<SubMsg>,
 }
 
 impl UampService {
-    pub fn new(rt: RtAndle) -> Self {
-        Self { rt }
+    pub fn new(rt: RtAndle, brcs: broadcast::WeakSender<SubMsg>) -> Self {
+        Self { rt, brcs }
     }
 
     pub async fn serve(
@@ -54,6 +56,7 @@ impl UampService {
         match req.uri().path() {
             "/api/ctrl" => self.handle_ctrl_api(req).await,
             "/api/req" => self.handle_req_api(req).await,
+            "/api/sub" => self.handle_sub_api(req).await,
             _ => Err(Error::http(404, "Unknown api endpoint.".to_string())),
         }
     }
@@ -115,6 +118,17 @@ impl UampService {
         }
 
         json_response(&reply)
+    }
+
+    async fn handle_sub_api(
+        &self,
+        _: Request<Incoming>,
+    ) -> Result<MyResponse> {
+        let Some(s) = self.brcs.upgrade() else {
+            return Err(Error::http(500, "No event source.".into()));
+        };
+        let srv = SseService::new(s.subscribe(), self.rt.clone());
+        Ok(sse_response(srv))
     }
 
     async fn make_req(&self, k: &str, v: &str) -> Result<RepMsg> {
@@ -206,6 +220,7 @@ fn err_response(err: Error) -> MyResponse {
         | Error::SerdeJson(_)
         | Error::ShellWords(_) => 400,
         Error::NotFound(_) => 404,
+        Error::Http(_, c) => c,
         _ => 500,
     };
 
@@ -231,6 +246,22 @@ fn json_response(s: &impl Serialize) -> Result<MyResponse> {
         .header("Content-Type", "application/json")
         .body(json_body(s)?)
         .expect("Failed to generate json response. This shouldn't happen."))
+}
+
+fn sse_response(s: SseService) -> MyResponse {
+    Response::builder()
+        .status(200)
+        .header("Content-Type", "text/event-stream")
+        .header("Cache-Control", "no-cache")
+        .header("Connection", "keep-alive")
+        .body(StreamBody::new(
+            stream::unfold(s, |mut s| async move {
+                let data = Ok(Frame::data(s.next().await.into()));
+                Some((data, s))
+            })
+            .boxed(),
+        ))
+        .expect("Failet to generate sse response. This shouldn't happen.")
 }
 
 fn string_body(s: impl Into<Cow<'static, str>>) -> MyBody {

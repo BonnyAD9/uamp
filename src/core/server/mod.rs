@@ -2,12 +2,15 @@ mod info;
 mod rep_msg;
 mod req_msg;
 mod snd_msg;
+mod sse_service;
+mod sub;
+mod sub_msg;
 mod uamp_service;
 
 use futures::executor::block_on;
 use hyper::{server::conn::http1, service::service_fn};
 use hyper_util::rt::TokioIo;
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, sync::broadcast};
 use tokio_util::sync::CancellationToken;
 
 use crate::core::{
@@ -17,7 +20,11 @@ use crate::core::{
 
 pub mod client;
 
-pub use self::{info::*, rep_msg::*, req_msg::*, snd_msg::*, uamp_service::*};
+pub use self::{
+    info::*, rep_msg::*, req_msg::*, snd_msg::*, sub_msg::*, uamp_service::*,
+};
+
+const MAX_BROADCAST_CAPACITY: usize = 16;
 
 struct Server {
     rt: RtHandle,
@@ -35,11 +42,13 @@ impl UampApp {
         let cancel = CancellationToken::new();
         let server = Server::new(&self.config, self.rt.clone())?;
         let token = cancel.clone();
-        ctrl.task(
-            async move { Msg::Job(JobMsg::Server(server.run(token).await)) },
-        );
+        let (sub_broadcast, _) = broadcast::channel(MAX_BROADCAST_CAPACITY);
+        let brcs = sub_broadcast.clone().downgrade();
+        ctrl.task(async move {
+            Msg::Job(JobMsg::Server(server.run(brcs, token).await))
+        });
         self.jobs.run(Job::SERVER);
-        self.jobs.server = Some(cancel);
+        self.jobs.server = Some((sub_broadcast, cancel));
 
         Ok(())
     }
@@ -55,7 +64,11 @@ impl Server {
         Ok(Self { rt, listener })
     }
 
-    async fn run(&self, stop: CancellationToken) -> Result<()> {
+    async fn run(
+        &self,
+        brcs: broadcast::WeakSender<SubMsg>,
+        stop: CancellationToken,
+    ) -> Result<()> {
         loop {
             let (conn, _) = tokio::select!(
                 _ = stop.cancelled() => break,
@@ -67,7 +80,7 @@ impl Server {
                 }
             );
 
-            let service = UampService::new(self.rt.andle());
+            let service = UampService::new(self.rt.andle(), brcs.clone());
             self.rt.spawn(http1::Builder::new().serve_connection(
                 TokioIo::new(conn),
                 service_fn(move |a| {

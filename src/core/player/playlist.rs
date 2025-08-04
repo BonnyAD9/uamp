@@ -210,6 +210,10 @@ impl Playlist {
         self.play_pos.take()
     }
 
+    pub fn get_play_pos(&self) -> Option<Duration> {
+        self.play_pos
+    }
+
     /// Removes the current song from the playlist, moves the position to the
     /// next song and returns the removed song id.
     pub(super) fn pop_current(&mut self) -> Option<SongId> {

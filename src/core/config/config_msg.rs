@@ -119,7 +119,7 @@ impl UampApp {
 
     pub fn stop_server(&mut self) {
         if self.jobs.is_running(Job::SERVER)
-            && let Some(stop) = self.jobs.server.take()
+            && let Some((_, stop)) = self.jobs.server.take()
         {
             stop.cancel();
         }
