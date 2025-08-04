@@ -8,7 +8,6 @@
 - Grououping by albums and artists
 
 # known issues
-- `uamp i sp` not working.
 - `ERROR [uamp::core::err] Failed to send mpris update: I/O error: Broken pipe (os error 32)`
   `ERROR [uamp::core::err] Failed to send mpris signal: I/O error: Broken pipe (os error 32)`
 - mpris seek not properly notified.

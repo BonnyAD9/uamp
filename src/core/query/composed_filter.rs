@@ -63,10 +63,26 @@ impl Display for ComposedFilter {
                 f.write_str(&ft.to_string().replace('/', "//"))
             }
             ComposedFilter::And(a) => {
-                write!(f, "{{{}}}", a.iter().map(|a| a.to_string()).join("."))
+                if a.is_empty() {
+                    write!(f, "{}", Filter::any())
+                } else {
+                    write!(
+                        f,
+                        "{{{}}}",
+                        a.iter().map(|a| a.to_string()).join(".")
+                    )
+                }
             }
             ComposedFilter::Or(o) => {
-                write!(f, "{{{}}}", o.iter().map(|a| a.to_string()).join("+"))
+                if o.is_empty() {
+                    write!(f, "{}", Filter::none())
+                } else {
+                    write!(
+                        f,
+                        "{{{}}}",
+                        o.iter().map(|a| a.to_string()).join("+")
+                    )
+                }
             }
         }
     }
