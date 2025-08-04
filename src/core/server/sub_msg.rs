@@ -38,7 +38,7 @@ pub enum SubMsg {
 impl SubMsg {
     pub fn event(&self) -> Result<String> {
         match self {
-            Self::SetAll(a) => make_event("set_all", a),
+            Self::SetAll(a) => make_event("set-all", a),
             Self::SetPlaylist(a) => make_event("set-playlist", a),
             Self::Playback(a) => make_event("playback", a),
             Self::PlaylistJump(a) => make_event("playlist-jump", a),
