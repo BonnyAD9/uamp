@@ -63,6 +63,7 @@ impl UampApp {
                 self.player.hard_pause();
                 self.hard_pause_at = None;
                 self.state.seeked = true;
+                self.client_update_seek();
             }
         }
     }

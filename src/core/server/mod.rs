@@ -20,7 +20,7 @@ use crate::core::{
     config::Config,
     library::SongId,
     log_err,
-    server::sub::{PlayTmp, SetPlaylist},
+    server::sub::{PlayTmp, SetAll, SetPlaylist},
 };
 
 pub mod client;
@@ -89,6 +89,13 @@ impl UampApp {
                 id,
                 &mut self.player,
             )));
+        }
+    }
+
+    pub fn client_update_set_all(&mut self) {
+        let msg = SetAll::new(self);
+        if let Some((ref snd, _)) = self.jobs.server {
+            _ = snd.send(SubMsg::SetAll(msg));
         }
     }
 }
