@@ -64,26 +64,15 @@ impl UampService {
     }
 
     async fn serve_get(&self, req: Request<Incoming>) -> Result<MyResponse> {
-        let headers = req.headers();
-        let path = if let Some(re) = headers.get("Referer") {
-            join_paths(
-                Url::parse(re.to_str().map_err(|_| {
-                    Error::http(400, "Invalid referer encoding.".into())
-                })?)?
-                .path(),
-                req.uri().path(),
-            )
-        } else {
-            req.uri().path().to_string()
-        };
-        dbg!(&path);
-        match path.as_str() {
-            "/api/ctrl" => self.handle_ctrl_api(req).await,
-            "/api/req" => self.handle_req_api(req).await,
-            "/api/sub" => self.handle_sub_api(req).await,
-            v if v.starts_with("/app") => {
+        let referer = get_referrer_path(&req);
+        match (req.uri().path(), referer.as_deref()) {
+            ("/api/ctrl", _) => self.handle_ctrl_api(req).await,
+            ("/api/req", _) => self.handle_req_api(req).await,
+            ("/api/sub", _) => self.handle_sub_api(req).await,
+            (v, _) if v.starts_with("/app") => {
                 self.handle_app(v.strip_prefix("/app").unwrap()).await
             }
+            (v, Some("/app" | "/app/")) => self.handle_app(v).await,
             _ => Err(Error::http(404, "Unknown api endpoint.".to_string())),
         }
     }
@@ -165,7 +154,6 @@ impl UampService {
         }
         let path = self.app_path.join(path);
         // TODO: disallow .. in path
-        dbg!(&path);
         file_response(path)
     }
 
@@ -343,12 +331,8 @@ fn uri_to_url(uri: &Uri) -> Result<Url> {
     )?)
 }
 
-fn join_paths(a: impl AsRef<str>, b: impl AsRef<str>) -> String {
-    let a = a.as_ref();
-    let b = b.as_ref();
-    match (a.ends_with('/'), b.starts_with('/')) {
-        (true, true) => a.to_string() + &b[1..],
-        (false, false) => a.to_string() + "/" + b,
-        _ => a.to_string() + b,
-    }
+fn get_referrer_path(req: &Request<Incoming>) -> Option<String> {
+    let r = req.headers().get("Referer")?.to_str().ok()?;
+    let url = Url::parse(r).ok()?;
+    Some(url.path().to_string())
 }
