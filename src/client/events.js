@@ -22,9 +22,9 @@ eventSource.addEventListener('set-all', e => {
 });
 
 eventSource.addEventListener('set-playlist', e => {
-    setPlaylist(AppSingleton.get(), JSON.parse(e.data));
-    app.displayPlaylist();
-    app.updateSongs();
+    const app = AppSingleton.get();
+    setPlaylist(app, JSON.parse(e.data));
+    playlistChanged(app);
 });
 
 eventSource.addEventListener('playback', e => {
@@ -66,10 +66,9 @@ eventSource.addEventListener('pop-playlist', e => {
     popPlaylist(app);
     app.player.playlist.current = data.position;
     app.timestamp = data.timestamp;
-    setPlayback(data.playback);
+    setPlayback(app, data.playback);
 
-    app.displayPlaylist();
-    app.updateSongs();
+    playlistChanged(app);
 });
 
 eventSource.addEventListener('pop-set-playlist', e => {
@@ -80,9 +79,8 @@ eventSource.addEventListener('pop-set-playlist', e => {
         data.pop_cnt = app.player.playlist_stack.length;
     for (let i = 0; i < data.pop_cnt && popPlaylist(app); i++) { }
 
-    setPlaylist(app, JSON.parse(e.data));
-    app.displayPlaylist();
-    app.updateSongs();
+    setPlaylist(app, data.playlist);
+    playlistChanged(app);
 });
 
 eventSource.addEventListener('set-playlist-add-policy', e => {
@@ -96,9 +94,9 @@ eventSource.addEventListener('set-playlist-end-action', e => {
 });
 
 eventSource.addEventListener('push-playlist', e => {
-    pushPlaylist(AppSingleton.get(), JSON.parse(e.data));
-    app.displayPlaylist();
-    app.updateSongs();
+    const app = AppSingleton.get();
+    pushPlaylist(app, JSON.parse(e.data));
+    playlistChanged(app);
 });
 
 eventSource.addEventListener('push-playlist-with-cur', e => {
@@ -106,13 +104,12 @@ eventSource.addEventListener('push-playlist-with-cur', e => {
     const data = JSON.parse(e.data);
 
     const current = app.player.playlist.current;
-    if (current) {
+    if (current !== null) {
         app.player.playlist.songs.splice(current, 1);
     }
 
     pushPlaylist(app, data);
     app.displayPlaylist();
-    app.updateSongs();
 });
 
 eventSource.addEventListener('queue', e => {
@@ -124,10 +121,11 @@ eventSource.addEventListener('queue', e => {
 eventSource.addEventListener('play-next', e => {
     const app = AppSingleton.get();
 
+    console.log('play-next');
     const current = app.player.playlist.current;
-    if (!current) return;
+    if (current === null) return;
 
-    app.player.playlist.songs.splice(current, 0, ...JSON.parse(e.data));
+    app.player.playlist.songs.splice(current + 1, 0, ...JSON.parse(e.data));
     app.displayPlaylist();
 });
 
@@ -157,11 +155,17 @@ function pushPlaylist(app, data) {
     app.player.playlist_stack.unshift(app.player.playlist);
     app.player.playlist = data.playlist;
     app.timestamp = data.timestamp;
-    setPlayback(data.playback);
+    setPlayback(app, data.playback);
 }
 
 function popPlaylist(app) {
     if (app.player.playlist_stack.length == 0) return false;
     app.player.playlist = app.player.playlist_stack.shift();
     return true;
+}
+
+function playlistChanged(app) {
+    app.displayPlaylist();
+    app.updateSongs();
+    app.updateCurrent(app.getPlaying());
 }
