@@ -74,8 +74,12 @@ eventSource.addEventListener('pop-playlist', e => {
 
 eventSource.addEventListener('pop-set-playlist', e => {
     const app = AppSingleton.get();
+    const data = JSON.parse(e.data);
 
-    popPlaylist(app);
+    if (data.pop_cnt == 0)
+        data.pop_cnt = app.player.playlist_stack.length;
+    for (let i = 0; i < data.pop_cnt && popPlaylist(app); i++) { }
+
     setPlaylist(app, JSON.parse(e.data));
     app.displayPlaylist();
     app.updateSongs();
@@ -133,6 +137,10 @@ eventSource.addEventListener('reorder-playlist-stack', e => { });
 
 eventSource.addEventListener('play-tmp', e => { });
 
+eventSource.addEventListener('new-server', _ => {
+    console.log('You should use correct server!');
+});
+
 function setPlayback(app, playback) {
     app.player.state = playback;
     app.handleSongProgress();
@@ -153,6 +161,7 @@ function pushPlaylist(app, data) {
 }
 
 function popPlaylist(app) {
-    if (app.player.playlist_stack.length == 0) return;
+    if (app.player.playlist_stack.length == 0) return false;
     app.player.playlist = app.player.playlist_stack.shift();
+    return true;
 }
