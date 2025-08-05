@@ -69,6 +69,7 @@ impl UampService {
             ("/api/ctrl", _) => self.handle_ctrl_api(req).await,
             ("/api/req", _) => self.handle_req_api(req).await,
             ("/api/sub", _) => self.handle_sub_api(req).await,
+            ("/api/ping", _) => Ok(string_response("pong")),
             (v, _) if v.starts_with("/app/") || v == "/app" => {
                 self.handle_app(v.strip_prefix("/app").unwrap()).await
             }
