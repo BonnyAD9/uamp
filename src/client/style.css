@@ -5,6 +5,7 @@
     --bg-light: #252525;
     --bg-light-trans: #25252599;
     --bg-dark: #151515;
+    --bg-dark-trans: #15151599;
     --primary: #3acbaf;
     /* --primary: #dddd55; */
     --fg: #eee;
@@ -112,6 +113,7 @@ section.screen {
     padding: 0px 5px 70px 5px;
     box-sizing: border-box;
     overflow-y: auto;
+    position: relative;
 }
 
 @-moz-document url-prefix() {
@@ -460,5 +462,65 @@ input:checked+.slider:before {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: block;
+}
+
+section.screen#playlist {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.playlist-wrapper {
+    width: 100%;
+    padding-left: 5px;
+    padding-right: 5px;
+    display: block;
+}
+
+section.screen#playlist .songs thead {
+    top: 30px;
+}
+
+.tabs {
+    height: 30px;
+    display: flex;
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    background-color: var(--bg-dark-trans);
+    backdrop-filter: blur(5px);
+}
+
+.tabs>.tab {
+    appearance: none;
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    border-bottom: 1px solid var(--primary);
+    background-color: transparent;
+    color: var(--fg);
+    padding: 5px 10px;
+    margin-top: 3px;
+}
+
+.tabs>.tab.active {
+    background-color: var(--bg);
+    border: 1px solid var(--primary);
+    border-bottom: none;
+    border-radius: 5px 5px 0 0;
+}
+
+.tabs>.filler {
+    flex-grow: 1;
+    border-bottom: 1px solid var(--primary);
+}
+
+.playlist-stack {
+    display: none;
+}
+
+.playlist-stack.active {
     display: block;
 }

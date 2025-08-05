@@ -151,7 +151,7 @@ function setPlaylist(app, data) {
 }
 
 function pushPlaylist(app, data) {
-    app.player.playlist_stack.unshift(app.player.playlist);
+    app.player.playlist_stack.push(app.player.playlist);
     app.player.playlist = data.playlist;
     setTimestamp(app, data.timestamp);
     setPlayback(app, data.playback);
@@ -159,7 +159,7 @@ function pushPlaylist(app, data) {
 
 function popPlaylist(app) {
     if (app.player.playlist_stack.length == 0) return false;
-    app.player.playlist = app.player.playlist_stack.shift();
+    app.player.playlist = app.player.playlist_stack.pop();
     return true;
 }
 
