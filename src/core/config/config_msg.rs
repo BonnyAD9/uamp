@@ -1,6 +1,9 @@
 use std::time::Instant;
 
-use crate::core::{Alias, AppCtrl, Error, Job, Msg, Result, UampApp};
+use crate::core::{
+    Alias, AppCtrl, Error, Job, Msg, Result, UampApp,
+    server::{SubMsg, sub::NewServer},
+};
 
 use super::Config;
 
@@ -104,6 +107,10 @@ impl UampApp {
 impl UampApp {
     fn reload_server(&mut self, ctrl: &mut AppCtrl) -> Result<()> {
         if self.jobs.is_running(Job::SERVER) {
+            self.client_update(SubMsg::NewServer(NewServer::new(
+                self.config.port(),
+                self.config.server_address().clone().into(),
+            )));
             self.stop_server();
         } else if self.config.should_start_server() {
             self.start_server(ctrl)?;

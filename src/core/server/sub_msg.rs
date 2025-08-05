@@ -8,7 +8,8 @@ use crate::core::{
     library::SongId,
     player::{AddPolicy, Playback},
     server::sub::{
-        PlayTmp, PlaylistJump, ReorderPlaylistStack, SetAll, SetPlaylist,
+        NewServer, PlayTmp, PlaylistJump, PopSetPlaylist,
+        ReorderPlaylistStack, SetAll, SetPlaylist,
     },
 };
 
@@ -33,7 +34,7 @@ pub enum SubMsg {
     // Playlist has been removed from top of the stack.
     PopPlaylist(PlaylistJump),
     // Combination of PopPlaylist and SetPlaylist
-    PopSetPlaylist(SetPlaylist),
+    PopSetPlaylist(PopSetPlaylist),
     // Sets the playlis add policy of the current playlist
     SetPlaylistAddPolicy(AddPolicy),
     // Sets the playlist end action
@@ -56,6 +57,9 @@ pub enum SubMsg {
     // Play temporary song. The new song is added with temporary id as new
     // playlist on top of the stack.
     PlayTmp(PlayTmp),
+    // New uamp server with different address/port will start. You should
+    // reconnect to it. It may not be available immidietely.
+    NewServer(NewServer),
 }
 
 impl SubMsg {
@@ -88,6 +92,7 @@ impl SubMsg {
                 make_event("reorder-playlist-stack", d)
             }
             Self::PlayTmp(d) => make_event("play-tmp", d),
+            Self::NewServer(d) => make_event("new-server", d),
         }
     }
 }

@@ -17,7 +17,10 @@ use crate::{
         library::LoadOpts,
         player::AddPolicy,
         query::SongOrder,
-        server::{SubMsg, sub::PlaylistJump},
+        server::{
+            SubMsg,
+            sub::{PlaylistJump, PopSetPlaylist},
+        },
     },
     ext::{Wrap, duration_to_string},
 };
@@ -214,7 +217,9 @@ impl UampApp {
             }
             ControlMsg::Flatten(cnt) => {
                 self.player.flatten(cnt);
-                self.client_update_set_playlist(SubMsg::PopSetPlaylist);
+                self.client_update_set_playlist(|pl| {
+                    SubMsg::PopSetPlaylist(PopSetPlaylist::new(cnt, pl))
+                });
             }
             ControlMsg::SetPlaylistAddPolicy(policy) => {
                 self.player.playlist_mut().add_policy = policy;
