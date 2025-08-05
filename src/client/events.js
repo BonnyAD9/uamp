@@ -37,7 +37,7 @@ eventSource.addEventListener('playlist-jump', e => {
 
     setPlayback(app, jump.playback);
     app.player.playlist.current = jump.position;
-    app.position = jump.timestamp;
+    setTimestamp(app, jump.timestamp);
 
     app.updateCurrent(app.getPlaying());
 });
@@ -65,7 +65,7 @@ eventSource.addEventListener('pop-playlist', e => {
 
     popPlaylist(app);
     app.player.playlist.current = data.position;
-    app.timestamp = data.timestamp;
+    setTimestamp(app, data.timestamp);
     setPlayback(app, data.playback);
 
     playlistChanged(app);
@@ -147,13 +147,13 @@ function setPlayback(app, playback) {
 function setPlaylist(app, data) {
     setPlayback(app, data.playback);
     app.player.playlist = data.playlist;
-    app.position = data.timestamp;
+    setTimestamp(app, data.timestamp);
 }
 
 function pushPlaylist(app, data) {
     app.player.playlist_stack.unshift(app.player.playlist);
     app.player.playlist = data.playlist;
-    app.timestamp = data.timestamp;
+    setTimestamp(app, data.timestamp);
     setPlayback(app, data.playback);
 }
 
@@ -167,4 +167,12 @@ function playlistChanged(app) {
     app.displayPlaylist();
     app.updateSongs();
     app.updateCurrent(app.getPlaying());
+}
+
+function setTimestamp(app, timestamp) {
+    app.position = timestamp;
+    if (timestamp === null) return;
+
+    app.getPlaying().length = timestamp.total;
+    app.displayProgress(0);
 }
