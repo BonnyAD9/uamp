@@ -9,11 +9,16 @@ volumeSlider.addEventListener('input', () => {
     apiCtrl(`v=${volumeSlider.value / 100}`);
 });
 
+const slider = document.querySelector('.bar .slider hr');
+
 class App {
     constructor(eventData) {
         this.library = eventData.library;
         this.player = eventData.player;
         this.position = eventData.position;
+
+        this.lastUpdate = performance.now();
+        this.rafId = null;
     }
 
     isPlaying() {
@@ -88,6 +93,7 @@ class App {
         this.updateCurrent(this.getPlaying());
         this.updateVolume(this.player.volume);
         this.updatePlayBtn(this.isPlaying());
+        this.handleStateChange();
     }
 
     formatDuration(duration) {
@@ -139,6 +145,43 @@ class App {
         row.querySelector('.genre').textContent = song.genre;
 
         return row;
+    }
+
+    handleSongProgress() {
+        if (this.isPlaying()) {
+            this.lastUpdate = performance.now();
+            this.stopProgress();
+            this.rafId = requestAnimationFrame(() => this.updateProgressBar());
+        } else if (this.radId !== null) {
+            cancelAnimationFrame(this.rafId);
+            this.rafId = null;
+        }
+    }
+
+    updateProgressBar() {
+        if (!this.isPlaying()) return;
+
+        const now = performance.now();
+        const delta = (now - this.lastUpdate) / 1000;
+        this.lastUpdate = now;
+
+        let current = this.getDurationSecs(this.position.current) + delta;
+        const total = this.getDurationSecs(this.getPlaying().length);;
+
+        if (current > total)
+            current = total;
+
+        const percent = (current / total) * 100;
+        slider.style.width = `${percent}%`;
+
+        this.position.current.secs = Math.floor(current);
+        this.position.current.nanos = Math.floor((current % 1) * 1_000_000_000);
+
+        this.rafId = requestAnimationFrame(() => this.updateProgressBar());
+    }
+
+    getDurationSecs(duration) {
+        return duration.secs + duration.nanos / 1_000_000_000;
     }
 }
 
