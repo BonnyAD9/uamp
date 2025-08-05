@@ -150,6 +150,8 @@ class App {
         row.querySelector('.length').textContent =
             this.formatDuration(song.length);
         row.querySelector('.genre').textContent = song.genre;
+        row.querySelector('.track').textContent = song.track;
+        row.querySelector('.disc').textContent = song.disc;
 
         return row;
     }

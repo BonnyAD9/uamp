@@ -9,6 +9,7 @@
     /* --primary: #dddd55; */
     --fg: #eee;
     --fg-sec: #888888;
+    --fg-sec2: #666666;
 }
 
 * {
@@ -104,16 +105,38 @@ section.menu nav .spacer {
     flex-grow: 1;
 }
 
-.wrapper-songs {
+section.screen {
+    display: none;
     width: 100%;
-    padding: 0px 5px 5px 5px;
+    height: 100vh;
+    padding: 0px 5px 70px 5px;
+    box-sizing: border-box;
     overflow-y: auto;
 }
 
-section.screen {
-    display: none;
-    margin-bottom: 65px;
-    width: 100%;
+@-moz-document url-prefix() {
+    section.screen {
+        scrollbar-width: thin;
+        scrollbar-color: var(--fg-sec) transparent;
+    }
+}
+
+section.screen::-webkit-scrollbar {
+    width: 4px;
+}
+
+section.screen::-webkit-scrollbar-track {
+    margin-bottom: 70px;
+}
+
+section.screen::-webkit-scrollbar-thumb {
+    background-color: var(--fg-sec);
+    transition: .3s ease;
+    border-radius: 2px;
+}
+
+section.screen::-webkit-scrollbar-thumb:hover {
+    background-color: var(--fg-sec2);
 }
 
 section.screen.active {
@@ -124,6 +147,22 @@ table.songs {
     border-collapse: collapse;
     width: 100%;
     table-layout: fixed;
+}
+
+table.songs col.col-ta {
+    width: 40%;
+}
+
+table.songs col.col-ay {
+    width: 35%;
+}
+
+table.songs col.col-lg {
+    width: 20%;
+}
+
+table.songs col.col-td {
+    width: 5%;
 }
 
 table.songs thead {
@@ -171,7 +210,6 @@ table.songs tr {
 
 table.songs td {
     padding: 5px 0;
-    line-height: 17px;
 }
 
 table.songs td>p {
@@ -268,6 +306,10 @@ section.bar .controls {
     gap: 20px;
 }
 
+section.bar .control {
+    cursor: pointer;
+}
+
 section.bar .controls img {
     width: 20px;
     height: 20px;
@@ -307,13 +349,14 @@ section.bar .volume>.volume-slider {
 }
 
 section.bar .volume>input[type="range"] {
-    -webkit-appearance: none;
-    appearance: none;
     width: 90px;
     height: 4px;
     background: transparent;
     cursor: pointer;
     border-radius: 2px;
+    border: none;
+    outline: none;
+    accent-color: var(--primary);
 }
 
 input[type="range"]::-webkit-slider-thumb {
@@ -324,6 +367,7 @@ input[type="range"]::-webkit-slider-thumb {
     background: transparent;
     box-shadow: none;
     border: none;
+    visibility: hidden;
 }
 
 input[type="range"]::-moz-range-track {

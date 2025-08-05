@@ -121,7 +121,6 @@ eventSource.addEventListener('queue', e => {
 eventSource.addEventListener('play-next', e => {
     const app = AppSingleton.get();
 
-    console.log('play-next');
     const current = app.player.playlist.current;
     if (current === null) return;
 
