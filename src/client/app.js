@@ -93,7 +93,7 @@ class App {
         this.updateCurrent(this.getPlaying());
         this.updateVolume(this.player.volume);
         this.updatePlayBtn(this.isPlaying());
-        this.handleStateChange();
+        this.displayProgress(0);
     }
 
     formatDuration(duration) {
@@ -152,7 +152,13 @@ class App {
             this.lastUpdate = performance.now();
             this.stopProgress();
             this.rafId = requestAnimationFrame(() => this.updateProgressBar());
-        } else if (this.radId !== null) {
+        } else {
+            this.stopProgress();
+        }
+    }
+
+    stopProgress() {
+        if (this.radId !== null) {
             cancelAnimationFrame(this.rafId);
             this.rafId = null;
         }
@@ -165,8 +171,13 @@ class App {
         const delta = (now - this.lastUpdate) / 1000;
         this.lastUpdate = now;
 
+        this.displayProgress(delta);
+        this.rafId = requestAnimationFrame(() => this.updateProgressBar());
+    }
+
+    displayProgress(delta) {
         let current = this.getDurationSecs(this.position.current) + delta;
-        const total = this.getDurationSecs(this.getPlaying().length);;
+        const total = this.getDurationSecs(this.getPlaying().length);
 
         if (current > total)
             current = total;
@@ -176,8 +187,6 @@ class App {
 
         this.position.current.secs = Math.floor(current);
         this.position.current.nanos = Math.floor((current % 1) * 1_000_000_000);
-
-        this.rafId = requestAnimationFrame(() => this.updateProgressBar());
     }
 
     getDurationSecs(duration) {

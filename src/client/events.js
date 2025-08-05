@@ -28,7 +28,7 @@ eventSource.addEventListener('set-playlist', e => {
     setPlayback(app, data.playback);
     app.player.playlist = data.playlist;
     app.position = data.timestamp;
-    
+
     app.updatePlaylist();
 });
 
@@ -85,6 +85,6 @@ eventSource.addEventListener('set-playlist-add-policy', e => {
 
 function setPlayback(app, playback) {
     app.player.state = playback;
-    app.handleStateChange();
+    app.handleSongProgress();
     app.updatePlayBtn(app.isPlaying());
 }
