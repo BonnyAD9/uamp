@@ -30,7 +30,9 @@ impl UampApp {
                     Playlist::new(songs, index),
                     true,
                 );
-                self.client_update_set_playlist(SubMsg::SetPlaylist);
+                self.client_update_set_playlist(|p| {
+                    SubMsg::SetPlaylist(p.into())
+                });
             }
         }
 

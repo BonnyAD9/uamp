@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use raplay::Timestamp;
 use serde::Serialize;
 
@@ -11,7 +9,7 @@ use crate::core::{
 
 #[derive(Debug, Clone, Serialize)]
 pub struct PlayTmp {
-    song: Arc<Song>,
+    song: Song,
     tmp_id: SongId,
     playlist: Playlist,
     playback: Playback,
@@ -19,7 +17,7 @@ pub struct PlayTmp {
 }
 
 impl PlayTmp {
-    pub fn new(song: Arc<Song>, id: SongId, player: &mut Player) -> Self {
+    pub fn new(song: Song, id: SongId, player: &mut Player) -> Self {
         Self {
             song,
             tmp_id: id,

@@ -63,7 +63,7 @@ impl UampApp {
             DataControlMsg::Alias(name) => return self.invoke_alias(&name),
             DataControlMsg::SetPlaylistEndAction(act) => {
                 self.player.playlist_mut().on_end = act.clone();
-                self.client_update(SubMsg::SetPlaylistEndAction(act));
+                self.client_update(SubMsg::SetPlaylistEndAction(act.into()));
             }
             DataControlMsg::SetPlaylist(q) => {
                 let songs = q.get_ids(
@@ -76,7 +76,9 @@ impl UampApp {
                     songs.into(),
                     false,
                 );
-                self.client_update_set_playlist(SubMsg::SetPlaylist);
+                self.client_update_set_playlist(|p| {
+                    SubMsg::SetPlaylist(p.into())
+                });
             }
             DataControlMsg::PushPlaylist(q) => {
                 let songs = q.get_ids(
@@ -89,7 +91,9 @@ impl UampApp {
                     songs.into(),
                     false,
                 );
-                self.client_update_set_playlist(SubMsg::PushPlaylist);
+                self.client_update_set_playlist(|p| {
+                    SubMsg::PushPlaylist(p.into())
+                });
             }
             DataControlMsg::PushPlaylistAndCur(q) => {
                 let songs = q.get_ids(
@@ -98,7 +102,9 @@ impl UampApp {
                     &self.player,
                 )?;
                 self.player.push_with_cur(songs.into());
-                self.client_update_set_playlist(SubMsg::PushPlaylistWithCur);
+                self.client_update_set_playlist(|p| {
+                    SubMsg::PushPlaylistWithCur(p.into())
+                });
             }
             DataControlMsg::Queue(q) => {
                 let songs = q.get_ids(

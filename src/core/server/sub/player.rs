@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use serde::Serialize;
 
 use crate::core::{
@@ -10,7 +8,7 @@ use crate::core::{
 #[derive(Debug, Clone, Serialize)]
 pub struct Player {
     pub playlist: Playlist,
-    pub playlist_stack: Arc<Vec<Playlist>>,
+    pub playlist_stack: Vec<Playlist>,
     pub volume: f32,
     pub mute: bool,
     pub state: Playback,

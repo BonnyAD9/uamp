@@ -369,8 +369,7 @@ impl Player {
                 .playlist_stack
                 .iter_mut()
                 .map(sub::Playlist::new)
-                .collect_vec()
-                .into(),
+                .collect_vec(),
             volume: self.volume(),
             mute: self.mute(),
             state: self.state,

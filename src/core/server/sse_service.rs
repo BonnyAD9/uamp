@@ -27,7 +27,7 @@ impl SseService {
     }
 
     async fn init(rt: RtAndle) -> Option<String> {
-        rt.request(|app, _| SubMsg::SetAll(SetAll::new(app)))
+        rt.request(|app, _| SubMsg::SetAll(SetAll::new(app).into()))
             .await
             .ok()?
             .event()

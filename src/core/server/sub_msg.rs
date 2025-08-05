@@ -16,9 +16,9 @@ use crate::core::{
 #[derive(Debug, Clone)]
 pub enum SubMsg {
     // initial message. Set this values.
-    SetAll(SetAll),
+    SetAll(Arc<SetAll>),
     // The current playlist has changed.
-    SetPlaylist(SetPlaylist),
+    SetPlaylist(Arc<SetPlaylist>),
     // The playback state has changed.
     Playback(Playback),
     // Jump within the current playlist
@@ -34,16 +34,16 @@ pub enum SubMsg {
     // Playlist has been removed from top of the stack.
     PopPlaylist(PlaylistJump),
     // Combination of PopPlaylist and SetPlaylist
-    PopSetPlaylist(PopSetPlaylist),
+    PopSetPlaylist(Arc<PopSetPlaylist>),
     // Sets the playlis add policy of the current playlist
     SetPlaylistAddPolicy(AddPolicy),
     // Sets the playlist end action
-    SetPlaylistEndAction(Option<Alias>),
+    SetPlaylistEndAction(Arc<Option<Alias>>),
     // Pushes playlist to the playlist stack
-    PushPlaylist(SetPlaylist),
+    PushPlaylist(Arc<SetPlaylist>),
     // Moves the current song to the start of the new playlist. The new
     // playlist in this message aleady contains the moved song.
-    PushPlaylistWithCur(SetPlaylist),
+    PushPlaylistWithCur(Arc<SetPlaylist>),
     // Append the songs to the end of the current playlist
     Queue(Arc<Vec<SongId>>),
     // Insert the songs into the playlist after the current song
@@ -56,7 +56,7 @@ pub enum SubMsg {
     ReorderPlaylistStack(ReorderPlaylistStack),
     // Play temporary song. The new song is added with temporary id as new
     // playlist on top of the stack.
-    PlayTmp(PlayTmp),
+    PlayTmp(Arc<PlayTmp>),
     // New uamp server with different address/port will start. You should
     // reconnect to it. It may not be available immidietely.
     NewServer(NewServer),

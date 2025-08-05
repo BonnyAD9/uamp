@@ -84,16 +84,15 @@ impl UampApp {
 
     pub fn client_update_tmp_song(&mut self, id: SongId) {
         if let Some((ref snd, _)) = self.jobs.server {
-            _ = snd.send(SubMsg::PlayTmp(PlayTmp::new(
-                self.library[id].clone().into(),
-                id,
-                &mut self.player,
-            )));
+            _ = snd.send(SubMsg::PlayTmp(
+                PlayTmp::new(self.library[id].clone(), id, &mut self.player)
+                    .into(),
+            ));
         }
     }
 
     pub fn client_update_set_all(&mut self) {
-        let msg = SetAll::new(self);
+        let msg = SetAll::new(self).into();
         if let Some((ref snd, _)) = self.jobs.server {
             _ = snd.send(SubMsg::SetAll(msg));
         }
