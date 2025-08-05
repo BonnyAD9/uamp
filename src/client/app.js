@@ -2,6 +2,10 @@ const UNDEF_YEAR = 2147483647;
 
 const songsElement = document.querySelector('#library .songs tbody');
 const playlistElement = document.querySelector('#playlist .songs tbody');
+const playlistTabs = document.querySelector('#playlist .tabs');
+const playlists = document.querySelector('#playlist .playlist-wrapper');
+
+const tableTemplate = document.getElementById('songs-template');
 const songTemplate = document.getElementById('song-template');
 
 const volumeSlider = document.getElementById('volumeSlider');
@@ -97,6 +101,7 @@ class App {
         this.updatePlayBtn(this.isPlaying());
         this.displayProgress(0);
         this.handleSongProgress();
+        this.displayPlaylistStack();
     }
 
     formatDuration(duration) {
@@ -201,6 +206,54 @@ class App {
     getDurationSecs(duration) {
         return duration.secs + duration.nanos / 1_000_000_000;
     }
+
+    displayPlaylistStack() {
+        playlistTabs.querySelectorAll('.tab:not(#playingPlaylist)')
+            .forEach(tab => tab.remove());
+        playlists.querySelectorAll('.playlist-stack:not(#playingTable)')
+            .forEach(table => table.remove());
+
+        const filler = playlistTabs.querySelector('.filler');
+        const len = this.player.playlist_stack.length;
+        for (let i = 1; i <= len; i++) {
+            const id = len - i;
+            const playlist = this.player.playlist_stack[id];
+
+            const cloned = tableTemplate.content.cloneNode(true);
+            const content = cloned.querySelector('tbody');
+            this.displaySongsTable(content, playlist.songs, playlist.current);
+
+            playlists.appendChild(cloned);
+
+            const button = document.createElement('button');
+            button.classList.add('tab');
+            button.textContent = `-${i}`;
+            button.onclick = () => showPlaylistTab(i);
+            playlistTabs.insertBefore(button, filler);
+        }
+    }
+
+    /**
+     * Displays given songs in the specified element, highlights the current
+     * song based on the current index.
+     * @param {HTMLElement} element - DOM tbody element.
+     * @param {Array} songs - array of songs.
+     * @param {number} current - index of the current song.
+     * @param {Function} onClick - optional click handler for each song.
+     */
+    displaySongsTable(element, songs, current, onClick = (_) => { }) {
+        element.innerHTML = '';
+        console.log(songs);
+        for (let i = 0; i < songs.length; i++) {
+            const song = this.library.songs[songs[i]];
+            if (song.deleted === true) continue;
+
+            const row = this.getSongRow(song, () => onClick(i));
+            if (i === current)
+                row.classList.add('active');
+            element.appendChild(row);
+        }
+    }
 }
 
 const navs = document.querySelectorAll('nav p');
@@ -220,6 +273,23 @@ navs.forEach(item => {
         }
     });
 });
+
+function showPlaylistTab(id) {
+    const tabs = document.querySelectorAll('#playlist .tabs .tab');
+    const playlists = document.querySelectorAll('.playlist-stack');
+
+    for (let i = 0; i < tabs.length; i++) {
+        const tab = tabs[i];
+        const playlist = playlists[i];
+
+        tab.classList.remove('active');
+        playlist.classList.remove('active');
+        if (i === id) {
+            tab.classList.add('active');
+            playlist.classList.add('active');
+        }
+    }
+}
 
 function apiCtrl(query) {
     return fetch(`/api/ctrl?${query}`)
