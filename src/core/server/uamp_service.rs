@@ -1,8 +1,7 @@
 use std::{
     borrow::Cow,
     convert::Infallible,
-    fs::File,
-    io::{BufReader, ErrorKind, Read},
+    io::ErrorKind,
     path::{Path, PathBuf},
 };
 
@@ -17,7 +16,11 @@ use hyper::{
 };
 use pareg::FromArg;
 use serde::Serialize;
-use tokio::sync::broadcast;
+use tokio::{
+    fs::{self, File},
+    sync::broadcast,
+};
+use tokio_util::codec::{BytesCodec, FramedRead};
 use url::Url;
 
 use crate::core::{
@@ -64,16 +67,14 @@ impl UampService {
     }
 
     async fn serve_get(&self, req: Request<Incoming>) -> Result<MyResponse> {
-        let referer = get_referrer_path(&req);
-        match (req.uri().path(), referer.as_deref()) {
-            ("/api/ctrl", _) => self.handle_ctrl_api(req).await,
-            ("/api/req", _) => self.handle_req_api(req).await,
-            ("/api/sub", _) => self.handle_sub_api(req).await,
-            ("/api/marco", _) => Ok(string_response("polo")),
-            (v, _) if v.starts_with("/app/") || v == "/app" => {
+        match req.uri().path() {
+            "/api/ctrl" => self.handle_ctrl_api(req).await,
+            "/api/req" => self.handle_req_api(req).await,
+            "/api/sub" => self.handle_sub_api(req).await,
+            "/api/marco" => Ok(string_response("polo")),
+            v if v.starts_with("/app/") || v == "/app" => {
                 self.handle_app(v.strip_prefix("/app").unwrap()).await
             }
-            (v, Some("/app" | "/app/")) => self.handle_app(v).await,
             _ => Err(Error::http(404, "Unknown endpoint.".to_string())),
         }
     }
@@ -150,18 +151,25 @@ impl UampService {
 
     async fn handle_app(&self, mut path: &str) -> Result<MyResponse> {
         path = path.strip_prefix("/").unwrap_or(path);
-        if path.is_empty() {
-            path = "index.html";
-        }
-        let path = Path::new(&path);
-        if path.components().any(|c| c.as_os_str() == "..") {
+        let os_path = Path::new(&path);
+        if os_path.components().any(|c| c.as_os_str() == "..") {
             return Err(Error::http(
                 403,
                 "Relative `..` is disallowed.".into(),
             ));
         }
-        let path = self.app_path.join(path);
-        file_response(path)
+        let os_path = self.app_path.join(path);
+        if fs::metadata(&os_path).await?.is_dir() {
+            if path.ends_with('/') {
+                Ok(redirect_response(&["/app/", path, "index.html"].join("")))
+            } else if path.is_empty() {
+                Ok(redirect_response("/app/index.html"))
+            } else {
+                Ok(redirect_response(&["/app/", path, "/index.html"].join("")))
+            }
+        } else {
+            file_response(os_path).await
+        }
     }
 
     async fn make_req(&self, k: &str, v: &str) -> Result<RepMsg> {
@@ -298,15 +306,32 @@ fn sse_response(s: SseService) -> MyResponse {
         .expect("Failet to generate sse response. This shouldn't happen.")
 }
 
-fn file_response(p: impl AsRef<Path>) -> Result<MyResponse> {
-    let mut res = vec![];
-    BufReader::new(File::open(p.as_ref())?).read_to_end(&mut res)?;
+async fn file_response(p: impl AsRef<Path>) -> Result<MyResponse> {
+    let fr = FramedRead::new(File::open(p.as_ref()).await?, BytesCodec::new());
     let mime = mime_guess::from_path(p).first_or_octet_stream();
     Ok(Response::builder()
         .status(200)
         .header("Content-Type", mime.essence_str())
-        .body(byte_body(res))
+        .body(StreamBody::new(
+            stream::unfold(fr, |mut fr| async move {
+                let n = fr
+                    .next()
+                    .await?
+                    .map(|a| Frame::data(a.into()))
+                    .map_err(|e| e.into());
+                Some((n, fr))
+            })
+            .boxed(),
+        ))
         .expect("Failed to generate file response. This shouldn't happen."))
+}
+
+fn redirect_response(path: &str) -> MyResponse {
+    Response::builder()
+        .status(301)
+        .header("Location", path)
+        .body(empty_body())
+        .expect("Failed to generate redirect response. This shouldn't happen.")
 }
 
 fn string_body(s: impl Into<Cow<'static, str>>) -> MyBody {
@@ -333,14 +358,12 @@ fn byte_body(b: Vec<u8>) -> MyBody {
     )
 }
 
+fn empty_body() -> MyBody {
+    StreamBody::new(stream::empty().boxed())
+}
+
 fn uri_to_url(uri: &Uri) -> Result<Url> {
     Ok(Url::parse(
         &("http://dummy".to_string() + uri.path_and_query().unwrap().as_str()),
     )?)
-}
-
-fn get_referrer_path(req: &Request<Incoming>) -> Option<String> {
-    let r = req.headers().get("Referer")?.to_str().ok()?;
-    let url = Url::parse(r).ok()?;
-    Some(url.path().to_string())
 }

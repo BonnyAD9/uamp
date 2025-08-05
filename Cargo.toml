@@ -38,8 +38,8 @@ serde_json = "1.0.142"
 shell-words = "1.1.0"
 termal = { version =  "4.0.2", features = ["image", "raw", "events"] }
 thiserror = "2.0.12"
-tokio = { version = "1.47.1", features = ["rt", "sync", "signal", "macros", "net", "rt-multi-thread"] }
-tokio-util = "0.7.15"
+tokio = { version = "1.47.1", features = ["rt", "sync", "signal", "macros", "net", "rt-multi-thread", "fs"] }
+tokio-util = { version = "0.7.15", features = ["codec"] }
 unidecode = "0.3.0"
 url = "2.5.4"
 
