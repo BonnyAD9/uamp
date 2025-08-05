@@ -25,50 +25,62 @@
             </nav>
         </section>
 
-        <div class="wrapper-songs">
-            <section id="library" class="screen active">
-                <table class="songs">
-                    <thead>
-                        <th>Title / Artist</th>
-                        <th>Album / Year</th>
-                        <th>Length / Genre</th>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </section>
+        <section id="library" class="screen active">
+            <table class="songs">
+                <colgroup>
+                    <col class="col-ta">
+                    <col class="col-ay">
+                    <col class="col-lg">
+                    <col class="col-td">
+                </colgroup>
+                <thead>
+                    <th>Title / Artist</th>
+                    <th>Album / Year</th>
+                    <th>Length / Genre</th>
+                    <th>T / D</th>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </section>
 
-            <section id="playlist" class="screen">
-                <table class="songs">
-                    <thead>
-                        <th>Title / Artist</th>
-                        <th>Album / Year</th>
-                        <th>Length / Genre</th>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </section>
+        <section id="playlist" class="screen">
+            <table class="songs">
+                <colgroup>
+                    <col class="col-ta">
+                    <col class="col-ay">
+                    <col class="col-lg">
+                    <col class="col-td">
+                </colgroup>
+                <thead>
+                    <th>Title / Artist</th>
+                    <th>Album / Year</th>
+                    <th>Length / Genre</th>
+                    <th>T / D</th>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </section>
 
-            <section id="settings" class="screen">
+        <section id="settings" class="screen">
+            <div>
+                <h1>Settings</h1>
+
                 <div>
-                    <h1>Settings</h1>
-
-                    <div>
-                        <label for="themeColor">Theme color:</label><br />
-                        <input type="color" id="themeColor" />
-                    </div>
-
-                    <div class="switch-setting">
-                        <label class="switch">
-                            <input type="checkbox" id="floatingBar" />
-                            <span class="slider"></span>
-                        </label>
-                        <p>Floating music player bar</p>
-                    </div>
+                    <label for="themeColor">Theme color:</label><br />
+                    <input type="color" id="themeColor" />
                 </div>
-            </section>
-        </div>
+
+                <div class="switch-setting">
+                    <label class="switch">
+                        <input type="checkbox" id="floatingBar" />
+                        <span class="slider"></span>
+                    </label>
+                    <p>Floating music player bar</p>
+                </div>
+            </div>
+        </section>
     </div>
 
     <section class="bar floating">
@@ -85,16 +97,19 @@
 
             <div class="controls">
                 <img 
+                    class="control"
                     src="/assets/svg/previous.svg" 
                     onclick="apiCtrl('ps')" 
                     id="prev"
                 >
                 <img 
+                    class="control"
                     src="/assets/svg/play.svg" 
                     onclick="apiCtrl('pp')" 
                     id="play"
                 >
                 <img 
+                    class="control"
                     src="/assets/svg/next.svg" 
                     onclick="apiCtrl('ns')" 
                     id="next"
@@ -103,6 +118,7 @@
 
             <div class="volume">
                 <img 
+                    class="control"
                     src="/assets/svg/volume_1.svg" 
                     onclick="apiCtrl('mute')"
                 >
@@ -125,6 +141,10 @@
             <td>
                 <p class="length ellipsis"></p>
                 <span class="genre ellipsis"><span>
+            </td>
+            <td>
+                <p class="track ellipsis"></p>
+                <span class="disc ellipsis"><span>
             </td>
         </tr>
     </template>
