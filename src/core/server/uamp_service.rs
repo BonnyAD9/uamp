@@ -1,10 +1,12 @@
 use std::{
     borrow::Cow,
     convert::Infallible,
+    env,
     io::ErrorKind,
     path::{Path, PathBuf},
 };
 
+use const_format::concatc;
 use futures::{
     StreamExt,
     stream::{self, BoxStream},
@@ -39,6 +41,15 @@ pub struct UampService {
     brcs: broadcast::WeakSender<SubMsg>,
     app_path: PathBuf,
 }
+
+pub const SERVER_HEADER: &str = concatc!(
+    config::APP_ID,
+    "/",
+    config::VERSION_STR,
+    " (",
+    env::consts::OS,
+    ")"
+);
 
 impl UampService {
     pub fn new(
@@ -270,6 +281,7 @@ fn err_response(err: Error) -> MyResponse {
 
     Response::builder()
         .status(code)
+        .header("Server", SERVER_HEADER)
         .body(string_body(msg))
         .expect("Failed to generate error response. This shouldn't happen.")
 }
@@ -278,6 +290,7 @@ fn string_response(s: impl Into<Cow<'static, str>>) -> MyResponse {
     Response::builder()
         .status(200)
         .header("Content-Type", "text/plain")
+        .header("Server", SERVER_HEADER)
         .body(string_body(s))
         .expect("Failed to generate string response. This shouldn't happen.")
 }
@@ -286,6 +299,7 @@ fn json_response(s: &impl Serialize) -> Result<MyResponse> {
     Ok(Response::builder()
         .status(200)
         .header("Content-Type", "application/json")
+        .header("Server", SERVER_HEADER)
         .body(json_body(s)?)
         .expect("Failed to generate json response. This shouldn't happen."))
 }
@@ -296,6 +310,7 @@ fn sse_response(s: SseService) -> MyResponse {
         .header("Content-Type", "text/event-stream")
         .header("Cache-Control", "no-cache")
         .header("Connection", "keep-alive")
+        .header("Server", SERVER_HEADER)
         .body(StreamBody::new(
             stream::unfold(s, |mut s| async move {
                 let data = Ok(Frame::data(s.next().await?.into()));
@@ -312,6 +327,7 @@ async fn file_response(p: impl AsRef<Path>) -> Result<MyResponse> {
     Ok(Response::builder()
         .status(200)
         .header("Content-Type", mime.essence_str())
+        .header("Server", SERVER_HEADER)
         .body(StreamBody::new(
             stream::unfold(fr, |mut fr| async move {
                 let n = fr
@@ -330,6 +346,7 @@ fn redirect_response(path: &str) -> MyResponse {
     Response::builder()
         .status(301)
         .header("Location", path)
+        .header("Server", SERVER_HEADER)
         .body(empty_body())
         .expect("Failed to generate redirect response. This shouldn't happen.")
 }
