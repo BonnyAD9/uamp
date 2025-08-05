@@ -1,3 +1,5 @@
+const UNDEF_YEAR = 2147483647;
+
 const songsElement = document.querySelector('#library .songs tbody');
 const playlistElement = document.querySelector('#playlist .songs tbody');
 const songTemplate = document.getElementById('song-template');
@@ -100,6 +102,9 @@ class App {
     formatDuration(duration) {
         const minutes = Math.floor(duration.secs / 60);
         const seconds = duration.secs % 60;
+        if (minutes == 0 && seconds == 0) {
+            return '-';
+        }
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
 
@@ -140,7 +145,8 @@ class App {
         row.querySelector('.title').textContent = song.title;
         row.querySelector('.author').textContent = song.artist;
         row.querySelector('.album').textContent = song.album;
-        row.querySelector('.year').textContent = song.year;
+        row.querySelector('.year').textContent =
+            song.year == UNDEF_YEAR ? '-' : song.year;
         row.querySelector('.length').textContent =
             this.formatDuration(song.length);
         row.querySelector('.genre').textContent = song.genre;
