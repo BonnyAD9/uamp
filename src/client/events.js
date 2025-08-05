@@ -22,14 +22,9 @@ eventSource.addEventListener('set-all', e => {
 });
 
 eventSource.addEventListener('set-playlist', e => {
-    const app = AppSingleton.get();
-    const data = JSON.parse(e.data);
-
-    setPlayback(app, data.playback);
-    app.player.playlist = data.playlist;
-    app.position = data.timestamp;
-
-    app.updatePlaylist();
+    setPlaylist(AppSingleton.get(), JSON.parse(e.data));
+    app.displayPlaylist();
+    app.updateSongs();
 });
 
 eventSource.addEventListener('playback', e => {
@@ -64,18 +59,26 @@ eventSource.addEventListener('set-mute', e => {
     app.updateVolume(app.player.volume);
 });
 
-eventSource.addEventListener('pop-playlist', e => { });
-
-eventSource.addEventListener('pop-set-playlist', e => {
+eventSource.addEventListener('pop-playlist', e => {
     const app = AppSingleton.get();
     const data = JSON.parse(e.data);
 
-    app.player.playlist = app.player.playlist_stack.shift();
+    popPlaylist(app);
     app.player.playlist.current = data.position;
+    app.timestamp = data.timestamp;
+    setPlayback(data.playback);
 
-    app.updatePlaylist();
+    app.displayPlaylist();
+    app.updateSongs();
+});
 
-    // TODO: timestamp
+eventSource.addEventListener('pop-set-playlist', e => {
+    const app = AppSingleton.get();
+
+    popPlaylist(app);
+    setPlaylist(app, JSON.parse(e.data));
+    app.displayPlaylist();
+    app.updateSongs();
 });
 
 eventSource.addEventListener('set-playlist-add-policy', e => {
@@ -83,8 +86,73 @@ eventSource.addEventListener('set-playlist-add-policy', e => {
     app.player.playlist.add_policy = JSON.parse(e.data);
 });
 
+eventSource.addEventListener('set-playlist-end-action', e => {
+    const app = AppSingleton.get();
+    app.player.playlist.on_end = JSON.parse(e.data);
+});
+
+eventSource.addEventListener('push-playlist', e => {
+    pushPlaylist(AppSingleton.get(), JSON.parse(e.data));
+    app.displayPlaylist();
+    app.updateSongs();
+});
+
+eventSource.addEventListener('push-playlist-with-cur', e => {
+    const app = AppSingleton.get();
+    const data = JSON.parse(e.data);
+
+    const current = app.player.playlist.current;
+    if (current) {
+        app.player.playlist.songs.splice(current, 1);
+    }
+
+    pushPlaylist(app, data);
+    app.displayPlaylist();
+    app.updateSongs();
+});
+
+eventSource.addEventListener('queue', e => {
+    const app = AppSingleton.get();
+    app.player.playlist.songs.push(...JSON.parse(e.data));
+    app.displayPlaylist();
+});
+
+eventSource.addEventListener('play-next', e => {
+    const app = AppSingleton.get();
+
+    const current = app.player.playlist.current;
+    if (!current) return;
+
+    app.player.playlist.songs.splice(current, 0, ...JSON.parse(e.data));
+    app.displayPlaylist();
+});
+
+eventSource.addEventListener('restarting', e => console.log('Restaring...'));
+
+eventSource.addEventListener('reorder-playlist-stack', e => { });
+
+eventSource.addEventListener('play-tmp', e => { });
+
 function setPlayback(app, playback) {
     app.player.state = playback;
     app.handleSongProgress();
     app.updatePlayBtn(app.isPlaying());
+}
+
+function setPlaylist(app, data) {
+    setPlayback(app, data.playback);
+    app.player.playlist = data.playlist;
+    app.position = data.timestamp;
+}
+
+function pushPlaylist(app, data) {
+    app.player.playlist_stack.unshift(app.player.playlist);
+    app.player.playlist = data.playlist;
+    app.timestamp = data.timestamp;
+    setPlayback(data.playback);
+}
+
+function popPlaylist(app) {
+    if (app.player.playlist_stack.length == 0) return;
+    app.player.playlist = app.player.playlist_stack.shift();
 }

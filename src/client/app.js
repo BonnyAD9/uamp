@@ -94,6 +94,7 @@ class App {
         this.updateVolume(this.player.volume);
         this.updatePlayBtn(this.isPlaying());
         this.displayProgress(0);
+        this.handleSongProgress();
     }
 
     formatDuration(duration) {
