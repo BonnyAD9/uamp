@@ -76,8 +76,8 @@ section.menu nav {
 section.menu nav p {
     padding-left: 15px;
     position: relative;
-    height: 25px;
-    padding-top: 1px;
+    height: 26px;
+    padding-top: 4px;
     font-size: 15px;
     cursor: pointer;
     border-radius: 5px;
