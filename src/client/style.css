@@ -225,7 +225,7 @@ section.bar .slider {
 }
 
 section.bar .slider>hr {
-    width: 36%;
+    width: 0%;
     border: 2px solid var(--primary);
     border-radius: 2px;
 }
