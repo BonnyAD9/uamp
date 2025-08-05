@@ -64,12 +64,12 @@ class App {
 
     displayPlaylist() {
         const playing = this.player.playlist.current;
-        playlistElement.innerHtml = '';
+        playlistElement.innerHTML = '';
         for (let i = 0; i < this.player.playlist.songs.length; i++) {
             const song = this.library.songs[this.player.playlist.songs[i]];
             if (song.deleted === true) continue;
 
-            const row = this.getSongRow(song);
+            const row = this.getSongRow(song, () => apiCtrl(`pj=${i}`));
             if (i === playing)
                 row.classList.add('active');
             playlistElement.appendChild(row);
@@ -137,10 +137,10 @@ class App {
         volumeIcon.src = `/assets/svg/${icon}`;
     }
 
-    getSongRow(song) {
+    getSongRow(song, onClick = () => { }) {
         const cloned = songTemplate.content.cloneNode(true);
         const row = cloned.querySelector('tr');
-        row.addEventListener('click', () => this.playSong(i));
+        row.addEventListener('click', onClick);
 
         row.querySelector('.title').textContent = song.title;
         row.querySelector('.author').textContent = song.artist;
