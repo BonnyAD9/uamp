@@ -123,6 +123,7 @@ section.screen.active {
 table.songs {
     border-collapse: collapse;
     width: 100%;
+    table-layout: fixed;
 }
 
 table.songs thead {
@@ -409,4 +410,11 @@ input:checked+.slider:before {
     -webkit-transform: translateX(14px);
     -ms-transform: translateX(14px);
     transform: translateX(14px);
+}
+
+.ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
 }
