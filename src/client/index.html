@@ -34,10 +34,12 @@
                     <col class="col-td">
                 </colgroup>
                 <thead>
-                    <th>Title / Artist</th>
-                    <th>Album / Year</th>
-                    <th>Length / Genre</th>
-                    <th>T / D</th>
+                    <tr>
+                        <th>Title / Artist</th>
+                        <th>Album / Year</th>
+                        <th>Length / Genre</th>
+                        <th>T / D</th>
+                    </tr>
                 </thead>
                 <tbody>
                 </tbody>
@@ -45,22 +47,34 @@
         </section>
 
         <section id="playlist" class="screen">
-            <table class="songs">
-                <colgroup>
-                    <col class="col-ta">
-                    <col class="col-ay">
-                    <col class="col-lg">
-                    <col class="col-td">
-                </colgroup>
-                <thead>
-                    <th>Title / Artist</th>
-                    <th>Album / Year</th>
-                    <th>Length / Genre</th>
-                    <th>T / D</th>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
+            <div class="tabs">
+                <button 
+                    id="playingPlaylist" 
+                    class="tab active"
+                    onclick="showPlaylistTab(0)"
+                >Playing</button>
+                <div class="filler"></div>
+            </div>
+            <div class="playlist-wrapper">
+                <table id="playingTable" class="songs playlist-stack active">
+                    <colgroup>
+                        <col class="col-ta">
+                        <col class="col-ay">
+                        <col class="col-lg">
+                        <col class="col-td">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>Title / Artist</th>
+                            <th>Album / Year</th>
+                            <th>Length / Genre</th>
+                            <th>T / D</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         <section id="settings" class="screen">
@@ -127,6 +141,27 @@
             </div>
         </div>
     </section>
+
+    <template id="songs-template">
+        <table class="songs playlist-stack">
+            <colgroup>
+                <col class="col-ta">
+                <col class="col-ay">
+                <col class="col-lg">
+                <col class="col-td">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>Title / Artist</th>
+                    <th>Album / Year</th>
+                    <th>Length / Genre</th>
+                    <th>T / D</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </template>
 
     <template id="song-template">
         <tr>
