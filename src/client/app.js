@@ -125,6 +125,9 @@ class App {
      * @returns previous active playlist if it exists, otherwise null.
      */
     popPlaylist(cnt = 1) {
+        if (cnt === 0)
+            cnt = this.player.playlist_stack.length;
+
         let prev = null;
         while (cnt-- > 0 && this.player.playlist_stack.length > 0) {
             prev = this.player.playlist;
