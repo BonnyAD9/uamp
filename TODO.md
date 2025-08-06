@@ -8,6 +8,9 @@
 - Grououping by albums and artists
 
 # known issues
+- When playlist ends with no end action, it might jump to different than the
+  first song. This is fixed in future version of raplay that is not yet
+  released.
 - mpris seek not properly notified (Can't reproduce, will see in next release
   if it is still issue. If yes, doesn't seem to be uamp related.)
 - When playing some flac files, log will show error with end of stream. This is
