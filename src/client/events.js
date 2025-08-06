@@ -49,8 +49,10 @@ eventSource.addEventListener('set-mute', e => {
 
 eventSource.addEventListener('pop-playlist', e => {
     const app = AppSingleton.get();
-    app.popPlaylist();
-    playlistJumpEvent(app, JSON.parse(e.data));
+    const data = JSON.parse(e.data);
+
+    app.popPlaylist(data.pop_cnt);
+    playlistJumpEvent(app, data.playlist);
 });
 
 eventSource.addEventListener('pop-set-playlist', e => {
