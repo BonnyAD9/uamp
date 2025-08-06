@@ -1,36 +1,34 @@
-const UNDEF_YEAR = 2147483647;
-
 const songsElement = document.querySelector('#library .songs tbody');
-const playlistElement = document.querySelector('#playlist .songs tbody');
-const playlistTabs = document.querySelector('#playlist .tabs');
-const playlists = document.querySelector('#playlist .playlist-wrapper');
-
 const tableTemplate = document.getElementById('songs-template');
-const songTemplate = document.getElementById('song-template');
-
-const volumeSlider = document.getElementById('volumeSlider');
-const volumeValue = document.getElementById('volumeValue');
-const volumeIcon = document.querySelector('.volume img');
-volumeSlider.addEventListener('input', () => {
-    apiCtrl(`v=${volumeSlider.value / 100}`);
-});
-
 const slider = document.querySelector('.bar .slider hr');
 
 class App {
-    constructor(eventData) {
-        this.library = eventData.library;
-        this.player = eventData.player;
-        this.position = eventData.position;
+    constructor(data) {
+        this.library = {
+            songs: data.library.songs.map(Song.from),
+            tmp_songs: data.library.tmp_songs.map(Song.from),
+        };
+        this.player = data.player;
+        this.position = data.position && Timestamp.from(data.position);
 
         this.lastUpdate = performance.now();
         this.rafId = null;
+
+        this.playlistTab = 0;
     }
 
+    /**
+     * Checks whether player is playing or not
+     * @returns {boolean} true when playing, else false
+     */
     isPlaying() {
         return this.player.state === 'Playing';
     }
 
+    /**
+     * Gets currently playing song
+     * @returns {?Song} playing song if found
+     */
     getPlaying() {
         const playing = this.player.playlist.current;
         if (playing === null) return null;
@@ -39,128 +37,192 @@ class App {
         return this.library.songs[current];
     }
 
-    playSong(index) {
-        console.log(index);
+    /**
+     * Sets the playback state and updates related UI elements.
+     * @param {string} playback - playback state to set.
+     */
+    setPlayback(playback) {
+        this.player.state = playback;
+        this.handleSongProgress();
+        updatePlayBtn(this.isPlaying());
     }
+
+    /**
+     * Sets the timestamp to given value and updates related UI elements.
+     * @param {?Timestamp} timestamp - the timestamp to set.
+     */
+    setTimestamp(timestamp) {
+        if (timestamp === null) {
+            this.position = null;
+            return;
+        }
+
+        this.position = Timestamp.from(timestamp);
+        this.getPlaying().length = Duration.from(timestamp.total);
+        this.displayProgress(0);
+    }
+
+    /**
+     * Sets the current song index in the playlist.
+     * @param {?number} id - index of the current song in the playlist.
+     */
+    setCurrent(id) {
+        this.player.playlist.current = id;
+        updateCurrent(this.getPlaying());
+        this.highlightLibrary();
+        this.highlightPlaylist();
+    }
+
+    /**
+     * Sets the volume level and updates the UI accordingly.
+     * @param {number} volume - volume level to set (0 to 1).
+     */
+    setVolume(volume) {
+        this.player.volume = volume;
+        updateVolume(volume, this.player.mute);
+    }
+
+    /**
+     * Sets the mute state and updates the UI accordingly.
+     * @param {boolean} mute - boolean indicating whether to mute or unmute.
+     */
+    setMute(mute) {
+        this.player.mute = mute;
+        updateVolume(this.player.volume, mute);
+    }
+
+    /**
+     * Sets the active playlist to the given one, updates UI.
+     * @param {*} playlist - playlist to set as active.
+     */
+    setPlaylist(playlist) {
+        this.player.playlist = playlist;
+        this.displayPlaylist();
+        this.highlightLibrary();
+        updateCurrent(this.getPlaying());
+    }
+
+    /**
+     * Pushes active playlist to the stack and sets the new playlist. Updates
+     * related UI elements.
+     * @param {*} playlist - playlist to push onto the stack.
+     */
+    pushPlaylist(playlist) {
+        this.player.playlist_stack.push(this.player.playlist);
+        if (this.playlistTab !== 0)
+            this.playlistTab += 1;
+
+        pushPlaylist();
+        pushPlaylistTab();
+        this.setPlaylist(playlist);
+        showPlaylist(this.playlistTab);
+    }
+
+    /**
+     * Pops playlists from the stack and sets it as the active playlist. Updates
+     * related UI elements.
+     * @param {number} cnt - number of playlists to pop from the stack.
+     * @returns previous active playlist if it exists, otherwise null.
+     */
+    popPlaylist(cnt = 1) {
+        let prev = null;
+        while (cnt-- > 0 && this.player.playlist_stack.length > 0) {
+            prev = this.player.playlist;
+            this.player.playlist = this.player.playlist_stack.pop();
+
+            popPlaylist();
+            popPlaylistTab();
+            this.playlistTab -= 1;
+        }
+
+        this.playlistTab = Math.max(0, this.playlistTab);
+        showPlaylist(this.playlistTab);
+        updateCurrent(this.getPlaying());
+        return prev;
+    }
+
+    /**
+     * Sets active playlist tab and updates related UI elements.
+     * @param {number} id - ID of the playlist tab
+     */
+    setPlaylistTab(id) {
+        this.playlistTab = id;
+        showPlaylist(id);
+    }
+
 
     displaySongs() {
         const playing = this.player.playlist.current;
-        const current = playing ? this.player.playlist.songs[playing] : null;
+        const current =
+            playing !== null ? this.player.playlist.songs[playing] : null;
 
         songsElement.innerHTML = '';
         for (let i = 0; i < this.library.songs.length; i++) {
             const song = this.library.songs[i];
             if (song.deleted === true) continue;
 
-            const row = this.getSongRow(song);
+            const row = song.getTableRow();
+            row.addEventListener(
+                'click',
+                () => {
+                    const play = this.isPlaying() ? 'play' : 'pause';
+                    const push = encodeURIComponent(song.getQuery());
+                    apiCtrl(`push=${push}&pp=${play}`);
+                }
+            );
             if (i === current)
                 row.classList.add('active');
             songsElement.appendChild(row);
         }
     }
 
-    updateSongs() {
-        const playing = this.player.playlist.current;
-        const current = playing ? this.player.playlist.songs[playing] : null;
-        const rows = document.querySelectorAll('#library .songs tbody tr');
-        this.highlightPlaying(current, rows)
-    }
-
     displayPlaylist() {
         const playing = this.player.playlist.current;
+        const playlistElement =
+            document.querySelector('#playlist #playingTable tbody');
         playlistElement.innerHTML = '';
         for (let i = 0; i < this.player.playlist.songs.length; i++) {
             const song = this.library.songs[this.player.playlist.songs[i]];
             if (song.deleted === true) continue;
 
-            const row = this.getSongRow(song, () => apiCtrl(`pj=${i}`));
+            const row = song.getTableRow();
+            row.addEventListener('click', () => apiCtrl(`pj=${i}`));
             if (i === playing)
                 row.classList.add('active');
             playlistElement.appendChild(row);
         }
     }
 
-    updatePlaylist() {
+    /**
+     * Highlights currently playing song in the library
+     */
+    highlightLibrary() {
         const playing = this.player.playlist.current;
-        const rows = document.querySelectorAll('#playlist .songs tbody tr');
-        this.highlightPlaying(playing, rows);
+        const current =
+            playing !== null ? this.player.playlist.songs[playing] : null;
+        highlightLibrary(current);
     }
 
-    highlightPlaying(index, rows) {
-        for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
-            row.classList.remove('active');
-            if (index === i)
-                row.classList.add('active');
-        }
+    /**
+     * Highlights currently playing song in the playlist
+     */
+    highlightPlaylist() {
+        highlightPlaylist(this.player.playlist.current);
     }
 
     updateAll() {
-        this.updateCurrent(this.getPlaying());
-        this.updateVolume(this.player.volume);
-        this.updatePlayBtn(this.isPlaying());
         this.displayProgress(0);
         this.handleSongProgress();
         this.displayPlaylistStack();
+
+        updateCurrent(this.getPlaying());
+        updatePlayBtn(this.isPlaying());
+        updateVolume(this.player.volume, this.player.mute);
     }
 
-    formatDuration(duration) {
-        const minutes = Math.floor(duration.secs / 60);
-        const seconds = duration.secs % 60;
-        if (minutes == 0 && seconds == 0) {
-            return '-';
-        }
-        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    }
-
-    updatePlayBtn(playing) {
-        const icon = playing ? 'pause.svg' : 'play.svg';
-        document.getElementById('play').src = '/assets/svg/' + icon;
-    }
-
-    updateCurrent(song) {
-        const title = document.querySelector('.info .title h3');
-        if (song === null) {
-            title.textContent = 'Not Playing';
-            return;
-        }
-        title.textContent = song.title;
-        document.querySelector('.info .title h4').textContent = song.artist;
-
-        this.updateSongs();
-        this.updatePlaylist();
-    }
-
-    updateVolume(volume) {
-        this.player.volume = volume;
-        const perVolume = Math.round(volume * 100);
-        volumeSlider.value = perVolume;
-        volumeValue.textContent = perVolume;
-
-        const level = Math.ceil(volume * 4);
-        let icon = `${this.player.mute ? 'no_' : ''}volume_${level}.svg`;
-        volumeIcon.src = `/assets/svg/${icon}`;
-    }
-
-    getSongRow(song, onClick = () => { }) {
-        const cloned = songTemplate.content.cloneNode(true);
-        const row = cloned.querySelector('tr');
-        row.addEventListener('click', onClick);
-
-        row.querySelector('.title').textContent = song.title;
-        row.querySelector('.author').textContent = song.artist;
-        row.querySelector('.album').textContent = song.album;
-        row.querySelector('.year').textContent =
-            song.year == UNDEF_YEAR ? '-' : song.year;
-        row.querySelector('.length').textContent =
-            this.formatDuration(song.length);
-        row.querySelector('.genre').textContent = song.genre;
-        row.querySelector('.track').textContent = song.track;
-        row.querySelector('.disc').textContent = song.disc;
-
-        return row;
-    }
-
+    /**
+     * Handles song progress bar updates
+     */
     handleSongProgress() {
         if (this.isPlaying()) {
             this.lastUpdate = performance.now();
@@ -171,6 +233,9 @@ class App {
         }
     }
 
+    /**
+     * Stops the song progres bar updates
+     */
     stopProgress() {
         if (this.radId !== null) {
             cancelAnimationFrame(this.rafId);
@@ -178,6 +243,9 @@ class App {
         }
     }
 
+    /**
+     * Updates progress bar based on delta time
+     */
     updateProgressBar() {
         if (!this.isPlaying()) return;
 
@@ -189,9 +257,15 @@ class App {
         this.rafId = requestAnimationFrame(() => this.updateProgressBar());
     }
 
-    displayProgress(delta) {
-        let current = this.getDurationSecs(this.position.current) + delta;
-        const total = this.getDurationSecs(this.getPlaying().length);
+    /**
+     * Updates progress bar
+     * @param {number} delta - optional delta time
+     */
+    displayProgress(delta = 0) {
+        let current = 0 + delta;
+        if (this.position !== null)
+            current = this.position.current.toSecs() + delta;
+        const total = this.getPlaying().length.toSecs();
 
         if (current > total)
             current = total;
@@ -199,8 +273,11 @@ class App {
         const percent = (current / total) * 100;
         slider.style.width = `${percent}%`;
 
-        this.position.current.secs = Math.floor(current);
-        this.position.current.nanos = Math.floor((current % 1) * 1_000_000_000);
+        if (this.position !== null) {
+            this.position.current.secs = Math.floor(current);
+            this.position.current.nanos =
+                Math.floor((current % 1) * 1_000_000_000);
+        }
     }
 
     getDurationSecs(duration) {
@@ -219,40 +296,43 @@ class App {
             const id = len - i;
             const playlist = this.player.playlist_stack[id];
 
-            const cloned = tableTemplate.content.cloneNode(true);
-            const content = cloned.querySelector('tbody');
-            this.displaySongsTable(content, playlist.songs, playlist.current);
-
+            const cloned =
+                this.getSongsTable(playlist.songs, playlist.current);
             playlists.appendChild(cloned);
 
             const button = document.createElement('button');
             button.classList.add('tab');
             button.textContent = `-${i}`;
-            button.onclick = () => showPlaylistTab(i);
+            button.onclick = () => this.setPlaylistTab(i);
             playlistTabs.insertBefore(button, filler);
         }
     }
 
     /**
-     * Displays given songs in the specified element, highlights the current
-     * song based on the current index.
-     * @param {HTMLElement} element - DOM tbody element.
+     * Creates new songs table with the given songs
      * @param {Array} songs - array of songs.
      * @param {number} current - index of the current song.
      * @param {Function} onClick - optional click handler for each song.
+     * @returns {HTMLTableElement}
      */
-    displaySongsTable(element, songs, current, onClick = (_) => { }) {
+    getSongsTable(songs, current, onClick = (_) => { }) {
+        const cloned = tableTemplate.content.cloneNode(true);
+
+        const element = cloned.querySelector('tbody');
         element.innerHTML = '';
-        console.log(songs);
+
         for (let i = 0; i < songs.length; i++) {
             const song = this.library.songs[songs[i]];
             if (song.deleted === true) continue;
 
-            const row = this.getSongRow(song, () => onClick(i));
+            const row = song.getTableRow();
+            row.addEventListener('click', () => onClick(i));
             if (i === current)
                 row.classList.add('active');
             element.appendChild(row);
         }
+
+        return cloned;
     }
 }
 
@@ -273,23 +353,6 @@ navs.forEach(item => {
         }
     });
 });
-
-function showPlaylistTab(id) {
-    const tabs = document.querySelectorAll('#playlist .tabs .tab');
-    const playlists = document.querySelectorAll('.playlist-stack');
-
-    for (let i = 0; i < tabs.length; i++) {
-        const tab = tabs[i];
-        const playlist = playlists[i];
-
-        tab.classList.remove('active');
-        playlist.classList.remove('active');
-        if (i === id) {
-            tab.classList.add('active');
-            playlist.classList.add('active');
-        }
-    }
-}
 
 function apiCtrl(query) {
     return fetch(`/api/ctrl?${query}`)
