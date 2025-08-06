@@ -18,6 +18,7 @@ eventSource.addEventListener('set-all', e => {
     const app = AppSingleton.init(JSON.parse(e.data));
     app.displaySongs();
     app.displayPlaylist();
+    app.displayAlbums();
     app.updateAll();
 });
 

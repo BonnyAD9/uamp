@@ -219,15 +219,95 @@ table.songs td {
     padding: 5px 0;
 }
 
-table.songs td>p {
+table.songs td>p,
+.list .card>.details>p {
     color: var(--fg);
     font-size: 15px;
 }
 
-table.songs td>span {
+table.songs td>span,
+.list .card>.details>span {
     color: var(--fg-sec);
     font-size: 11px;
     padding-left: 3px;
+}
+
+.list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    justify-content: flex-start;
+}
+
+.list .card {
+    flex: 1 1 calc(14.28% - 5px);
+    max-width: calc(14.28% - 5px);
+    box-sizing: border-box;
+    background-color: var(--bg-light);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: .3s ease;
+}
+
+.list .card:hover {
+    background-color: var(--bg-lighter);
+}
+
+.list .card .details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 3px 5px 8px 5px;
+    overflow: hidden;
+}
+
+.list .card .details p,
+.list .card .details span {
+    max-width: 100%;
+}
+
+@media screen and (max-width: 1800px) {
+    .list .card {
+        flex: 1 1 calc(16.66% - 5px);
+        max-width: calc(16.66% - 5px);
+    }
+}
+
+@media screen and (max-width: 1600px) {
+    .list .card {
+        flex: 1 1 calc(20% - 5px);
+        max-width: calc(20% - 5px);
+    }
+}
+
+@media screen and (max-width: 1350px) {
+    .list .card {
+        flex: 1 1 calc(25% - 5px);
+        max-width: calc(25% - 5px);
+    }
+}
+
+@media screen and (max-width: 1100px) {
+    .list .card {
+        flex: 1 1 calc(33.33% - 5px);
+        max-width: calc(33.33% - 5px);
+    }
+}
+
+@media screen and (max-width: 875px) {
+    .list .card {
+        flex: 1 1 calc(50% - 5px);
+        max-width: calc(50% - 5px);
+    }
+}
+
+@media screen and (max-width: 630px) {
+    .list .card {
+        flex: 1 1 calc(100% - 5px);
+        max-width: calc(100% - 5px);
+    }
 }
 
 section.bar {

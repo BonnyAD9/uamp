@@ -15,6 +15,8 @@ class App {
         this.rafId = null;
 
         this.playlistTab = 0;
+
+        this.albums = App.generateAlbums(this.library.songs);
     }
 
     /**
@@ -220,6 +222,15 @@ class App {
         }
     }
 
+    displayAlbums() {
+        const albums = document.querySelector('#albums .list');
+        albums.innerHTML = '';
+        for (const [_, album] of this.albums) {
+            const card = album.getCard();
+            albums.appendChild(card);
+        }
+    }
+
     /**
      * Highlights currently playing song in the library
      */
@@ -380,6 +391,23 @@ class App {
 
         const play = this.isPlaying() ? 'play' : 'pause';
         apiCtrl(`${cmd}pj=${row.dataset.index}&pp=${play}`);
+    }
+
+    static generateAlbums(songs) {
+        const albums = new Map();
+
+        for (let i = 0; i < songs.length; i++) {
+            const song = songs[i];
+            if (song.deleted) continue;
+
+            const key = `${song.album}::${song.artist}`;
+            if (!albums.has(key))
+                albums.set(key, new Album(song.album, song.artist, song.year));
+
+            albums.get(key).songs.push(i);
+        }
+
+        return albums;
     }
 }
 
