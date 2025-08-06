@@ -12,7 +12,7 @@ use std::path::PathBuf;
 use futures::executor::block_on;
 use hyper::{server::conn::http1, service::service_fn};
 use hyper_util::rt::TokioIo;
-use tokio::{net::TcpListener, sync::broadcast};
+use tokio::{net::TcpListener, sync::broadcast, task::AbortHandle};
 use tokio_util::sync::CancellationToken;
 
 use crate::core::{
@@ -118,6 +118,7 @@ impl Server {
         brcs: broadcast::WeakSender<SubMsg>,
         stop: CancellationToken,
     ) -> Result<()> {
+        let mut connections: Vec<AbortHandle> = vec![];
         loop {
             let (conn, _) = tokio::select!(
                 _ = stop.cancelled() => break,
@@ -128,19 +129,25 @@ impl Server {
                     val
                 }
             );
+            
+            connections.retain(|a| !a.is_finished());
 
             let service = UampService::new(
                 self.rt.andle(),
                 brcs.clone(),
                 self.app_path.clone(),
             );
-            self.rt.spawn(http1::Builder::new().serve_connection(
+            connections.push(self.rt.spawn(http1::Builder::new().serve_connection(
                 TokioIo::new(conn),
                 service_fn(move |a| {
                     let s = service.clone();
                     async move { s.serve(a).await }
                 }),
-            ));
+            )).abort_handle());
+        }
+        
+        for c in connections {
+            c.abort();
         }
 
         Ok(())
