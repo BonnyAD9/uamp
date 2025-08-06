@@ -1,6 +1,7 @@
 const UNDEF_YEAR = 2147483647;
 
 const songTemplate = document.getElementById('song-template');
+const albumTemplate = document.getElementById('album-template');
 
 class Song {
     /**
@@ -87,15 +88,30 @@ class Song {
     }
 }
 
-class Library {
+class Album {
     /**
-     * Creates new library
-     * @param {} songs
-     * @param {*} tmp_songs 
+     * Creates new album
+     * @param {string} name
+     * @param {string} artist
+     * @param {number} year 
+     * @param {number[]} songs 
      */
-    constructor(songs, tmp_songs) {
+    constructor(name, artist, year, songs = []) {
+        this.name = name;
+        this.artist = artist;
+        this.year = year;
         this.songs = songs;
-        this.tmp_songs = tmp_songs;
+    }
+
+    /**
+     * Generates an album details card
+     * @returns {HTMLElement} - generated album card
+     */
+    getCard() {
+        const card = albumTemplate.content.cloneNode(true);
+        card.querySelector('.name').textContent = this.name;
+        card.querySelector('.artist').textContent = this.artist;
+        return card;
     }
 }
 
