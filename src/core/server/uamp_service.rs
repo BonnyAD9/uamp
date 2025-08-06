@@ -110,7 +110,7 @@ impl UampService {
             msgs.push(AnyControlMsg::from_arg(&buf)?.into());
         }
 
-        self.rt.msgs(msgs);
+        self.rt.msgs_result(msgs).await?;
 
         Ok(string_response("Success!"))
     }

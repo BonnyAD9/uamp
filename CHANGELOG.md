@@ -15,6 +15,7 @@
 - Partially fix: when playlist ends with no end action, it cycles its songs.
   Full fix requires new version of raplay which is not yet released.
 - Properly shutdown connections when server stops.
+- Fix `rps` message.
 
 ## v0.5.13
 ### New features
