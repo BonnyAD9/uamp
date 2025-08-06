@@ -5,7 +5,7 @@ const playBtn = document.getElementById('play');
  */
 function updatePlayBtn(playing) {
     const icon = playing ? 'pause.svg' : 'play.svg';
-    playBtn.src = '/assets/svg/' + icon;
+    playBtn.src = 'assets/svg/' + icon;
 }
 
 const songTitle = document.querySelector('.info .title h3');
@@ -43,7 +43,7 @@ function updateVolume(volume, mute = false) {
 
     const level = Math.ceil(volume * 4);
     let icon = `${mute ? 'no_' : ''}volume_${level}.svg`;
-    volumeIcon.src = `/assets/svg/${icon}`;
+    volumeIcon.src = `assets/svg/${icon}`;
 }
 
 /**

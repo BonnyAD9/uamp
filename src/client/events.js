@@ -12,10 +12,6 @@ const AppSingleton = (() => {
     }
 })();
 
-/**
- * TODO:
- * - fix timestamp null errors
- */
 const eventSource = new EventSource('/api/sub');
 
 eventSource.addEventListener('set-all', e => {
@@ -121,8 +117,21 @@ eventSource.addEventListener('reorder-playlist-stack', e => { });
 
 eventSource.addEventListener('play-tmp', e => { });
 
-eventSource.addEventListener('new-server', _ => {
-    console.log('You should use correct server!');
+eventSource.addEventListener('new-server', e => {
+    const { address, port } = JSON.parse(e.data);
+    const server = `http://${address}:${port}`;
+    const ping = `${server}/api/marco`;
+
+    const interval = setInterval(async () => {
+        fetch(ping, { cache: 'no-store' })
+            .then(res => res.text())
+            .then(text => {
+                if (text === 'polo') {
+                    clearInterval(interval);
+                    window.location.href = `${server}/app`;
+                }
+            }).catch(_ => { });
+    }, 1000);
 });
 
 function setPlaylistEvent(app, data) {
