@@ -6,7 +6,11 @@ use raplay::{CallbackInfo, Timestamp};
 
 use crate::{
     core::{
-        config::Config, library::{Library, SongId}, log_err, server::sub, Alias, DataControlMsg, Error, Msg, Result, RtAndle
+        Alias, DataControlMsg, Error, Msg, Result, RtAndle,
+        config::Config,
+        library::{Library, SongId},
+        log_err,
+        server::sub,
     },
     ext::AlcVec,
     gen_struct,
@@ -475,7 +479,10 @@ impl Player {
         let Some(id) = id else {
             if !self.state.is_stopped() {
                 self.inner.play(false);
-                log_err("Failed to hard pause the playback when stopped.", self.inner.hard_pause());
+                log_err(
+                    "Failed to hard pause the playback when stopped.",
+                    self.inner.hard_pause(),
+                );
                 self.state = Playback::Stopped;
             }
             return false;
