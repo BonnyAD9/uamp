@@ -526,6 +526,10 @@ section.screen#playlist .songs thead {
     display: none;
 }
 
+.playlist-wrapper .playlist-stack:not(:first-of-type) tr.active p {
+    opacity: 0.7;
+}
+
 .playlist-stack.active {
     display: table;
 }

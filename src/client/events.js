@@ -30,12 +30,7 @@ eventSource.addEventListener('playback', e => {
 });
 
 eventSource.addEventListener('playlist-jump', e => {
-    const app = AppSingleton.get();
-    const data = JSON.parse(e.data);
-
-    app.setCurrent(data.position);
-    app.setPlayback(data.playback);
-    app.setTimestamp(data.timestamp);
+    playlistJumpEvent(AppSingleton.get(), JSON.parse(e.data));
 });
 
 eventSource.addEventListener('seek', e => {
@@ -54,12 +49,8 @@ eventSource.addEventListener('set-mute', e => {
 
 eventSource.addEventListener('pop-playlist', e => {
     const app = AppSingleton.get();
-    const data = JSON.parse(e.data);
-
     app.popPlaylist();
-    app.setCurrent(data.position);
-    app.setPlayback(data.playback);
-    app.setTimestamp(data.timestamp);
+    playlistJumpEvent(app, JSON.parse(e.data));
 });
 
 eventSource.addEventListener('pop-set-playlist', e => {
@@ -111,15 +102,15 @@ eventSource.addEventListener('play-next', e => {
     app.displayPlaylist();
 });
 
-eventSource.addEventListener('restarting', e => console.log('Restaring...'));
+eventSource.addEventListener('restarting', _ => console.log('Restaring...'));
 
 eventSource.addEventListener('reorder-playlist-stack', e => {
     const app = AppSingleton.get();
     const data = JSON.parse(e.data);
 
     const order = extendArray(data.order, app.player.playlist_stack.length);
-    console.log(order);
-    reorderPlaylists(order);
+    app.reorderPlaylists(order);
+    playlistJumpEvent(app, data.position);
 });
 
 eventSource.addEventListener('play-tmp', e => { });
@@ -141,6 +132,12 @@ eventSource.addEventListener('new-server', e => {
     }, 1000);
 });
 
+function playlistJumpEvent(app, data) {
+    app.setCurrent(data.position);
+    app.setPlayback(data.playback);
+    app.setTimestamp(data.timestamp);
+}
+
 function setPlaylistEvent(app, data) {
     app.setPlaylist(data.playlist);
     app.setTimestamp(data.timestamp);
@@ -156,7 +153,6 @@ function pushPlaylistEvent(app, data) {
 function extendArray(arr, max) {
     const set = new Set(arr);
     const missing = [];
-
     for (let i = 0; i <= max; i++) {
         if (!set.has(i)) {
             missing.push(i);
@@ -164,13 +160,4 @@ function extendArray(arr, max) {
     }
 
     return arr.concat(missing);
-}
-
-function reorderPlaylists(indexes) {
-    const wrapper = document.querySelector('.playlist-wrapper');
-    const tables = Array.from(wrapper.querySelectorAll('.playlist-stack'));
-
-    const reordered = indexes.map(i => tables[i]);
-
-    reordered.forEach(table => wrapper.appendChild(table));
 }

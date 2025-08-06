@@ -60,7 +60,8 @@ function highlightLibrary(index) {
  * @param {?number} index - song index in the playlist
  */
 function highlightPlaylist(index) {
-    const rows = document.querySelectorAll('#playlist #playingTable tbody tr');
+    const table = document.querySelector('#playlist .playlist-stack tbody');
+    const rows = table.querySelectorAll('tr');
     this.highlightPlaying(index, rows);
 }
 
@@ -80,31 +81,39 @@ function highlightPlaying(index, rows) {
 
 const playlists = document.querySelector('#playlist .playlist-wrapper');
 /**
- * Pushes playing table to the playlist stack, keeps the original playing table
+ * Pushes empty playing table to the playlist stack
  */
 function pushPlaylist() {
-    const playing = playlists.querySelector('#playingTable');
+    const cloned = tableTemplate.content.cloneNode(true);
+    const tbody = cloned.querySelector('tbody');
+    tbody.addEventListener('click', e => AppSingleton.get().playlistClick(e));
 
-    const clone = playing.cloneNode(true);
-    clone.removeAttribute('id');
-
-    playlists.insertBefore(clone, playing.nextSibling);
+    const playing = playlists.querySelector('.playlist-stack');
+    playlists.insertBefore(cloned, playing);
 }
 
 /**
  * Pops playlist from the playlist stack, sets the playing table as well
  */
 function popPlaylist() {
-    const next = playlists.querySelector('.playlist-stack:not(#playingTable)');
-    if (next === null) return;
+    const tables = playlists.querySelectorAll('.playlist-stack');
+    if (tables.length < 2) return;
 
-    const playing = playlists.querySelector('#playingTable');
+    const playing = tables[0];
     playing.remove();
+}
 
-    next.id = 'playingTable';
+/**
+ * Reorders playlists based on the given indexes.
+ * @param {number[]} indexes - reorder indexes containing all playlists.
+ */
+function reorderPlaylists(indexes) {
+    const wrapper = document.querySelector('.playlist-wrapper');
+    const tables =
+        Array.from(wrapper.querySelectorAll('#playlist .playlist-stack'));
 
-    const rows = next.querySelectorAll('tbody tr');
-    rows.forEach((row, i) => row.onClick = () => apiCtrl(`pj=${i}`));
+    const reordered = indexes.map(i => tables[i]);
+    reordered.forEach(table => wrapper.appendChild(table));
 }
 
 /**
@@ -112,7 +121,8 @@ function popPlaylist() {
  * @param {number} id - row ID to be removed
  */
 function removePlaylistRow(id) {
-    const rows = playlists.querySelectorAll('#playingTable tbody tr');
+    const table = playlists.querySelector('#playlist .playlist-stack tbody');
+    const rows = table.querySelectorAll('tr');
     if (rows.length <= id) return;
 
     if (rows[id].classList.contains('active') && rows[id].nextSibling !== null)
