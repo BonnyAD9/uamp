@@ -7,12 +7,19 @@ pub mod sub;
 mod sub_msg;
 mod uamp_service;
 
-use std::path::PathBuf;
+use std::{path::PathBuf, pin::Pin};
 
-use futures::executor::block_on;
+use futures::{
+    FutureExt,
+    executor::block_on,
+    future::{Either, select},
+};
 use hyper::{server::conn::http1, service::service_fn};
 use hyper_util::rt::TokioIo;
-use tokio::{net::TcpListener, sync::broadcast, task::AbortHandle};
+use tokio::{
+    net::{TcpListener, TcpStream},
+    sync::broadcast,
+};
 use tokio_util::sync::CancellationToken;
 
 use crate::core::{
@@ -118,7 +125,7 @@ impl Server {
         brcs: broadcast::WeakSender<SubMsg>,
         stop: CancellationToken,
     ) -> Result<()> {
-        let mut connections: Vec<AbortHandle> = vec![];
+        let shutdown = CancellationToken::new();
         loop {
             let (conn, _) = tokio::select!(
                 _ = stop.cancelled() => break,
@@ -129,27 +136,44 @@ impl Server {
                     val
                 }
             );
-            
-            connections.retain(|a| !a.is_finished());
 
             let service = UampService::new(
                 self.rt.andle(),
                 brcs.clone(),
                 self.app_path.clone(),
             );
-            connections.push(self.rt.spawn(http1::Builder::new().serve_connection(
-                TokioIo::new(conn),
-                service_fn(move |a| {
-                    let s = service.clone();
-                    async move { s.serve(a).await }
-                }),
-            )).abort_handle());
-        }
-        
-        for c in connections {
-            c.abort();
+            self.rt.spawn(cancellable_connection(
+                service,
+                conn,
+                shutdown.clone(),
+            ));
         }
 
+        shutdown.cancel();
+
         Ok(())
+    }
+}
+
+async fn cancellable_connection(
+    service: UampService,
+    connection: TcpStream,
+    cancel: CancellationToken,
+) {
+    let conn = http1::Builder::new().serve_connection(
+        TokioIo::new(connection),
+        service_fn(move |a| {
+            let s = service.clone();
+            async move { s.serve(a).await }
+        }),
+    );
+    let cancelled = cancel.cancelled().boxed();
+
+    match select(cancelled, conn).await {
+        Either::Left((_, mut conn)) => {
+            Pin::new(&mut conn).graceful_shutdown();
+            log_err("Connection failed on shutdown.", conn.await);
+        }
+        Either::Right((res, _)) => _ = log_err("Connection ended.", res),
     }
 }

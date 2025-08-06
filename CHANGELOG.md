@@ -14,6 +14,7 @@
 - Properly use HTTP1.1 instead of some accidental HTTP2 headers.
 - Partially fix: when playlist ends with no end action, it cycles its songs.
   Full fix requires new version of raplay which is not yet released.
+- Properly shutdown connections when server stops.
 
 ## v0.5.13
 ### New features
