@@ -3,7 +3,6 @@ mod err;
 mod jobs;
 mod message_delegate;
 mod msg;
-mod play_msg;
 mod state;
 mod uamp_app;
 
@@ -21,8 +20,8 @@ pub mod server;
 mod mpris;
 
 pub use self::{
-    control::*, err::*, jobs::*, message_delegate::*, msg::*, play_msg::*,
-    state::*, uamp_app::*,
+    control::*, err::*, jobs::*, message_delegate::*, msg::*, state::*,
+    uamp_app::*,
 };
 
 pub type AppCtrl<'a> = crate::env::AppCtrl<'a, Msg, Error>;

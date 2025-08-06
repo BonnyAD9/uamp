@@ -11,7 +11,7 @@ use futures::{
     StreamExt,
     stream::{self, BoxStream},
 };
-use http_body_util::StreamBody;
+use http_body_util::{BodyExt, StreamBody};
 use hyper::{
     Method, Request, Response, Uri,
     body::{Bytes, Frame, Incoming},
@@ -53,6 +53,9 @@ pub const SERVER_HEADER: &str = concatc!(
     ")"
 );
 
+/// Maximum limit for the amount of cumulative accepted data.
+pub const MAX_ACCEPT_LENGTH: usize = 1024 * 1024; // 1 MiB
+
 impl UampService {
     pub fn new(
         rt: RtAndle,
@@ -75,6 +78,7 @@ impl UampService {
     async fn serve_inner(&self, req: Request<Incoming>) -> Result<MyResponse> {
         match *req.method() {
             Method::GET => self.serve_get(req).await,
+            Method::POST => self.serve_post(req).await,
             _ => Err(Error::http(405, "Unknown method.".to_string())),
         }
     }
@@ -88,7 +92,14 @@ impl UampService {
             v if v.starts_with("/app/") || v == "/app" => {
                 self.handle_app(v.strip_prefix("/app").unwrap()).await
             }
-            _ => Err(Error::http(404, "Unknown endpoint.".to_string())),
+            _ => Err(Error::http(404, "Unknown GET endpoint.".to_string())),
+        }
+    }
+
+    async fn serve_post(&self, req: Request<Incoming>) -> Result<MyResponse> {
+        match req.uri().path() {
+            "/api/ctrl" => self.handle_ctrl_post_api(req).await,
+            _ => Err(Error::http(404, "Unknown POST endpoint.".to_string())),
         }
     }
 
@@ -168,6 +179,44 @@ impl UampService {
         } else {
             self.handle_app_tar(path).await
         }
+    }
+
+    async fn handle_ctrl_post_api(
+        &self,
+        mut req: Request<Incoming>,
+    ) -> Result<MyResponse> {
+        let len = req
+            .headers()
+            .get("Content-Length")
+            .and_then(|l| l.to_str().ok())
+            .and_then(|a| a.parse().ok());
+        let mut str = req.body_mut().into_data_stream();
+
+        let mut data = if let Some(len) = len {
+            if len > MAX_ACCEPT_LENGTH {
+                return Err(Error::http(413, "Too much data.".to_string()));
+            }
+            Vec::with_capacity(len)
+        } else {
+            vec![]
+        };
+
+        while data.len() <= MAX_ACCEPT_LENGTH
+            && let Some(frame) = str.next().await
+        {
+            let frame = frame?;
+            data.extend(frame);
+        }
+
+        if data.len() > MAX_ACCEPT_LENGTH {
+            return Err(Error::http(413, "Too much data.".to_string()));
+        }
+
+        let msg = serde_json::from_slice(&data)?;
+
+        self.rt.msg_result(Msg::IdControl(msg)).await?;
+
+        Ok(string_response("Success!"))
     }
 
     async fn make_req(&self, k: &str, v: &str) -> Result<RepMsg> {

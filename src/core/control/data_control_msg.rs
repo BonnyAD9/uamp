@@ -245,7 +245,11 @@ impl Display for DataControlMsg {
                 write!(f, "restart={}", ft.to_string_lossy())
             }
             DataControlMsg::ReorderPlaylistStack(ord) => {
-                write!(f, "rps={}", ord.iter().map(|a| a.to_string()).join(","))
+                write!(
+                    f,
+                    "rps={}",
+                    ord.iter().map(|a| a.to_string()).join(",")
+                )
             }
             DataControlMsg::PlayTmp(p) => write!(f, "p={}", p.display()),
         }
