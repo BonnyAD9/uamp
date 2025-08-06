@@ -3,6 +3,7 @@
 ## future
 ### New features
 - Allow disabling watchin of exe with `"auto_restart": false`.
+- Allow specifying cnt for `pop`.
 
 ### Fixes
 - Fix order of `a` and `b` when requesting with `uam i nfo=a..b`.

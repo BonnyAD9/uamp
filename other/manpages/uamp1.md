@@ -671,10 +671,9 @@ Integrations:
 
   See *Format query* for more information on *query*.
 
-`pop`, `pop-playlist`
-  Pop the current playlist from the top of the stack. Playback status will not
-  change. The playlist end action of the poped playlist will not be invoked.
-  If the playlist stack has only one playlist, it cannot be poped.
+`pop`[`=`*N*], `pop-playlist`[`=`*N*]
+  Pop *N* playlists from the playlist stack, but leave at least one. If *N* is
+  0, leave only the last playlist. This will not change the playback status.
 
 `flat`[`=`*N*], `flatten`[`=`*N*]
   Insert the current playlist into the next playlist on the stack at the

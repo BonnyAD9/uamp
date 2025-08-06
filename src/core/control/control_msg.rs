@@ -19,7 +19,7 @@ use crate::{
         query::SongOrder,
         server::{
             SubMsg,
-            sub::{PlaylistJump, PopSetPlaylist},
+            sub::{PlaylistJump, PopPlaylist, PopSetPlaylist},
         },
     },
     ext::{Wrap, duration_to_string},
@@ -64,8 +64,9 @@ pub enum ControlMsg {
     Rewind(Option<Duration>),
     /// Sorts the top playlist.
     SortPlaylist(SongOrder),
-    /// Pop the intercepted playlist.
-    PopPlaylist,
+    /// Pop the n playlists from the playlist stack. `0` means pop all (only
+    /// last remains).
+    PopPlaylist(usize),
     /// Flatten the playlist `n` times. `0` means flatten all.
     Flatten(usize),
     /// Set the playlist add policy.
@@ -213,11 +214,12 @@ impl UampApp {
                     SubMsg::SetPlaylist(p.into())
                 });
             }
-            ControlMsg::PopPlaylist => {
-                self.player.pop_playlist(&mut self.library);
-                self.client_update(SubMsg::PopPlaylist(PlaylistJump::new(
-                    &self.player,
-                )));
+            ControlMsg::PopPlaylist(n) => {
+                self.player.pop_playlist(&mut self.library, n);
+                self.client_update(SubMsg::PopPlaylist(
+                    PopPlaylist::new(n, PlaylistJump::new(&self.player))
+                        .into(),
+                ));
             }
             ControlMsg::Flatten(cnt) => {
                 self.player.flatten(cnt);
@@ -281,7 +283,8 @@ impl Display for ControlMsg {
                 write!(f, "rw={}", duration_to_string(*d, false))
             }
             ControlMsg::SortPlaylist(ord) => write!(f, "sort={ord}"),
-            ControlMsg::PopPlaylist => f.write_str("pop"),
+            ControlMsg::PopPlaylist(1) => f.write_str("pop"),
+            ControlMsg::PopPlaylist(n) => write!(f, "pop={n}"),
             ControlMsg::Flatten(1) => f.write_str("flat"),
             ControlMsg::Flatten(c) => write!(f, "flat={c}"),
             ControlMsg::SetPlaylistAddPolicy(AddPolicy::None) => {
@@ -360,7 +363,9 @@ impl FromStr for ControlMsg {
             v if has_any_key!(v, '=', "sort-playlist", "sort") => {
                 Ok(ControlMsg::SortPlaylist(val_arg(v, '=')?))
             }
-            "pop" | "pop-playlist" => Ok(ControlMsg::PopPlaylist),
+            v if has_any_key!(v, '=', "pop", "pop-playlist") => {
+                Ok(ControlMsg::PopPlaylist(mval_arg(v, '=')?.unwrap_or(1)))
+            }
             v if has_any_key!(v, '=', "flatten", "flat") => {
                 Ok(ControlMsg::Flatten(mval_arg(v, '=')?.unwrap_or(1)))
             }

@@ -8,7 +8,7 @@ use crate::core::{
     library::SongId,
     player::{AddPolicy, Playback},
     server::sub::{
-        NewServer, PlayTmp, PlaylistJump, PopSetPlaylist,
+        NewServer, PlayTmp, PlaylistJump, PopPlaylist, PopSetPlaylist,
         ReorderPlaylistStack, SetAll, SetPlaylist,
     },
 };
@@ -32,7 +32,7 @@ pub enum SubMsg {
     // The mute state has changed
     SetMute(bool),
     // Playlist has been removed from top of the stack.
-    PopPlaylist(PlaylistJump),
+    PopPlaylist(Arc<PopPlaylist>),
     // Combination of PopPlaylist and SetPlaylist
     PopSetPlaylist(Arc<PopSetPlaylist>),
     // Sets the playlis add policy of the current playlist

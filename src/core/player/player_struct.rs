@@ -170,8 +170,13 @@ impl Player {
         self.inner.do_prefetch_notify(true);
     }
 
-    /// If there are more playlists in the stack, end the top one.
-    pub fn pop_playlist(&mut self, lib: &mut Library) {
+    /// If there are more playlists in the stack, remove the n on top, but
+    /// leave at least one. If `n` is 0 leave only the last one.
+    pub fn pop_playlist(&mut self, lib: &mut Library, n: usize) {
+        let len = self.playlist_stack.len();
+        self.playlist_stack
+            .splice(len - n.wrapping_sub(1).min(len - 1).., []);
+
         let Some(playlist) = self.playlist_stack.pop() else {
             return;
         };
@@ -358,7 +363,7 @@ impl Player {
             .map(|a| std::mem::take(&mut playlists[a]))
             .collect();
 
-        self.pop_playlist(lib);
+        self.pop_playlist(lib, 1);
 
         Ok(())
     }

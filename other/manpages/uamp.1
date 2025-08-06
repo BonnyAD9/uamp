@@ -712,10 +712,9 @@ playlist to the start of the new playlist.
 .IP
 See \fIFormat query\fP for more information on \fIquery\fP\&.
 .TP
-\fB\fCpop\fR, \fB\fCpop\-playlist\fR
-Pop the current playlist from the top of the stack. Playback status will not
-change. The playlist end action of the poped playlist will not be invoked.
-If the playlist stack has only one playlist, it cannot be poped.
+\fB\fCpop\fR[\fB\fC=\fR\fIN\fP], \fB\fCpop\-playlist\fR[\fB\fC=\fR\fIN\fP]
+Pop \fIN\fP playlists from the playlist stack, but leave at least one. If \fIN\fP is
+0, leave only the last playlist. This will not change the playback status.
 .TP
 \fB\fCflat\fR[\fB\fC=\fR\fIN\fP], \fB\fCflatten\fR[\fB\fC=\fR\fIN\fP]
 Insert the current playlist into the next playlist on the stack at the

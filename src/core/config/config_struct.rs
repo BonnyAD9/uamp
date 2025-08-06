@@ -92,7 +92,7 @@ gen_struct! {
                     end_action("endless-mix"),
                 ].into()),
                 ("pcont".into(), [
-                    ControlMsg::PopPlaylist.into(),
+                    ControlMsg::PopPlaylist(1).into(),
                     ControlMsg::PlayPause(Some(true)).into(),
                 ].into()),
                 (
