@@ -8,6 +8,7 @@
 - Grououping by albums and artists
 
 # known issues
+- Sending `pj seek=value pp` ignores the seek when freshly started.
 - When playlist ends with no end action, it might jump to different than the
   first song. This is fixed in future version of raplay that is not yet
   released.
