@@ -113,7 +113,14 @@ eventSource.addEventListener('play-next', e => {
 
 eventSource.addEventListener('restarting', e => console.log('Restaring...'));
 
-eventSource.addEventListener('reorder-playlist-stack', e => { });
+eventSource.addEventListener('reorder-playlist-stack', e => {
+    const app = AppSingleton.get();
+    const data = JSON.parse(e.data);
+
+    const order = extendArray(data.order, app.player.playlist_stack.length);
+    console.log(order);
+    reorderPlaylists(order);
+});
 
 eventSource.addEventListener('play-tmp', e => { });
 
@@ -144,4 +151,26 @@ function pushPlaylistEvent(app, data) {
     app.pushPlaylist(data.playlist);
     app.setTimestamp(data.timestamp);
     app.setPlayback(data.playback);
+}
+
+function extendArray(arr, max) {
+    const set = new Set(arr);
+    const missing = [];
+
+    for (let i = 0; i <= max; i++) {
+        if (!set.has(i)) {
+            missing.push(i);
+        }
+    }
+
+    return arr.concat(missing);
+}
+
+function reorderPlaylists(indexes) {
+    const wrapper = document.querySelector('.playlist-wrapper');
+    const tables = Array.from(wrapper.querySelectorAll('.playlist-stack'));
+
+    const reordered = indexes.map(i => tables[i]);
+
+    reordered.forEach(table => wrapper.appendChild(table));
 }
