@@ -16,6 +16,7 @@
   Full fix requires new version of raplay which is not yet released.
 - Properly shutdown connections when server stops.
 - Fix `rps` message.
+- Properly return errors from control messages.
 
 ## v0.5.13
 ### New features
