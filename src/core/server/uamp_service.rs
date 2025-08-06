@@ -20,8 +20,10 @@ use pareg::FromArg;
 use serde::Serialize;
 use tokio::{
     fs::{self, File},
+    io::AsyncRead,
     sync::broadcast,
 };
+use tokio_tar::Archive;
 use tokio_util::codec::{BytesCodec, FramedRead};
 use url::Url;
 
@@ -160,26 +162,11 @@ impl UampService {
         Ok(sse_response(srv))
     }
 
-    async fn handle_app(&self, mut path: &str) -> Result<MyResponse> {
-        path = path.strip_prefix("/").unwrap_or(path);
-        let os_path = Path::new(&path);
-        if os_path.components().any(|c| c.as_os_str() == "..") {
-            return Err(Error::http(
-                403,
-                "Relative `..` is disallowed.".into(),
-            ));
-        }
-        let os_path = self.app_path.join(path);
-        if fs::metadata(&os_path).await?.is_dir() {
-            if path.ends_with('/') {
-                Ok(redirect_response(&["/app/", path, "index.html"].join("")))
-            } else if path.is_empty() {
-                Ok(redirect_response("/app/index.html"))
-            } else {
-                Ok(redirect_response(&["/app/", path, "/index.html"].join("")))
-            }
+    async fn handle_app(&self, path: &str) -> Result<MyResponse> {
+        if fs::metadata(&self.app_path).await?.is_dir() {
+            self.handle_app_dir(path).await
         } else {
-            file_response(os_path).await
+            self.handle_app_tar(path).await
         }
     }
 
@@ -202,6 +189,52 @@ impl UampService {
             .request(move |app, _| app.query_response(&q))
             .await?
             .map(RepMsg::Query)
+    }
+
+    async fn handle_app_dir(&self, mut path: &str) -> Result<MyResponse> {
+        path = path.strip_prefix("/").unwrap_or(path);
+        let os_path = Path::new(&path);
+        if os_path.components().any(|c| c.as_os_str() == "..") {
+            return Err(Error::http(
+                403,
+                "Relative `..` is disallowed.".into(),
+            ));
+        }
+        let os_path = self.app_path.join(path);
+        if fs::metadata(&os_path).await?.is_dir() {
+            Ok(redirect_response(&path_join(["/app", path, "index.html"])))
+        } else {
+            file_response(os_path).await
+        }
+    }
+
+    async fn handle_app_tar(&self, mut path: &str) -> Result<MyResponse> {
+        path = path.strip_prefix('/').unwrap_or(path);
+        let sec_path = path_join([path, "index.html"]);
+
+        let mut archive = Archive::new(File::open(&self.app_path).await?);
+        let mut entry = None;
+        let mut entries = archive.entries()?;
+        while let Some(e) = entries.next().await {
+            let e = e?;
+            let epath = e.path()?;
+            if epath == Path::new(path) {
+                entry = Some(e);
+                break;
+            }
+            dbg!(&epath);
+            if epath == Path::new(sec_path.as_str()) {
+                return Ok(redirect_response(&path_join(["/app", &sec_path])));
+            }
+        }
+
+        let Some(file) = entry else {
+            return Err(Error::http(404, "No such file.".into()));
+        };
+
+        let mime = mime_guess::from_path(file.path()?).first_or_octet_stream();
+
+        Ok(reader_response(file, mime.essence_str()))
     }
 }
 
@@ -322,11 +355,19 @@ fn sse_response(s: SseService) -> MyResponse {
 }
 
 async fn file_response(p: impl AsRef<Path>) -> Result<MyResponse> {
-    let fr = FramedRead::new(File::open(p.as_ref()).await?, BytesCodec::new());
+    let r = File::open(p.as_ref()).await?;
     let mime = mime_guess::from_path(p).first_or_octet_stream();
-    Ok(Response::builder()
+    Ok(reader_response(r, mime.essence_str()))
+}
+
+fn reader_response(
+    r: impl AsyncRead + Unpin + Send + 'static,
+    mime: &str,
+) -> MyResponse {
+    let fr = FramedRead::new(r, BytesCodec::new());
+    Response::builder()
         .status(200)
-        .header("Content-Type", mime.essence_str())
+        .header("Content-Type", mime)
         .header("Server", SERVER_HEADER)
         .body(StreamBody::new(
             stream::unfold(fr, |mut fr| async move {
@@ -339,7 +380,7 @@ async fn file_response(p: impl AsRef<Path>) -> Result<MyResponse> {
             })
             .boxed(),
         ))
-        .expect("Failed to generate file response. This shouldn't happen."))
+        .expect("Failed to generate reader response. This shouldn't happen.")
 }
 
 fn redirect_response(path: &str) -> MyResponse {
@@ -383,4 +424,29 @@ fn uri_to_url(uri: &Uri) -> Result<Url> {
     Ok(Url::parse(
         &("http://dummy".to_string() + uri.path_and_query().unwrap().as_str()),
     )?)
+}
+
+fn path_join<S: AsRef<str>>(paths: impl IntoIterator<Item = S>) -> String {
+    let mut it = paths.into_iter();
+    let Some(p) = it.next() else {
+        return String::new();
+    };
+
+    let mut res = p.as_ref().to_string();
+    for p in it {
+        let s = p.as_ref();
+        if s.is_empty() {
+            continue;
+        }
+        match (res.ends_with('/'), s.starts_with('/')) {
+            (true, true) => res += &s[1..],
+            (false, false) => {
+                res.push('/');
+                res += s;
+            }
+            _ => res += s,
+        }
+    }
+
+    res
 }
