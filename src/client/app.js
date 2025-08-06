@@ -142,6 +142,30 @@ class App {
     }
 
     /**
+     * Reorders the playlists based on the given indexes, updates related UI.
+     * @param {number[]} indexes - reorder indexes containing all playlists
+     */
+    reorderPlaylists(indexes) {
+        reorderPlaylists(indexes);
+        if (this.playlistTab !== 0)
+            this.playlistTab = indexes.indexOf(this.playlistTab);
+
+        let order = indexes.reverse();
+        const all = [
+            ...this.player.playlist_stack.slice(),
+            this.player.playlist
+        ];
+
+        const len = order.length - 1;
+        this.player.playlist = all[len - order[len]];
+        this.player.playlist_stack = order.slice(0, -1).map(i => all[len - i]);
+
+        showPlaylist(this.playlistTab);
+        updateCurrent(this.getPlaying());
+        this.highlightLibrary();
+    }
+
+    /**
      * Sets active playlist tab and updates related UI elements.
      * @param {number} id - ID of the playlist tab
      */
@@ -179,14 +203,14 @@ class App {
     displayPlaylist() {
         const playing = this.player.playlist.current;
         const playlistElement =
-            document.querySelector('#playlist #playingTable tbody');
+            document.querySelector('#playlist .playlist-stack tbody');
         playlistElement.innerHTML = '';
         for (let i = 0; i < this.player.playlist.songs.length; i++) {
             const song = this.library.songs[this.player.playlist.songs[i]];
             if (song.deleted === true) continue;
 
             const row = song.getTableRow();
-            row.addEventListener('click', () => apiCtrl(`pj=${i}`));
+            row.dataset.index = i;
             if (i === playing)
                 row.classList.add('active');
             playlistElement.appendChild(row);
@@ -287,8 +311,8 @@ class App {
     displayPlaylistStack() {
         playlistTabs.querySelectorAll('.tab:not(#playingPlaylist)')
             .forEach(tab => tab.remove());
-        playlists.querySelectorAll('.playlist-stack:not(#playingTable)')
-            .forEach(table => table.remove());
+        playlists.querySelectorAll('.playlist-stack')
+            .forEach((table, i) => i !== 0 && table.remove());
 
         const filler = playlistTabs.querySelector('.filler');
         const len = this.player.playlist_stack.length;
@@ -296,8 +320,11 @@ class App {
             const id = len - i;
             const playlist = this.player.playlist_stack[id];
 
-            const cloned =
-                this.getSongsTable(playlist.songs, playlist.current);
+            const cloned = this.getSongsTable(
+                playlist.songs,
+                playlist.current,
+                (e) => this.playlistClick(e)
+            );
             playlists.appendChild(cloned);
 
             const button = document.createElement('button');
@@ -319,6 +346,7 @@ class App {
         const cloned = tableTemplate.content.cloneNode(true);
 
         const element = cloned.querySelector('tbody');
+        element.addEventListener('click', e => onClick(e));
         element.innerHTML = '';
 
         for (let i = 0; i < songs.length; i++) {
@@ -326,13 +354,29 @@ class App {
             if (song.deleted === true) continue;
 
             const row = song.getTableRow();
-            row.addEventListener('click', () => onClick(i));
+            row.dataset.index = i;
             if (i === current)
                 row.classList.add('active');
             element.appendChild(row);
         }
 
         return cloned;
+    }
+
+    playlistClick(e) {
+        const row = e.target.closest('tr');
+        const table = row?.closest('table');
+        if (!row || !table) return;
+
+        const first =
+            document.querySelector('#playlist .playlist-stack');
+        let cmd = '';
+        if (table !== first) {
+            cmd = `rps=${this.playlistTab}&`;
+        }
+
+        const play = this.isPlaying() ? 'play' : 'pause';
+        apiCtrl(`${cmd}pj=${row.dataset.index}&pp=${play}`);
     }
 }
 

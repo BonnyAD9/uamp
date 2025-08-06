@@ -56,7 +56,7 @@
                 <div class="filler"></div>
             </div>
             <div class="playlist-wrapper">
-                <table id="playingTable" class="songs playlist-stack active">
+                <table class="songs playlist-stack active">
                     <colgroup>
                         <col class="col-ta">
                         <col class="col-ay">
@@ -71,7 +71,7 @@
                             <th>T / D</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody onclick="AppSingleton.get().playlistClick(event)">
                     </tbody>
                 </table>
             </div>
