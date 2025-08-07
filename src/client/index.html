@@ -49,7 +49,36 @@
 
         <section id="albums" class="screen">
             <h1>Albums</h1>
-            <div class="list"></div>
+            <div class="list" onclick="AppSingleton.get().albumClick(event)">
+            </div>
+        </section>
+
+        <section id="album-detail" class="screen">
+            <div class="info">
+                <img src="assets/svg/img_placeholder.svg" alt="album cover" />
+                <div class="details">
+                    <h2 class="name"></h2>
+                    <p class="artist"></p>
+                    <span class="other"></span>
+                </div>
+            </div>
+            <table class="songs">
+                <colgroup>
+                    <col class="col-ta">
+                    <col class="col-ay">
+                    <col class="col-lg">
+                    <col class="col-td">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>Title / Artist</th>
+                        <th>Album / Year</th>
+                        <th>Length / Genre</th>
+                        <th>T / D</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </section>
 
         <section id="playlist" class="screen">

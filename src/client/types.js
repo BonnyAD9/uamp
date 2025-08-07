@@ -49,7 +49,7 @@ class Song {
     }
 
     /**
-     * Gets songs release year, checkes for not set year
+     * Gets songs release year, checks for not set year
      * @returns {string} songs release year
      */
     getYear() {
@@ -94,7 +94,7 @@ class Album {
      * @param {string} name
      * @param {string} artist
      * @param {number} year 
-     * @param {number[]} songs 
+     * @param {Song[]} songs 
      */
     constructor(name, artist, year, songs = []) {
         this.name = name;
@@ -104,14 +104,36 @@ class Album {
     }
 
     /**
+     * Gets albums release year, checks for not set year
+     * @returns {string} songs release year
+     */
+    getYear() {
+        return this.year == UNDEF_YEAR ? '-' : `${this.year}`;
+    }
+
+    /**
      * Generates an album details card
      * @returns {HTMLElement} - generated album card
      */
     getCard() {
-        const card = albumTemplate.content.cloneNode(true);
+        const cloned = albumTemplate.content.cloneNode(true);
+        const card = cloned.querySelector('.card');
+
         card.querySelector('.name').textContent = this.name;
         card.querySelector('.artist').textContent = this.artist;
         return card;
+    }
+}
+
+class Artist {
+    /**
+     * Creates new artist
+     * @param {string} name 
+     * @param {Song[]} songs 
+     */
+    constructor(name, songs = []) {
+        this.name = name;
+        this.songs = songs;
     }
 }
 

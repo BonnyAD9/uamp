@@ -175,3 +175,34 @@ function showPlaylist(id) {
         }
     }
 }
+
+const albumInfo = document.querySelector('#album-detail .info')
+const albumSongs = document.querySelector('#album-detail .songs');
+/**
+ * Displays album in the album details page
+ * @param {Album} album
+ */
+function displayAlbum(album) {
+    albumInfo.querySelector('.name').textContent = album.name;
+    albumInfo.querySelector('.artist').textContent = album.artist;
+
+    let other = album.getYear() !== '-' ? `${album.getYear()}  •  ` : '';
+    albumInfo.querySelector('.other').textContent =
+        `${other}${album.songs.length} songs`;
+
+    displaySongs(albumSongs, album.songs);
+}
+
+/**
+ * Displays songs in the given table
+ * @param {HTMLTableElement} table - table element to display songs in
+ * @param {Song[]} songs - songs to be displayed
+ */
+function displaySongs(table, songs) {
+    const body = table.querySelector('tbody');
+    body.innerHTML = '';
+
+    for (const song of songs) {
+        body.appendChild(song.getTableRow());
+    }
+}

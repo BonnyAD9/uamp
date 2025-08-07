@@ -17,6 +17,7 @@ class App {
         this.playlistTab = 0;
 
         this.albums = App.generateAlbums(this.library.songs);
+        this.album = null;
     }
 
     /**
@@ -225,10 +226,11 @@ class App {
     displayAlbums() {
         const albums = document.querySelector('#albums .list');
         albums.innerHTML = '';
-        for (const [_, album] of this.albums) {
+        this.albums.forEach((album, i) => {
             const card = album.getCard();
+            card.dataset.index = i;
             albums.appendChild(card);
-        }
+        });
     }
 
     /**
@@ -393,21 +395,28 @@ class App {
         apiCtrl(`${cmd}pj=${row.dataset.index}&pp=${play}`);
     }
 
+    albumClick(e) {
+        const card = e.target.closest('.card');
+        if (!card) return;
+
+        this.album = card.dataset.index;
+        displayAlbum(this.albums[this.album]);
+        showScreen('album-detail');
+    }
+
     static generateAlbums(songs) {
         const albums = new Map();
-
-        for (let i = 0; i < songs.length; i++) {
-            const song = songs[i];
+        for (const song of songs) {
             if (song.deleted) continue;
 
             const key = `${song.album}::${song.artist}`;
             if (!albums.has(key))
                 albums.set(key, new Album(song.album, song.artist, song.year));
 
-            albums.get(key).songs.push(i);
+            albums.get(key).songs.push(song);
         }
 
-        return albums;
+        return Array.from(albums.values());
     }
 }
 
@@ -420,14 +429,18 @@ navs.forEach(item => {
         item.classList.add('active');
 
         const targetId = item.dataset.screen;
-        for (let screen of screens) {
-            screen.classList.remove('active');
-            if (screen.id == targetId) {
-                screen.classList.add('active');
-            }
-        }
+        showScreen(targetId);
     });
 });
+
+function showScreen(target) {
+    for (let screen of screens) {
+        screen.classList.remove('active');
+        if (screen.id == target) {
+            screen.classList.add('active');
+        }
+    }
+}
 
 function apiCtrl(query) {
     return fetch(`/api/ctrl?${query}`)

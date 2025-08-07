@@ -230,6 +230,7 @@ table.songs td>span,
     color: var(--fg-sec);
     font-size: 11px;
     padding-left: 3px;
+    display: block;
 }
 
 .list {
@@ -308,6 +309,43 @@ table.songs td>span,
         flex: 1 1 calc(100% - 5px);
         max-width: calc(100% - 5px);
     }
+}
+
+section#album-detail .info {
+    display: flex;
+    gap: 5px;
+    height: 250px;
+    padding-top: 5px;
+}
+
+section#album-detail .info img {
+    max-height: 100%;
+    object-fit: contain;
+}
+
+section#album-detail .info .details {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    justify-content: center;
+}
+
+section#album-detail .info .details h2 {
+    font-size: 35px;
+    font-weight: normal;
+}
+
+section#album-detail .info .details p {
+    color: var(--fg-sec);
+    font-size: 15px;
+    padding-left: 3px;
+}
+
+section#album-detail .info .details span {
+    color: var(--fg-sec);
+    font-size: 11px;
+    padding-left: 3px;
+    display: block;
 }
 
 section.bar {
