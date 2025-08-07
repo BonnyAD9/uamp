@@ -462,6 +462,8 @@ class App {
         }
 
         this.albums = Array.from(albums.values());
+        this.albums.forEach(album => album.sortByTrack());
+
         this.artists = Array.from(artists.values());
     }
 }
