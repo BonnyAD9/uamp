@@ -683,3 +683,29 @@ section.screen#playlist .songs thead {
 .playlist-stack.active {
     display: table;
 }
+
+.button {
+    box-sizing: border-box;
+    width: 0;
+    height: 20px;
+
+    border-color: transparent transparent transparent #fff;
+    transition: 100ms all ease;
+    cursor: pointer;
+
+    border-style: solid;
+    border-width: 10px 0 10px 18px;
+    /* top, right, bottom, left */
+
+    /* Pause style */
+}
+
+.button.paused {
+    border-style: double;
+    border-width: 0px 0 0px 18px;
+    /* Shrinks triangle into two bars */
+}
+
+.button:hover {
+    border-color: transparent transparent transparent #404040;
+}
