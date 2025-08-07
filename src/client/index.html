@@ -20,6 +20,7 @@
             <nav>
                 <p class="active" data-screen="library">Library</p>
                 <p data-screen="albums">Albums</p>
+                <p data-screen="artists">Artists</p>
                 <p data-screen="playlist">Playlist</p>
                 <div class="spacer"></div>
                 <p data-screen="settings">Settings</p>
@@ -27,6 +28,7 @@
         </section>
 
         <section id="library" class="screen active">
+            <h1>Library</h1>
             <table class="songs">
                 <colgroup>
                     <col class="col-ta">
@@ -62,6 +64,47 @@
                     <span class="other"></span>
                 </div>
             </div>
+            <table class="songs">
+                <colgroup>
+                    <col class="col-ta">
+                    <col class="col-ay">
+                    <col class="col-lg">
+                    <col class="col-td">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>Title / Artist</th>
+                        <th>Album / Year</th>
+                        <th>Length / Genre</th>
+                        <th>T / D</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section id="artists" class="screen">
+            <h1>Artists</h1>
+            <table class="songs">
+                <tbody onclick="AppSingleton.get().artistClick(event)"></tbody>
+            </table>
+        </section>
+
+        <section id="artist-detail" class="screen">
+            <div class="info">
+                <div class="details">
+                    <h2 class="name"></h2>
+                    <p class="other"></p>
+                </div>
+            </div>
+
+            <h3>Albums</h3>
+            <div 
+                class="list" 
+                onclick="AppSingleton.get().albumArtistClick(event)"
+            ></div>
+
+            <h3>Songs</h3>
             <table class="songs">
                 <colgroup>
                     <col class="col-ta">
@@ -230,6 +273,18 @@
                 <span class="artist ellipsis"></span>
             </div>
         </div>
+    </template>
+
+    <template id="artist-template">
+        <tr>
+            <td>
+                <p class="artist ellipsis"></p>
+                <span class="other ellipsis"><span>
+            </td>
+            <td>
+                <div class="albums-preview"></div>
+            </td>
+        </tr>
     </template>
 </body>
 

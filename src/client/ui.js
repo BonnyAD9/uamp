@@ -193,6 +193,21 @@ function displayAlbum(album) {
     displaySongs(albumSongs, album.songs);
 }
 
+const artistInfo = document.querySelector('#artist-detail .info');
+const artistAlbums = document.querySelector('#artist-detail .list');
+const artistSongs = document.querySelector('#artist-detail .songs');
+/**
+ * Displays artist in the artist details page
+ * @param {Artist} artist
+ */
+function displayArtist(artist) {
+    artistInfo.querySelector('.name').textContent = artist.name;
+    artistInfo.querySelector('.other').textContent = artist.getOtherDetails();
+
+    displayAlbums(artistAlbums, artist.albums);
+    displaySongs(artistSongs, artist.songs);
+}
+
 /**
  * Displays songs in the given table
  * @param {HTMLTableElement} table - table element to display songs in
@@ -205,4 +220,18 @@ function displaySongs(table, songs) {
     for (const song of songs) {
         body.appendChild(song.getTableRow());
     }
+}
+
+/**
+ * Displays given albums in a given list
+ * @param {HTMLDivElement} list
+ * @param {Album[]} albums
+ */
+function displayAlbums(list, albums) {
+    list.innerHTML = '';
+    albums.forEach((album, i) => {
+        const card = album.getCard();
+        card.dataset.index = i;
+        list.appendChild(card);
+    });
 }

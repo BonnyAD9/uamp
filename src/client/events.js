@@ -19,6 +19,7 @@ eventSource.addEventListener('set-all', e => {
     app.displaySongs();
     app.displayPlaylist();
     app.displayAlbums();
+    app.displayArtists();
     app.updateAll();
 });
 
