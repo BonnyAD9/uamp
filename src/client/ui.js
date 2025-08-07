@@ -1,11 +1,19 @@
-const playBtn = document.getElementById('play');
+const pausePlayP1 = document.getElementById("from_pause_to_play_p1");
+const playPauseP1 = document.getElementById("from_play_to_pause_p1");
+const pausePlayP2 = document.getElementById("from_pause_to_play_p2");
+const playPauseP2 = document.getElementById("from_play_to_pause_p2");
 /**
  * Updates the play button based on the playing state
  * @param {boolean} playing - whether player is playing or not
  */
 function updatePlayBtn(playing) {
-    const icon = playing ? 'pause.svg' : 'play.svg';
-    playBtn.src = 'assets/svg/' + icon;
+    if (playing) {
+        playPauseP1.beginElement();
+        playPauseP2.beginElement();
+    } else {
+        pausePlayP1.beginElement();
+        pausePlayP2.beginElement();
+    }
 }
 
 const songTitle = document.querySelector('.info .title h3');
