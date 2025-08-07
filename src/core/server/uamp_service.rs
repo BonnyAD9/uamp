@@ -28,8 +28,9 @@ use tokio_util::codec::{BytesCodec, FramedRead};
 use url::Url;
 
 use crate::core::{
-    AnyControlMsg, Error, Msg, Result, RtAndle, UampApp, config,
-    library::Song,
+    AnyControlMsg, Error, Msg, Result, RtAndle, UampApp,
+    config::{self, CacheSize},
+    library::{Song, img_lookup::lookup_image_path_rt_thread},
     query::Query,
     server::{Info, RepMsg, ReqMsg, SubMsg, sse_service::SseService},
 };
@@ -42,6 +43,7 @@ pub struct UampService {
     rt: RtAndle,
     brcs: broadcast::WeakSender<SubMsg>,
     app_path: PathBuf,
+    cache: PathBuf,
 }
 
 pub const SERVER_HEADER: &str = concatc!(
@@ -61,8 +63,14 @@ impl UampService {
         rt: RtAndle,
         brcs: broadcast::WeakSender<SubMsg>,
         app_path: PathBuf,
+        cache: PathBuf,
     ) -> Self {
-        Self { rt, brcs, app_path }
+        Self {
+            rt,
+            brcs,
+            app_path,
+            cache,
+        }
     }
 
     pub async fn serve(
@@ -89,6 +97,7 @@ impl UampService {
             "/api/req" => self.handle_req_api(req).await,
             "/api/sub" => self.handle_sub_api(req).await,
             "/api/marco" => Ok(string_response("polo")),
+            "/api/img" => self.handle_img_api(req).await,
             v if v.starts_with("/app/") || v == "/app" => {
                 self.handle_app(v.strip_prefix("/app").unwrap()).await
             }
@@ -171,6 +180,41 @@ impl UampService {
         };
         let srv = SseService::new(s.subscribe(), self.rt.clone());
         Ok(sse_response(srv))
+    }
+
+    async fn handle_img_api(
+        &self,
+        req: Request<Incoming>,
+    ) -> Result<MyResponse> {
+        let url = uri_to_url(req.uri())?;
+        let mut album = None;
+        let mut artist = None;
+
+        for (k, v) in url.query_pairs() {
+            match k.as_ref() {
+                "artist" => artist = Some(v.into_owned()),
+                "album" => album = Some(v.into_owned()),
+                _ => {}
+            };
+        }
+        let Some(album) = album else {
+            return Err(Error::http(400, "Missing album in query.".into()));
+        };
+
+        let Some(artist) = artist else {
+            return Err(Error::http(400, "Missing artist in query.".into()));
+        };
+
+        let img_path = lookup_image_path_rt_thread(
+            self.rt.clone(),
+            self.cache.clone(),
+            artist,
+            album,
+            CacheSize::Full,
+        )
+        .await??;
+
+        file_response(img_path).await
     }
 
     async fn handle_app(&self, path: &str) -> Result<MyResponse> {

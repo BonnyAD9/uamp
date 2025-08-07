@@ -42,6 +42,7 @@ struct Server {
     rt: RtHandle,
     listener: TcpListener,
     app_path: PathBuf,
+    cache: PathBuf,
 }
 
 impl UampApp {
@@ -117,6 +118,7 @@ impl Server {
             rt,
             listener,
             app_path: conf.http_client().clone(),
+            cache: conf.cache_path().clone(),
         })
     }
 
@@ -141,6 +143,7 @@ impl Server {
                 self.rt.andle(),
                 brcs.clone(),
                 self.app_path.clone(),
+                self.cache.clone(),
             );
             self.rt.spawn(cancellable_connection(
                 service,
