@@ -16,8 +16,12 @@ class App {
 
         this.playlistTab = 0;
 
-        this.albums = App.generateAlbums(this.library.songs);
+        this.albums = [];
+        this.artists = [];
         this.album = null;
+        this.artist = null;
+
+        this.generateLibraryData();
     }
 
     /**
@@ -225,11 +229,16 @@ class App {
 
     displayAlbums() {
         const albums = document.querySelector('#albums .list');
-        albums.innerHTML = '';
-        this.albums.forEach((album, i) => {
-            const card = album.getCard();
-            card.dataset.index = i;
-            albums.appendChild(card);
+        displayAlbums(albums, this.albums);
+    }
+
+    displayArtists() {
+        const artists = document.querySelector('#artists .songs tbody');
+        artists.innerHTML = '';
+        this.artists.forEach((artist, i) => {
+            const row = artist.getTableRow();
+            row.dataset.index = i;
+            artists.appendChild(row);
         });
     }
 
@@ -395,28 +404,65 @@ class App {
         apiCtrl(`${cmd}pj=${row.dataset.index}&pp=${play}`);
     }
 
-    albumClick(e) {
+    albumClick = (e) => this.genericAlbumClick(e, this.albums);
+    albumArtistClick = (e) => this.genericAlbumClick(e, this.artist.albums);
+
+    genericAlbumClick(e, albums) {
         const card = e.target.closest('.card');
         if (!card) return;
 
-        this.album = card.dataset.index;
-        displayAlbum(this.albums[this.album]);
+        this.album = albums[card.dataset.index];
+        displayAlbum(this.album);
         showScreen('album-detail');
     }
 
-    static generateAlbums(songs) {
-        const albums = new Map();
-        for (const song of songs) {
-            if (song.deleted) continue;
+    artistClick(e) {
+        const row = e.target.closest('tr');
+        if (!row) return;
 
-            const key = `${song.album}::${song.artist}`;
-            if (!albums.has(key))
-                albums.set(key, new Album(song.album, song.artist, song.year));
+        const artist = this.artists[row.dataset.index];
 
-            albums.get(key).songs.push(song);
+        const album = e.target.closest('.albums-preview img');
+        if (!album) {
+            this.artist = artist;
+            displayArtist(this.artist);
+            showScreen('artist-detail');
+            return;
         }
 
-        return Array.from(albums.values());
+        this.album = artist.albums[album.dataset.index];
+        displayAlbum(this.album);
+        showScreen('album-detail');
+    }
+
+    generateLibraryData() {
+        const albums = new Map();
+        const artists = new Map();
+
+        for (const song of this.library.songs) {
+            if (song.deleted) continue;
+
+            const artistKey = song.artist.trim().toLowerCase();
+            if (!artists.has(artistKey)) {
+                artists.set(artistKey, new Artist(song.artist));
+            }
+
+            const artist = artists.get(artistKey);
+            artist.songs.push(song);
+
+            const albumKey = `${song.album.trim().toLowerCase()}::${artistKey}`;
+            if (!albums.has(albumKey)) {
+                albums.set(
+                    albumKey,
+                    new Album(song.album, song.artist, song.year)
+                );
+                artist.albums.push(albums.get(albumKey));
+            }
+            albums.get(albumKey).songs.push(song);
+        }
+
+        this.albums = Array.from(albums.values());
+        this.artists = Array.from(artists.values());
     }
 }
 

@@ -145,6 +145,11 @@ section.screen.active {
     display: block;
 }
 
+section.screen h1 {
+    font-size: 30px;
+    padding: 5px 3px;
+}
+
 table.songs {
     border-collapse: collapse;
     width: 100%;
@@ -233,6 +238,18 @@ table.songs td>span,
     display: block;
 }
 
+table.songs td .albums-preview {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+}
+
+table.songs td .albums-preview img {
+    object-fit: contain;
+    max-height: 30px;
+}
+
 .list {
     display: flex;
     flex-wrap: wrap;
@@ -311,11 +328,16 @@ table.songs td>span,
     }
 }
 
-section#album-detail .info {
+section#album-detail .info,
+section#artist-detail .info {
     display: flex;
     gap: 5px;
     height: 250px;
     padding-top: 5px;
+}
+
+section#artist-detail .info {
+    height: auto;
 }
 
 section#album-detail .info img {
@@ -323,19 +345,22 @@ section#album-detail .info img {
     object-fit: contain;
 }
 
-section#album-detail .info .details {
+section#album-detail .info .details,
+section#artist-detail .info .details {
     display: flex;
     flex-direction: column;
     gap: 5px;
     justify-content: center;
 }
 
-section#album-detail .info .details h2 {
+section#album-detail .info .details h2,
+section#artist-detail .info .details h2 {
     font-size: 35px;
     font-weight: normal;
 }
 
-section#album-detail .info .details p {
+section#album-detail .info .details p,
+section#artist-detail .info .details p {
     color: var(--fg-sec);
     font-size: 15px;
     padding-left: 3px;
@@ -346,6 +371,13 @@ section#album-detail .info .details span {
     font-size: 11px;
     padding-left: 3px;
     display: block;
+}
+
+section#artist-detail h3 {
+    margin-top: 10px;
+    margin-bottom: 5px;
+    font-weight: normal;
+    font-size: 20px;
 }
 
 section.bar {

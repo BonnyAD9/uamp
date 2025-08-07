@@ -2,6 +2,7 @@ const UNDEF_YEAR = 2147483647;
 
 const songTemplate = document.getElementById('song-template');
 const albumTemplate = document.getElementById('album-template');
+const artistTemplate = document.getElementById('artist-template');
 
 class Song {
     /**
@@ -128,12 +129,45 @@ class Album {
 class Artist {
     /**
      * Creates new artist
-     * @param {string} name 
-     * @param {Song[]} songs 
+     * @param {string} name
+     * @param {Song[]} songs
+     * @param {Album[]} albums
      */
-    constructor(name, songs = []) {
+    constructor(name, songs = [], albums = []) {
         this.name = name;
         this.songs = songs;
+        this.albums = albums;
+    }
+
+    /**
+     * Gets albums and songs count string
+     * @returns {string} the details string
+     */
+    getOtherDetails() {
+        return `${this.albums.length} albums  •  ${this.songs.length} songs`;
+    }
+
+    /**
+     * Generates a table row with artist details
+     * @returns {HTMLTableRowElement} - generated artist table row
+     */
+    getTableRow() {
+        const cloned = artistTemplate.content.cloneNode(true);
+        const row = cloned.querySelector('tr');
+
+        row.querySelector('.artist').textContent = this.name;
+        row.querySelector('.other').textContent = this.getOtherDetails();
+
+        const albums = row.querySelector('.albums-preview');
+        this.albums.forEach((album, i) => {
+            const img = document.createElement('img');
+            img.src = 'assets/svg/img_placeholder.svg';
+            img.title = album.name;
+            img.dataset.index = i;
+            albums.appendChild(img);
+        });
+
+        return row;
     }
 }
 
