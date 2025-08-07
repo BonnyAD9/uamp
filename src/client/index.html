@@ -31,6 +31,7 @@
             <h1>Library</h1>
             <table class="songs">
                 <colgroup>
+                    <col class="col-img">
                     <col class="col-ta">
                     <col class="col-ay">
                     <col class="col-lg">
@@ -38,6 +39,7 @@
                 </colgroup>
                 <thead>
                     <tr>
+                        <th></th>
                         <th>Title / Artist</th>
                         <th>Album / Year</th>
                         <th>Length / Genre</th>
@@ -57,7 +59,11 @@
 
         <section id="album-detail" class="screen">
             <div class="info">
-                <img src="assets/svg/img_placeholder.svg" alt="album cover" />
+                <img 
+                    src="assets/svg/img_placeholder.svg" 
+                    alt="album cover"
+                    onerror="this.onerror=null; this.src='assets/svg/img_placeholder.svg';"
+                />
                 <div class="details">
                     <h2 class="name"></h2>
                     <p class="artist"></p>
@@ -66,6 +72,7 @@
             </div>
             <table class="songs">
                 <colgroup>
+                    <col class="col-img">
                     <col class="col-ta">
                     <col class="col-ay">
                     <col class="col-lg">
@@ -73,6 +80,7 @@
                 </colgroup>
                 <thead>
                     <tr>
+                        <th></th>
                         <th>Title / Artist</th>
                         <th>Album / Year</th>
                         <th>Length / Genre</th>
@@ -107,6 +115,7 @@
             <h3>Songs</h3>
             <table class="songs">
                 <colgroup>
+                    <col class="col-img">
                     <col class="col-ta">
                     <col class="col-ay">
                     <col class="col-lg">
@@ -114,6 +123,7 @@
                 </colgroup>
                 <thead>
                     <tr>
+                        <th></th>
                         <th>Title / Artist</th>
                         <th>Album / Year</th>
                         <th>Length / Genre</th>
@@ -136,6 +146,7 @@
             <div class="playlist-wrapper">
                 <table class="songs playlist-stack active">
                     <colgroup>
+                        <col class="col-img">
                         <col class="col-ta">
                         <col class="col-ay">
                         <col class="col-lg">
@@ -143,6 +154,7 @@
                     </colgroup>
                     <thead>
                         <tr>
+                            <th></th>
                             <th>Title / Artist</th>
                             <th>Album / Year</th>
                             <th>Length / Genre</th>
@@ -181,6 +193,11 @@
                 <hr />
             </div>
             <div class="info">
+                <img 
+                    src="assets/svg/img_placeholder.svg" 
+                    alt="song cover"
+                    onerror="this.onerror=null; this.src='assets/svg/img_placeholder.svg';"
+                />
                 <div class="title">
                     <h3 class="ellipsis">Not Playing</h3>
                     <h4 class="ellipsis"></h4>
@@ -268,6 +285,7 @@
     <template id="songs-template">
         <table class="songs playlist-stack">
             <colgroup>
+                <col class="col-img">
                 <col class="col-ta">
                 <col class="col-ay">
                 <col class="col-lg">
@@ -275,6 +293,7 @@
             </colgroup>
             <thead>
                 <tr>
+                    <th></th>
                     <th>Title / Artist</th>
                     <th>Album / Year</th>
                     <th>Length / Genre</th>
@@ -288,6 +307,13 @@
 
     <template id="song-template">
         <tr>
+            <td class="cover">
+                <img 
+                    src="assets/svg/img_placeholder.svg" 
+                    alt="song cover"
+                    onerror="this.onerror=null; this.src='assets/svg/img_placeholder.svg';"
+                />
+            </td>
             <td>
                 <p class="title ellipsis"></p>
                 <span class="author ellipsis"><span>
@@ -309,10 +335,13 @@
 
     <template id="album-template">
         <div class="card">
-            <img 
-                src="assets/svg/img_placeholder.svg" 
-                alt="album cover" 
-            />
+            <div class="card-pic">
+                <img 
+                    src="assets/svg/img_placeholder.svg" 
+                    alt="album cover"
+                    onerror="this.onerror=null; this.src='assets/svg/img_placeholder.svg';"
+                />
+            </div>
             <div class="details">
                 <p class="name ellipsis"></p>
                 <span class="artist ellipsis"></span>

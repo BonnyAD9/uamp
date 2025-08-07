@@ -65,6 +65,7 @@ class Song {
         const cloned = songTemplate.content.cloneNode(true);
         const row = cloned.querySelector('tr');
 
+        row.querySelector('img').src = Album.getCover(this.artist, this.album);
         row.querySelector('.title').textContent = this.title;
         row.querySelector('.author').textContent = this.artist;
         row.querySelector('.album').textContent = this.album;
@@ -120,9 +121,26 @@ class Album {
         const cloned = albumTemplate.content.cloneNode(true);
         const card = cloned.querySelector('.card');
 
+        card.querySelector('img').src =
+            Album.getCover(this.artist, this.name);
         card.querySelector('.name').textContent = this.name;
         card.querySelector('.artist').textContent = this.artist;
         return card;
+    }
+
+    sortByTrack() {
+        this.songs.sort((a, b) => a.track - b.track);
+    }
+
+    /**
+     * Gets the API URL to get the album cover
+     * @param {string} artist
+     * @param {string} album
+     * @return {string} API URL
+     */
+    static getCover(artist, album) {
+        return `/api/img?artist=${encodeURIComponent(artist)}&album=` +
+            `${encodeURIComponent(album)}`;
     }
 }
 
@@ -161,8 +179,12 @@ class Artist {
         const albums = row.querySelector('.albums-preview');
         this.albums.forEach((album, i) => {
             const img = document.createElement('img');
-            img.src = 'assets/svg/img_placeholder.svg';
+            img.src = Album.getCover(album.artist, album.name);
             img.title = album.name;
+            img.onerror = function () {
+                this.onerror = null;
+                this.src = 'assets/svg/img_placeholder.svg';
+            };
             img.dataset.index = i;
             albums.appendChild(img);
         });

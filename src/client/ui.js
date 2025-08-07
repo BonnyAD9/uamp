@@ -16,8 +16,9 @@ function updatePlayBtn(playing) {
     }
 }
 
-const songTitle = document.querySelector('.info .title h3');
-const songArtist = document.querySelector('.info .title h4');
+const songIcon = document.querySelector('.bar .info img');
+const songTitle = document.querySelector('.bar .info .title h3');
+const songArtist = document.querySelector('.bar .info .title h4');
 /**
  * Updates the currently playing song info
  * @param {?Song} song - currently playing song
@@ -28,6 +29,7 @@ function updateCurrent(song) {
         return;
     }
 
+    songIcon.src = Album.getCover(song.artist, song.album);
     songTitle.textContent = song.title;
     songArtist.textContent = song.artist;
 }
@@ -191,6 +193,8 @@ const albumSongs = document.querySelector('#album-detail .songs');
  * @param {Album} album
  */
 function displayAlbum(album) {
+    albumInfo.querySelector('img').src =
+        Album.getCover(album.artist, album.name);
     albumInfo.querySelector('.name').textContent = album.name;
     albumInfo.querySelector('.artist').textContent = album.artist;
 
