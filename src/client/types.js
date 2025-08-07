@@ -182,8 +182,7 @@ class Artist {
             img.src = Album.getCover(album.artist, album.name);
             img.title = album.name;
             img.onerror = function () {
-                this.onerror = null;
-                this.src = 'assets/svg/img_placeholder.svg';
+                imgFallback(this);
             };
             img.dataset.index = i;
             albums.appendChild(img);
