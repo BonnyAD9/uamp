@@ -247,3 +247,8 @@ function displayAlbums(list, albums) {
         list.appendChild(card);
     });
 }
+
+function imgFallback(img) {
+    if (img.src !== 'assets/svg/img_placeholder.svg')
+        img.src = 'assets/svg/img_placeholder.svg';
+}
