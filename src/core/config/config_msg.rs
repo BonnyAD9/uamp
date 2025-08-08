@@ -55,6 +55,7 @@ impl UampApp {
                     }
                     if conf.http_client() != self.config.http_client() {
                         *d.client.lock().unwrap() = conf.http_client().clone();
+                        self.client_update(SubMsg::ClientChanged);
                     }
                 }
 
