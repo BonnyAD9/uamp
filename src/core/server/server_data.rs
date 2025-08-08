@@ -1,10 +1,10 @@
 use std::{
     path::PathBuf,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, RwLock},
 };
 
 use itertools::Either;
-use tokio::sync::broadcast;
+use tokio::sync::{broadcast};
 use tokio_util::sync::CancellationToken;
 
 use crate::core::{config::Config, server::SubMsg};
@@ -14,8 +14,8 @@ pub struct ServerData {
     pub sender:
         Either<broadcast::Sender<SubMsg>, broadcast::WeakSender<SubMsg>>,
     pub cancel: CancellationToken,
-    pub cache: Arc<Mutex<PathBuf>>,
-    pub client: Arc<Mutex<PathBuf>>,
+    pub cache: Arc<RwLock<PathBuf>>,
+    pub client: Arc<RwLock<PathBuf>>,
 }
 
 const MAX_BROADCAST_CAPACITY: usize = 16;

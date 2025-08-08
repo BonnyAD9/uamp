@@ -190,7 +190,7 @@ impl UampService {
             return Err(Error::http(400, "Missing artist in query.".into()));
         };
 
-        let cache = self.data.cache.lock().unwrap().clone();
+        let cache = self.data.cache.read().unwrap().clone();
 
         let res = lookup_image_path_rt_thread(
             self.rt.clone(),
@@ -209,7 +209,7 @@ impl UampService {
     }
 
     async fn handle_app(&self, path: &str) -> Result<MyResponse> {
-        let app_path = self.data.client.lock().unwrap().clone();
+        let app_path = self.data.client.read().unwrap().clone();
         if fs::metadata(&app_path).await?.is_dir() {
             self.handle_app_dir(&app_path, path).await
         } else {

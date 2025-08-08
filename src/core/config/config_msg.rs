@@ -51,10 +51,10 @@ impl UampApp {
 
                 if !reload_server && let Some(ref d) = self.jobs.server {
                     if conf.cache_path() != self.config.cache_path() {
-                        *d.cache.lock().unwrap() = conf.cache_path().clone();
+                        *d.cache.write().unwrap() = conf.cache_path().clone();
                     }
                     if conf.http_client() != self.config.http_client() {
-                        *d.client.lock().unwrap() = conf.http_client().clone();
+                        *d.client.write().unwrap() = conf.http_client().clone();
                         self.client_update(SubMsg::ClientChanged);
                     }
                 }
