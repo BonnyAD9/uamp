@@ -9,6 +9,7 @@
     --primary: #3acbaf;
     /* --primary: #dddd55; */
     --fg: #eee;
+    --fg2: #ccc;
     --fg-sec: #888888;
     --fg-sec2: #666666;
 }
@@ -311,48 +312,6 @@ table.songs td .albums-preview img {
     max-width: 100%;
 }
 
-@media screen and (max-width: 1800px) {
-    .list .card {
-        flex: 1 1 calc(16.66% - 5px);
-        max-width: calc(16.66% - 5px);
-    }
-}
-
-@media screen and (max-width: 1600px) {
-    .list .card {
-        flex: 1 1 calc(20% - 5px);
-        max-width: calc(20% - 5px);
-    }
-}
-
-@media screen and (max-width: 1350px) {
-    .list .card {
-        flex: 1 1 calc(25% - 5px);
-        max-width: calc(25% - 5px);
-    }
-}
-
-@media screen and (max-width: 1100px) {
-    .list .card {
-        flex: 1 1 calc(33.33% - 5px);
-        max-width: calc(33.33% - 5px);
-    }
-}
-
-@media screen and (max-width: 875px) {
-    .list .card {
-        flex: 1 1 calc(50% - 5px);
-        max-width: calc(50% - 5px);
-    }
-}
-
-@media screen and (max-width: 630px) {
-    .list .card {
-        flex: 1 1 calc(100% - 5px);
-        max-width: calc(100% - 5px);
-    }
-}
-
 section#album-detail .info,
 section#artist-detail .info {
     display: flex;
@@ -421,6 +380,7 @@ section.bar {
     overflow: hidden;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     transition: .2s ease;
+    z-index: 20;
 }
 
 section.bar.floating {
@@ -428,6 +388,20 @@ section.bar.floating {
     left: 8px;
     width: calc(100% - 16px);
     border-radius: 10px;
+}
+
+section.bar.expanded {
+    bottom: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background-color: var(--bg-light);
+    padding: 5px;
+    padding-top: 0;
+    border-radius: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
 }
 
 section.bar>.bar-wrapper {
@@ -440,14 +414,30 @@ section.bar>.bar-wrapper {
     padding: 2px 5px;
 }
 
+section.bar.expanded>.bar-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+    justify-content: center;
+}
+
 section.bar .slider {
     width: 100%;
     height: 4px;
+    background-color: #303030;
+    border-radius: 3px;
+}
+
+section.bar.expanded .slider {
+    flex-shrink: 0;
+    max-width: 75%;
+}
+
+section.bar:not(.expanded) .slider {
     position: absolute;
     top: 0;
     left: 0;
-    background-color: #303030;
-    border-radius: 3px;
 }
 
 section.bar .slider>hr {
@@ -464,6 +454,14 @@ section.bar .info {
     overflow: hidden;
 }
 
+section.bar.expanded .info {
+    flex-direction: column;
+    height: auto;
+    max-height: calc(100% - 60px);
+    min-height: 0;
+    overflow: hidden;
+}
+
 section.bar .info .info-pic {
     padding: 3px;
     padding-top: 7px;
@@ -471,10 +469,34 @@ section.bar .info .info-pic {
     height: 100%;
 }
 
+section.bar.expanded .info .info-pic {
+    height: auto;
+    min-height: 0;
+    flex-grow: 1;
+    flex-shrink: 1;
+    padding: 10px;
+    max-width: 75%;
+}
+
 section.bar .info .info-pic img {
     height: 100%;
+    width: 100%;
     object-fit: contain;
     border-radius: 5px;
+}
+
+section.bar.expanded .info .info-pic img {
+    height: 100%;
+    width: auto;
+    max-width: 100%;
+    display: block;
+}
+
+section.bar.expanded .info>.title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
 }
 
 section.bar .info>.title h3 {
@@ -488,6 +510,10 @@ section.bar .info>.title h4 {
     font-weight: normal;
     color: #aaa;
     padding-left: 3px;
+}
+
+section.bar.expanded .info>.title h4 {
+    padding-left: 0;
 }
 
 section.bar .controls {
@@ -521,6 +547,10 @@ section.bar .volume {
     margin-right: 5px;
 }
 
+section.bar.expanded .volume {
+    display: none;
+}
+
 section.bar .volume img {
     max-width: 18px;
     max-height: 18px;
@@ -547,6 +577,61 @@ section.bar .volume>input[type="range"] {
     border: none;
     outline: none;
     accent-color: var(--primary);
+}
+
+section.bar .playlist {
+    display: none;
+    overflow: hidden;
+    overflow-y: auto;
+    max-height: 80%;
+    height: 100%;
+    margin: auto 0;
+}
+
+section.bar.expanded .playlist {
+    display: block;
+}
+
+section.bar .playlist .songs {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 80%;
+    width: 100%;
+    margin: 0 auto;
+}
+
+section.bar .backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    z-index: -1;
+    filter: blur(30px);
+    opacity: 0.4;
+    transform: scale(1.1);
+}
+
+section.bar:not(.expanded) .backdrop {
+    opacity: 0.6;
+}
+
+section.bar .playlist p {
+    color: var(--fg-sec);
+}
+
+section.bar .playlist p .title,
+section.bar .playlist p .artist {
+    color: var(--fg2);
+    padding: 0 5px;
+}
+
+section.bar .playlist .active .title,
+section.bar .playlist .active .artist {
+    color: var(--primary);
 }
 
 input[type="range"]::-webkit-slider-thumb {
@@ -717,28 +802,56 @@ section.screen#playlist .songs thead {
     display: table;
 }
 
-.button {
-    box-sizing: border-box;
-    width: 0;
-    height: 20px;
-
-    border-color: transparent transparent transparent #fff;
-    transition: 100ms all ease;
-    cursor: pointer;
-
-    border-style: solid;
-    border-width: 10px 0 10px 18px;
-    /* top, right, bottom, left */
-
-    /* Pause style */
+@media screen and (max-width: 1800px) {
+    .list .card {
+        flex: 1 1 calc(16.66% - 5px);
+        max-width: calc(16.66% - 5px);
+    }
 }
 
-.button.paused {
-    border-style: double;
-    border-width: 0px 0 0px 18px;
-    /* Shrinks triangle into two bars */
+@media screen and (max-width: 1600px) {
+    .list .card {
+        flex: 1 1 calc(20% - 5px);
+        max-width: calc(20% - 5px);
+    }
+
+    section.bar.expanded .slider {
+        max-width: 100%;
+    }
+
+    section.bar.expanded .info .info-pic {
+        max-width: 100%;
+    }
+
+    section.bar .playlist .songs {
+        max-width: 100%;
+    }
 }
 
-.button:hover {
-    border-color: transparent transparent transparent #404040;
+@media screen and (max-width: 1350px) {
+    .list .card {
+        flex: 1 1 calc(25% - 5px);
+        max-width: calc(25% - 5px);
+    }
+}
+
+@media screen and (max-width: 1100px) {
+    .list .card {
+        flex: 1 1 calc(33.33% - 5px);
+        max-width: calc(33.33% - 5px);
+    }
+}
+
+@media screen and (max-width: 875px) {
+    .list .card {
+        flex: 1 1 calc(50% - 5px);
+        max-width: calc(50% - 5px);
+    }
+}
+
+@media screen and (max-width: 630px) {
+    .list .card {
+        flex: 1 1 calc(100% - 5px);
+        max-width: calc(100% - 5px);
+    }
 }

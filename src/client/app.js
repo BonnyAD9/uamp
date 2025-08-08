@@ -207,16 +207,27 @@ class App {
         const playing = this.player.playlist.current;
         const playlistElement =
             document.querySelector('#playlist .playlist-stack tbody');
+        const barPlaylist = document.querySelector('.bar .playlist .songs')
+
         playlistElement.innerHTML = '';
+        barPlaylist.innerHTML = '';
         for (let i = 0; i < this.player.playlist.songs.length; i++) {
             const song = this.library.songs[this.player.playlist.songs[i]];
             if (song.deleted === true) continue;
 
             const row = song.getTableRow();
             row.dataset.index = i;
-            if (i === playing)
+
+            const item = song.getBarRow(i);
+            item.dataset.index = i;
+
+            if (i === playing) {
                 row.classList.add('active');
+                item.classList.add('active');
+            }
+
             playlistElement.appendChild(row);
+            barPlaylist.appendChild(item);
         }
     }
 
@@ -250,6 +261,7 @@ class App {
      */
     highlightPlaylist() {
         highlightPlaylist(this.player.playlist.current);
+        highlightBarPlaylist(this.player.playlist.current);
     }
 
     updateAll() {
