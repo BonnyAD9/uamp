@@ -196,14 +196,7 @@ class App {
             if (song.deleted === true) continue;
 
             const row = song.getTableRow();
-            row.addEventListener(
-                'click',
-                () => {
-                    const play = this.isPlaying() ? 'play' : 'pause';
-                    const push = encodeURIComponent(song.getQuery());
-                    apiCtrl(`push=${push}&pp=${play}`);
-                }
-            );
+            row.dataset.index = i;
             if (i === current)
                 row.classList.add('active');
             songsElement.appendChild(row);
@@ -386,6 +379,19 @@ class App {
         }
 
         return cloned;
+    }
+
+    libraryClick = (e) => this.genericSongsClick(e, 'any');
+    albumSongClick = (e) => this.genericSongsClick(e, this.album.getQuery());
+    artistSongClick = (e) => this.genericSongsClick(e, this.artist.getQuery());
+
+    genericSongsClick(e, query) {
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const play = this.isPlaying() ? 'play' : 'pause';
+        const encodedQuery = encodeURIComponent(query);
+        apiCtrl(`push=${encodedQuery}&pj=${row.dataset.index}&pp=${play}`);
     }
 
     playlistClick(e) {

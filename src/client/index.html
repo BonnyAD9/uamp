@@ -46,7 +46,7 @@
                         <th>T / D</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody onclick="AppSingleton.get().libraryClick(event)">
                 </tbody>
             </table>
         </section>
@@ -83,7 +83,8 @@
                         <th>T / D</th>
                     </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody onclick="AppSingleton.get().albumSongClick(event)">
+                </tbody>
             </table>
         </section>
 
@@ -126,7 +127,8 @@
                         <th>T / D</th>
                     </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody onclick="AppSingleton.get().artistSongClick(event)">
+                </tbody>
             </table>
         </section>
 
@@ -189,7 +191,9 @@
                 <hr />
             </div>
             <div class="info">
-                <img src="assets/svg/img_placeholder.svg" alt="song cover" />
+                <div class="info-pic">
+                    <img src="assets/svg/img_placeholder.svg" alt="song cover"/>
+                </div>
                 <div class="title">
                     <h3 class="ellipsis">Not Playing</h3>
                     <h4 class="ellipsis"></h4>
