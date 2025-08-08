@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    fs::create_dir_all,
+    fs::{self, create_dir_all},
     io::{Cursor, ErrorKind},
     path::{Path, PathBuf},
 };
@@ -9,6 +9,7 @@ use audiotags::Tag;
 use futures::executor::block_on;
 use image::{DynamicImage, ImageReader};
 use itertools::{Either, Itertools};
+use log::warn;
 use tokio::task::JoinHandle;
 use unidecode::unidecode;
 
@@ -16,8 +17,11 @@ use crate::core::{
     Error, Result, RtAndle,
     config::CacheSize,
     library::Song,
+    log_err,
     query::{Base, CmpType, ComposedFilter, Filter, FilterType, Query},
 };
+
+const MIN_IMG_SIZE: u64 = 125;
 
 pub fn lookup_image(
     rt_path: Either<RtAndle, &Path>,
@@ -99,7 +103,11 @@ impl ImageLookup<'_> {
         cached_path.push(self.name);
 
         if cached_path.try_exists()? {
-            return Ok((cached_path, None));
+            if cached_path.metadata()?.len() >= MIN_IMG_SIZE {
+                return Ok((cached_path, None));
+            }
+            // Invalid image, try again.
+            fs::remove_file(&cached_path)?;
         }
 
         let Some(size) = size.size() else {
@@ -292,7 +300,8 @@ impl ImageLookup<'_> {
         dst: &Path,
     ) -> Result<DynamicImage> {
         make_parent(dst)?;
-        img.to_rgb8().save(dst)?;
+        let img = img.into_rgb8().into();
+        looped_save(&img, dst)?;
         Ok(img)
     }
 
@@ -333,4 +342,22 @@ fn make_parent(p: &Path) -> Result<()> {
 
 fn simple_str(s: &str) -> String {
     unidecode(s).to_ascii_lowercase()
+}
+
+/// Save the image and verify it.
+///
+/// This is done because for some reason, the save sometimes failes.
+fn looped_save(img: &DynamicImage, dst: &Path) -> Result<()> {
+    const MAX_TRIES: usize = 4;
+
+    for i in 1..=MAX_TRIES {
+        img.save(dst)?;
+        if dst.exists() && dst.metadata()?.len() >= MIN_IMG_SIZE {
+            return Ok(());
+        }
+        warn!("Failed to save image to {} {i} times.", dst.display());
+        log_err("Failed to remove file.", fs::remove_file(dst));
+    }
+
+    Err(Error::Unexpected("Failed to save image.".into()))
 }
