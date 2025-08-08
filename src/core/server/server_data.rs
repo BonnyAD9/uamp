@@ -1,10 +1,10 @@
 use std::{
     path::PathBuf,
-    sync::{Arc, Mutex, RwLock},
+    sync::{Arc, RwLock},
 };
 
 use itertools::Either;
-use tokio::sync::{broadcast};
+use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 
 use crate::core::{config::Config, server::SubMsg};

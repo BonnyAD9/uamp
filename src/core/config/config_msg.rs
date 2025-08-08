@@ -54,7 +54,8 @@ impl UampApp {
                         *d.cache.write().unwrap() = conf.cache_path().clone();
                     }
                     if conf.http_client() != self.config.http_client() {
-                        *d.client.write().unwrap() = conf.http_client().clone();
+                        *d.client.write().unwrap() =
+                            conf.http_client().clone();
                         self.client_update(SubMsg::ClientChanged);
                     }
                 }
