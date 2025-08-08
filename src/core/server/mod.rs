@@ -1,13 +1,14 @@
 mod info;
 mod rep_msg;
 mod req_msg;
+mod server_data;
 mod snd_msg;
 mod sse_service;
 pub mod sub;
 mod sub_msg;
 mod uamp_service;
 
-use std::{path::PathBuf, pin::Pin};
+use std::pin::Pin;
 
 use futures::{
     FutureExt,
@@ -16,10 +17,7 @@ use futures::{
 };
 use hyper::{server::conn::http1, service::service_fn};
 use hyper_util::rt::TokioIo;
-use tokio::{
-    net::{TcpListener, TcpStream},
-    sync::broadcast,
-};
+use tokio::net::{TcpListener, TcpStream};
 use tokio_util::sync::CancellationToken;
 
 use crate::core::{
@@ -33,16 +31,13 @@ use crate::core::{
 pub mod client;
 
 pub use self::{
-    info::*, rep_msg::*, req_msg::*, snd_msg::*, sub_msg::*, uamp_service::*,
+    info::*, rep_msg::*, req_msg::*, server_data::*, snd_msg::*, sub_msg::*,
+    uamp_service::*,
 };
-
-const MAX_BROADCAST_CAPACITY: usize = 16;
 
 struct Server {
     rt: RtHandle,
     listener: TcpListener,
-    app_path: PathBuf,
-    cache: PathBuf,
 }
 
 impl UampApp {
@@ -53,23 +48,21 @@ impl UampApp {
             );
         }
 
-        let cancel = CancellationToken::new();
         let server = Server::new(&self.config, self.rt.clone())?;
-        let token = cancel.clone();
-        let (sub_broadcast, _) = broadcast::channel(MAX_BROADCAST_CAPACITY);
-        let brcs = sub_broadcast.clone().downgrade();
+        let srv_data = ServerData::new(&self.config);
+        let weak_data = srv_data.weak_clone();
         ctrl.task(async move {
-            Msg::Job(JobMsg::Server(server.run(brcs, token).await))
+            Msg::Job(JobMsg::Server(server.run(weak_data).await))
         });
         self.jobs.run(Job::SERVER);
-        self.jobs.server = Some((sub_broadcast, cancel));
+        self.jobs.server = Some(srv_data);
 
         Ok(())
     }
 
     pub fn client_update(&mut self, msg: SubMsg) {
-        if let Some((ref snd, _)) = self.jobs.server {
-            _ = snd.send(msg);
+        if let Some(ref d) = self.jobs.server {
+            _ = d.strong_send(msg);
         }
     }
 
@@ -77,22 +70,22 @@ impl UampApp {
         &mut self,
         f: impl FnOnce(SetPlaylist) -> SubMsg,
     ) {
-        if let Some((ref snd, _)) = self.jobs.server {
-            _ = snd.send(f(SetPlaylist::new(&mut self.player)));
+        if let Some(ref d) = self.jobs.server {
+            _ = d.strong_send(f(SetPlaylist::new(&mut self.player)));
         }
     }
 
     pub fn client_update_seek(&mut self) {
-        if let Some((ref snd, _)) = self.jobs.server
+        if let Some(ref d) = self.jobs.server
             && let Some(ts) = self.player.timestamp()
         {
-            _ = snd.send(SubMsg::Seek(ts));
+            _ = d.strong_send(SubMsg::Seek(ts));
         }
     }
 
     pub fn client_update_tmp_song(&mut self, id: SongId) {
-        if let Some((ref snd, _)) = self.jobs.server {
-            _ = snd.send(SubMsg::PlayTmp(
+        if let Some(ref d) = self.jobs.server {
+            _ = d.strong_send(SubMsg::PlayTmp(
                 PlayTmp::new(self.library[id].clone(), id, &mut self.player)
                     .into(),
             ));
@@ -101,8 +94,8 @@ impl UampApp {
 
     pub fn client_update_set_all(&mut self) {
         let msg = SetAll::new(self).into();
-        if let Some((ref snd, _)) = self.jobs.server {
-            _ = snd.send(SubMsg::SetAll(msg));
+        if let Some(ref d) = self.jobs.server {
+            _ = d.strong_send(SubMsg::SetAll(msg));
         }
     }
 }
@@ -114,23 +107,14 @@ impl Server {
             conf.server_address(),
             conf.port()
         )))?;
-        Ok(Self {
-            rt,
-            listener,
-            app_path: conf.http_client().clone(),
-            cache: conf.cache_path().clone(),
-        })
+        Ok(Self { rt, listener })
     }
 
-    async fn run(
-        &self,
-        brcs: broadcast::WeakSender<SubMsg>,
-        stop: CancellationToken,
-    ) -> Result<()> {
+    async fn run(&self, data: ServerData) -> Result<()> {
         let shutdown = CancellationToken::new();
         loop {
             let (conn, _) = tokio::select!(
-                _ = stop.cancelled() => break,
+                _ = data.cancel.cancelled() => break,
                 res = self.listener.accept() => {
                     let Some(val) = log_err("Failed to accept.", res) else {
                         continue;
@@ -139,12 +123,7 @@ impl Server {
                 }
             );
 
-            let service = UampService::new(
-                self.rt.andle(),
-                brcs.clone(),
-                self.app_path.clone(),
-                self.cache.clone(),
-            );
+            let service = UampService::new(self.rt.andle(), data.clone());
             self.rt.spawn(cancellable_connection(
                 service,
                 conn,

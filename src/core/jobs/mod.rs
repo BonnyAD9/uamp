@@ -4,19 +4,16 @@ mod job_msg;
 #[cfg(unix)]
 use std::rc::Rc;
 
-use tokio::sync::broadcast;
-use tokio_util::sync::CancellationToken;
-
 #[cfg(unix)]
 use crate::core::mpris::Mpris;
-use crate::core::server::SubMsg;
+use crate::core::server::ServerData;
 
 pub use self::{job::*, job_msg::*};
 
 #[derive(Debug, Default)]
 pub struct Jobs {
     unique: Job,
-    pub server: Option<(broadcast::Sender<SubMsg>, CancellationToken)>,
+    pub server: Option<ServerData>,
     #[cfg(unix)]
     pub system_player: Option<Rc<mpris_server::Server<Mpris>>>,
 }

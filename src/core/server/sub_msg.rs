@@ -60,6 +60,8 @@ pub enum SubMsg {
     // New uamp server with different address/port will start. You should
     // reconnect to it. It may not be available immidietely.
     NewServer(NewServer),
+    // The path to the client has changed. Client should reload itself.
+    ClientChanged,
 }
 
 impl SubMsg {
@@ -93,6 +95,7 @@ impl SubMsg {
             }
             Self::PlayTmp(d) => make_event("play-tmp", d),
             Self::NewServer(d) => make_event("new-server", d),
+            Self::ClientChanged => Ok("event: client-changed\n\n".to_string()),
         }
     }
 }

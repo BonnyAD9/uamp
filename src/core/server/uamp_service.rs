@@ -1,10 +1,4 @@
-use std::{
-    borrow::Cow,
-    convert::Infallible,
-    env,
-    io::ErrorKind,
-    path::{Path, PathBuf},
-};
+use std::{borrow::Cow, convert::Infallible, env, io::ErrorKind, path::Path};
 
 use const_format::concatc;
 use futures::{
@@ -21,7 +15,6 @@ use serde::Serialize;
 use tokio::{
     fs::{self, File},
     io::AsyncRead,
-    sync::broadcast,
 };
 use tokio_tar::Archive;
 use tokio_util::codec::{BytesCodec, FramedRead};
@@ -32,7 +25,7 @@ use crate::core::{
     config::{self, CacheSize},
     library::{Song, img_lookup::lookup_image_path_rt_thread},
     query::Query,
-    server::{Info, RepMsg, ReqMsg, SubMsg, sse_service::SseService},
+    server::{Info, RepMsg, ReqMsg, ServerData, sse_service::SseService},
 };
 
 type MyBody = StreamBody<BoxStream<'static, Result<Frame<Bytes>>>>;
@@ -41,9 +34,7 @@ type MyResponse = Response<MyBody>;
 #[derive(Debug, Clone)]
 pub struct UampService {
     rt: RtAndle,
-    brcs: broadcast::WeakSender<SubMsg>,
-    app_path: PathBuf,
-    cache: PathBuf,
+    data: ServerData,
 }
 
 pub const SERVER_HEADER: &str = concatc!(
@@ -59,18 +50,8 @@ pub const SERVER_HEADER: &str = concatc!(
 pub const MAX_ACCEPT_LENGTH: usize = 1024 * 1024; // 1 MiB
 
 impl UampService {
-    pub fn new(
-        rt: RtAndle,
-        brcs: broadcast::WeakSender<SubMsg>,
-        app_path: PathBuf,
-        cache: PathBuf,
-    ) -> Self {
-        Self {
-            rt,
-            brcs,
-            app_path,
-            cache,
-        }
+    pub fn new(rt: RtAndle, data: ServerData) -> Self {
+        Self { rt, data }
     }
 
     pub async fn serve(
@@ -175,10 +156,10 @@ impl UampService {
         &self,
         _: Request<Incoming>,
     ) -> Result<MyResponse> {
-        let Some(s) = self.brcs.upgrade() else {
+        let Some(s) = self.data.make_reciever() else {
             return Err(Error::http(204, "No event source.".into()));
         };
-        let srv = SseService::new(s.subscribe(), self.rt.clone());
+        let srv = SseService::new(s, self.rt.clone());
         Ok(sse_response(srv))
     }
 
@@ -209,9 +190,11 @@ impl UampService {
             return Err(Error::http(400, "Missing artist in query.".into()));
         };
 
+        let cache = self.data.cache.lock().unwrap().clone();
+
         let res = lookup_image_path_rt_thread(
             self.rt.clone(),
-            self.cache.clone(),
+            cache,
             artist,
             album,
             size.unwrap_or_default(),
@@ -226,10 +209,11 @@ impl UampService {
     }
 
     async fn handle_app(&self, path: &str) -> Result<MyResponse> {
-        if fs::metadata(&self.app_path).await?.is_dir() {
-            self.handle_app_dir(path).await
+        let app_path = self.data.client.lock().unwrap().clone();
+        if fs::metadata(&app_path).await?.is_dir() {
+            self.handle_app_dir(&app_path, path).await
         } else {
-            self.handle_app_tar(path).await
+            self.handle_app_tar(&app_path, path).await
         }
     }
 
@@ -292,7 +276,11 @@ impl UampService {
             .map(RepMsg::Query)
     }
 
-    async fn handle_app_dir(&self, mut path: &str) -> Result<MyResponse> {
+    async fn handle_app_dir(
+        &self,
+        app_path: &Path,
+        mut path: &str,
+    ) -> Result<MyResponse> {
         path = path.strip_prefix("/").unwrap_or(path);
         let os_path = Path::new(&path);
         if os_path.components().any(|c| c.as_os_str() == "..") {
@@ -301,7 +289,7 @@ impl UampService {
                 "Relative `..` is disallowed.".into(),
             ));
         }
-        let os_path = self.app_path.join(path);
+        let os_path = app_path.join(path);
         if fs::metadata(&os_path).await?.is_dir() {
             Ok(redirect_response(
                 &path_join(["/app", path, "index.html"]),
@@ -312,11 +300,15 @@ impl UampService {
         }
     }
 
-    async fn handle_app_tar(&self, mut path: &str) -> Result<MyResponse> {
+    async fn handle_app_tar(
+        &self,
+        app_path: &Path,
+        mut path: &str,
+    ) -> Result<MyResponse> {
         path = path.strip_prefix('/').unwrap_or(path);
         let sec_path = path_join([path, "index.html"]);
 
-        let mut archive = Archive::new(File::open(&self.app_path).await?);
+        let mut archive = Archive::new(File::open(app_path).await?);
         let mut entry = None;
         let mut entries = archive.entries()?;
         while let Some(e) = entries.next().await {

@@ -49,6 +49,15 @@ impl UampApp {
                 let system_player_change =
                     conf.system_player() != self.config.system_player();
 
+                if !reload_server && let Some(ref d) = self.jobs.server {
+                    if conf.cache_path() != self.config.cache_path() {
+                        *d.cache.lock().unwrap() = conf.cache_path().clone();
+                    }
+                    if conf.http_client() != self.config.http_client() {
+                        *d.client.lock().unwrap() = conf.http_client().clone();
+                    }
+                }
+
                 self.player.load_config(&conf);
                 conf.force_server = self.config.force_server;
                 self.config = conf;
@@ -126,9 +135,9 @@ impl UampApp {
 
     pub fn stop_server(&mut self) {
         if self.jobs.is_running(Job::SERVER)
-            && let Some((_, stop)) = self.jobs.server.take()
+            && let Some(d) = self.jobs.server.take()
         {
-            stop.cancel();
+            d.cancel.cancel();
         }
     }
 }
