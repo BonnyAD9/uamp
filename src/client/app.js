@@ -393,17 +393,18 @@ class App {
         return cloned;
     }
 
-    libraryClick = (e) => this.genericSongsClick(e, 'any');
-    albumSongClick = (e) => this.genericSongsClick(e, this.album.getQuery());
-    artistSongClick = (e) => this.genericSongsClick(e, this.artist.getQuery());
+    libraryClick = e => this.genericSongClick(e, 'any');
+    albumSongClick = e => this.genericSongClick(e, this.album.getQuery());
+    artistSongClick = e => this.genericSongClick(e, this.artist.getQuery());
 
-    genericSongsClick(e, query) {
+    genericSongClick(e, query) {
         const row = e.target.closest('tr');
         if (!row) return;
 
+        console.log(this.library.songs[row.dataset.index]);
         const play = this.isPlaying() ? 'play' : 'pause';
         const encodedQuery = encodeURIComponent(query);
-        apiCtrl(`push=${encodedQuery}&pj=${row.dataset.index}&pp=${play}`);
+        // apiCtrl(`push=${encodedQuery}&pj=${row.dataset.index}&pp=${play}`);
     }
 
     playlistClick(e) {
@@ -420,6 +421,12 @@ class App {
 
         const play = this.isPlaying() ? 'play' : 'pause';
         apiCtrl(`${cmd}pj=${row.dataset.index}&pp=${play}`);
+    }
+
+    barPlaylistClick(e) {
+        const item = e.target.closest('.item');
+        if (!item) return;
+        apiCtrl(`pj=${item.dataset.index}`);
     }
 
     albumClick = (e) => this.genericAlbumClick(e, this.albums);

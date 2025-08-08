@@ -619,6 +619,10 @@ section.bar:not(.expanded) .backdrop {
     opacity: 0.6;
 }
 
+section.bar .playlist .item {
+    cursor: pointer;
+}
+
 section.bar .playlist p {
     color: var(--fg-sec);
 }
