@@ -185,17 +185,22 @@
 
     <section class="bar floating">
         <div class="bar-wrapper">
-            <div class="slider">
-                <hr />
-            </div>
             <div class="info">
                 <div class="info-pic">
-                    <img src="assets/svg/img_placeholder.svg" alt="song cover"/>
+                    <img 
+                        src="assets/svg/img_placeholder.svg" 
+                        alt="song cover"
+                        onclick="toggleBar()"
+                    />
                 </div>
                 <div class="title">
-                    <h3 class="ellipsis">Not Playing</h3>
+                    <h3 class="ellipsis">Not Playing...</h3>
                     <h4 class="ellipsis"></h4>
                 </div>
+            </div>
+
+            <div class="slider">
+                <hr />
             </div>
 
             <div class="controls">
@@ -274,6 +279,19 @@
                 <input type="range" min="0" max="100" id="volumeSlider">
             </div>
         </div>
+
+        <div class="playlist">
+            <div class="songs">
+                <div class="item">
+                    <p class="ellipsis">
+                        <span class="id">1</span>. <span class="title">Nico And The Niners</span> • <span class="artist">Twenty One Pilots</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <img class="backdrop" src="assets/svg/img_placeholder.svg" />
+        <!-- <img class="backdrop" src="https://www.nova-development.com/sites/default/files/color_swatches/20S-Glacier-White-3.jpg" /> -->
     </section>
 
     <template id="songs-template">
@@ -345,6 +363,15 @@
                 <div class="albums-preview"></div>
             </td>
         </tr>
+    </template>
+
+    <template id="bar-song-template">
+        <div class="item">
+            <p class="ellipsis">
+                <span class="id"></span>. <span class="title"></span> • 
+                <span class="artist"></span>
+            </p>
+        </div>
     </template>
 </body>
 

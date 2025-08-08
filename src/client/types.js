@@ -1,6 +1,7 @@
 const UNDEF_YEAR = 2147483647;
 
 const songTemplate = document.getElementById('song-template');
+const barSongTemplate = document.getElementById('bar-song-template');
 const albumTemplate = document.getElementById('album-template');
 const artistTemplate = document.getElementById('artist-template');
 
@@ -77,6 +78,22 @@ class Song {
         row.querySelector('.disc').textContent = this.disc;
 
         return row;
+    }
+
+    /**
+     * Gets bar playlist song representation
+     * @param {number} id 
+     * @return {HTMLDivElement} bar playlist song
+     */
+    getBarRow(id) {
+        const cloned = barSongTemplate.content.cloneNode(true);
+        const item = cloned.querySelector('.item');
+
+        item.querySelector('.id').textContent = id + 1;
+        item.querySelector('.title').textContent = this.title;
+        item.querySelector('.artist').textContent = this.artist;
+
+        return item;
     }
 
     /**
