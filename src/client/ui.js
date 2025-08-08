@@ -202,7 +202,7 @@ function displayAlbum(album) {
     albumInfo.querySelector('.other').textContent =
         `${other}${album.songs.length} songs`;
 
-    displaySongs(albumSongs, album.songs);
+    displaySongs(albumSongs, album.songs, false);
 }
 
 const artistInfo = document.querySelector('#artist-detail .info');
@@ -224,14 +224,19 @@ function displayArtist(artist) {
  * Displays songs in the given table
  * @param {HTMLTableElement} table - table element to display songs in
  * @param {Song[]} songs - songs to be displayed
+ * @param {boolean} icons - whether to display icons
  */
-function displaySongs(table, songs) {
+function displaySongs(table, songs, icons = true) {
     const body = table.querySelector('tbody');
     body.innerHTML = '';
 
     songs.forEach((song, i) => {
         const row = song.getTableRow();
         row.dataset.index = i;
+
+        if (!icons)
+            row.querySelector('.cover').remove();
+
         body.appendChild(row);
     });
 }
