@@ -4,8 +4,6 @@ mod job_msg;
 #[cfg(unix)]
 use std::rc::Rc;
 
-#[cfg(unix)]
-use mpris_server::LocalServer;
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 
@@ -20,7 +18,7 @@ pub struct Jobs {
     unique: Job,
     pub server: Option<(broadcast::Sender<SubMsg>, CancellationToken)>,
     #[cfg(unix)]
-    pub system_player: Option<(Rc<LocalServer<Mpris>>, CancellationToken)>,
+    pub system_player: Option<Rc<mpris_server::Server<Mpris>>>,
 }
 
 impl Jobs {

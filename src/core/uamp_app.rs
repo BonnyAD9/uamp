@@ -129,7 +129,7 @@ impl UampApp {
         app.state = state;
 
         if app.config.system_player() {
-            app.enable_system_player(ctrl);
+            app.enable_system_player();
         }
 
         Ok(app)
@@ -187,9 +187,9 @@ impl UampApp {
         }
     }
 
-    pub(super) fn enable_system_player(&mut self, ctrl: &mut AppCtrl) {
+    pub(super) fn enable_system_player(&mut self) {
         #[cfg(unix)]
-        self.start_mpris(ctrl);
+        self.start_mpris();
     }
 
     pub(super) fn disable_system_player(&mut self) {

@@ -55,7 +55,7 @@ impl UampApp {
 
                 if system_player_change {
                     if self.config.system_player() {
-                        self.enable_system_player(ctrl);
+                        self.enable_system_player();
                     } else {
                         self.disable_system_player();
                     }

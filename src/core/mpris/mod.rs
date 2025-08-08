@@ -1,14 +1,14 @@
 use std::time::Duration;
 
 use mpris_server::{
-    LocalPlayerInterface, LocalRootInterface, LoopStatus, Metadata,
-    PlaybackRate, PlaybackStatus, Time, TrackId, Volume,
+    LoopStatus, Metadata, PlaybackRate, PlaybackStatus, PlayerInterface,
+    RootInterface, Time, TrackId, Volume,
     zbus::{self, fdo},
 };
 
 use crate::{
     core::{
-        ControlMsg, DataControlMsg, Msg, Result, RtHandle, UampApp,
+        ControlMsg, DataControlMsg, Msg, Result, RtAndle, UampApp,
         config::{self, CacheSize},
         player::Playback,
     },
@@ -18,11 +18,11 @@ use crate::{
 mod app_impl;
 
 pub struct Mpris {
-    rt: RtHandle,
+    rt: RtAndle,
 }
 
 impl Mpris {
-    pub fn new(rt: RtHandle) -> Self {
+    pub fn new(rt: RtAndle) -> Self {
         Self { rt }
     }
 
@@ -56,7 +56,7 @@ impl Mpris {
     }
 }
 
-impl LocalRootInterface for Mpris {
+impl RootInterface for Mpris {
     async fn raise(&self) -> fdo::Result<()> {
         Ok(())
     }
@@ -121,7 +121,7 @@ impl LocalRootInterface for Mpris {
     }
 }
 
-impl LocalPlayerInterface for Mpris {
+impl PlayerInterface for Mpris {
     async fn next(&self) -> fdo::Result<()> {
         self.send_msg(Msg::Control(ControlMsg::NextSong(1))).await
     }
