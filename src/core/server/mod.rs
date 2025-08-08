@@ -113,7 +113,7 @@ impl Server {
     async fn run(&self, data: ServerData) -> Result<()> {
         let shutdown = CancellationToken::new();
         loop {
-            let (conn, _) = tokio::select!(
+            let (conn, peer) = tokio::select!(
                 _ = data.cancel.cancelled() => break,
                 res = self.listener.accept() => {
                     let Some(val) = log_err("Failed to accept.", res) else {
@@ -123,7 +123,8 @@ impl Server {
                 }
             );
 
-            let service = UampService::new(self.rt.andle(), data.clone());
+            let service =
+                UampService::new(self.rt.andle(), data.clone(), peer);
             self.rt.spawn(cancellable_connection(
                 service,
                 conn,

@@ -27,7 +27,7 @@ impl ServerData {
             sender: Either::Left(sender),
             cancel: CancellationToken::new(),
             cache: Arc::new(conf.cache_path().clone().into()),
-            client: Arc::new(conf.http_client().clone().into()),
+            client: Arc::new(conf.skin().clone().into()),
         }
     }
 

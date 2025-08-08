@@ -3,7 +3,7 @@ use serde::Serialize;
 
 use crate::core::{
     UampApp,
-    server::sub::{Library, Player},
+    server::sub::{Config, Library, Player},
 };
 
 #[derive(Debug, Clone, Serialize)]
@@ -11,6 +11,7 @@ pub struct SetAll {
     library: Library,
     player: Player,
     position: Option<Timestamp>,
+    config: Config,
 }
 
 impl SetAll {
@@ -19,6 +20,7 @@ impl SetAll {
             library: Library::new(&mut app.library),
             player: Player::new(&mut app.player),
             position: app.player.timestamp(),
+            config: Config::new(&app.config),
         }
     }
 }

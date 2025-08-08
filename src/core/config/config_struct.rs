@@ -121,7 +121,7 @@ gen_struct! {
             update::DEFAULT_REMOTE.to_owned()
         },
 
-        http_client: PathBuf { pub, pub } => pub(super) () {
+        skin: PathBuf { pub, pub } => pub(super) () {
             default_http_client_path()
         },
 
@@ -268,7 +268,7 @@ impl Config {
             system_player: default_system_player(),
             auto_restart: default_auto_restart(),
             force_server: None,
-            http_client: default_http_client(),
+            skin: default_skin(),
             change: Cell::new(true),
         }
     }

@@ -1,4 +1,7 @@
-use std::{borrow::Cow, convert::Infallible, env, io::ErrorKind, path::Path};
+use std::{
+    borrow::Cow, convert::Infallible, env, io::ErrorKind, net::SocketAddr,
+    path::Path,
+};
 
 use const_format::concatc;
 use futures::{
@@ -21,7 +24,7 @@ use tokio_util::codec::{BytesCodec, FramedRead};
 use url::Url;
 
 use crate::core::{
-    AnyControlMsg, Error, Msg, Result, RtAndle, UampApp,
+    AnyControlMsg, Error, IdControlMsg, Msg, Result, RtAndle, UampApp,
     config::{self, CacheSize},
     library::{Song, img_lookup::lookup_image_path_rt_thread},
     query::Query,
@@ -35,6 +38,7 @@ type MyResponse = Response<MyBody>;
 pub struct UampService {
     rt: RtAndle,
     data: ServerData,
+    peer: SocketAddr,
 }
 
 pub const SERVER_HEADER: &str = concatc!(
@@ -50,8 +54,8 @@ pub const SERVER_HEADER: &str = concatc!(
 pub const MAX_ACCEPT_LENGTH: usize = 1024 * 1024; // 1 MiB
 
 impl UampService {
-    pub fn new(rt: RtAndle, data: ServerData) -> Self {
-        Self { rt, data }
+    pub fn new(rt: RtAndle, data: ServerData, peer: SocketAddr) -> Self {
+        Self { rt, data, peer }
     }
 
     pub async fn serve(
@@ -249,6 +253,15 @@ impl UampService {
         }
 
         let msg = serde_json::from_slice(&data)?;
+
+        if matches!(msg, IdControlMsg::SetConfig(_))
+            && !self.peer.ip().is_loopback()
+        {
+            return Err(Error::http(
+                403,
+                "Only loopback is allowed to modify settings.".into(),
+            ));
+        }
 
         self.rt.msg_result(Msg::IdControl(msg)).await?;
 

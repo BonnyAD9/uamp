@@ -8,7 +8,7 @@ use crate::core::{
     library::SongId,
     player::{AddPolicy, Playback},
     server::sub::{
-        NewServer, PlayTmp, PlaylistJump, PopPlaylist, PopSetPlaylist,
+        Config, NewServer, PlayTmp, PlaylistJump, PopPlaylist, PopSetPlaylist,
         ReorderPlaylistStack, SetAll, SetPlaylist,
     },
 };
@@ -62,6 +62,8 @@ pub enum SubMsg {
     NewServer(NewServer),
     // The path to the client has changed. Client should reload itself.
     ClientChanged,
+    // The uamp configuration has changed
+    ConfigChanged(Arc<Config>),
 }
 
 impl SubMsg {
@@ -96,6 +98,7 @@ impl SubMsg {
             Self::PlayTmp(d) => make_event("play-tmp", d),
             Self::NewServer(d) => make_event("new-server", d),
             Self::ClientChanged => Ok("event: client-changed\n\n".to_string()),
+            Self::ConfigChanged(d) => make_event("config-changed", d),
         }
     }
 }

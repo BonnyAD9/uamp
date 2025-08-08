@@ -1,7 +1,11 @@
 use serde::Deserialize;
 
 use crate::core::{
-    Msg, Result, UampApp, library::SongId, player::Playlist, server::SubMsg,
+    Msg, Result, UampApp,
+    config::ConfigMsg,
+    library::SongId,
+    player::Playlist,
+    server::{SubMsg, sub},
 };
 
 #[derive(Debug, Deserialize)]
@@ -16,6 +20,7 @@ pub enum IdControlMsg {
         position: usize,
         play: bool,
     },
+    SetConfig(Box<sub::Config>),
 }
 
 impl UampApp {
@@ -53,6 +58,9 @@ impl UampApp {
                 self.client_update_set_playlist(|a| {
                     SubMsg::PushPlaylist(a.into())
                 });
+            }
+            IdControlMsg::SetConfig(cfg) => {
+                return Ok(vec![ConfigMsg::Set(cfg).into()]);
             }
         }
         Ok(vec![])
