@@ -16,7 +16,7 @@ use hyper::{
     Method, Request, Response, Uri,
     body::{Bytes, Frame, Incoming},
 };
-use pareg::FromArg;
+use pareg::{ArgInto, FromArg};
 use serde::Serialize;
 use tokio::{
     fs::{self, File},
@@ -189,11 +189,15 @@ impl UampService {
         let url = uri_to_url(req.uri())?;
         let mut album = None;
         let mut artist = None;
+        let mut size: Option<CacheSize> = None;
+        let mut or = None;
 
         for (k, v) in url.query_pairs() {
             match k.as_ref() {
                 "artist" => artist = Some(v.into_owned()),
                 "album" => album = Some(v.into_owned()),
+                "size" => size = Some(v.arg_into()?),
+                "or" => or = Some(v.into_owned()),
                 _ => {}
             };
         }
@@ -205,16 +209,20 @@ impl UampService {
             return Err(Error::http(400, "Missing artist in query.".into()));
         };
 
-        let img_path = lookup_image_path_rt_thread(
+        let res = lookup_image_path_rt_thread(
             self.rt.clone(),
             self.cache.clone(),
             artist,
             album,
-            CacheSize::Full,
+            size.unwrap_or_default(),
         )
-        .await??;
+        .await?;
 
-        file_response(img_path).await
+        match (res, or) {
+            (Ok(r), _) => file_response(r).await,
+            (Err(_), Some(o)) => Ok(redirect_response(&o, false)),
+            (Err(e), _) => Err(e),
+        }
     }
 
     async fn handle_app(&self, path: &str) -> Result<MyResponse> {
@@ -295,7 +303,10 @@ impl UampService {
         }
         let os_path = self.app_path.join(path);
         if fs::metadata(&os_path).await?.is_dir() {
-            Ok(redirect_response(&path_join(["/app", path, "index.html"])))
+            Ok(redirect_response(
+                &path_join(["/app", path, "index.html"]),
+                true,
+            ))
         } else {
             file_response(os_path).await
         }
@@ -317,7 +328,10 @@ impl UampService {
             }
             dbg!(&epath);
             if epath == Path::new(sec_path.as_str()) {
-                return Ok(redirect_response(&path_join(["/app", &sec_path])));
+                return Ok(redirect_response(
+                    &path_join(["/app", &sec_path]),
+                    true,
+                ));
             }
         }
 
@@ -476,9 +490,9 @@ fn reader_response(
         .expect("Failed to generate reader response. This shouldn't happen.")
 }
 
-fn redirect_response(path: &str) -> MyResponse {
+fn redirect_response(path: &str, permanent: bool) -> MyResponse {
     Response::builder()
-        .status(301)
+        .status(if permanent { 301 } else { 302 })
         .header("Location", path)
         .header("Server", SERVER_HEADER)
         .body(empty_body())

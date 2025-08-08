@@ -108,7 +108,9 @@ impl ImageLookup<'_> {
 
         let img = match self.lookup(CacheSize::Full)? {
             (path, None) => self.cache_path_to(&path, &cached_path, size)?,
-            (_, Some(img)) => self.cache_img_to(img, &cached_path, size)?,
+            (path, Some(img)) => {
+                self.cache_img_to(img, &path, &cached_path, size)?
+            }
         };
 
         Ok((cached_path, Some(img)))
@@ -227,7 +229,7 @@ impl ImageLookup<'_> {
 
         Ok(Some((
             cache_to.to_owned(),
-            self.write_path_to(&path, cache_to)?,
+            self.write_path_to(&path, None, cache_to)?,
         )))
     }
 
@@ -254,15 +256,21 @@ impl ImageLookup<'_> {
         size: usize,
     ) -> Result<DynamicImage> {
         let img = ImageReader::open(src)?.decode()?;
-        self.cache_img_to(img, dst, size)
+        self.cache_img_to(img, src, dst, size)
     }
 
     fn cache_img_to(
         &self,
         img: DynamicImage,
+        src_path: &Path,
         dst: &Path,
         size: usize,
     ) -> Result<DynamicImage> {
+        // Don't upscale images
+        if (img.width().max(img.height()) as usize) < size {
+            return Ok(self.write_path_to(src_path, Some(img), dst)?.unwrap());
+        }
+
         let (w, h) = if img.width() > img.height() {
             (size, img.height() as usize * size / img.width() as usize)
         } else {
@@ -284,18 +292,23 @@ impl ImageLookup<'_> {
         dst: &Path,
     ) -> Result<DynamicImage> {
         make_parent(dst)?;
-        img.save(dst)?;
+        img.to_rgb8().save(dst)?;
         Ok(img)
     }
 
     fn write_path_to(
         &self,
         path: &Path,
+        img: Option<DynamicImage>,
         dst: &Path,
     ) -> Result<Option<DynamicImage>> {
         if path.extension() != dst.extension() {
-            let img = ImageReader::open(path)?.decode()?;
-            return Ok(Some(self.write_image_to(img, dst)?));
+            return if let Some(img) = img {
+                Ok(Some(self.write_image_to(img, dst)?))
+            } else {
+                let img = ImageReader::open(path)?.decode()?;
+                Ok(Some(self.write_image_to(img, dst)?))
+            };
         }
         let dst = dst.with_extension(path.extension().unwrap_or_default());
         make_parent(&dst)?;

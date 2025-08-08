@@ -1,10 +1,17 @@
 use std::fmt::Display;
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+use pareg::FromArg;
+
+#[derive(Copy, Clone, PartialEq, Eq, Default, FromArg)]
 pub enum CacheSize {
-    S128 = 7,
-    S256 = 8,
+    #[default]
     Full = 0,
+    #[arg("64")]
+    S64 = 6,
+    #[arg("128")]
+    S128 = 7,
+    #[arg("256")]
+    S256 = 8,
 }
 
 impl CacheSize {
