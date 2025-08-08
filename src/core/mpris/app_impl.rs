@@ -105,7 +105,7 @@ impl UampApp {
         );
         properties.extend(
             song.is_some()
-                .then(|| Property::Metadata(mpris::metadata(self))),
+                .then(|| Property::Metadata(mpris::metadata(self, false).0)),
         );
         properties.extend(volume.map(|v| Property::Volume(v as f64)));
         properties.extend(can_go_next.map(Property::CanGoNext));
