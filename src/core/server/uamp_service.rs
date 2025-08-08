@@ -483,6 +483,7 @@ fn reader_response(
         .status(200)
         .header("Content-Type", mime)
         .header("Accept-CH", "Sec-CH-Width")
+        .header("Permissions-Policy", "ch-width(self)")
         .header("Server", SERVER_HEADER)
         .body(StreamBody::new(
             stream::unfold(fr, |mut fr| async move {
