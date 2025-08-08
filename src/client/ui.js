@@ -19,6 +19,7 @@ function updatePlayBtn(playing) {
 const songIcon = document.querySelector('.bar .info img');
 const songTitle = document.querySelector('.bar .info .title h3');
 const songArtist = document.querySelector('.bar .info .title h4');
+const barBackdrop = document.querySelector('.bar .backdrop');
 /**
  * Updates the currently playing song info
  * @param {?Song} song - currently playing song
@@ -26,10 +27,12 @@ const songArtist = document.querySelector('.bar .info .title h4');
 function updateCurrent(song) {
     if (song === null) {
         songTitle.textContent = 'Not Playing...';
+        songArtist.textContent = '';
         return;
     }
 
-    songIcon.src = Album.getCover(song.artist, song.album, 64);
+    songIcon.src = Album.getCover(song.artist, song.album);
+    barBackdrop.src = Album.getCover(song.artist, song.album, 64);
     songTitle.textContent = song.title;
     songArtist.textContent = song.artist;
 }
@@ -73,6 +76,16 @@ function highlightPlaylist(index) {
     const table = document.querySelector('#playlist .playlist-stack tbody');
     const rows = table.querySelectorAll('tr');
     this.highlightPlaying(index, rows);
+}
+
+const barPlaylist = document.querySelector('.bar .playlist .songs');
+/**
+ * Highlights songs with given index in the playlist
+ * @param {?number} index - song index in the playlist
+ */
+function highlightBarPlaylist(index) {
+    const items = barPlaylist.querySelectorAll('.item');
+    this.highlightPlaying(index, items);
 }
 
 /**
@@ -253,4 +266,8 @@ function displayAlbums(list, albums) {
         card.dataset.index = i;
         list.appendChild(card);
     });
+}
+
+function toggleBar() {
+    bar.classList.toggle('expanded');
 }
