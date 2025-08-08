@@ -356,7 +356,7 @@ table.songs td .albums-preview img {
 section#album-detail .info,
 section#artist-detail .info {
     display: flex;
-    gap: 5px;
+    gap: 10px;
     height: 250px;
     padding-top: 5px;
 }
@@ -368,6 +368,7 @@ section#artist-detail .info {
 section#album-detail .info img {
     max-height: 100%;
     object-fit: contain;
+    border-radius: 5px;
 }
 
 section#album-detail .info .details,
@@ -403,6 +404,10 @@ section#artist-detail h3 {
     margin-bottom: 5px;
     font-weight: normal;
     font-size: 20px;
+}
+
+section#album-detail .songs {
+    margin-top: 5px;
 }
 
 section.bar {
