@@ -421,6 +421,7 @@ fn err_response(err: Error) -> MyResponse {
 
     Response::builder()
         .status(code)
+        .header("Content-Type", "text/plain; charset=UTF-8")
         .header("Server", SERVER_HEADER)
         .body(string_body(msg))
         .expect("Failed to generate error response. This shouldn't happen.")
@@ -429,7 +430,7 @@ fn err_response(err: Error) -> MyResponse {
 fn string_response(s: impl Into<Cow<'static, str>>) -> MyResponse {
     Response::builder()
         .status(200)
-        .header("Content-Type", "text/plain")
+        .header("Content-Type", "text/plain; charset=UTF-8")
         .header("Server", SERVER_HEADER)
         .body(string_body(s))
         .expect("Failed to generate string response. This shouldn't happen.")
