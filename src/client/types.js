@@ -65,7 +65,8 @@ class Song {
         const cloned = songTemplate.content.cloneNode(true);
         const row = cloned.querySelector('tr');
 
-        row.querySelector('img').src = Album.getCover(this.artist, this.album);
+        row.querySelector('img').src =
+            Album.getCover(this.artist, this.album);
         row.querySelector('.title').textContent = this.title;
         row.querySelector('.author').textContent = this.artist;
         row.querySelector('.album').textContent = this.album;
@@ -140,7 +141,8 @@ class Album {
      */
     static getCover(artist, album) {
         return `/api/img?artist=${encodeURIComponent(artist)}&album=` +
-            `${encodeURIComponent(album)}`;
+            `${encodeURIComponent(album)}&or=` +
+            encodeURIComponent('/app/assets/svg/img_placeholder.svg');
     }
 }
 
@@ -181,9 +183,6 @@ class Artist {
             const img = document.createElement('img');
             img.src = Album.getCover(album.artist, album.name);
             img.title = album.name;
-            img.onerror = function () {
-                imgFallback(this);
-            };
             img.dataset.index = i;
             albums.appendChild(img);
         });
