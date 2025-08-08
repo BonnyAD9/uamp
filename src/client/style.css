@@ -459,10 +459,14 @@ section.bar .info {
     overflow: hidden;
 }
 
-section.bar .info img {
+section.bar .info .info-pic {
     padding: 3px;
     padding-top: 7px;
     box-sizing: border-box;
+    height: 100%;
+}
+
+section.bar .info .info-pic img {
     height: 100%;
     object-fit: contain;
     border-radius: 5px;

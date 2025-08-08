@@ -29,7 +29,7 @@ function updateCurrent(song) {
         return;
     }
 
-    songIcon.src = Album.getCover(song.artist, song.album);
+    songIcon.src = Album.getCover(song.artist, song.album, 64);
     songTitle.textContent = song.title;
     songArtist.textContent = song.artist;
 }
@@ -229,9 +229,11 @@ function displaySongs(table, songs) {
     const body = table.querySelector('tbody');
     body.innerHTML = '';
 
-    for (const song of songs) {
-        body.appendChild(song.getTableRow());
-    }
+    songs.forEach((song, i) => {
+        const row = song.getTableRow();
+        row.dataset.index = i;
+        body.appendChild(row);
+    });
 }
 
 /**

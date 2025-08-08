@@ -66,7 +66,7 @@ class Song {
         const row = cloned.querySelector('tr');
 
         row.querySelector('img').src =
-            Album.getCover(this.artist, this.album);
+            Album.getCover(this.artist, this.album, 64);
         row.querySelector('.title').textContent = this.title;
         row.querySelector('.author').textContent = this.artist;
         row.querySelector('.album').textContent = this.album;
@@ -134,15 +134,27 @@ class Album {
     }
 
     /**
+     * Gets uamp query for filtering the album
+     * @returns uamp query string
+     */
+    getQuery() {
+        const s = (text) => text.replaceAll('/', '//');
+        return `p=/${s(this.artist)}/.a=/${s(this.name)}/@/t`;
+    }
+
+    /**
      * Gets the API URL to get the album cover
      * @param {string} artist
      * @param {string} album
      * @return {string} API URL
      */
-    static getCover(artist, album) {
-        return `/api/img?artist=${encodeURIComponent(artist)}&album=` +
+    static getCover(artist, album, size = null) {
+        let req = `/api/img?artist=${encodeURIComponent(artist)}&album=` +
             `${encodeURIComponent(album)}&or=` +
             encodeURIComponent('/app/assets/svg/img_placeholder.svg');
+        if (size !== null)
+            req += `&size=${size}`;
+        return req;
     }
 }
 
@@ -181,13 +193,22 @@ class Artist {
         const albums = row.querySelector('.albums-preview');
         this.albums.forEach((album, i) => {
             const img = document.createElement('img');
-            img.src = Album.getCover(album.artist, album.name);
+            img.src = Album.getCover(album.artist, album.name, 64);
             img.title = album.name;
             img.dataset.index = i;
             albums.appendChild(img);
         });
 
         return row;
+    }
+
+    /**
+     * Gets uamp query for filtering the artist
+     * @returns uamp query string
+     */
+    getQuery() {
+        const s = (text) => text.replaceAll('/', '//');
+        return `p=/${s(this.name)}/`;
     }
 }
 
