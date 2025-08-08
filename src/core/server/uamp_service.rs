@@ -209,6 +209,13 @@ impl UampService {
             return Err(Error::http(400, "Missing artist in query.".into()));
         };
 
+        if size.is_none()
+            && let Some(h) = req.headers().get("Sec-CH-Width")
+        {
+            let s = String::from_utf8_lossy(h.as_bytes());
+            size = s.parse().ok().map(CacheSize::for_size);
+        }
+
         let res = lookup_image_path_rt_thread(
             self.rt.clone(),
             self.cache.clone(),

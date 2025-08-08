@@ -22,6 +22,15 @@ impl CacheSize {
             Some(1 << *self as usize)
         }
     }
+
+    pub fn for_size(s: usize) -> Self {
+        match s {
+            ..=64 => Self::S64,
+            65..=128 => Self::S128,
+            129..=256 => Self::S256,
+            _ => Self::Full,
+        }
+    }
 }
 
 impl Display for CacheSize {
