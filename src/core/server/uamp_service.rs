@@ -210,7 +210,10 @@ impl UampService {
         };
 
         if size.is_none()
-            && let Some(h) = req.headers().get("Sec-CH-Width")
+            && let Some(h) = req
+                .headers()
+                .get("Sec-CH-Width")
+                .or_else(|| req.headers().get("Width"))
         {
             let s = String::from_utf8_lossy(h.as_bytes());
             size = s.parse().ok().map(CacheSize::for_size);
@@ -482,7 +485,7 @@ fn reader_response(
     Response::builder()
         .status(200)
         .header("Content-Type", mime)
-        .header("Accept-CH", "Sec-CH-Width")
+        .header("Accept-CH", "Sec-CH-Width, Width")
         .header("Permissions-Policy", "ch-width(self)")
         .header("Server", SERVER_HEADER)
         .body(StreamBody::new(
