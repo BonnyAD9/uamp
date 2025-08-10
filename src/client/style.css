@@ -452,6 +452,7 @@ section.bar .info {
     gap: 5px;
     height: 100%;
     overflow: hidden;
+    cursor: pointer;
 }
 
 section.bar.expanded .info {
