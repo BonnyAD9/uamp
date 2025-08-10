@@ -476,6 +476,7 @@ section.bar.expanded .info .info-pic {
     flex-shrink: 1;
     padding: 10px;
     max-width: 75%;
+    width: 100%;
 }
 
 section.bar .info .info-pic img {
@@ -487,6 +488,7 @@ section.bar .info .info-pic img {
 
 section.bar.expanded .info .info-pic img {
     height: 100%;
+    width: 100%;
     width: auto;
     max-width: 100%;
     display: block;
