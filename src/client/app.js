@@ -16,8 +16,10 @@ class App {
 
         this.playlistTab = 0;
 
+        this.songs = [];
         this.albums = [];
         this.artists = [];
+
         this.album = null;
         this.artist = null;
 
@@ -191,9 +193,9 @@ class App {
             playing !== null ? this.player.playlist.songs[playing] : null;
 
         songsElement.innerHTML = '';
-        for (let i = 0; i < this.library.songs.length; i++) {
-            const song = this.library.songs[i];
-            if (song.deleted === true) continue;
+        for (let i = 0; i < this.songs.length; i++) {
+            const song = this.songs[i];
+            // if (song.deleted === true) continue;
 
             const row = song.getTableRow();
             row.dataset.index = i;
@@ -250,10 +252,15 @@ class App {
      * Highlights currently playing song in the library
      */
     highlightLibrary() {
-        const playing = this.player.playlist.current;
-        const current =
-            playing !== null ? this.player.playlist.songs[playing] : null;
-        highlightLibrary(current);
+        const song = this.getPlaying();
+
+        const rows = document.querySelectorAll('#library .songs tbody tr');
+        for (const row of rows) {
+            row.classList.remove('active');
+            if (song === this.songs[row.dataset.index]) {
+                row.classList.add('active');
+            }
+        }
     }
 
     /**
@@ -401,10 +408,8 @@ class App {
         const row = e.target.closest('tr');
         if (!row) return;
 
-        console.log(this.library.songs[row.dataset.index]);
-        const play = this.isPlaying() ? 'play' : 'pause';
         const encodedQuery = encodeURIComponent(query);
-        // apiCtrl(`push=${encodedQuery}&pj=${row.dataset.index}&pp=${play}`);
+        apiCtrl(`sp=${encodedQuery}&pj=${row.dataset.index}&pp=play`);
     }
 
     playlistClick(e) {
@@ -419,8 +424,7 @@ class App {
             cmd = `rps=${this.playlistTab}&`;
         }
 
-        const play = this.isPlaying() ? 'play' : 'pause';
-        apiCtrl(`${cmd}pj=${row.dataset.index}&pp=${play}`);
+        apiCtrl(`${cmd}pj=${row.dataset.index}&pp=play`);
     }
 
     barPlaylistClick(e) {
@@ -467,6 +471,7 @@ class App {
         for (const song of this.library.songs) {
             if (song.deleted) continue;
 
+            this.songs.push(song);
             const artistKey = song.artist.trim().toLowerCase();
             if (!artists.has(artistKey)) {
                 artists.set(artistKey, new Artist(song.artist));
@@ -490,6 +495,7 @@ class App {
         this.albums.forEach(album => album.sortByTrack());
 
         this.artists = Array.from(artists.values());
+        this.artists.sort((a, b) => a.name.localeCompare(b.name));
     }
 }
 
