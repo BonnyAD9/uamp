@@ -16,7 +16,7 @@ function updatePlayBtn(playing) {
     }
 }
 
-const songIcon = document.querySelector('.bar .info img');
+const songIcon = document.querySelector('.bar .info .info-pic img');
 const songTitle = document.querySelector('.bar .info .title h3');
 const songArtist = document.querySelector('.bar .info .title h4');
 const barBackdrop = document.querySelector('.bar .backdrop');

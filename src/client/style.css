@@ -204,7 +204,7 @@ table.songs thead::after {
 }
 
 table.songs th {
-    color: #888;
+    color: var(--fg-sec);
     font-weight: normal;
     text-align: left;
     text-transform: uppercase;
@@ -425,7 +425,7 @@ section.bar.expanded>.bar-wrapper {
 section.bar .slider {
     width: 100%;
     height: 4px;
-    background-color: #303030;
+    background-color: var(--bg-lighter);
     border-radius: 3px;
 }
 
@@ -504,13 +504,13 @@ section.bar.expanded .info>.title {
 section.bar .info>.title h3 {
     font-size: 15px;
     font-weight: normal;
-    color: #fff;
+    color: var(--fg);
 }
 
 section.bar .info>.title h4 {
     font-size: 11px;
     font-weight: normal;
-    color: #aaa;
+    color: var(--fg2);
     padding-left: 3px;
 }
 
@@ -586,7 +586,6 @@ section.bar .playlist {
     overflow: hidden;
     overflow-y: auto;
     max-height: 80%;
-    height: 100%;
     margin: auto 0;
 }
 
