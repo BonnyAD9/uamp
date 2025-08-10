@@ -227,6 +227,10 @@ class Artist {
         const s = (text) => text.replaceAll('/', '//');
         return `p=/${s(this.name)}/`;
     }
+
+    sortAlbums() {
+        this.albums.sort((a, b) => a.year - b.year);
+    }
 }
 
 class Timestamp {
