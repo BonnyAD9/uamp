@@ -496,6 +496,7 @@ class App {
 
         this.artists = Array.from(artists.values());
         this.artists.sort((a, b) => a.name.localeCompare(b.name));
+        this.artists.forEach(artist => artist.sortAlbums());
     }
 }
 
