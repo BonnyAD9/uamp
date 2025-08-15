@@ -136,6 +136,13 @@ eventSource.addEventListener('new-server', e => {
     }, 1000);
 });
 
+eventSource.addEventListener('client-changed', _ => window.location.reload());
+
+eventSource.addEventListener('config-changed', e => {
+    const app = AppSingleton.get();
+    app.config = JSON.parse(e.data);
+});
+
 function playlistJumpEvent(app, data) {
     app.setCurrent(data.position);
     app.setPlayback(data.playback);
