@@ -10,6 +10,7 @@ class App {
         };
         this.player = data.player;
         this.position = data.position && Timestamp.from(data.position);
+        this.config = data.config;
 
         this.lastUpdate = performance.now();
         this.rafId = null;

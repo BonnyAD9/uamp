@@ -252,7 +252,8 @@ table.songs td>p,
 }
 
 table.songs td>span,
-.list .card>.details>span {
+.list .card>.details>span,
+.switch-setting>div>span {
     color: var(--fg-sec);
     font-size: 11px;
     padding-left: 3px;
