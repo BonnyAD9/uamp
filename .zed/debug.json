@@ -18,6 +18,6 @@
       "args": ["build"]
     },
     "program": "$ZED_WORKTREE_ROOT/target/debug/uamp",
-    "args": ["i", "ps=0", "ps=0"]
+    "args": ["i", "load-songs"]
   }
 ]
