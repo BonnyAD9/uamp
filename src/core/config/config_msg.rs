@@ -165,13 +165,15 @@ impl UampApp {
         let system_player_change =
             conf.system_player() != self.config.system_player();
 
+        let mut skin_change = false;
+
         if !reload_server && let Some(ref d) = self.jobs.server {
             if conf.cache_path() != self.config.cache_path() {
                 *d.cache.write().unwrap() = conf.cache_path().clone();
             }
             if conf.skin() != self.config.skin() {
                 *d.client.write().unwrap() = conf.skin().clone();
-                self.client_update(SubMsg::ClientChanged);
+                skin_change = true;
             }
         }
 
@@ -190,6 +192,10 @@ impl UampApp {
         if reload_server {
             self.reload_server(ctrl)
                 .map_err(|e| e.prepend("Failed to reload server."))?;
+        }
+
+        if skin_change {
+            self.client_update(SubMsg::ClientChanged);
         }
 
         self.client_update(SubMsg::ConfigChanged(
