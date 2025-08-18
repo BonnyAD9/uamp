@@ -19,6 +19,7 @@
 - Properly shutdown connections when server stops.
 - Fix `rps` message.
 - Properly return errors from control messages.
+- Fix `load-songs` message.
 
 ## v0.5.13
 ### New features
