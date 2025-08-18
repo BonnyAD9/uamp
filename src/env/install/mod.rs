@@ -1,10 +1,11 @@
 use std::{ffi::OsStr, fs, path::Path, process::Command};
 
-use crate::core::{ErrCtx, Error, Result};
+use crate::core::{ErrCtx, Error, Result, config};
 
 mod update;
 mod update_mode;
 
+use termal::printcln;
 pub use update::*;
 pub use update_mode::*;
 
@@ -58,6 +59,11 @@ pub fn install(root: &Path, exe: &Path, man: bool) -> Result<()> {
         fs::copy(man1, "/usr/share/man/man1/uamp.1.gz")?;
         fs::copy(man5, "/usr/share/man/man1/uamp.5.gz")?;
     }
+
+    printcln!(
+        "{'g}Success!{'_} uamp v{} is installed.",
+        config::VERSION_STR
+    );
 
     Ok(())
 }
