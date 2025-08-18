@@ -21,8 +21,10 @@ pub const INSTALL_MANPAGES: bool = true;
 #[cfg(not(unix))]
 pub const INSTALL_MANPAGES: bool = false;
 
-pub fn install(root: &Path, exe: &Path, man: bool) -> Result<()> {
-    let exe = root.join(exe.strip_prefix("/").unwrap_or(exe));
+pub fn install(root: Option<&Path>, exe: &Path, man: bool) -> Result<()> {
+    let exe = root
+        .map(|r| r.join(exe.strip_prefix("/").unwrap_or(exe)))
+        .unwrap_or_else(|| exe.to_path_buf());
     if exe.exists() {
         println!("Uamp is already installed, using tmp file for move.");
         let tmpexe = exe.join(".tmp");

@@ -74,8 +74,6 @@ fn update(remote: &str, commit: &str, manapges: bool) -> Result<()> {
             .args([
                 "internal",
                 "install",
-                "--root",
-                "/",
                 "--man",
                 &manapges.to_string(),
                 "--exe",
