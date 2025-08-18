@@ -7,7 +7,7 @@ use crate::{
         Alias, ControlFunction,
         config::{self, SongPosSave},
     },
-    env::update,
+    env::install,
     ext::Wrap,
 };
 
@@ -23,7 +23,7 @@ pub struct Config {
     pub server_address: String,
     pub port: u16,
     pub skin: PathBuf,
-    pub update_mode: update::Mode,
+    pub update_mode: install::UpdateMode,
     pub update_remote: String,
     pub delete_logs_after: Wrap<Duration>,
     pub enable_server: bool,

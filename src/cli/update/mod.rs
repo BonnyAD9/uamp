@@ -4,7 +4,7 @@ use termal::printcln;
 use crate::{
     cli::{help::help_update, update::action::Action},
     core::{ErrCtx, Error, Result, config::Config},
-    env::update,
+    env::install,
 };
 
 mod action;
@@ -15,7 +15,7 @@ pub struct Update {
     no_do: bool,
     remote: Option<String>,
     manpages: Option<bool>,
-    mode: Option<update::Mode>,
+    mode: Option<install::UpdateMode>,
     action: Action,
 }
 
@@ -57,7 +57,7 @@ impl Update {
     }
 
     fn act_enabled(&self) -> Result<()> {
-        if update::ALLOW_SELF_UPDATE {
+        if install::ALLOW_SELF_UPDATE {
             println!("yes");
         } else {
             println!("no");
@@ -67,7 +67,7 @@ impl Update {
     }
 
     fn act_update(&self, conf: &Config) -> Result<()> {
-        if !update::ALLOW_SELF_UPDATE && !self.force {
+        if !install::ALLOW_SELF_UPDATE && !self.force {
             return Error::InvalidOperation(
                 ErrCtx::new(
                     "Uamp self update has been disabled for this build.",
@@ -78,10 +78,10 @@ impl Update {
             .err();
         }
 
-        let r = update::try_update(
+        let r = install::try_update(
             self.remote.as_deref().unwrap_or(conf.update_remote()),
             self.mode.as_ref().unwrap_or(conf.update_mode()),
-            self.manpages.unwrap_or(update::INSTALL_MANPAGES),
+            self.manpages.unwrap_or(install::INSTALL_MANPAGES),
         )?;
 
         if r {

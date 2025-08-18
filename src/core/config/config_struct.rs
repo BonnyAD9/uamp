@@ -6,7 +6,7 @@ use crate::{
         Alias, AnyControlMsg, ControlFunction, ControlMsg, DataControlMsg,
         config::default_http_client_path, player::AddPolicy, query::Query,
     },
-    env::update,
+    env::install,
     ext::Wrap,
     gen_struct,
 };
@@ -112,13 +112,13 @@ gen_struct! {
         },
 
         #[doc = "Determines how uamp will self update."]
-        update_mode: update::Mode { pub, pub } => pub(super) () {
+        update_mode: install::UpdateMode { pub, pub } => pub(super) () {
             Default::default()
         },
 
         #[doc = "Determines the repository fro which uamp will update."]
         update_remote: String { pub, pub } => pub(super) () {
-            update::DEFAULT_REMOTE.to_owned()
+            install::DEFAULT_REMOTE.to_owned()
         },
 
         skin: PathBuf { pub, pub } => pub(super) () {
