@@ -539,6 +539,9 @@ fn print_update_help(color: bool) {
   {'y}-h  -?  --help{'_}
     See help for update.
 
+  {'y}--enabled{'_}
+    Check if self update is enabled. Prints `{'i}yes{'_}` or `{'i}no{'_}`.
+
   {'y}-f  --force{'_}
     Force self update even if it was disabled. DONT DO THIS unless you know
     what you are doing.

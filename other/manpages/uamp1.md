@@ -498,6 +498,9 @@ Update accepts the following options:
   Shows help for update. If this is present, uamp will not update and only show
   the help.
 
+`--enabled`
+  Checks if self update is enabled. Prints either `yes` or `no`.
+
 `-f`, `--force`
   Force the update even if it has been disabled.
 

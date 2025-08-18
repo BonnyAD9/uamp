@@ -4,6 +4,7 @@
 ### New features
 - Allow disabling watchin of exe with `"auto_restart": false`.
 - Allow specifying cnt for `pop`.
+- Add option to check if self update is enabled with `update --enabled`.
 
 ### Fixes
 - Fix order of `a` and `b` when requesting with `uam i nfo=a..b`.
