@@ -92,3 +92,137 @@ function getCookie(name) {
         return k === name ? decodeURIComponent(v) : acc;
     }, null);
 }
+
+const configSchema = {
+    // Library settings section
+    library: {
+        search_paths: {
+            type: "list",
+            label: "Search paths",
+            description: "List of paths where to search for music.",
+            default: []
+        },
+        audio_extensions: {
+            type: "list",
+            label: "Audio extensions",
+            description: "List of file extensions to load to library.",
+            default: ["flac", "mp3", "m4a", "mp4"]
+        },
+        recursive_search: {
+            type: "bool",
+            label: "Recursive search",
+            description: "Searches for songs in library paths recursively" +
+                "(traversing all subdirectories).",
+            default: true
+        },
+        update_library_on_start: {
+            type: "bool",
+            label: "Update library on start",
+            description: "Searches library paths every time on startup.",
+            default: true
+        },
+        remove_missing_on_load: {
+            type: "bool",
+            label: "Remove missing on load",
+            description: "Removes nonexisting songs from library.",
+            default: true
+        }
+    },
+    // Playlists settings section
+    playlists: {
+        control_aliases: {
+            type: "list",
+            label: "Control aliases",
+            description: "Alias is a set of control messages that will be " +
+                "used in its place.",
+            default: []
+        },
+        default_playlist_end_action: {
+            type: "string",
+            label: "Default playlist end action",
+            description: "Alias invocation set as playlist end action.",
+            default: null
+        },
+        simple_sorting: {
+            type: "bool",
+            label: "Simple sorting",
+            description: "Uamp sorts only by the given field.",
+            default: false
+        },
+        shuffle_current: {
+            type: "bool",
+            label: "Shuffle current",
+            description: "Shuffles all songs in the playlist, including " +
+                "current.",
+            default: true
+        }
+    },
+    // Playback settings section
+    playback: {
+        play_on_start: {
+            type: "bool",
+            label: "Play on start",
+            description: "Uamp will continue playing when it starts.",
+            default: false
+        },
+        volume_jump: {
+            type: "float",
+            label: "Volume jump",
+            description: "Default change of volume.",
+            default: 2.5
+        },
+        save_playback_pos: {
+            type: "select",
+            label: "Save playback position",
+            description: "Retaining position within current track after exiting",
+            default: "OnClose",
+            options: ["Never", "On Close", "Always"]
+        },
+        fade_play_pause: {
+            type: "duration",
+            label: "Fade play/pause",
+            description: "Smoothly change volume when playing/pausing.",
+            default: "00:00.15"
+        },
+        gapless: {
+            type: "bool",
+            label: "Gapless",
+            description: "Removes silent parts between songs.",
+            default: true
+        },
+        seek_jump: {
+            type: "duration",
+            label: "Seek jump",
+            description: "Default seek amount when using fast forward and" +
+                "rewind.",
+            default: "00:10"
+        },
+        previous_timeout: {
+            type: "duration",
+            label: "Previous timeout",
+            description: "Jumping to previous song timeout.",
+            default: null,
+        }
+    },
+    // Server settings section
+    server: {
+        server_address: {
+            type: "string",
+            label: "Server address",
+            description: "Address of the backend HTTP server.",
+            default: "127.0.0.1"
+        },
+        port: {
+            type: "number",
+            label: "Server port",
+            description: "Port of the backend HTTP server.",
+            default: 8267
+        },
+        system_player: {
+            type: "bool",
+            label: "System player",
+            description: "Integrate with the system as media player.",
+            default: true
+        }
+    }
+};
