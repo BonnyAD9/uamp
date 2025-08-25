@@ -246,14 +246,15 @@ table.songs td>img {
 }
 
 table.songs td>p,
-.list .card>.details>p {
+.list .card>.details>p,
+.setting>div>p {
     color: var(--fg);
     font-size: 15px;
 }
 
 table.songs td>span,
 .list .card>.details>span,
-.switch-setting>div>span {
+.setting>div>span {
     color: var(--fg-sec);
     font-size: 11px;
     padding-left: 3px;
@@ -679,26 +680,40 @@ section#settings>div {
     font-size: 15px;
 }
 
-.switch-setting {
+section#settings>div>#settingsContent {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 15px;
+}
+
+.setting {
     display: flex;
     gap: 5px;
     align-items: center;
+    border-bottom: 1px solid var(--bg-light);
+    padding-bottom: 5px;
 }
 
-label.switch {
+.setting>.text {
+    flex-grow: 1;
+}
+
+.switch {
     position: relative;
     display: inline-block;
     width: 40px;
     height: 20px;
 }
 
-label.switch input {
+.switch input {
     opacity: 0;
     width: 0;
     height: 0;
 }
 
-label.switch>.slider {
+.switch>.slider {
     position: absolute;
     cursor: pointer;
     top: 0;
@@ -711,7 +726,7 @@ label.switch>.slider {
     transition: .4s;
 }
 
-label.switch>.slider:before {
+.switch>.slider:before {
     position: absolute;
     content: "";
     height: 14px;
@@ -736,6 +751,20 @@ input:checked+.slider:before {
     -webkit-transform: translateX(14px);
     -ms-transform: translateX(14px);
     transform: translateX(14px);
+}
+
+.select-setting select {
+    line-height: 1.5rem;
+    padding: 0.25rem 0.4rem;
+    background-color: var(--bg-lighter);
+    background-clip: padding-box;
+    color: var(--fg);
+    font-size: 14px;
+    font-family: inherit;
+    border: none;
+    border-radius: 10px;
+    transition: 0.15s ease-in-out;
+    cursor: pointer;
 }
 
 .ellipsis {
