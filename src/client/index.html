@@ -172,113 +172,17 @@
                     <input type="color" id="themeColor" />
                 </div>
 
-                <div class="switch-setting">
-                    <label class="switch">
+                <label class="switch-setting setting">
+                    <div class="text">
+                        <p>Floating music player bar</p>
+                    </div>
+                    <div class="switch">
                         <input type="checkbox" id="floatingBar" />
                         <span class="slider"></span>
-                    </label>
-                    <p>Floating music player bar</p>
-                </div>
-
-
-                <h2>Library</h2>
-
-                <div class="switch-setting">
-                    <label class="switch">
-                        <input type="checkbox" id="recursiveSearch" />
-                        <span class="slider"></span>
-                    </label>
-                    <div>
-                        <p>Recursive search</p>
-                        <span>
-                            Searches for songs in library paths recursively 
-                            (traversing all subdirectories).
-                        </span>
                     </div>
-                </div>
+                </label>
 
-                <div class="switch-setting">
-                    <label class="switch">
-                        <input type="checkbox" id="recursiveSearch" />
-                        <span class="slider"></span>
-                    </label>
-                    <div>
-                        <p>Update library on start</p>
-                        <span>
-                            Searches library paths every time on startup.
-                        </span>
-                    </div>
-                </div>
-
-                <div class="switch-setting">
-                    <label class="switch">
-                        <input type="checkbox" id="recursiveSearch" />
-                        <span class="slider"></span>
-                    </label>
-                    <div>
-                        <p>Remove missing on load</p>
-                        <span>
-                            Removes nonexisting songs from library.
-                        </span>
-                    </div>
-                </div>
-
-                <h2>Playlists</h2>
-
-                <div class="switch-setting">
-                    <label class="switch">
-                        <input type="checkbox" id="recursiveSearch" />
-                        <span class="slider"></span>
-                    </label>
-                    <div>
-                        <p>Simple sorting</p>
-                        <span>
-                            Uamp sorts only by the given field.
-                        </span>
-                    </div>
-                </div>
-
-                <div class="switch-setting">
-                    <label class="switch">
-                        <input type="checkbox" id="recursiveSearch" />
-                        <span class="slider"></span>
-                    </label>
-                    <div>
-                        <p>Shuffle current</p>
-                        <span>
-                            Shuffles all songs in the playlist, including
-                            current.
-                        </span>
-                    </div>
-                </div>
-
-                <h2>Playback</h2>
-
-                <div class="switch-setting">
-                    <label class="switch">
-                        <input type="checkbox" id="recursiveSearch" />
-                        <span class="slider"></span>
-                    </label>
-                    <div>
-                        <p>Play on start</p>
-                        <span>
-                            Uamp will continue playing when it starts.
-                        </span>
-                    </div>
-                </div>
-
-                <div class="switch-setting">
-                    <label class="switch">
-                        <input type="checkbox" id="recursiveSearch" />
-                        <span class="slider"></span>
-                    </label>
-                    <div>
-                        <p>Gapless</p>
-                        <span>
-                            Removes silent parts between songs.
-                        </span>
-                    </div>
-                </div>
+                <div id="settingsContent"></div>
             </div>
         </section>
     </div>
@@ -477,14 +381,23 @@
     </template>
 
     <template id="toggle-setting">
-        <div class="switch-setting">
-            <label class="switch">
-                <input type="checkbox" /> <span class="slider"></span>
-            </label>
-            <div>
+        <label class="switch-setting setting">
+            <div class="text">
                 <p class="label"></p> <span class="description"></span>
             </div>
-        </div>
+            <div class="switch">
+                <input type="checkbox" /> <span class="slider"></span>
+            </div>
+        </label>
+    </template>
+
+    <template id="select-setting">
+        <label class="select-setting setting">
+            <div class="text">
+                <p class="label"></p> <span class="description"></span>
+            </div>
+            <select></select>
+        </label>
     </template>
 </body>
 
