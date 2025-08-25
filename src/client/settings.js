@@ -1,3 +1,6 @@
+const toggleTemplate = document.getElementById('toggle-setting');
+const selectTemplate = document.getElementById('select-setting');
+
 const colorInput = document.getElementById('themeColor');
 const savedColor = getCookie('themeColor') ?? '#3acbaf';
 colorInput.value = savedColor;
@@ -66,6 +69,71 @@ class Config {
         if (this[name] === undefined) return;
         this[name] = !this[name];
     }
+
+    render() {
+        const content = document.getElementById('settingsContent');
+        content.innerHTML = '';
+
+        for (const group of configSchema) {
+            const header = document.createElement('h2');
+            header.textContent = group.name;
+            content.appendChild(header);
+
+            for (const key in group.settings) {
+                const setting =
+                    this.getSettingElement(key, group.settings[key]);
+                if (setting === null) continue;
+                content.appendChild(setting);
+            }
+        }
+    }
+
+    getSettingElement(key, setting) {
+        switch (setting.type) {
+            case "bool":
+                return this.getToggleSetting(key, setting);
+            case "select":
+                return this.getSelectSetting(key, setting);
+            default:
+                return null;
+        }
+    }
+
+    getToggleSetting(key, setting) {
+        const clone = toggleTemplate.content.cloneNode(true);
+        const toggle = clone.querySelector('.switch-setting');
+
+        toggle.querySelector('.label').textContent = setting.label;
+        toggle.querySelector('.description').textContent = setting.description;
+
+        const input = toggle.querySelector('input');
+        input.checked = this[key];
+        input.onclick = () => this.toggleSwitch(key);
+
+        return toggle;
+    }
+
+    getSelectSetting(key, setting) {
+        const clone = selectTemplate.content.cloneNode(true);
+        const select = clone.querySelector('.select-setting');
+
+        select.querySelector('.label').textContent = setting.label;
+        select.querySelector('.description').textContent = setting.description;
+
+        const input = select.querySelector('select');
+        for (const opt of setting.options) {
+            const option = document.createElement('option');
+            option.textContent = opt;
+            input.appendChild(option);
+        }
+
+        input.addEventListener('change', () => {
+            const value = input.value.replace(' ', '');
+            this[key] = value;
+        });
+
+        return select;
+    }
 }
 
 function applyThemeColor(color) {
@@ -93,136 +161,149 @@ function getCookie(name) {
     }, null);
 }
 
-const configSchema = {
+const configSchema = [
     // Library settings section
-    library: {
-        search_paths: {
-            type: "list",
-            label: "Search paths",
-            description: "List of paths where to search for music.",
-            default: []
-        },
-        audio_extensions: {
-            type: "list",
-            label: "Audio extensions",
-            description: "List of file extensions to load to library.",
-            default: ["flac", "mp3", "m4a", "mp4"]
-        },
-        recursive_search: {
-            type: "bool",
-            label: "Recursive search",
-            description: "Searches for songs in library paths recursively" +
-                "(traversing all subdirectories).",
-            default: true
-        },
-        update_library_on_start: {
-            type: "bool",
-            label: "Update library on start",
-            description: "Searches library paths every time on startup.",
-            default: true
-        },
-        remove_missing_on_load: {
-            type: "bool",
-            label: "Remove missing on load",
-            description: "Removes nonexisting songs from library.",
-            default: true
+    {
+        name: "Library",
+        settings: {
+            search_paths: {
+                type: "list",
+                label: "Search paths",
+                description: "List of paths where to search for music.",
+                default: []
+            },
+            audio_extensions: {
+                type: "list",
+                label: "Audio extensions",
+                description: "List of file extensions to load to library.",
+                default: ["flac", "mp3", "m4a", "mp4"]
+            },
+            recursive_search: {
+                type: "bool",
+                label: "Recursive search",
+                description: "Searches for songs in library paths recursively" +
+                    "(traversing all subdirectories).",
+                default: true
+            },
+            update_library_on_start: {
+                type: "bool",
+                label: "Update library on start",
+                description: "Searches library paths every time on startup.",
+                default: true
+            },
+            remove_missing_on_load: {
+                type: "bool",
+                label: "Remove missing on load",
+                description: "Removes nonexisting songs from library.",
+                default: true
+            }
         }
     },
     // Playlists settings section
-    playlists: {
-        control_aliases: {
-            type: "list",
-            label: "Control aliases",
-            description: "Alias is a set of control messages that will be " +
-                "used in its place.",
-            default: []
-        },
-        default_playlist_end_action: {
-            type: "string",
-            label: "Default playlist end action",
-            description: "Alias invocation set as playlist end action.",
-            default: null
-        },
-        simple_sorting: {
-            type: "bool",
-            label: "Simple sorting",
-            description: "Uamp sorts only by the given field.",
-            default: false
-        },
-        shuffle_current: {
-            type: "bool",
-            label: "Shuffle current",
-            description: "Shuffles all songs in the playlist, including " +
-                "current.",
-            default: true
+    {
+        name: "Playlist",
+        settings: {
+            control_aliases: {
+                type: "list",
+                label: "Control aliases",
+                description: "Alias is a set of control messages that will be" +
+                    " used in its place.",
+                default: []
+            },
+            default_playlist_end_action: {
+                type: "string",
+                label: "Default playlist end action",
+                description: "Alias invocation set as playlist end action.",
+                default: null
+            },
+            simple_sorting: {
+                type: "bool",
+                label: "Simple sorting",
+                description: "Uamp sorts only by the given field.",
+                default: false
+            },
+            shuffle_current: {
+                type: "bool",
+                label: "Shuffle current",
+                description: "Shuffles all songs in the playlist, including " +
+                    "current.",
+                default: true
+            }
         }
     },
     // Playback settings section
-    playback: {
-        play_on_start: {
-            type: "bool",
-            label: "Play on start",
-            description: "Uamp will continue playing when it starts.",
-            default: false
-        },
-        volume_jump: {
-            type: "float",
-            label: "Volume jump",
-            description: "Default change of volume.",
-            default: 2.5
-        },
-        save_playback_pos: {
-            type: "select",
-            label: "Save playback position",
-            description: "Retaining position within current track after exiting",
-            default: "OnClose",
-            options: ["Never", "On Close", "Always"]
-        },
-        fade_play_pause: {
-            type: "duration",
-            label: "Fade play/pause",
-            description: "Smoothly change volume when playing/pausing.",
-            default: "00:00.15"
-        },
-        gapless: {
-            type: "bool",
-            label: "Gapless",
-            description: "Removes silent parts between songs.",
-            default: true
-        },
-        seek_jump: {
-            type: "duration",
-            label: "Seek jump",
-            description: "Default seek amount when using fast forward and" +
-                "rewind.",
-            default: "00:10"
-        },
-        previous_timeout: {
-            type: "duration",
-            label: "Previous timeout",
-            description: "Jumping to previous song timeout.",
-            default: null,
+    {
+        name: "Playback",
+        settings: {
+            play_on_start: {
+                type: "bool",
+                label: "Play on start",
+                description: "Uamp will continue playing when it starts.",
+                default: false
+            },
+            volume_jump: {
+                type: "float",
+                label: "Volume jump",
+                description: "Default change of volume.",
+                default: 2.5
+            },
+            save_playback_pos: {
+                type: "select",
+                label: "Save playback position",
+                description: "Retaining position within current track after " +
+                    "exiting",
+                default: "OnClose",
+                options: ["Never", "On Close", "Always"]
+            },
+            fade_play_pause: {
+                type: "duration",
+                label: "Fade play/pause",
+                description: "Smoothly change volume when playing/pausing.",
+                default: "00:00.15"
+            },
+            gapless: {
+                type: "bool",
+                label: "Gapless",
+                description: "Removes silent parts between songs.",
+                default: true
+            },
+            seek_jump: {
+                type: "duration",
+                label: "Seek jump",
+                description: "Default seek amount when using fast forward and" +
+                    "rewind.",
+                default: "00:10"
+            },
+            previous_timeout: {
+                type: "duration",
+                label: "Previous timeout",
+                description: "Jumping to previous song timeout.",
+                default: null,
+            }
         }
     },
     // Server settings section
-    server: {
-        server_address: {
-            type: "string",
-            label: "Server address",
-            description: "Address of the backend HTTP server.",
-            default: "127.0.0.1"
-        },
-        port: {
-            type: "number",
-            label: "Server port",
-            description: "Port of the backend HTTP server.",
-            default: 8267
-        },
-        system_player: {
-            type: "bool",
-            label: "System player",
-            description: "Integrate with the system as media player.",
-            default: true
+    {
+        name: "Server",
+        settings: {
+            server_address: {
+                type: "string",
+                label: "Server address",
+                description: "Address of the backend HTTP server.",
+                default: "127.0.0.1"
+            },
+            port: {
+                type: "number",
+                label: "Server port",
+                description: "Port of the backend HTTP server.",
+                default: 8267
+            },
+            system_player: {
+                type: "bool",
+                label: "System player",
+                description: "Integrate with the system as media player.",
+                default: true
+            }
         }
     }
-};
+];
