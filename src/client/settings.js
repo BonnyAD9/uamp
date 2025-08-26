@@ -1,5 +1,7 @@
 const toggleTemplate = document.getElementById('toggle-setting');
 const selectTemplate = document.getElementById('select-setting');
+const listTemplate = document.getElementById('list-setting');
+const listItemTemplate = document.getElementById('list-item-setting');
 
 const colorInput = document.getElementById('themeColor');
 const savedColor = getCookie('themeColor') ?? '#3acbaf';
@@ -94,6 +96,8 @@ class Config {
                 return this.getToggleSetting(key, setting);
             case "select":
                 return this.getSelectSetting(key, setting);
+            case "list":
+                return this.getListSetting(key, setting);
             default:
                 return null;
         }
@@ -133,6 +137,24 @@ class Config {
         });
 
         return select;
+    }
+
+    getListSetting(key, setting) {
+        const clone = listTemplate.content.cloneNode(true);
+        const list = clone.querySelector('.list-setting');
+
+        list.querySelector('.label').textContent = setting.label;
+        list.querySelector('.description').textContent = setting.description;
+
+        const items = list.querySelector('.items');
+        const input = list.querySelector('.input-item');
+        for (const item of this[key]) {
+            const itemClone = listItemTemplate.content.cloneNode(true);
+            itemClone.querySelector('p').textContent = item;
+            items.insertBefore(itemClone, input);
+        }
+
+        return list;
     }
 }
 
@@ -204,7 +226,7 @@ const configSchema = [
         name: "Playlist",
         settings: {
             control_aliases: {
-                type: "list",
+                type: "objectList",
                 label: "Control aliases",
                 description: "Alias is a set of control messages that will be" +
                     " used in its place.",

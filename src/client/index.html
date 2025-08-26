@@ -175,6 +175,9 @@
                 <label class="switch-setting setting">
                     <div class="text">
                         <p>Floating music player bar</p>
+                        <span>
+                            Music player bar detached from the window edges.
+                        </span>
                     </div>
                     <div class="switch">
                         <input type="checkbox" id="floatingBar" />
@@ -398,6 +401,26 @@
             </div>
             <select></select>
         </label>
+    </template>
+
+    <template id="list-setting">
+        <label class="list-setting setting">
+            <div class="text">
+                <p class="label"></p> <span class="description"></span>
+            </div>
+            <div class="items">
+                <div class="item input-item">
+                    <img src="assets/svg/add.svg" alt="add" />
+                    <input type="text" />
+                </div>
+            </div>
+        </label>
+    </template>
+
+    <template id="list-item-setting">
+        <div class="item">
+            <img src="assets/svg/trash.svg" alt="trash" /><p></p>
+        </div>
     </template>
 </body>
 
