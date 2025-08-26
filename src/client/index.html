@@ -164,28 +164,34 @@
         </section>
 
         <section id="settings" class="screen">
-            <div>
+            <div class="tabs">
                 <h1>Settings</h1>
-
-                <div>
-                    <label for="themeColor">Theme color:</label><br />
-                    <input type="color" id="themeColor" />
+                <button
+                    class="tab active"
+                    onclick="Config.showPage(0)"
+                >Appearance</button>
+                <div class="filler"></div>
+            </div>
+            <div class="settings-wrapper">
+                <div class="settings-content active">
+                    <div>
+                        <label for="themeColor">Theme color:</label><br />
+                        <input type="color" id="themeColor" />
+                    </div>
+    
+                    <label class="switch-setting setting">
+                        <div class="text">
+                            <p>Floating music player bar</p>
+                            <span>
+                                Music player bar detached from the window edges.
+                            </span>
+                        </div>
+                        <div class="switch">
+                            <input type="checkbox" id="floatingBar" />
+                            <span class="slider"></span>
+                        </div>
+                    </label>
                 </div>
-
-                <label class="switch-setting setting">
-                    <div class="text">
-                        <p>Floating music player bar</p>
-                        <span>
-                            Music player bar detached from the window edges.
-                        </span>
-                    </div>
-                    <div class="switch">
-                        <input type="checkbox" id="floatingBar" />
-                        <span class="slider"></span>
-                    </div>
-                </label>
-
-                <div id="settingsContent"></div>
             </div>
         </section>
     </div>
@@ -411,7 +417,7 @@
             <div class="items">
                 <div class="item input-item">
                     <img src="assets/svg/add.svg" alt="add" />
-                    <input type="text" />
+                    <input class="form-input" type="text" />
                 </div>
             </div>
         </label>
@@ -421,6 +427,15 @@
         <div class="item">
             <img src="assets/svg/trash.svg" alt="trash" /><p></p>
         </div>
+    </template>
+
+    <template id="input-setting">
+        <label class="input-setting setting">
+            <div class="text">
+                <p class="label"></p> <span class="description"></span>
+            </div>
+            <input class="form-input" type="text" />
+        </label>
     </template>
 </body>
 
