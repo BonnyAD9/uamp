@@ -1,7 +1,10 @@
+const settingsTabs = document.querySelector('#settings .tabs');
+
 const toggleTemplate = document.getElementById('toggle-setting');
 const selectTemplate = document.getElementById('select-setting');
 const listTemplate = document.getElementById('list-setting');
 const listItemTemplate = document.getElementById('list-item-setting');
+const inputTemplate = document.getElementById('input-setting');
 
 const colorInput = document.getElementById('themeColor');
 const savedColor = getCookie('themeColor') ?? '#3acbaf';
@@ -73,27 +76,44 @@ class Config {
     }
 
     render() {
-        const content = document.getElementById('settingsContent');
-        content.innerHTML = '';
+        const content = document.querySelector('#settings .settings-wrapper');
 
-        for (const group of configSchema) {
-            const header = document.createElement('h2');
-            header.textContent = group.name;
-            content.appendChild(header);
+        settingsTabs.querySelectorAll('.tab').forEach((tab, i) => {
+            if (i == 0) tab.classList.add('active');
+            else tab.remove();
+        });
+        content.querySelectorAll('.settings-content').forEach((page, i) => {
+            if (i == 0) page.classList.add('active');
+            else page.remove();
+        });
+
+        const filler = settingsTabs.querySelector('.filler');
+        configSchema.forEach((group, id) => {
+            const page = document.createElement('div');
+            page.classList.add('settings-content');
 
             for (const key in group.settings) {
                 const setting =
                     this.getSettingElement(key, group.settings[key]);
                 if (setting === null) continue;
-                content.appendChild(setting);
+                page.appendChild(setting);
             }
-        }
+            content.appendChild(page);
+
+            const tab = document.createElement('button');
+            tab.classList.add('tab');
+            tab.textContent = group.name;
+            tab.onclick = () => Config.showPage(id + 1);
+            settingsTabs.insertBefore(tab, filler);
+        });
     }
 
     getSettingElement(key, setting) {
         switch (setting.type) {
             case "bool":
                 return this.getToggleSetting(key, setting);
+            case "string":
+                return this.getInputSetting(key, setting);
             case "select":
                 return this.getSelectSetting(key, setting);
             case "list":
@@ -155,6 +175,36 @@ class Config {
         }
 
         return list;
+    }
+
+    getInputSetting(key, setting) {
+        const clone = inputTemplate.content.cloneNode(true);
+        const element = clone.querySelector('.input-setting');
+
+        element.querySelector('.label').textContent = setting.label;
+        element.querySelector('.description').textContent = setting.description;
+
+        const input = element.querySelector('input');
+        input.value = this[key];
+
+        return element;
+    }
+
+    static showPage(id) {
+        const tabs = settingsTabs.querySelectorAll('.tab');
+        const pages = document.querySelectorAll('#settings .settings-content');
+
+        for (let i = 0; i < tabs.length; i++) {
+            const tab = tabs[i];
+            const page = pages[i];
+
+            tab.classList.remove('active');
+            page.classList.remove('active');
+            if (i === id) {
+                tab.classList.add('active');
+                page.classList.add('active');
+            }
+        }
     }
 }
 

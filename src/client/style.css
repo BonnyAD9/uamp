@@ -672,12 +672,22 @@ input[type="range"]::-moz-range-thumb {
     border: none;
 }
 
-section#settings>div {
-    display: flex;
+section#settings .settings-wrapper {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+section#settings .settings-wrapper .settings-content {
+    display: none;
     width: 100%;
     flex-direction: column;
     gap: 5px;
     font-size: 15px;
+    padding-top: 5px;
+}
+
+section#settings .settings-wrapper .settings-content.active {
+    display: flex;
 }
 
 section#settings>div>#settingsContent {
@@ -767,7 +777,8 @@ input:checked+.slider:before {
     cursor: pointer;
 }
 
-.list-setting {
+.list-setting,
+.input-setting {
     display: block;
 }
 
@@ -777,6 +788,10 @@ input:checked+.slider:before {
     flex-direction: column;
     gap: 8px;
     padding-left: 5px;
+}
+
+.input-setting>input {
+    margin-top: 8px;
 }
 
 .list-setting .items .item {
@@ -794,7 +809,7 @@ input:checked+.slider:before {
     cursor: pointer;
 }
 
-input[type="text"] {
+.form-input {
     line-height: 1.5rem;
     padding: 2px 8px;
     background-color: var(--bg-lighter);
@@ -810,7 +825,7 @@ input[type="text"] {
     transition: 0.15s ease-in-out;
 }
 
-input[type="text"]:focus {
+.form-input:focus {
     outline: 0;
 }
 
@@ -821,7 +836,8 @@ input[type="text"]:focus {
     display: block;
 }
 
-section.screen#playlist {
+section.screen#playlist,
+section.screen#settings {
     padding-left: 0;
     padding-right: 0;
 }
@@ -847,6 +863,15 @@ section.screen#playlist .songs thead {
     z-index: 20;
     background-color: var(--bg-dark-trans);
     backdrop-filter: blur(5px);
+}
+
+section.screen#settings .tabs {
+    height: 45px;
+}
+
+section.screen .tabs>h1 {
+    border-bottom: 1px solid var(--primary);
+    padding-right: 10px;
 }
 
 .tabs>.tab {
