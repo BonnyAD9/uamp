@@ -356,9 +356,11 @@ impl UampApp {
             }
         }
 
-        self.client_update(SubMsg::ConfigChanged(
-            sub::Config::new(&self.config).into(),
-        ));
+        if self.config.changed() {
+            self.client_update(SubMsg::ConfigChanged(
+                sub::Config::new(&self.config).into(),
+            ));
+        }
 
         Ok(())
     }
