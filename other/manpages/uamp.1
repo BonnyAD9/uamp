@@ -572,6 +572,33 @@ generated. The exact argument for which the completion should be generated
 is given by \fIopt\-index\fP\&.
 .IP
 All arguments after argument given by \fIopt\-index\fP are ignored.
+.TP
+\fB\fCinstall\fR [\fIflags\fP]
+Install uamp according to the flags.
+.IP
+This is the default installation with no flags on linux. On other OSs, you
+should specify at least \fB\fC\-\-exe\fR\&.
+.IP
+Available flags:
+.TP
+\fB\fC\-\-man\fR \fB\fCtrue\fR|\fB\fCfalse\fR
+    Enable/disable man page installation.
+.PP
+.RS
+.nf
+Even if enabled, does nothing on non\-unix systems.
+.fi
+.RE
+.TP
+\fB\fC\-\-root\fR \fIpath\fP
+    Specify root (fakeroot) for the installation. By default, this is the
+    system root.
+.TP
+\fB\fC\-\-exe\fR \fIpath\fP
+    Specify path at which to place the installed executable. This is always
+    relative to \fB\fCroot\fR even if the path is absolute. By default this is
+    \fB\fC/usr/bin/uamp\fR which may not be the correct place for other OSs than
+    linux.
 .SS Message control
 .TP
 \fB\fCpp\fR[\fB\fC=\fR\fIplay\-state\fP], \fB\fCplay\-pause\fR[\fB\fC=\fR\fIplay\-state\fP]

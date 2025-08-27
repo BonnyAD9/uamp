@@ -545,6 +545,29 @@ Integrations:
 
   All arguments after argument given by *opt-index* are ignored.
 
+`install` [*flags*]
+  Install uamp according to the flags.
+  
+  This is the default installation with no flags on linux. On other OSs, you
+  should specify at least `--exe`.
+  
+  Available flags:
+  
+  `--man` `true`|`false`
+    Enable/disable man page installation.
+    
+    Even if enabled, does nothing on non-unix systems.
+    
+  `--root` *path*
+    Specify root (fakeroot) for the installation. By default, this is the
+    system root.
+    
+  `--exe` *path*
+    Specify path at which to place the installed executable. This is always
+    relative to `root` even if the path is absolute. By default this is
+    `/usr/bin/uamp` which may not be the correct place for other OSs than
+    linux.
+
 ### Message control
 
 `pp`[`=`*play-state*], `play-pause`[`=`*play-state*]
