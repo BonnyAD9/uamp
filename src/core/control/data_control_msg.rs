@@ -12,7 +12,14 @@ use pareg::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::core::{Alias, AppCtrl, Msg, Result, UampApp, query::Query};
+use crate::core::{
+    Alias, AppCtrl, Msg, Result, UampApp,
+    query::Query,
+    server::{
+        SubMsg,
+        sub::{PlaylistJump, ReorderPlaylistStack},
+    },
+};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -55,7 +62,8 @@ impl UampApp {
         match msg {
             DataControlMsg::Alias(name) => return self.invoke_alias(&name),
             DataControlMsg::SetPlaylistEndAction(act) => {
-                self.player.playlist_mut().on_end = act;
+                self.player.playlist_mut().on_end = act.clone();
+                self.client_update(SubMsg::SetPlaylistEndAction(act.into()));
             }
             DataControlMsg::SetPlaylist(q) => {
                 let songs = q.get_ids(
@@ -68,6 +76,9 @@ impl UampApp {
                     songs.into(),
                     false,
                 );
+                self.client_update_set_playlist(|p| {
+                    SubMsg::SetPlaylist(p.into())
+                });
             }
             DataControlMsg::PushPlaylist(q) => {
                 let songs = q.get_ids(
@@ -80,6 +91,9 @@ impl UampApp {
                     songs.into(),
                     false,
                 );
+                self.client_update_set_playlist(|p| {
+                    SubMsg::PushPlaylist(p.into())
+                });
             }
             DataControlMsg::PushPlaylistAndCur(q) => {
                 let songs = q.get_ids(
@@ -88,6 +102,9 @@ impl UampApp {
                     &self.player,
                 )?;
                 self.player.push_with_cur(songs.into());
+                self.client_update_set_playlist(|p| {
+                    SubMsg::PushPlaylistWithCur(p.into())
+                });
             }
             DataControlMsg::Queue(q) => {
                 let songs = q.get_ids(
@@ -95,7 +112,8 @@ impl UampApp {
                     self.config.simple_sorting(),
                     &self.player,
                 )?;
-                self.player.playlist_mut().extend(songs);
+                self.player.playlist_mut().extend(songs.iter().copied());
+                self.client_update(SubMsg::Queue(songs.into()));
             }
             DataControlMsg::PlayNext(q) => {
                 let songs = q.get_ids(
@@ -103,7 +121,8 @@ impl UampApp {
                     self.config.simple_sorting(),
                     &self.player,
                 )?;
-                self.player.playlist_mut().play_next(songs);
+                self.player.playlist_mut().play_next(songs.iter().copied());
+                self.client_update(SubMsg::PlayNext(songs.into()));
             }
             DataControlMsg::Restart(exe) => {
                 self.restart_path = None;
@@ -113,9 +132,16 @@ impl UampApp {
                     env::current_exe()?
                 };
                 self.restart_path = Some(exe);
+                self.client_update(SubMsg::Restarting);
             }
             DataControlMsg::ReorderPlaylistStack(ord) => {
                 self.player.reorder_playlist(&mut self.library, &ord)?;
+                self.client_update(SubMsg::ReorderPlaylistStack(
+                    ReorderPlaylistStack::new(
+                        ord.into(),
+                        PlaylistJump::new(&self.player),
+                    ),
+                ));
             }
             DataControlMsg::PlayTmp(path) => {
                 let id = self.library.add_tmp_path(&path).map_err(|e| {
@@ -130,6 +156,7 @@ impl UampApp {
                     vec![id].into(),
                     true,
                 );
+                self.client_update_tmp_song(id);
             }
         }
 
@@ -218,7 +245,11 @@ impl Display for DataControlMsg {
                 write!(f, "restart={}", ft.to_string_lossy())
             }
             DataControlMsg::ReorderPlaylistStack(ord) => {
-                write!(f, "{}", ord.iter().map(|a| a.to_string()).join(","))
+                write!(
+                    f,
+                    "rps={}",
+                    ord.iter().map(|a| a.to_string()).join(",")
+                )
             }
             DataControlMsg::PlayTmp(p) => write!(f, "p={}", p.display()),
         }

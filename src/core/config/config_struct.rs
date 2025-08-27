@@ -4,9 +4,9 @@ use std::{cell::Cell, collections::HashMap, path::PathBuf, time::Duration};
 use crate::{
     core::{
         Alias, AnyControlMsg, ControlFunction, ControlMsg, DataControlMsg,
-        player::AddPolicy, query::Query,
+        config::default_http_client_path, player::AddPolicy, query::Query,
     },
-    env::update,
+    env::install,
     ext::Wrap,
     gen_struct,
 };
@@ -92,7 +92,7 @@ gen_struct! {
                     end_action("endless-mix"),
                 ].into()),
                 ("pcont".into(), [
-                    ControlMsg::PopPlaylist.into(),
+                    ControlMsg::PopPlaylist(1).into(),
                     ControlMsg::PlayPause(Some(true)).into(),
                 ].into()),
                 (
@@ -112,13 +112,17 @@ gen_struct! {
         },
 
         #[doc = "Determines how uamp will self update."]
-        update_mode: update::Mode { pub, pub } => pub(super) () {
+        update_mode: install::UpdateMode { pub, pub } => pub(super) () {
             Default::default()
         },
 
         #[doc = "Determines the repository fro which uamp will update."]
         update_remote: String { pub, pub } => pub(super) () {
-            update::DEFAULT_REMOTE.to_owned()
+            install::DEFAULT_REMOTE.to_owned()
+        },
+
+        skin: PathBuf { pub, pub } => pub(super) () {
+            default_http_client_path()
         },
 
         ; // fields passed by value:
@@ -264,6 +268,7 @@ impl Config {
             system_player: default_system_player(),
             auto_restart: default_auto_restart(),
             force_server: None,
+            skin: default_skin(),
             change: Cell::new(true),
         }
     }

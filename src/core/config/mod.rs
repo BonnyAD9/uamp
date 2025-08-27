@@ -12,7 +12,9 @@ use std::path::PathBuf;
 
 use const_format::{concatc, str_splice};
 
-pub use self::{cache_size::*, config_msg::*, config_struct::*};
+pub use self::{
+    cache_size::*, config_msg::*, config_struct::*, song_pos_save::*,
+};
 
 /// Unique app identifier, it is different when debugging.
 #[cfg(not(debug_assertions))]
@@ -60,6 +62,12 @@ pub fn default_log_dir() -> PathBuf {
 pub fn default_cache_dir() -> PathBuf {
     let mut d = get_uamp_dir(dirs::cache_dir());
     d.push("cache");
+    d
+}
+
+pub fn default_http_client_path() -> PathBuf {
+    let mut d = get_uamp_dir(dirs::data_local_dir());
+    d.push("skins/default-uamp.tar");
     d
 }
 

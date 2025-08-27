@@ -2,18 +2,21 @@ use pareg::Pareg;
 use termal::printcln;
 
 use crate::{
-    cli::help::help_update,
+    cli::{help::help_update, update::action::Action},
     core::{ErrCtx, Error, Result, config::Config},
-    env::update,
+    env::install,
 };
+
+mod action;
 
 #[derive(Debug, Default)]
 pub struct Update {
     force: bool,
+    no_do: bool,
     remote: Option<String>,
     manpages: Option<bool>,
-    mode: Option<update::Mode>,
-    help: bool,
+    mode: Option<install::UpdateMode>,
+    action: Action,
 }
 
 impl Update {
@@ -26,13 +29,14 @@ impl Update {
             match arg {
                 "-h" | "-?" | "--help" => {
                     help_update(color);
-                    self.help = true;
+                    self.no_do = true;
                 }
                 "-f" | "--force" => self.force = true,
                 "--remote" => self.remote = Some(args.next_arg()?),
                 "--man" => self.manpages = Some(true),
                 "--no-man" => self.manpages = Some(false),
                 "-m" | "--mode" => self.mode = args.next_arg()?,
+                "--enabled" => self.action = Action::CheckEnabled,
                 "--" => break,
                 _ => args.err_unknown_argument().err()?,
             }
@@ -42,11 +46,28 @@ impl Update {
     }
 
     pub fn act(&self, conf: &Config) -> Result<()> {
-        if self.help {
+        if self.no_do {
             return Ok(());
         }
 
-        if !update::ALLOW_SELF_UPDATE && !self.force {
+        match self.action {
+            Action::CheckEnabled => self.act_enabled(),
+            Action::Update => self.act_update(conf),
+        }
+    }
+
+    fn act_enabled(&self) -> Result<()> {
+        if install::ALLOW_SELF_UPDATE {
+            println!("yes");
+        } else {
+            println!("no");
+        }
+
+        Ok(())
+    }
+
+    fn act_update(&self, conf: &Config) -> Result<()> {
+        if !install::ALLOW_SELF_UPDATE && !self.force {
             return Error::InvalidOperation(
                 ErrCtx::new(
                     "Uamp self update has been disabled for this build.",
@@ -57,10 +78,10 @@ impl Update {
             .err();
         }
 
-        let r = update::try_update(
+        let r = install::try_update(
             self.remote.as_deref().unwrap_or(conf.update_remote()),
             self.mode.as_ref().unwrap_or(conf.update_mode()),
-            self.manpages.unwrap_or(update::INSTALL_MANPAGES),
+            self.manpages.unwrap_or(install::INSTALL_MANPAGES),
         )?;
 
         if r {

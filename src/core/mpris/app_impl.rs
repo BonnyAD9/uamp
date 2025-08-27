@@ -1,57 +1,42 @@
-use std::{io::ErrorKind, mem, rc::Rc};
+use std::{io::ErrorKind, rc::Rc};
 
 use futures::executor::block_on;
-use log::info;
-use mpris_server::{LocalServer, Property, Signal, zbus};
-use tokio::select;
-use tokio_util::sync::CancellationToken;
+use mpris_server::{Property, Server, Signal, zbus};
 
 use crate::core::{
-    AppCtrl, Job, JobMsg, State, UampApp, config, log_err,
+    AppCtrl, Job, JobMsg, Msg, State, UampApp, config, log_err,
     mpris::{self, Mpris},
 };
 
 impl UampApp {
-    pub fn start_mpris(&mut self, ctrl: &mut AppCtrl) {
+    pub fn start_mpris(&mut self) {
         if self.jobs.is_running(Job::SYSTEM_PLAYER) {
             return;
         }
 
-        let e = LocalServer::new(config::APP_ID, Mpris::new(self.rt.clone()));
+        self.stop_mpris();
+
+        let e = Server::new(config::APP_ID, Mpris::new(self.rt.andle()));
         let mpris: Option<Rc<_>> =
             log_err("Failed to start mpris player: ", block_on(e))
                 .map(|a| a.into());
 
         self.jobs.system_player = if let Some(s) = mpris {
-            let cancel = CancellationToken::new();
-            let task = s.run();
-            let token = cancel.clone();
-            ctrl.task(async move {
-                select!(
-                    _ = task => unreachable!(),
-                    _ = cancel.cancelled() => JobMsg::SystemPlayer.into(),
-                )
-            });
             self.jobs.run(Job::SYSTEM_PLAYER);
-            Some((s, token))
+            Some(s)
         } else {
             None
         }
     }
 
     pub fn stop_mpris(&mut self) {
-        if let Some((_, cancel)) = self.jobs.system_player.take() {
-            cancel.cancel();
-        }
+        self.jobs.system_player.take();
     }
 
-    pub fn mpris_routine(&mut self, ctrl: &mut AppCtrl) {
-        let Some((mpris, cancel)) = self.jobs.system_player.clone() else {
+    pub fn mpris_routine(&mut self, ctrl: &mut AppCtrl, mut old: State) {
+        let Some(mpris) = self.jobs.system_player.clone() else {
             return;
         };
-
-        let mut old = self.get_state();
-        old = mem::replace(&mut self.state, old);
 
         let changes = self.handle_changes(&mut old);
 
@@ -61,7 +46,7 @@ impl UampApp {
 
         let seek = old.seeked.then(|| mpris::position(self));
 
-        ctrl.spawn(async move {
+        ctrl.tasks(async move {
             let mut restart = false;
             if !changes.is_empty() {
                 let change = mpris.properties_changed(changes).await;
@@ -75,8 +60,9 @@ impl UampApp {
             }
 
             if restart {
-                info!("Restarting MPRIS server.");
-                cancel.cancel();
+                vec![Msg::Job(JobMsg::SystemPlayer)]
+            } else {
+                vec![]
             }
         });
     }
@@ -119,7 +105,7 @@ impl UampApp {
         );
         properties.extend(
             song.is_some()
-                .then(|| Property::Metadata(mpris::metadata(self))),
+                .then(|| Property::Metadata(mpris::metadata(self, false).0)),
         );
         properties.extend(volume.map(|v| Property::Volume(v as f64)));
         properties.extend(can_go_next.map(Property::CanGoNext));

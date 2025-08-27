@@ -140,6 +140,8 @@ impl UampApp {
             res.add_policy,
         );
 
+        self.client_update_set_all();
+
         match self.library.start_to_default_json(
             &self.config,
             ctrl,

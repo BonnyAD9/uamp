@@ -35,7 +35,7 @@ impl UampApp {
             JobMsg::SystemPlayer => {
                 self.jobs.finish(Job::SYSTEM_PLAYER);
                 if self.config.system_player() {
-                    self.enable_system_player(ctrl);
+                    self.enable_system_player();
                 }
             }
         }

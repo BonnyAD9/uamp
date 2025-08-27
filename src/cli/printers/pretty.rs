@@ -14,7 +14,7 @@ use crate::{
     cli::Props,
     core::{
         config::{CacheSize, Config},
-        library::Song,
+        library::{Song, img_lookup::lookup_image_data_song},
         server::Info,
     },
     ext::duration_to_string,
@@ -474,7 +474,9 @@ impl Info {
         let Some(s) = &self.now_playing else {
             return res;
         };
-        let Ok(img) = s.lookup_cached_cover(conf, CacheSize::S256) else {
+        let Ok(img) =
+            lookup_image_data_song(s, conf.cache_path(), CacheSize::S256)
+        else {
             return res;
         };
 

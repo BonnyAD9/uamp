@@ -11,7 +11,6 @@ _GZIP=${GZIP_BINARY-gzip}
 _UAMP=${UAMP_PATH-"/usr/bin/uamp"}
 _FORCE=${FORCE_INSTALL-no}
 _CLEAN=${UAMP_CLEANUP-tmp}
-_MAN_DIR=${MAN_DIRECTORY-/usr/share/man}
 
 # Define colors
 if [ -t 1 ]; then
@@ -45,12 +44,12 @@ error_out() {
 }
 
 _HELP="Welcome in help for the $_ITALIC${_GREEN}uamp installer$_RESET by $_SIGN$_RESET.
-Version 0.1.0
+Version 0.2.0
 
 This script is usually invoked directly from wget:
   ${_CYAN}wget $_YELLOW-nv -O $_WHITE- https://raw.githubusercontent.com/BonnyAD9/uamp/master/packages/script/install.sh $_RED| ${_CYAN}sh
 
-${_GREEN}sage:
+${_GREEN}Usage:
   ${_CYAN}install.sh $_GRAY[${_DYELLOW}flags$_GRAY]$_RESET
     Install uamp.
 
@@ -91,18 +90,11 @@ ${_GREEN}Environment variables:$_RESET
   ${_MAGENTA}CARGO_BINARY$_RESET
     Chooses the cargo binary. (${_ITALIC}cargo$_RESET by default)
 
-  ${_MAGENTA}GZIP_BINARY$_RESET
-    Choose the gzip binary. (${_ITALIC}gzip$_RESET by default)
-
   ${_MAGENTA}UAMP_PATH$_RESET
     Choose uamp install path. (${_ITALIC}/usr/bin/uamp$_RESET by default)
 
   ${_MAGENTA}FORCE_INSTALL$_RESET
     Set to ${_ITALIC}yes$_RESET to force install uamp.
-
-  ${_MAGENTA}MAN_DIRECTORY$_RESET
-    Choose where manapges will be installed (${_ITALIC}/usr/share/man$_RESET by
-    default).
 
  “ ${_ITALIC}One who despises the word will do badly, But
    one who fears the commandment will be rewarded.$_RESET ”
@@ -161,10 +153,6 @@ if ! type $_GIT &> /dev/null; then
     error_out "git is not installed."
 fi
 
-if ! type $_TAR &> /dev/null; then
-    error_out "tar is not installed."
-fi
-
 if ! type $_CARGO &> /dev/null; then
     error_out 'cargo is not installed. See
 https://doc.rust-lang.org/cargo/getting-started/installation.html for
@@ -207,20 +195,8 @@ $_GIT checkout "$_TAG"
 echo "Building uamp..."
 UAMP_VERSION_COMMIT=`"$_GIT" rev-parse HEAD` $_CARGO build -r
 
-echo "Building man pages..."
-mkdir -p target/manpages
-"$_GZIP" -c --best other/manpages/uamp.1 > target/manpages/uamp.1.gz
-"$_GZIP" -c --best other/manpages/uamp.5 > target/manpages/uamp.5.gz
-
-echo "Moving files to system..."
-echo "Sudo is required for this final step."
-sudo mkdir -p "`dirname "$_UAMP"`"
-sudo mv "$_GROOT/target/release/uamp" "$_UAMP"
-sudo mkdir -p /usr/man/man1
-sudo mkdir -p /usr/man/man5
-sudo mv "$_GROOT/target/manpages/uamp.1.gz" /usr/share/man/man1/uamp.1
-sudo mv "$_GROOT/target/manpages/uamp.5.gz" /usr/share/man/man5/uamp.5
-sudo mandb
+echo "Self installing uamp..."
+sudo target/release/uamp internal install --man true --root / --exe $_UAMP
 
 echo "Checking that uamp works..."
 if "$_UAMP" --version; then

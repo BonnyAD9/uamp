@@ -2,11 +2,13 @@ use core::fmt::Debug;
 
 use tokio::sync::oneshot;
 
-use crate::core::{AppCtrl, Error, JobMsg, RtAndle, RtHandle, UampApp};
+use crate::core::{
+    AppCtrl, Error, IdControlMsg, JobMsg, RtAndle, RtHandle, UampApp,
+};
 
 use super::{
-    AnyControlMsg, ControlMsg, DataControlMsg, MessageDelegate, PlayMsg,
-    Result, config::ConfigMsg, player::PlayerMsg,
+    AnyControlMsg, ControlMsg, DataControlMsg, MessageDelegate, Result,
+    config::ConfigMsg, player::PlayerMsg,
 };
 
 //===========================================================================//
@@ -17,12 +19,12 @@ use super::{
 #[allow(missing_debug_implementations)]
 #[derive(Debug, Default)]
 pub enum Msg {
-    /// Play song song at the given index in the playlist.
-    PlaySong(PlayMsg),
     /// Some simple messages.
     Control(ControlMsg),
     /// More complicated messages.
     DataControl(Box<DataControlMsg>),
+    /// Messages from cooperating client referencing song ids.
+    IdControl(IdControlMsg),
     /// Player messges handled by the player.
     Player(PlayerMsg),
     /// Dellegate the message.
@@ -43,9 +45,9 @@ impl UampApp {
         msg: Msg,
     ) -> Result<Vec<Msg>> {
         let mut res = match msg {
-            Msg::PlaySong(msg) => self.play_event(msg)?,
             Msg::Control(msg) => self.control_event(ctrl, msg)?,
             Msg::DataControl(msg) => self.data_control_event(ctrl, *msg)?,
+            Msg::IdControl(msg) => self.id_control_event(msg)?,
             Msg::Player(msg) => self.player_event(msg),
             Msg::Delegate(d) => d.update(self, ctrl)?,
             Msg::Config(msg) => self.config_event(ctrl, msg)?,
@@ -60,12 +62,6 @@ impl UampApp {
             ),
         );
         Ok(res)
-    }
-}
-
-impl From<PlayMsg> for Msg {
-    fn from(value: PlayMsg) -> Self {
-        Self::PlaySong(value)
     }
 }
 

@@ -1,4 +1,5 @@
 mod add_new_songs;
+pub mod img_lookup;
 mod json;
 mod library_load_result;
 mod library_msg;

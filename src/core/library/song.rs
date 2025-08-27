@@ -1,14 +1,11 @@
 use std::{
-    borrow::Cow,
     fmt::Debug,
-    fs::{self, File, create_dir_all},
-    io::{BufReader, Cursor, ErrorKind},
+    fs::File,
     path::{Path, PathBuf},
     time::Duration,
 };
 
 use audiotags::Tag;
-use image::{DynamicImage, ImageReader, imageops::FilterType};
 use log::warn;
 use raplay::source::{Source, Symph};
 use serde::{Deserialize, Serialize};
@@ -108,98 +105,6 @@ impl Song {
         }
 
         Ok(s)
-    }
-
-    pub fn lookup_image(&self) -> Result<DynamicImage> {
-        if let Ok(tag) = Tag::new().read_from_path(&self.path) {
-            if let Some(img) = tag.album_cover() {
-                return Ok(ImageReader::new(Cursor::new(img.data))
-                    .with_guessed_format()?
-                    .decode()?);
-            }
-        }
-
-        let Some(p) = self.path.parent() else {
-            return Err(Error::io(std::io::Error::new(
-                ErrorKind::NotFound,
-                format!("Couldn't find parent directory of {:?}", self.path),
-            )));
-        };
-
-        let lookup_names: &[Cow<'static, str>] = &[
-            // Uamp way
-            filesan::escape_str(
-                &format!("{} - {}", self.artist(), self.album()),
-                '_',
-                filesan::Mode::ALL,
-            )
-            .into(),
-            // Winamp way
-            filesan::replace_escape(self.album(), '_', filesan::Mode::ALL)
-                .into(),
-            // Standard way if in separate folders.
-            "cover".into(),
-        ];
-        let extensions = ["jpg", "jpeg", "png", "webp"];
-        let path = lookup_names
-            .iter()
-            .flat_map(|n| extensions.iter().map(|e| n.to_string() + "." + e))
-            .map(|n| p.join(n))
-            .find(|p| p.exists());
-
-        let Some(img) = path else {
-            return Err(Error::io(std::io::Error::new(
-                ErrorKind::NotFound,
-                format!("Couldn't find image for song {:?}", self.path),
-            )));
-        };
-
-        // It is more reliable to guess the format of user provided image by
-        // its contents than using its extension.
-        Ok(ImageReader::new(BufReader::new(File::open(img)?))
-            .with_guessed_format()?
-            .decode()?)
-    }
-
-    pub fn lookup_cached_cover(
-        &self,
-        conf: &Config,
-        size: CacheSize,
-    ) -> Result<DynamicImage> {
-        let mut cached = conf.get_cache_cover_path(size);
-        let name = format!("{} - {}.jpg", self.artist, self.album);
-        cached.push(filesan::escape_str(&name, '_', filesan::Mode::SYSTEM));
-
-        let size = size.size() as u32;
-
-        if cached.exists() {
-            // This image was created by uamp, so we can be sure that the
-            // format guessed from extension is correct.
-            return Ok(ImageReader::open(cached)?.decode()?);
-        }
-
-        let img = self.lookup_image()?;
-
-        create_dir_all(cached.parent().unwrap())?;
-
-        let (w, h) = if img.width() >= img.height() {
-            (size, img.height() * size / img.width())
-        } else {
-            (img.width() * size / img.height(), size)
-        };
-        let img = image::imageops::resize(
-            &img.to_rgb8(),
-            w,
-            h,
-            FilterType::Triangle,
-        );
-
-        create_dir_all(cached.parent().unwrap())?;
-        if img.save(&cached).is_err() {
-            _ = fs::remove_file(cached);
-        }
-
-        Ok(img.into())
     }
 
     pub fn get_cached_path(

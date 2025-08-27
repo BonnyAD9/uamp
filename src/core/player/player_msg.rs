@@ -5,6 +5,7 @@ use raplay::PrefetchState;
 use crate::core::{
     Msg, UampApp,
     library::{Library, LibraryUpdate, SongId},
+    server::{SubMsg, sub::PlaylistJump},
 };
 
 //===========================================================================//
@@ -34,9 +35,15 @@ impl UampApp {
                 PrefetchState::NoPrefetch | PrefetchState::PrefetchFailed,
             ) => {
                 self.player.play_next(&mut self.library, 1);
+                self.client_update(SubMsg::PlaylistJump(PlaylistJump::new(
+                    &self.player,
+                )));
             }
             PlayerMsg::SongEnd(PrefetchState::PrefetchSuccessful) => {
                 self.player.prefetch_success();
+                self.client_update(SubMsg::PlaylistJump(PlaylistJump::new(
+                    &self.player,
+                )));
             }
             PlayerMsg::Prefetch => {
                 self.player.prefetch(&mut self.library);
@@ -63,6 +70,7 @@ impl UampApp {
                 self.player.hard_pause();
                 self.hard_pause_at = None;
                 self.state.seeked = true;
+                self.client_update_seek();
             }
         }
     }

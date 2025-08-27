@@ -2,8 +2,10 @@
 //                                   Public                                  //
 //===========================================================================//
 
+use serde::Serialize;
+
 /// State of the player playback
-#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Serialize)]
 pub enum Playback {
     /// No song is playing (no song is loaded)
     #[default]

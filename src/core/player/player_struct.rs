@@ -1,5 +1,6 @@
 use std::{cell::Cell, mem, time::Duration};
 
+use itertools::Itertools;
 use log::{error, info, warn};
 use raplay::{CallbackInfo, Timestamp};
 
@@ -8,6 +9,8 @@ use crate::{
         Alias, DataControlMsg, Error, Msg, Result, RtAndle,
         config::Config,
         library::{Library, SongId},
+        log_err,
+        server::sub,
     },
     ext::AlcVec,
     gen_struct,
@@ -27,7 +30,7 @@ gen_struct! {
     pub Player {
         // Reference
         playlist: Playlist { pub, pub },
-        playlist_stack: Vec<Playlist> { pub, pri },
+        playlist_stack: Vec<Playlist> { pub, pub },
         ; // value
         volume: f32 { pub, pri },
         mute: bool { pub, pri },
@@ -67,7 +70,9 @@ impl Player {
     ///   result in distorted audio). It is on square root scale.
     pub fn set_volume(&mut self, volume: f32) {
         self.volume_set(volume);
-        self.inner.set_volume(volume);
+        if !self.mute() {
+            self.inner.set_volume(volume);
+        }
     }
 
     /// Mute/Unmute.
@@ -165,8 +170,13 @@ impl Player {
         self.inner.do_prefetch_notify(true);
     }
 
-    /// If there are more playlists in the stack, end the top one.
-    pub fn pop_playlist(&mut self, lib: &mut Library) {
+    /// If there are more playlists in the stack, remove the n on top, but
+    /// leave at least one. If `n` is 0 leave only the last one.
+    pub fn pop_playlist(&mut self, lib: &mut Library, n: usize) {
+        let len = self.playlist_stack.len();
+        self.playlist_stack
+            .splice(len - n.wrapping_sub(1).min(len - 1).., []);
+
         let Some(playlist) = self.playlist_stack.pop() else {
             return;
         };
@@ -353,9 +363,29 @@ impl Player {
             .map(|a| std::mem::take(&mut playlists[a]))
             .collect();
 
-        self.pop_playlist(lib);
+        self.pop_playlist(lib, 1);
 
         Ok(())
+    }
+
+    pub fn get_sub(&mut self) -> sub::Player {
+        // These operations doesn't actually mutate the data, just the way they
+        // are stored (AlcVec).
+        sub::Player {
+            playlist: self.sub_playlist(),
+            playlist_stack: self
+                .playlist_stack
+                .iter_mut()
+                .map(sub::Playlist::new)
+                .collect_vec(),
+            volume: self.volume(),
+            mute: self.mute(),
+            state: self.state,
+        }
+    }
+
+    pub fn sub_playlist(&mut self) -> sub::Playlist {
+        sub::Playlist::new(&mut self.playlist)
     }
 
     /// Creates new player from the sender
@@ -456,6 +486,10 @@ impl Player {
         let Some(id) = id else {
             if !self.state.is_stopped() {
                 self.inner.play(false);
+                log_err(
+                    "Failed to hard pause the playback when stopped.",
+                    self.inner.hard_pause(),
+                );
                 self.state = Playback::Stopped;
             }
             return false;

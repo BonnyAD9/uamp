@@ -11,6 +11,7 @@ no-self-update = []
 
 [dependencies]
 anyhow = "1.0.98"
+astral-tokio-tar = "0.5.2"
 audiotags = "0.5.0"
 bitflags = { version = "2.9.1", features = [ "serde" ] }
 const_format = { version = "0.2.34", features = [ "fmt" ] }
@@ -25,6 +26,7 @@ hyper-util = { version = "0.1.16", features = ["tokio"] }
 image = "0.25.6"
 itertools = "0.14.0"
 log = "0.4.27"
+mime_guess = "2.0.5"
 notify = "8.1.0"
 pareg ="0.10.0"
 # pareg = { path = "../pareg" }
@@ -32,13 +34,13 @@ place_macro = "1.0.0"
 rand = "0.9.2"
 raplay = { version = "0.4.2", features = ["serde"] }
 # raplay = { path = "../raplay", features = ["serde"] }
-serde = "1.0.219"
+serde = { version = "1.0.219", features = ["rc"] }
 serde_json = "1.0.142"
 shell-words = "1.1.0"
 termal = { version =  "4.0.2", features = ["image", "raw", "events"] }
 thiserror = "2.0.12"
-tokio = { version = "1.47.1", features = ["rt", "sync", "signal", "macros", "net", "rt-multi-thread"] }
-tokio-util = "0.7.15"
+tokio = { version = "1.47.1", features = ["rt", "sync", "signal", "macros", "net", "rt-multi-thread", "fs"] }
+tokio-util = { version = "0.7.15", features = ["codec"] }
 unidecode = "0.3.0"
 url = "2.5.4"
 

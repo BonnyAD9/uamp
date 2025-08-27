@@ -539,6 +539,9 @@ fn print_update_help(color: bool) {
   {'y}-h  -?  --help{'_}
     See help for update.
 
+  {'y}--enabled{'_}
+    Check if self update is enabled. Prints `{'i}yes{'_}` or `{'i}no{'_}`.
+
   {'y}-f  --force{'_}
     Force self update even if it was disabled. DONT DO THIS unless you know
     what you are doing.
@@ -646,8 +649,9 @@ fn print_control_messages_help(color: bool) {
     currently playing song to the start of the new playlist. See
     `{'c}uamp {'b}h {'w bold}query{'_}` for more info.
 
-  {'r}pop-playlist  pop{'_}
-    Remove the secondary playlist and restore the primary playlist.
+  {'r}pop-playlist  pop{'gr}[=<cnt>]{'_}
+    Remove {'i}cnt{'_} playlists from top of the stack, but leave at least one.
+    If {'i}cnt{'_} is 0 leave only the last one. Default value is 1.
 
   {'r}flatten  flat{'gr}[=<cnt>]{'_}
     Seamlessly insert the top playlist to the next playlist on the stack. The

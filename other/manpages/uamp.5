@@ -392,6 +392,32 @@ Default value:
 .fi
 .RE
 .TP
+\fB\fCskin\fR
+Defines path for the skin for HTTP GUI. Should be absolute for future
+backwards compatibility.
+.IP
+Default value:
+.IP
+On unix systems, default path is:
+1. \fB\fC$XDG_DATA_HOME/uamp/skins/default\-uamp.tar\fR
+2. \fB\fC$HOME/.local/share/uamp/skins/default\-uamp.tar\fR
+.IP
+On macOS, default path is:
+1. \fB\fC$HOME/Library/Application Support/uamp/skins/default\-uamp.tar\fR
+2. \fB\fC/Users/Alice/Library/Application Support/uamp/skins/default\-uamp.tar\fR
+.TP
+On windows, default path is:
+1. \fB\fC{FOLDERID_LocalAppData}\\uamp\\skins\\default\-uamp.tar\fR which usually is
+     \fB\fC%appdata%\\uamp\\skins\\default\-uamp.tar\fR
+.IP
+Example value on linux:
+.PP
+.RS
+.nf
+"skin": "/home/alice/.local/share/uamp/skins/default\-uamp.tar"
+.fi
+.RE
+.TP
 \fB\fCsystem_player\fR
 When enabled, uamp will integrate with the system as media player.
 .IP

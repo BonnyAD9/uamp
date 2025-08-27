@@ -1,23 +1,34 @@
-use std::{borrow::Cow, convert::Infallible};
+use std::{
+    borrow::Cow, convert::Infallible, env, io::ErrorKind, net::SocketAddr,
+    path::Path,
+};
 
+use const_format::concatc;
 use futures::{
     StreamExt,
     stream::{self, BoxStream},
 };
-use http_body_util::StreamBody;
+use http_body_util::{BodyExt, StreamBody};
 use hyper::{
     Method, Request, Response, Uri,
     body::{Bytes, Frame, Incoming},
 };
-use pareg::FromArg;
+use pareg::{ArgInto, FromArg};
 use serde::Serialize;
+use tokio::{
+    fs::{self, File},
+    io::AsyncRead,
+};
+use tokio_tar::Archive;
+use tokio_util::codec::{BytesCodec, FramedRead};
 use url::Url;
 
 use crate::core::{
-    AnyControlMsg, Error, Msg, Result, RtAndle, UampApp, config,
-    library::Song,
+    AnyControlMsg, Error, IdControlMsg, Msg, Result, RtAndle, UampApp,
+    config::{self, CacheSize},
+    library::{Song, img_lookup::lookup_image_path_rt_thread},
     query::Query,
-    server::{Info, RepMsg, ReqMsg},
+    server::{Info, RepMsg, ReqMsg, ServerData, sse_service::SseService},
 };
 
 type MyBody = StreamBody<BoxStream<'static, Result<Frame<Bytes>>>>;
@@ -26,11 +37,25 @@ type MyResponse = Response<MyBody>;
 #[derive(Debug, Clone)]
 pub struct UampService {
     rt: RtAndle,
+    data: ServerData,
+    peer: SocketAddr,
 }
 
+pub const SERVER_HEADER: &str = concatc!(
+    config::APP_ID,
+    "/",
+    config::VERSION_STR,
+    " (",
+    env::consts::OS,
+    ")"
+);
+
+/// Maximum limit for the amount of cumulative accepted data.
+pub const MAX_ACCEPT_LENGTH: usize = 1024 * 1024; // 1 MiB
+
 impl UampService {
-    pub fn new(rt: RtAndle) -> Self {
-        Self { rt }
+    pub fn new(rt: RtAndle, data: ServerData, peer: SocketAddr) -> Self {
+        Self { rt, data, peer }
     }
 
     pub async fn serve(
@@ -46,6 +71,7 @@ impl UampService {
     async fn serve_inner(&self, req: Request<Incoming>) -> Result<MyResponse> {
         match *req.method() {
             Method::GET => self.serve_get(req).await,
+            Method::POST => self.serve_post(req).await,
             _ => Err(Error::http(405, "Unknown method.".to_string())),
         }
     }
@@ -54,7 +80,20 @@ impl UampService {
         match req.uri().path() {
             "/api/ctrl" => self.handle_ctrl_api(req).await,
             "/api/req" => self.handle_req_api(req).await,
-            _ => Err(Error::http(404, "Unknown api endpoint.".to_string())),
+            "/api/sub" => self.handle_sub_api(req).await,
+            "/api/marco" => Ok(string_response("polo")),
+            "/api/img" => self.handle_img_api(req).await,
+            v if v.starts_with("/app/") || v == "/app" => {
+                self.handle_app(v.strip_prefix("/app").unwrap()).await
+            }
+            _ => Err(Error::http(404, "Unknown GET endpoint.".to_string())),
+        }
+    }
+
+    async fn serve_post(&self, req: Request<Incoming>) -> Result<MyResponse> {
+        match req.uri().path() {
+            "/api/ctrl" => self.handle_ctrl_post_api(req).await,
+            _ => Err(Error::http(404, "Unknown POST endpoint.".to_string())),
         }
     }
 
@@ -76,7 +115,7 @@ impl UampService {
             msgs.push(AnyControlMsg::from_arg(&buf)?.into());
         }
 
-        self.rt.msgs(msgs);
+        self.rt.msgs_result(msgs).await?;
 
         Ok(string_response("Success!"))
     }
@@ -117,6 +156,118 @@ impl UampService {
         json_response(&reply)
     }
 
+    async fn handle_sub_api(
+        &self,
+        _: Request<Incoming>,
+    ) -> Result<MyResponse> {
+        let Some(s) = self.data.make_reciever() else {
+            return Err(Error::http(204, "No event source.".into()));
+        };
+        let srv = SseService::new(s, self.rt.clone());
+        Ok(sse_response(srv))
+    }
+
+    async fn handle_img_api(
+        &self,
+        req: Request<Incoming>,
+    ) -> Result<MyResponse> {
+        let url = uri_to_url(req.uri())?;
+        let mut album = None;
+        let mut artist = None;
+        let mut size: Option<CacheSize> = None;
+        let mut or = None;
+
+        for (k, v) in url.query_pairs() {
+            match k.as_ref() {
+                "artist" => artist = Some(v.into_owned()),
+                "album" => album = Some(v.into_owned()),
+                "size" => size = Some(v.arg_into()?),
+                "or" => or = Some(v.into_owned()),
+                _ => {}
+            };
+        }
+        let Some(album) = album else {
+            return Err(Error::http(400, "Missing album in query.".into()));
+        };
+
+        let Some(artist) = artist else {
+            return Err(Error::http(400, "Missing artist in query.".into()));
+        };
+
+        let cache = self.data.cache.read().unwrap().clone();
+
+        let res = lookup_image_path_rt_thread(
+            self.rt.clone(),
+            cache,
+            artist,
+            album,
+            size.unwrap_or_default(),
+        )
+        .await?;
+
+        match (res, or) {
+            (Ok(r), _) => file_response(r).await,
+            (Err(_), Some(o)) => Ok(redirect_response(&o, false)),
+            (Err(e), _) => Err(e),
+        }
+    }
+
+    async fn handle_app(&self, path: &str) -> Result<MyResponse> {
+        let app_path = self.data.client.read().unwrap().clone();
+        if fs::metadata(&app_path).await?.is_dir() {
+            self.handle_app_dir(&app_path, path).await
+        } else {
+            self.handle_app_tar(&app_path, path).await
+        }
+    }
+
+    async fn handle_ctrl_post_api(
+        &self,
+        mut req: Request<Incoming>,
+    ) -> Result<MyResponse> {
+        let len = req
+            .headers()
+            .get("Content-Length")
+            .and_then(|l| l.to_str().ok())
+            .and_then(|a| a.parse().ok());
+        let mut str = req.body_mut().into_data_stream();
+
+        let mut data = if let Some(len) = len {
+            if len > MAX_ACCEPT_LENGTH {
+                return Err(Error::http(413, "Too much data.".to_string()));
+            }
+            Vec::with_capacity(len)
+        } else {
+            vec![]
+        };
+
+        while data.len() <= MAX_ACCEPT_LENGTH
+            && let Some(frame) = str.next().await
+        {
+            let frame = frame?;
+            data.extend(frame);
+        }
+
+        if data.len() > MAX_ACCEPT_LENGTH {
+            return Err(Error::http(413, "Too much data.".to_string()));
+        }
+
+        let msg = serde_json::from_slice(&data)?;
+
+        if matches!(msg, IdControlMsg::SetConfig(_))
+            && !self.peer.ip().is_loopback()
+        {
+            return Err(Error::http(
+                403,
+                "Only loopback is allowed to modify settings.".into(),
+            ));
+        }
+
+        self.rt.msg_result(Msg::IdControl(msg)).await?;
+
+        Ok(string_response("Success!"))
+    }
+
     async fn make_req(&self, k: &str, v: &str) -> Result<RepMsg> {
         match ReqMsg::from_kv(k, v)? {
             ReqMsg::Info(b, a) => self.handle_info_req(b, a).await,
@@ -136,6 +287,66 @@ impl UampService {
             .request(move |app, _| app.query_response(&q))
             .await?
             .map(RepMsg::Query)
+    }
+
+    async fn handle_app_dir(
+        &self,
+        app_path: &Path,
+        mut path: &str,
+    ) -> Result<MyResponse> {
+        path = path.strip_prefix("/").unwrap_or(path);
+        let os_path = Path::new(&path);
+        if os_path.components().any(|c| c.as_os_str() == "..") {
+            return Err(Error::http(
+                403,
+                "Relative `..` is disallowed.".into(),
+            ));
+        }
+        let os_path = app_path.join(path);
+        if fs::metadata(&os_path).await?.is_dir() {
+            Ok(redirect_response(
+                &path_join(["/app", path, "index.html"]),
+                true,
+            ))
+        } else {
+            file_response(os_path).await
+        }
+    }
+
+    async fn handle_app_tar(
+        &self,
+        app_path: &Path,
+        mut path: &str,
+    ) -> Result<MyResponse> {
+        path = path.strip_prefix('/').unwrap_or(path);
+        let sec_path = path_join([path, "index.html"]);
+
+        let mut archive = Archive::new(File::open(app_path).await?);
+        let mut entry = None;
+        let mut entries = archive.entries()?;
+        while let Some(e) = entries.next().await {
+            let e = e?;
+            let epath = e.path()?;
+            if epath == Path::new(path) {
+                entry = Some(e);
+                break;
+            }
+            dbg!(&epath);
+            if epath == Path::new(sec_path.as_str()) {
+                return Ok(redirect_response(
+                    &path_join(["/app", &sec_path]),
+                    true,
+                ));
+            }
+        }
+
+        let Some(file) = entry else {
+            return Err(Error::http(404, "No such file.".into()));
+        };
+
+        let mime = mime_guess::from_path(file.path()?).first_or_octet_stream();
+
+        Ok(reader_response(file, mime.essence_str()))
     }
 }
 
@@ -206,6 +417,8 @@ fn err_response(err: Error) -> MyResponse {
         | Error::SerdeJson(_)
         | Error::ShellWords(_) => 400,
         Error::NotFound(_) => 404,
+        Error::Io(ref e) if e.inner().kind() == ErrorKind::NotFound => 404,
+        Error::Http(_, c) => c,
         _ => 500,
     };
 
@@ -213,6 +426,8 @@ fn err_response(err: Error) -> MyResponse {
 
     Response::builder()
         .status(code)
+        .header("Content-Type", "text/plain; charset=UTF-8")
+        .header("Server", SERVER_HEADER)
         .body(string_body(msg))
         .expect("Failed to generate error response. This shouldn't happen.")
 }
@@ -220,7 +435,8 @@ fn err_response(err: Error) -> MyResponse {
 fn string_response(s: impl Into<Cow<'static, str>>) -> MyResponse {
     Response::builder()
         .status(200)
-        .header("Content-Type", "text/plain")
+        .header("Content-Type", "text/plain; charset=UTF-8")
+        .header("Server", SERVER_HEADER)
         .body(string_body(s))
         .expect("Failed to generate string response. This shouldn't happen.")
 }
@@ -229,8 +445,64 @@ fn json_response(s: &impl Serialize) -> Result<MyResponse> {
     Ok(Response::builder()
         .status(200)
         .header("Content-Type", "application/json")
+        .header("Server", SERVER_HEADER)
         .body(json_body(s)?)
         .expect("Failed to generate json response. This shouldn't happen."))
+}
+
+fn sse_response(s: SseService) -> MyResponse {
+    Response::builder()
+        .status(200)
+        .header("Content-Type", "text/event-stream")
+        .header("Cache-Control", "no-cache")
+        .header("Connection", "keep-alive")
+        .header("Server", SERVER_HEADER)
+        .body(StreamBody::new(
+            stream::unfold(s, |mut s| async move {
+                let data = Ok(Frame::data(s.next().await?.into()));
+                Some((data, s))
+            })
+            .boxed(),
+        ))
+        .expect("Failet to generate sse response. This shouldn't happen.")
+}
+
+async fn file_response(p: impl AsRef<Path>) -> Result<MyResponse> {
+    let r = File::open(p.as_ref()).await?;
+    let mime = mime_guess::from_path(p).first_or_octet_stream();
+    Ok(reader_response(r, mime.essence_str()))
+}
+
+fn reader_response(
+    r: impl AsyncRead + Unpin + Send + 'static,
+    mime: &str,
+) -> MyResponse {
+    let fr = FramedRead::new(r, BytesCodec::new());
+    Response::builder()
+        .status(200)
+        .header("Content-Type", mime)
+        .header("Server", SERVER_HEADER)
+        .body(StreamBody::new(
+            stream::unfold(fr, |mut fr| async move {
+                let n = fr
+                    .next()
+                    .await?
+                    .map(|a| Frame::data(a.into()))
+                    .map_err(|e| e.into());
+                Some((n, fr))
+            })
+            .boxed(),
+        ))
+        .expect("Failed to generate reader response. This shouldn't happen.")
+}
+
+fn redirect_response(path: &str, permanent: bool) -> MyResponse {
+    Response::builder()
+        .status(if permanent { 301 } else { 302 })
+        .header("Location", path)
+        .header("Server", SERVER_HEADER)
+        .body(empty_body())
+        .expect("Failed to generate redirect response. This shouldn't happen.")
 }
 
 fn string_body(s: impl Into<Cow<'static, str>>) -> MyBody {
@@ -248,13 +520,46 @@ fn string_body(s: impl Into<Cow<'static, str>>) -> MyBody {
 
 fn json_body(s: &impl Serialize) -> Result<MyBody> {
     let data = serde_json::to_vec(s)?;
-    Ok(StreamBody::new(
-        stream::once(async move { Ok(Frame::data(data.into())) }).boxed(),
-    ))
+    Ok(byte_body(data))
+}
+
+fn byte_body(b: Vec<u8>) -> MyBody {
+    StreamBody::new(
+        stream::once(async move { Ok(Frame::data(b.into())) }).boxed(),
+    )
+}
+
+fn empty_body() -> MyBody {
+    StreamBody::new(stream::empty().boxed())
 }
 
 fn uri_to_url(uri: &Uri) -> Result<Url> {
     Ok(Url::parse(
         &("http://dummy".to_string() + uri.path_and_query().unwrap().as_str()),
     )?)
+}
+
+fn path_join<S: AsRef<str>>(paths: impl IntoIterator<Item = S>) -> String {
+    let mut it = paths.into_iter();
+    let Some(p) = it.next() else {
+        return String::new();
+    };
+
+    let mut res = p.as_ref().to_string();
+    for p in it {
+        let s = p.as_ref();
+        if s.is_empty() {
+            continue;
+        }
+        match (res.ends_with('/'), s.starts_with('/')) {
+            (true, true) => res += &s[1..],
+            (false, false) => {
+                res.push('/');
+                res += s;
+            }
+            _ => res += s,
+        }
+    }
+
+    res
 }

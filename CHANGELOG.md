@@ -3,6 +3,8 @@
 ## future
 ### New features
 - Allow disabling watchin of exe with `"auto_restart": false`.
+- Allow specifying cnt for `pop`.
+- Add option to check if self update is enabled with `update --enabled`.
 
 ### Fixes
 - Fix order of `a` and `b` when requesting with `uam i nfo=a..b`.
@@ -12,6 +14,13 @@
 - Empty query wasn't properly converted back to string.
 - Restart MPRIS server on broken pipe.
 - Properly use HTTP1.1 instead of some accidental HTTP2 headers.
+- Dont unmute on volume change.
+- Partially fix: when playlist ends with no end action, it cycles its songs.
+  Full fix requires new version of raplay which is not yet released.
+- Properly shutdown connections when server stops.
+- Fix `rps` message.
+- Properly return errors from control messages.
+- Fix `load-songs` message.
 
 ## v0.5.13
 ### New features

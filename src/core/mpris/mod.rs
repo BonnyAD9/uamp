@@ -1,15 +1,17 @@
-use std::time::Duration;
+use std::{path::PathBuf, time::Duration};
 
 use mpris_server::{
-    LocalPlayerInterface, LocalRootInterface, LoopStatus, Metadata,
-    PlaybackRate, PlaybackStatus, Time, TrackId, Volume,
+    LoopStatus, Metadata, PlaybackRate, PlaybackStatus, PlayerInterface,
+    RootInterface, Time, TrackId, Volume,
     zbus::{self, fdo},
 };
+use tokio::task::JoinHandle;
 
 use crate::{
     core::{
-        ControlMsg, DataControlMsg, Msg, Result, RtHandle, UampApp,
+        ControlMsg, DataControlMsg, Msg, Result, RtAndle, UampApp,
         config::{self, CacheSize},
+        library::img_lookup::lookup_image_path_rt_thread,
         player::Playback,
     },
     ext::uri::{get_file_uri, parse_file_uri},
@@ -18,11 +20,11 @@ use crate::{
 mod app_impl;
 
 pub struct Mpris {
-    rt: RtHandle,
+    rt: RtAndle,
 }
 
 impl Mpris {
-    pub fn new(rt: RtHandle) -> Self {
+    pub fn new(rt: RtAndle) -> Self {
         Self { rt }
     }
 
@@ -56,7 +58,7 @@ impl Mpris {
     }
 }
 
-impl LocalRootInterface for Mpris {
+impl RootInterface for Mpris {
     async fn raise(&self) -> fdo::Result<()> {
         Ok(())
     }
@@ -121,7 +123,7 @@ impl LocalRootInterface for Mpris {
     }
 }
 
-impl LocalPlayerInterface for Mpris {
+impl PlayerInterface for Mpris {
     async fn next(&self) -> fdo::Result<()> {
         self.send_msg(Msg::Control(ControlMsg::NextSong(1))).await
     }
@@ -267,7 +269,16 @@ impl LocalPlayerInterface for Mpris {
     }
 
     async fn metadata(&self) -> fdo::Result<Metadata> {
-        self.request(|app| Ok(metadata(app))).await
+        let (mut meta, task) =
+            self.request(|app| Ok(metadata(app, true))).await?;
+
+        if let Some(task) = task
+            && let Ok(Ok(img)) = task.await
+        {
+            meta.set_art_url(Some(get_file_uri("", img)));
+        }
+
+        Ok(meta)
     }
 
     async fn volume(&self) -> fdo::Result<Volume> {
@@ -392,22 +403,29 @@ pub fn playback(pb: Playback) -> PlaybackStatus {
     }
 }
 
-pub fn metadata(app: &UampApp) -> Metadata {
+pub fn metadata(
+    app: &UampApp,
+    image: bool,
+) -> (Metadata, Option<JoinHandle<Result<PathBuf>>>) {
     app.player
         .playlist()
         .current_idx()
-        .map(|i| metadata_for(app, i))
+        .map(|i| metadata_for(app, i, image))
         .unwrap_or_default()
 }
 
-fn metadata_for(app: &UampApp, idx: usize) -> Metadata {
+fn metadata_for(
+    app: &UampApp,
+    idx: usize,
+    image: bool,
+) -> (Metadata, Option<JoinHandle<Result<PathBuf>>>) {
     let mut data = Metadata::new();
     data.set_trackid(TrackId::try_from(make_track_id(idx)).ok());
     let len = (app.player.playlist().current_idx() == Some(idx))
         .then(|| app.player.timestamp().map(|t| t.total))
         .flatten();
     let Some(id) = app.player.playlist()[..].get(idx) else {
-        return data;
+        return (data, None);
     };
     let song = &app.library[id];
 
@@ -421,7 +439,7 @@ fn metadata_for(app: &UampApp, idx: usize) -> Metadata {
     data.set_disc_number(song.disc_opt().map(|d| d as i32));
     data.set_track_number(song.track_opt().map(|t| t as i32));
     data.set_art_url(
-        song.get_cached_path(&app.config, CacheSize::S256)
+        song.get_cached_path(&app.config, CacheSize::Full)
             .map(|s| get_file_uri("", s)),
     );
     data.set_trackid(
@@ -431,7 +449,17 @@ fn metadata_for(app: &UampApp, idx: usize) -> Metadata {
             .and_then(|pos| TrackId::try_from(make_track_id(pos)).ok()),
     );
 
-    data
+    let task = image.then(|| {
+        lookup_image_path_rt_thread(
+            app.rt.andle(),
+            app.config.cache_path().clone(),
+            song.artist().to_string(),
+            song.album().to_string(),
+            CacheSize::Full,
+        )
+    });
+
+    (data, task)
 }
 
 pub fn position(app: &UampApp) -> Time {

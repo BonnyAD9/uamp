@@ -5,20 +5,17 @@ mod job_msg;
 use std::rc::Rc;
 
 #[cfg(unix)]
-use mpris_server::LocalServer;
-use tokio_util::sync::CancellationToken;
-
-#[cfg(unix)]
 use crate::core::mpris::Mpris;
+use crate::core::server::ServerData;
 
 pub use self::{job::*, job_msg::*};
 
 #[derive(Debug, Default)]
 pub struct Jobs {
     unique: Job,
-    pub server: Option<CancellationToken>,
+    pub server: Option<ServerData>,
     #[cfg(unix)]
-    pub system_player: Option<(Rc<LocalServer<Mpris>>, CancellationToken)>,
+    pub system_player: Option<Rc<mpris_server::Server<Mpris>>>,
 }
 
 impl Jobs {

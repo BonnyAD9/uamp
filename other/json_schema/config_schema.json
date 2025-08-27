@@ -48,7 +48,7 @@
             "type": "boolean",
             "default": true
         },
-        "remove_missing_on_start": {
+        "remove_missing_on_load": {
             "description": "when true, uamp will remove songs from library that have invalid path when loading new songs",
             "type": "boolean",
             "default": true
@@ -116,6 +116,7 @@
         "previous_timeout": {
             "description": "When not null, the action for previous will go to previous only if the last previous action was in the given time, otherwise it will rewind to start",
             "type": ["string", "null"],
+            "pattern": "^([0-9]*d)?([0-9]*:)?([0-9]*:)?([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])$",
             "default": null
         },
         "play_on_start": {
@@ -173,7 +174,11 @@
         "system_player": {
           "description": "If enabled, uamp will integrate with the system. Only supported on linux where this uses mpris.",
           "type": "boolean",
-          "default": "true"
+          "default": true
+        },
+        "skin": {
+          "description": "Path to skin to use. Should be absolute.",
+          "type": "string"
         }
     }
 }

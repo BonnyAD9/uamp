@@ -1,5 +1,5 @@
 use std::{
-    fmt::{Debug, Display},
+    fmt::{Debug, Display, Write},
     str::FromStr,
 };
 
@@ -28,26 +28,18 @@ pub struct LoadOpts {
 
 impl Display for LoadOpts {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut res = String::new();
-
         match self.remove_missing {
-            Some(true) => res.push('r'),
-            Some(false) => res.push('l'),
+            Some(true) => f.write_char('r')?,
+            Some(false) => f.write_char('l')?,
             _ => {}
         }
 
         match self.add_to_playlist {
-            Some(AddPolicy::None) => res.push('-'),
-            Some(AddPolicy::End) => res.push('e'),
-            Some(AddPolicy::Next) => res.push('n'),
-            Some(AddPolicy::MixIn) => res.push('m'),
-            None => {}
-        }
-
-        if res.is_empty() {
-            f.write_str("load_songs")
-        } else {
-            write!(f, "load_songs={res}")
+            Some(AddPolicy::None) => f.write_char('-'),
+            Some(AddPolicy::End) => f.write_char('e'),
+            Some(AddPolicy::Next) => f.write_char('n'),
+            Some(AddPolicy::MixIn) => f.write_char('m'),
+            None => Ok(()),
         }
     }
 }

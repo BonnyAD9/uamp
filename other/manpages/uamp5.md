@@ -314,6 +314,28 @@ background.
   Default value:
 
     "enable_server": true
+
+`skin`
+  Defines path for the skin for HTTP GUI. Should be absolute for future
+  backwards compatibility.
+
+  Default value:
+
+  On unix systems, default path is:
+  1. `$XDG_DATA_HOME/uamp/skins/default-uamp.tar`
+  2. `$HOME/.local/share/uamp/skins/default-uamp.tar`
+    
+  On macOS, default path is:
+  1. `$HOME/Library/Application Support/uamp/skins/default-uamp.tar`
+  2. `/Users/Alice/Library/Application Support/uamp/skins/default-uamp.tar`
+
+  On windows, default path is:
+  1. `{FOLDERID_LocalAppData}\uamp\skins\default-uamp.tar` which usually is
+     `%appdata%\uamp\skins\default-uamp.tar`
+
+  Example value on linux:
+
+    "skin": "/home/alice/.local/share/uamp/skins/default-uamp.tar"
     
 `system_player`
   When enabled, uamp will integrate with the system as media player.

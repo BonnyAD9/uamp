@@ -1,17 +1,14 @@
-mod mode;
-
 use std::{
     collections::HashMap,
     env::{current_exe, temp_dir},
-    ffi::OsStr,
-    fs::{self, create_dir_all},
-    path::Path,
+    fs::create_dir_all,
     process::Command,
 };
 
-use crate::core::{ErrCtx, Error, Result, config};
-
-pub use self::mode::*;
+use crate::{
+    core::{ErrCtx, Error, Result, config},
+    env::install::{run_command, see_command, update_mode::UpdateMode},
+};
 
 #[derive(Debug, Default)]
 struct Listing<'a> {
@@ -22,19 +19,11 @@ struct Listing<'a> {
     other: Vec<(&'a str, &'a str)>,
 }
 
-#[cfg(feature = "no-self-update")]
-pub const ALLOW_SELF_UPDATE: bool = false;
-#[cfg(not(feature = "no-self-update"))]
-pub const ALLOW_SELF_UPDATE: bool = true;
-
-pub const DEFAULT_REMOTE: &str = "https://github.com/BonnyAD9/uamp.git";
-
-#[cfg(unix)]
-pub const INSTALL_MANPAGES: bool = true;
-#[cfg(not(unix))]
-pub const INSTALL_MANPAGES: bool = false;
-
-pub fn try_update(remote: &str, mode: &Mode, manpages: bool) -> Result<bool> {
+pub fn try_update(
+    remote: &str,
+    mode: &UpdateMode,
+    manpages: bool,
+) -> Result<bool> {
     let v = get_latest_version(remote, mode)?;
     if is_up_to_date(&v, mode) {
         return Ok(false);
@@ -51,20 +40,10 @@ pub fn try_update(remote: &str, mode: &Mode, manpages: bool) -> Result<bool> {
     Ok(true)
 }
 
-fn update(remote: &str, commit: &str, manpages: bool) -> Result<()> {
+fn update(remote: &str, commit: &str, manapges: bool) -> Result<()> {
     let exe = current_exe()?;
-    let mut tmpexe = exe.as_os_str().to_owned();
-    tmpexe.push(".tmp");
-    let tmpexe_path = Path::new(&tmpexe);
-    if tmpexe_path.exists() {
-        return Error::Unexpected(
-            ErrCtx::new("Tmp path {tmpexe:?} already exists.").into(),
-        )
-        .err();
-    }
 
     let dir = temp_dir().join("uamp-install");
-
     create_dir_all(&dir)?;
     let repo = dir.join("uamp");
     if !repo.exists() {
@@ -87,57 +66,43 @@ fn update(remote: &str, commit: &str, manpages: bool) -> Result<()> {
             .args(["build", "-r"]),
     )?;
 
-    fs::copy(repo.join("target/release/uamp"), tmpexe_path)?;
-    fs::rename(tmpexe_path, exe)?;
+    println!("Using self install of the new uamp.");
 
-    #[cfg(unix)]
-    if manpages {
-        let man1 = repo.join("other/manpages/uamp.1.gz");
-        let man5 = repo.join("other/manpages/uamp.5.gz");
-
-        if !man1.exists() {
-            run_command(
-                Command::new("gzip")
-                    .current_dir(&repo)
-                    .args(["-k", "other/manpages/uamp.1"]),
-            )?;
-        }
-        if !man5.exists() {
-            run_command(
-                Command::new("gzip")
-                    .current_dir(&repo)
-                    .args(["-k", "other/manpages/uamp.5"]),
-            )?;
-        }
-
-        fs::copy(man1, "/usr/share/man/man1/uamp.1.gz")?;
-        fs::copy(man5, "/usr/share/man/man1/uamp.5.gz")?;
-    }
-
-    fs::remove_dir_all(dir)?;
+    run_command(
+        Command::new("target/release/uamp")
+            .current_dir(&repo)
+            .args([
+                "internal",
+                "install",
+                "--man",
+                &manapges.to_string(),
+                "--exe",
+            ])
+            .arg(exe),
+    )?;
 
     Ok(())
 }
 
 fn get_latest_version(
     remote: &str,
-    mode: &Mode,
+    mode: &UpdateMode,
 ) -> Result<(String, Option<String>)> {
     let list = git_ls(remote)?;
     let list = Listing::load(&list);
     match mode {
-        Mode::LatestTag => list
+        UpdateMode::LatestTag => list
             .latest_tag
             .map(|(c, t)| (c.to_string(), Some(t.to_string())))
             .ok_or_else(|| {
                 Error::NotFound(ErrCtx::new("No latest tag.").into())
             }),
-        Mode::LatestCommit => {
+        UpdateMode::LatestCommit => {
             list.head.map(|c| (c.to_string(), None)).ok_or_else(|| {
                 Error::NotFound(ErrCtx::new("No HEAD on repository.").into())
             })
         }
-        Mode::Branch(b) => list
+        UpdateMode::Branch(b) => list
             .branches
             .get(&b.as_str())
             .map(|c| (c.to_string(), None))
@@ -148,9 +113,12 @@ fn get_latest_version(
     }
 }
 
-fn is_up_to_date(latest: &(String, Option<String>), mode: &Mode) -> bool {
+fn is_up_to_date(
+    latest: &(String, Option<String>),
+    mode: &UpdateMode,
+) -> bool {
     match mode {
-        Mode::LatestTag => {
+        UpdateMode::LatestTag => {
             config::VERSION_NUMBER == &latest.1.as_ref().unwrap()[1..]
                 && config::VERSION_COMMIT == Some(&latest.0)
         }
@@ -180,44 +148,6 @@ fn git_ls(remote: &str) -> Result<Vec<(String, String)>> {
         res.push((commit.trim().to_string(), site.trim().to_string()));
     }
     Ok(res)
-}
-
-fn see_command<S: AsRef<OsStr>>(
-    cmd: impl AsRef<OsStr>,
-    args: impl IntoIterator<Item = S>,
-) -> Result<String> {
-    let mut cmd = Command::new(cmd);
-    cmd.args(args);
-
-    let res = cmd.output()?;
-    if res.status.success() {
-        Ok(String::from_utf8_lossy(res.stdout.trim_ascii()).to_string())
-    } else {
-        Error::ChildFailed(
-            ErrCtx::new(String::from_utf8_lossy(&res.stderr).to_string())
-                .into(),
-        )
-        .msg(format!(
-            "Command ({cmd:?}) failed wit exit code `{}`",
-            res.status.code().unwrap_or(1)
-        ))
-        .err()
-    }
-}
-
-fn run_command(cmd: &mut Command) -> Result<()> {
-    println!("{cmd:?}");
-    let res = cmd.spawn()?.wait()?;
-    if res.success() {
-        Ok(())
-    } else {
-        Error::ChildFailed(ErrCtx::new(String::new()).into())
-            .msg(format!(
-                "Command ({cmd:?}) failed wit exit code `{}`",
-                res.code().unwrap_or(1)
-            ))
-            .err()
-    }
 }
 
 impl<'a> Listing<'a> {

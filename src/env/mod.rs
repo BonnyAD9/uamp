@@ -1,8 +1,8 @@
 mod app_ctrl;
 mod command;
+pub mod install;
 pub mod rt;
 mod streams;
-pub mod update;
 
 //===========================================================================//
 //                                   Public                                  //

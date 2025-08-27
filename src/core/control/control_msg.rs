@@ -13,8 +13,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::{
-        AppCtrl, Error, Msg, Result, UampApp, library::LoadOpts,
-        player::AddPolicy, query::SongOrder,
+        AppCtrl, Error, Msg, Result, UampApp,
+        library::LoadOpts,
+        player::AddPolicy,
+        query::SongOrder,
+        server::{
+            SubMsg,
+            sub::{PlaylistJump, PopPlaylist, PopSetPlaylist},
+        },
     },
     ext::{Wrap, duration_to_string},
 };
@@ -58,8 +64,9 @@ pub enum ControlMsg {
     Rewind(Option<Duration>),
     /// Sorts the top playlist.
     SortPlaylist(SongOrder),
-    /// Pop the intercepted playlist.
-    PopPlaylist,
+    /// Pop the n playlists from the playlist stack. `0` means pop all (only
+    /// last remains).
+    PopPlaylist(usize),
     /// Flatten the playlist `n` times. `0` means flatten all.
     Flatten(usize),
     /// Set the playlist add policy.
@@ -82,10 +89,21 @@ impl UampApp {
                     self.hard_pause_at = None;
                 }
                 self.player.play(&mut self.library, pp)?;
+                self.client_update(SubMsg::Playback(
+                    self.player.playback_state(),
+                ));
             }
-            ControlMsg::Stop => self.player.stop(),
+            ControlMsg::Stop => {
+                self.player.stop();
+                self.client_update(SubMsg::Playback(
+                    self.player.playback_state(),
+                ));
+            }
             ControlMsg::NextSong(n) => {
                 self.player.play_next(&mut self.library, n);
+                self.client_update(SubMsg::PlaylistJump(PlaylistJump::new(
+                    &self.player,
+                )));
             }
             ControlMsg::PrevSong(n) => {
                 if let Some(t) = self.config.previous_timeout() {
@@ -101,9 +119,13 @@ impl UampApp {
                 }
 
                 self.player.play_prev(&mut self.library, n.unwrap_or(1));
+                self.client_update(SubMsg::PlaylistJump(PlaylistJump::new(
+                    &self.player,
+                )));
             }
             ControlMsg::Close => {
                 let r = self.save_all(true, ctrl).map(|_| vec![]);
+                self.client_update(SubMsg::Quitting);
                 self.shutdown_server();
                 if self.jobs.any_no_close() {
                     self.pending_close = true;
@@ -116,25 +138,39 @@ impl UampApp {
                 self.player
                     .playlist_mut()
                     .shuffle(self.config.shuffle_current());
+                self.client_update_set_playlist(|p| {
+                    SubMsg::SetPlaylist(p.into())
+                });
             }
             ControlMsg::SetVolume(v) => {
-                self.player.set_volume(v.clamp(0., 1.))
+                self.player.set_volume(v.clamp(0., 1.));
+                self.client_update(SubMsg::SetVolume(self.player.volume()));
             }
-            ControlMsg::VolumeUp(m) => self.player.set_volume(
-                (self.player.volume()
-                    + m.unwrap_or(self.config.volume_jump()))
-                .clamp(0., 1.),
-            ),
-            ControlMsg::VolumeDown(m) => self.player.set_volume(
-                (self.player.volume()
-                    - m.unwrap_or(self.config.volume_jump()))
-                .clamp(0., 1.),
-            ),
+            ControlMsg::VolumeUp(m) => {
+                self.player.set_volume(
+                    (self.player.volume()
+                        + m.unwrap_or(self.config.volume_jump()))
+                    .clamp(0., 1.),
+                );
+                self.client_update(SubMsg::SetVolume(self.player.volume()));
+            }
+            ControlMsg::VolumeDown(m) => {
+                self.player.set_volume(
+                    (self.player.volume()
+                        - m.unwrap_or(self.config.volume_jump()))
+                    .clamp(0., 1.),
+                );
+                self.client_update(SubMsg::SetVolume(self.player.volume()));
+            }
             ControlMsg::PlaylistJump(i) => {
                 self.player.jump_to(&mut self.library, i);
+                self.client_update(SubMsg::PlaylistJump(PlaylistJump::new(
+                    &self.player,
+                )));
             }
             ControlMsg::Mute(b) => {
-                self.player.set_mute(b.unwrap_or(!self.player.mute()))
+                self.player.set_mute(b.unwrap_or(!self.player.mute()));
+                self.client_update(SubMsg::SetMute(self.player.mute()));
             }
             ControlMsg::LoadNewSongs(opts) => {
                 match self.start_get_new_songs(ctrl, opts) {
@@ -150,6 +186,7 @@ impl UampApp {
             ControlMsg::SeekTo(d) => {
                 self.player.seek_to(d)?;
                 self.state.seeked = true;
+                self.client_update_seek();
             }
             ControlMsg::FastForward(d) => {
                 let t = d.unwrap_or(self.config.seek_jump().0);
@@ -157,6 +194,7 @@ impl UampApp {
                     .seek_by(t, true)
                     .map_err(|e| e.prepend("Failed to fast forward."))?;
                 self.state.seeked = true;
+                self.client_update_seek();
             }
             ControlMsg::Rewind(d) => {
                 let t = d.unwrap_or(self.config.seek_jump().0);
@@ -164,6 +202,7 @@ impl UampApp {
                     .seek_by(t, false)
                     .map_err(|e| e.prepend("Failed to rewind."))?;
                 self.state.seeked = true;
+                self.client_update_seek();
             }
             ControlMsg::SortPlaylist(ord) => {
                 self.player.playlist_mut().sort(
@@ -171,15 +210,26 @@ impl UampApp {
                     self.config.simple_sorting(),
                     ord,
                 );
+                self.client_update_set_playlist(|p| {
+                    SubMsg::SetPlaylist(p.into())
+                });
             }
-            ControlMsg::PopPlaylist => {
-                self.player.pop_playlist(&mut self.library);
+            ControlMsg::PopPlaylist(n) => {
+                self.player.pop_playlist(&mut self.library, n);
+                self.client_update(SubMsg::PopPlaylist(
+                    PopPlaylist::new(n, PlaylistJump::new(&self.player))
+                        .into(),
+                ));
             }
             ControlMsg::Flatten(cnt) => {
                 self.player.flatten(cnt);
+                self.client_update_set_playlist(|pl| {
+                    SubMsg::PopSetPlaylist(PopSetPlaylist::new(cnt, pl).into())
+                });
             }
             ControlMsg::SetPlaylistAddPolicy(policy) => {
                 self.player.playlist_mut().add_policy = policy;
+                self.client_update(SubMsg::SetPlaylistAddPolicy(policy));
             }
             ControlMsg::Save => self.save_all(false, ctrl)?,
         };
@@ -233,7 +283,8 @@ impl Display for ControlMsg {
                 write!(f, "rw={}", duration_to_string(*d, false))
             }
             ControlMsg::SortPlaylist(ord) => write!(f, "sort={ord}"),
-            ControlMsg::PopPlaylist => f.write_str("pop"),
+            ControlMsg::PopPlaylist(1) => f.write_str("pop"),
+            ControlMsg::PopPlaylist(n) => write!(f, "pop={n}"),
             ControlMsg::Flatten(1) => f.write_str("flat"),
             ControlMsg::Flatten(c) => write!(f, "flat={c}"),
             ControlMsg::SetPlaylistAddPolicy(AddPolicy::None) => {
@@ -312,7 +363,9 @@ impl FromStr for ControlMsg {
             v if has_any_key!(v, '=', "sort-playlist", "sort") => {
                 Ok(ControlMsg::SortPlaylist(val_arg(v, '=')?))
             }
-            "pop" | "pop-playlist" => Ok(ControlMsg::PopPlaylist),
+            v if has_any_key!(v, '=', "pop", "pop-playlist") => {
+                Ok(ControlMsg::PopPlaylist(mval_arg(v, '=')?.unwrap_or(1)))
+            }
             v if has_any_key!(v, '=', "flatten", "flat") => {
                 Ok(ControlMsg::Flatten(mval_arg(v, '=')?.unwrap_or(1)))
             }
