@@ -11,7 +11,7 @@ mod update;
 mod update_mode;
 
 use termal::printcln;
-use tokio::{runtime};
+use tokio::runtime;
 pub use update::*;
 pub use update_mode::*;
 
@@ -62,7 +62,7 @@ pub fn install(root: Option<&Path>, exe: &Path, man: bool) -> Result<()> {
                 Command::new("gzip").args(["-k", "other/manpages/uamp.5"]),
             )?;
         }
-        
+
         let dst1 = path_at_root(root, "/usr/share/man/man1/uamp.1.gz");
         let dst5 = path_at_root(root, "/usr/share/man/man5/uamp.5.gz");
         make_parent(&dst1)?;
@@ -75,10 +75,7 @@ pub fn install(root: Option<&Path>, exe: &Path, man: bool) -> Result<()> {
     println!("Creating client tar.");
     let client_dst = path_at_root(root, config::default_http_client_path());
     make_parent(&client_dst)?;
-    run_single_tokio(tar_contents_of(
-        "src/client",
-        client_dst,
-    ))?;
+    run_single_tokio(tar_contents_of("src/client", client_dst))?;
 
     printcln!(
         "{'g}Success!{'_} uamp v{} is installed.",
