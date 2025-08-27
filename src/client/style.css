@@ -816,13 +816,17 @@ input:checked+.slider:before {
     background-clip: padding-box;
     font-size: 14px;
     font-size: inherit;
-    border: none;
+    border: 1px solid var(--bg-lighter);
     color: var(--fg);
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
     border-radius: 10px;
     transition: 0.15s ease-in-out;
+}
+
+.form-input.invalid {
+    border: 1px solid red;
 }
 
 .form-input:focus {
