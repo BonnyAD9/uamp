@@ -500,7 +500,8 @@ fn print_internal_help(color: bool) {
     Get uamp tab completion for the given arguments.
 
   {'c}uamp {'b}internal {'r}install {'gr}[{'dy}flags{'gr}]{'_}
-    Install uamp on the system according to the flags:
+    Install uamp on the system according to the flags. Must be run with CWD
+    being the uamp repository. Flags:
       {'y}--man {'w}(true|false){'_}
         Enable/disable man page installation. Enabled by default on linux.
         
