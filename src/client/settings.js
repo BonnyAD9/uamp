@@ -114,6 +114,10 @@ class Config {
                 return this.getToggleSetting(key, setting);
             case "string":
                 return this.getInputSetting(key, setting);
+            case "duration":
+                return this.getDurationSetting(key, setting);
+            case "float":
+                return this.getFloatSetting(key, setting);
             case "select":
                 return this.getSelectSetting(key, setting);
             case "list":
@@ -186,6 +190,31 @@ class Config {
 
         const input = element.querySelector('input');
         input.value = this[key];
+
+        return element;
+    }
+
+    getFloatSetting(key, setting) {
+        const element = this.getInputSetting(key, setting);
+        const input = element.querySelector('input');
+        input.addEventListener('input', () => {
+            input.value =
+                input.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+        })
+
+        return element;
+    }
+
+    getDurationSetting(key, setting) {
+        const regex = /^([0-9]*d)?([0-9]*:)?([0-9]*:)?([0-9]*|\.|[0-9]*\.[0-9]*|\.[0-9])$/;
+
+        const element = this.getInputSetting(key, setting);
+        const input = element.querySelector('input');
+        input.addEventListener('input', () => {
+            input.classList.remove('invalid');
+            if (!regex.test(input.value.trim()))
+                input.classList.add('invalid');
+        });
 
         return element;
     }
