@@ -196,7 +196,7 @@ echo "Building uamp..."
 UAMP_VERSION_COMMIT=`"$_GIT" rev-parse HEAD` $_CARGO build -r
 
 echo "Self installing uamp..."
-sudo target/release/uamp internal install --man true --root / --exe $_UAMP
+sudo target/release/uamp internal install --exe $_UAMP
 
 echo "Checking that uamp works..."
 if "$_UAMP" --version; then

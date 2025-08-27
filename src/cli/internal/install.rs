@@ -1,6 +1,9 @@
 use pareg::Pareg;
 
-use crate::{core::Result, env::install::install};
+use crate::{
+    core::Result,
+    env::install::{self, install},
+};
 
 #[derive(Debug)]
 pub struct Install {
@@ -39,7 +42,7 @@ impl Default for Install {
         Self {
             root: None,
             exe: "/usr/bin/uamp".to_string(),
-            man: true,
+            man: install::INSTALL_MANPAGES,
         }
     }
 }
