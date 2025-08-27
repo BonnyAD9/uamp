@@ -205,13 +205,12 @@ impl SinkWrapper {
 
         const SMALL_TIME: f64 = 0.1;
 
-        if let Some(Timestamp { total, .. }) = src.get_time() {
-            if (lib[id].length().as_secs_f64() - total.as_secs_f64()).abs()
+        if let Some(Timestamp { total, .. }) = src.get_time()
+            && (lib[id].length().as_secs_f64() - total.as_secs_f64()).abs()
                 > SMALL_TIME
-            {
-                lib[id].set_length(total);
-                lib.update(LibraryUpdate::Metadata);
-            }
+        {
+            lib[id].set_length(total);
+            lib.update(LibraryUpdate::Metadata);
         }
 
         Ok(src)

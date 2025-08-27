@@ -106,15 +106,14 @@ impl UampApp {
                 )));
             }
             ControlMsg::PrevSong(n) => {
-                if let Some(t) = self.config.previous_timeout() {
-                    if n.is_none() {
-                        let now = Instant::now();
-                        if now - mem::replace(&mut self.last_prev, now) >= t.0
-                        {
-                            return Ok(vec![Msg::Control(
-                                ControlMsg::SeekTo(Duration::ZERO),
-                            )]);
-                        }
+                if let Some(t) = self.config.previous_timeout()
+                    && n.is_none()
+                {
+                    let now = Instant::now();
+                    if now - mem::replace(&mut self.last_prev, now) >= t.0 {
+                        return Ok(vec![Msg::Control(ControlMsg::SeekTo(
+                            Duration::ZERO,
+                        ))]);
                     }
                 }
 

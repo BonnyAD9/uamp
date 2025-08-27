@@ -1,7 +1,12 @@
-use std::time::Instant;
+use std::{env, time::Instant};
+
+use bitflags::bitflags;
+use notify::Watcher;
+use serde_json::from_value;
 
 use crate::core::{
     Alias, AppCtrl, Error, Job, Msg, Result, UampApp,
+    library::LoadOpts,
     server::{
         SubMsg,
         sub::{self, NewServer},
@@ -19,7 +24,210 @@ use super::Config;
 pub enum ConfigMsg {
     /// Reload the configuration from file.
     Reload,
-    Set(Box<sub::Config>),
+    Set(serde_json::Value),
+}
+
+bitflags! {
+    struct Change: u64 {
+        const LIBRARY_PATH = 0x1;
+        const PLAYER_PATH = 0x2;
+        const SEARCH_PATHS = 0x4;
+        const AUDIO_EXTENSIONS = 0x8;
+        const RECURSIVE_SEARCH = 0x10;
+        const SERVER_ADDRESS = 0x20;
+        const PORT = 0x40;
+        const SKIN = 0x80;
+        const ENABLE_SERVER = 0x100;
+        const AUTO_RESTART = 0x200;
+        const SYSTEM_PLAYER = 0x400;
+        const CACHE_PATH = 0x800;
+    }
+}
+
+impl Config {
+    fn set_new(&mut self, new: Config) -> Change {
+        let mut res = Change::empty();
+
+        if self.library_path() != new.library_path() {
+            res |= Change::LIBRARY_PATH;
+        }
+        if self.player_path() != new.player_path() {
+            res |= Change::PLAYER_PATH;
+        }
+        if self.search_paths() != new.search_paths() {
+            res |= Change::SEARCH_PATHS;
+        }
+        if self.audio_extensions() != new.audio_extensions() {
+            res |= Change::AUDIO_EXTENSIONS;
+        }
+        if self.server_address() != new.server_address() {
+            res |= Change::SERVER_ADDRESS;
+        }
+        if self.port() != new.port() {
+            res |= Change::PORT;
+        }
+        if self.skin() != new.skin() {
+            res |= Change::SKIN;
+        }
+        if self.enable_server() != new.enable_server() {
+            res |= Change::ENABLE_SERVER;
+        }
+        if self.auto_restart() != new.auto_restart() {
+            res |= Change::AUTO_RESTART;
+        }
+        if self.system_player() != new.system_player() {
+            res |= Change::SYSTEM_PLAYER;
+        }
+        if self.cache_path() != new.cache_path() {
+            res |= Change::CACHE_PATH;
+        }
+
+        new.set_change(true);
+        *self = new;
+
+        res
+    }
+
+    fn update(&mut self, up: serde_json::Value) -> Result<Change> {
+        let serde_json::Value::Object(obj) = up else {
+            return Err(Error::invalid_value("Expected json object."));
+        };
+
+        let mut change = Change::empty();
+
+        for (k, v) in obj {
+            match k.as_str() {
+                "library_path" => {
+                    let path = from_value(v)?;
+                    if *self.library_path() != path {
+                        *self.library_path_mut() = path;
+                        change |= Change::LIBRARY_PATH;
+                    }
+                }
+                "player_path" => {
+                    let path = from_value(v)?;
+                    if *self.player_path() != path {
+                        *self.player_path_mut() = path;
+                        change |= Change::PLAYER_PATH;
+                    }
+                }
+                "cache_path" => {
+                    let path = from_value(v)?;
+                    if path != *self.cache_path() {
+                        *self.cache_path_mut() = path;
+                        change |= Change::CACHE_PATH;
+                    }
+                }
+                "search_paths" => {
+                    let paths = from_value(v)?;
+                    if paths != *self.search_paths() {
+                        *self.search_paths_mut() = paths;
+                        change |= Change::SEARCH_PATHS;
+                    }
+                }
+                "audio_extensions" => {
+                    let exts = from_value(v)?;
+                    if exts != *self.audio_extensions() {
+                        *self.audio_extensions_mut() = exts;
+                        change |= Change::AUDIO_EXTENSIONS;
+                    }
+                }
+                "recursive_search" => {
+                    let rc = from_value(v)?;
+                    if rc != self.recursive_search() {
+                        self.recursive_search_set(rc);
+                        change |= Change::RECURSIVE_SEARCH;
+                    }
+                }
+                "server_address" => {
+                    let adr = from_value(v)?;
+                    if adr != *self.server_address() {
+                        *self.server_address_mut() = adr;
+                        change |= Change::SERVER_ADDRESS;
+                    }
+                }
+                "port" => {
+                    let port = from_value(v)?;
+                    if port != self.port() {
+                        self.port_set(port);
+                        change |= Change::PORT;
+                    }
+                }
+                "skin" => {
+                    let skin = from_value(v)?;
+                    if skin != *self.skin() {
+                        *self.skin_mut() = skin;
+                        change |= Change::SKIN;
+                    }
+                }
+                "update_mode" => *self.update_mode_mut() = from_value(v)?,
+                "update_remote" => *self.update_remote_mut() = from_value(v)?,
+                "delete_logs_after" => {
+                    _ = self.delete_logs_after_set(from_value(v)?)
+                }
+                "enable_server" => {
+                    let enable = from_value(v)?;
+                    if enable != self.enable_server() {
+                        self.enable_server_set(enable);
+                        change |= Change::ENABLE_SERVER;
+                    }
+                }
+                "auto_restart" => {
+                    let ar = from_value(v)?;
+                    if ar != self.auto_restart() {
+                        self.auto_restart_set(ar);
+                        change |= Change::AUTO_RESTART;
+                    }
+                }
+                "control_aliases" => {
+                    *self.control_aliases_mut() = from_value(v)?
+                }
+                "default_playlist_end_action" => {
+                    *self.default_playlist_end_action_mut() = from_value(v)?
+                }
+                "simple_sorting" => {
+                    _ = self.simple_sorting_set(from_value(v)?)
+                }
+                "play_on_start" => _ = self.play_on_start_set(from_value(v)?),
+                "shuffle_current" => {
+                    _ = self.shuffle_current_set(from_value(v)?)
+                }
+                "update_library_on_start" => {
+                    _ = self.update_library_on_start_set(from_value(v)?)
+                }
+                "remove_missin_on_load" => {
+                    _ = self.remove_missing_on_load_set(from_value(v)?)
+                }
+                "volume_jump" => _ = self.volume_jump_set(from_value(v)?),
+                "save_playback_pos" => {
+                    _ = self.save_playback_pos_set(from_value(v)?)
+                }
+                "save_timeout" => _ = self.save_timeout_set(from_value(v)?),
+                "fade_play_pause" => {
+                    _ = self.fade_play_pause_set(from_value(v)?)
+                }
+                "gapless" => _ = self.gapless_set(from_value(v)?),
+                "seek_jump" => _ = self.seek_jump_set(from_value(v)?),
+                "client_image_lookup" => {
+                    _ = self.client_image_lookup_set(from_value(v)?)
+                }
+                "system_player" => {
+                    let sp = from_value(v)?;
+                    if sp != self.system_player() {
+                        self.system_player_set(sp);
+                        change |= Change::SYSTEM_PLAYER;
+                    }
+                }
+                k => {
+                    return Err(Error::invalid_value(format!(
+                        "Invalid setting key `{k}`."
+                    )));
+                }
+            }
+        }
+
+        Ok(change)
+    }
 }
 
 impl UampApp {
@@ -45,44 +253,12 @@ impl UampApp {
                 let conf = Config::from_json(path)
                     .map_err(|e| e.prepend("Failed to reload config."))?;
 
-                self.apply_config(conf, ctrl)?;
+                let change = self.config.set_new(conf);
+                self.propagate_config_change(ctrl, change)?;
             }
             ConfigMsg::Set(cfg) => {
-                // TODO: optimize
-                let mut conf = self.config.clone();
-                *conf.library_path_mut() = cfg.library_path;
-                *conf.player_path_mut() = cfg.player_path;
-                *conf.cache_path_mut() = cfg.cache_path;
-                *conf.search_paths_mut() = cfg.search_paths;
-                *conf.audio_extensions_mut() = cfg.audio_extensions;
-                conf.recursive_search_set(cfg.recursive_search);
-                *conf.server_address_mut() = cfg.server_address;
-                conf.port_set(cfg.port);
-                *conf.skin_mut() = cfg.skin;
-                *conf.update_mode_mut() = cfg.update_mode;
-                *conf.update_remote_mut() = cfg.update_remote;
-                conf.delete_logs_after_set(cfg.delete_logs_after);
-                conf.enable_server_set(cfg.enable_server);
-                conf.auto_restart_set(cfg.auto_restart);
-
-                *conf.control_aliases_mut() = cfg.control_aliases;
-                *conf.default_playlist_end_action_mut() =
-                    cfg.default_playlist_end_action;
-                conf.simple_sorting_set(cfg.simple_sorting);
-                conf.play_on_start_set(cfg.play_on_start);
-                conf.shuffle_current_set(cfg.shuffle_current);
-                conf.update_library_on_start_set(cfg.update_library_on_start);
-                conf.remove_missing_on_load_set(cfg.remove_missing_on_load);
-                conf.volume_jump_set(cfg.volume_jump);
-                conf.save_playback_pos_set(cfg.save_playback_pos);
-                conf.save_timeout_set(cfg.save_timeout);
-                conf.fade_play_pause_set(cfg.fade_play_pause);
-                conf.gapless_set(cfg.gapless);
-                conf.seek_jump_set(cfg.seek_jump);
-                conf.client_image_lookup_set(cfg.client_image_lookup);
-                conf.system_player_set(cfg.system_player);
-
-                self.apply_config(conf, ctrl)?;
+                let change = self.config.update(cfg)?;
+                self.propagate_config_change(ctrl, change)?;
 
                 self.config.to_default_json()?;
             }
@@ -125,6 +301,68 @@ impl UampApp {
 //===========================================================================//
 
 impl UampApp {
+    fn propagate_config_change(
+        &mut self,
+        ctrl: &mut AppCtrl,
+        change: Change,
+    ) -> Result<()> {
+        if change.contains(Change::LIBRARY_PATH) {
+            self.library.change();
+        }
+
+        if change.contains(Change::PLAYER_PATH) {
+            self.player.change();
+        }
+
+        if change.intersects(
+            Change::SEARCH_PATHS
+                | Change::AUDIO_EXTENSIONS
+                | Change::RECURSIVE_SEARCH,
+        ) && self.config.update_library_on_start()
+        {
+            self.start_get_new_songs(ctrl, LoadOpts::default())?;
+        }
+
+        let restart_server = change.intersects(
+            Change::SERVER_ADDRESS | Change::PORT | Change::ENABLE_SERVER,
+        );
+        if restart_server {
+            self.reload_server(ctrl)?;
+        }
+
+        if !restart_server && let Some(ref d) = self.jobs.server {
+            if change.contains(Change::CACHE_PATH) {
+                *d.cache.write().unwrap() = self.config.cache_path().clone();
+            }
+            if change.contains(Change::SKIN) {
+                *d.client.write().unwrap() = self.config.skin().clone();
+                self.client_update(SubMsg::ClientChanged);
+            }
+        }
+
+        if change.contains(Change::AUTO_RESTART) {
+            if self.config.auto_restart() {
+                self.enable_auto_restart()?;
+            } else {
+                self.disable_auto_restart()?;
+            }
+        }
+
+        if change.contains(Change::SYSTEM_PLAYER) {
+            if self.config.system_player() {
+                self.enable_system_player();
+            } else {
+                self.disable_system_player();
+            }
+        }
+
+        self.client_update(SubMsg::ConfigChanged(
+            sub::Config::new(&self.config).into(),
+        ));
+
+        Ok(())
+    }
+
     fn reload_server(&mut self, ctrl: &mut AppCtrl) -> Result<()> {
         if self.jobs.is_running(Job::SERVER) {
             self.client_update(SubMsg::NewServer(NewServer::new(
@@ -135,6 +373,30 @@ impl UampApp {
         } else if self.config.should_start_server() {
             self.start_server(ctrl)?;
         }
+
+        Ok(())
+    }
+
+    fn enable_auto_restart(&mut self) -> Result<()> {
+        let Some(ref mut fw) = self.file_watch else {
+            self.file_watch =
+                Self::watch_files(self.rt.andle(), &self.config)?;
+            return Ok(());
+        };
+
+        let exe = env::current_exe()?;
+        fw.watch(&exe, notify::RecursiveMode::NonRecursive)?;
+
+        Ok(())
+    }
+
+    fn disable_auto_restart(&mut self) -> Result<()> {
+        let Some(ref mut fw) = self.file_watch else {
+            return Ok(());
+        };
+
+        let exe = env::current_exe()?;
+        fw.unwatch(&exe)?;
 
         Ok(())
     }
@@ -150,58 +412,5 @@ impl UampApp {
         {
             d.cancel.cancel();
         }
-    }
-
-    fn apply_config(
-        &mut self,
-        mut conf: Config,
-        ctrl: &mut AppCtrl,
-    ) -> Result<()> {
-        let reload_server = conf.server_address()
-            != self.config.server_address()
-            || conf.port() != self.config.port()
-            || conf.enable_server() != self.config.enable_server();
-
-        let system_player_change =
-            conf.system_player() != self.config.system_player();
-
-        let mut skin_change = false;
-
-        if !reload_server && let Some(ref d) = self.jobs.server {
-            if conf.cache_path() != self.config.cache_path() {
-                *d.cache.write().unwrap() = conf.cache_path().clone();
-            }
-            if conf.skin() != self.config.skin() {
-                *d.client.write().unwrap() = conf.skin().clone();
-                skin_change = true;
-            }
-        }
-
-        self.player.load_config(&conf);
-        conf.force_server = self.config.force_server;
-        self.config = conf;
-
-        if system_player_change {
-            if self.config.system_player() {
-                self.enable_system_player();
-            } else {
-                self.disable_system_player();
-            }
-        }
-
-        if reload_server {
-            self.reload_server(ctrl)
-                .map_err(|e| e.prepend("Failed to reload server."))?;
-        }
-
-        if skin_change {
-            self.client_update(SubMsg::ClientChanged);
-        }
-
-        self.client_update(SubMsg::ConfigChanged(
-            sub::Config::new(&self.config).into(),
-        ));
-
-        Ok(())
     }
 }

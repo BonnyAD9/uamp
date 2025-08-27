@@ -42,6 +42,10 @@ gen_struct! {
 }
 
 impl Player {
+    pub fn change(&self) {
+        self.change.set(true);
+    }
+
     /// Play/Pause.
     ///
     /// - `play`: play when `true`, otherwise pause.
