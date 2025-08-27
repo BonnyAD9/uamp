@@ -90,32 +90,39 @@ class Config {
     }
 
     getSettingElement(key, setting) {
-        console.log(key, setting);
-        return null;
-        // switch (setting.type) {
-        //     case "boolean":
-        //         return this.getToggleSetting(key, setting);
-        //     // case "string":
-        //     //     return this.getInputSetting(key, setting);
-        //     // case "duration":
-        //     //     return this.getDurationSetting(key, setting);
-        //     // case "float":
-        //     //     return this.getFloatSetting(key, setting);
-        //     // case "select":
-        //     //     return this.getSelectSetting(key, setting);
-        //     // case "list":
-        //     //     return this.getListSetting(key, setting);
-        //     default:
-        //         return null;
-        // }
+        // TODO: handle nullable
+        if (Array.isArray(setting.type)) {
+            const types = setting.type.filter(t => t !== "null");
+            setting.type = types[0];
+        }
+
+        let element;
+        switch (setting.type) {
+            case "boolean":
+                element = this.getToggleSetting(key);
+                break;
+            case "string":
+                element = this.getInputSetting(key, setting);
+                break;
+            case "number":
+                element = this.getFloatSetting(key, setting);
+                break;
+            // case "select":
+            //     return this.getSelectSetting(key, setting);
+            // case "list":
+            //     return this.getListSetting(key, setting);
+            default:
+                return null;
+        }
+
+        element.querySelector('.label').textContent = Config.keyToLabel(key);
+        element.querySelector('.description').textContent = setting.description;
+        return element;
     }
 
-    getToggleSetting(key, setting) {
+    getToggleSetting(key) {
         const clone = toggleTemplate.content.cloneNode(true);
         const toggle = clone.querySelector('.switch-setting');
-
-        toggle.querySelector('.label').textContent = setting.label;
-        toggle.querySelector('.description').textContent = setting.description;
 
         const input = toggle.querySelector('input');
         input.checked = this[key];
@@ -169,11 +176,17 @@ class Config {
         const clone = inputTemplate.content.cloneNode(true);
         const element = clone.querySelector('.input-setting');
 
-        element.querySelector('.label').textContent = setting.label;
-        element.querySelector('.description').textContent = setting.description;
-
         const input = element.querySelector('input');
-        input.value = this[key];
+        input.value = this[key] ?? '';
+
+        if (setting.pattern) {
+            input.addEventListener('input', () => {
+                const regex = new RegExp(setting.pattern);
+                input.classList.remove('invalid');
+                if (!regex.test(input.value))
+                    input.classList.add('invalid');
+            });
+        }
 
         return element;
     }
@@ -189,18 +202,9 @@ class Config {
         return element;
     }
 
-    getDurationSetting(key, setting) {
-        const regex = /^([0-9]*d)?([0-9]*:)?([0-9]*:)?([0-9]*|\.|[0-9]*\.[0-9]*|\.[0-9])$/;
-
-        const element = this.getInputSetting(key, setting);
-        const input = element.querySelector('input');
-        input.addEventListener('input', () => {
-            input.classList.remove('invalid');
-            if (!regex.test(input.value.trim()))
-                input.classList.add('invalid');
-        });
-
-        return element;
+    static keyToLabel(key) {
+        const label = key.replaceAll('_', ' ');
+        return label.charAt(0).toUpperCase() + label.slice(1);
     }
 
     static showPage(id) {
@@ -250,7 +254,7 @@ const settingsGroups = [
     {
         name: "Library", settings: [
             "search_paths", "audio_extensions", "recursive_search",
-            "update_library_on_start", "remove_mising_on_load"
+            "update_library_on_start", "remove_missing_on_load"
         ]
     },
     {
