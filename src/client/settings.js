@@ -31,39 +31,20 @@ floatingBarInput.addEventListener('change', () => {
 });
 
 class Config {
-    constructor(data) {
-        // Can be modified over HTTP only from localhost.
-        this.library_path = data.library_path;
-        this.player_path = data.player_path;
-        this.cache_path = data.cache_path;
-        this.search_paths = data.search_paths;
-        this.audio_extensions = data.audio_extensions;
-        this.recursive_search = data.recursive_search;
-        this.server_address = data.server_address;
-        this.port = data.port;
-        this.skin = data.skin;
-        this.update_mode = data.update_mode;
-        this.update_remote = data.update_remote;
-        this.delete_logs_after = data.delete_logs_after;
-        this.enable_server = data.enable_server;
-        this.autoauto_restartRestart = data.auto_restart;
+    constructor(data, schema) {
+        this.schema = schema;
+        Object.assign(this, data);
+    }
 
-        // Could be modified over HTTP.
-        this.control_aliases = data.control_aliases;
-        this.default_playlist_end_action = data.default_playlist_end_action;
-        this.simple_sorting = data.simple_sorting;
-        this.play_on_start = data.play_on_start;
-        this.shuffle_current = data.shuffle_current;
-        this.update_library_on_start = data.update_library_on_start;
-        this.remove_missing_on_load = data.remove_missing_on_load;
-        this.volume_jump = data.volume_jump;
-        this.save_playback_pos = data.save_playback_pos;
-        this.save_timeout = data.save_timeout;
-        this.fade_play_pause = data.fade_play_pause;
-        this.gapless = data.gapless
-        this.seek_jump = data.seek_jump;
-        this.client_image_lookup = data.client_image_lookup;
-        this.system_player = data.system_player;
+    static async init(data) {
+        const schema = await fetch('assets/config_schema.json')
+            .then(res => {
+                if (!res.ok) throw new Error('failed to load config');
+                return res.json();
+            })
+            .then(res => res.properties)
+            .catch(_ => null);
+        return new Config(data, schema);
     }
 
     /**
@@ -88,13 +69,13 @@ class Config {
         });
 
         const filler = settingsTabs.querySelector('.filler');
-        configSchema.forEach((group, id) => {
+        settingsGroups.forEach((group, id) => {
             const page = document.createElement('div');
             page.classList.add('settings-content');
 
-            for (const key in group.settings) {
+            for (const key of group.settings) {
                 const setting =
-                    this.getSettingElement(key, group.settings[key]);
+                    this.getSettingElement(key, this.schema[key]);
                 if (setting === null) continue;
                 page.appendChild(setting);
             }
@@ -109,22 +90,24 @@ class Config {
     }
 
     getSettingElement(key, setting) {
-        switch (setting.type) {
-            case "bool":
-                return this.getToggleSetting(key, setting);
-            case "string":
-                return this.getInputSetting(key, setting);
-            case "duration":
-                return this.getDurationSetting(key, setting);
-            case "float":
-                return this.getFloatSetting(key, setting);
-            case "select":
-                return this.getSelectSetting(key, setting);
-            case "list":
-                return this.getListSetting(key, setting);
-            default:
-                return null;
-        }
+        console.log(key, setting);
+        return null;
+        // switch (setting.type) {
+        //     case "boolean":
+        //         return this.getToggleSetting(key, setting);
+        //     // case "string":
+        //     //     return this.getInputSetting(key, setting);
+        //     // case "duration":
+        //     //     return this.getDurationSetting(key, setting);
+        //     // case "float":
+        //     //     return this.getFloatSetting(key, setting);
+        //     // case "select":
+        //     //     return this.getSelectSetting(key, setting);
+        //     // case "list":
+        //     //     return this.getListSetting(key, setting);
+        //     default:
+        //         return null;
+        // }
     }
 
     getToggleSetting(key, setting) {
@@ -172,6 +155,7 @@ class Config {
 
         const items = list.querySelector('.items');
         const input = list.querySelector('.input-item');
+        console.log(key, this);
         for (const item of this[key]) {
             const itemClone = listItemTemplate.content.cloneNode(true);
             itemClone.querySelector('p').textContent = item;
@@ -262,149 +246,28 @@ function getCookie(name) {
     }, null);
 }
 
-const configSchema = [
-    // Library settings section
+const settingsGroups = [
     {
-        name: "Library",
-        settings: {
-            search_paths: {
-                type: "list",
-                label: "Search paths",
-                description: "List of paths where to search for music.",
-                default: []
-            },
-            audio_extensions: {
-                type: "list",
-                label: "Audio extensions",
-                description: "List of file extensions to load to library.",
-                default: ["flac", "mp3", "m4a", "mp4"]
-            },
-            recursive_search: {
-                type: "bool",
-                label: "Recursive search",
-                description: "Searches for songs in library paths recursively" +
-                    "(traversing all subdirectories).",
-                default: true
-            },
-            update_library_on_start: {
-                type: "bool",
-                label: "Update library on start",
-                description: "Searches library paths every time on startup.",
-                default: true
-            },
-            remove_missing_on_load: {
-                type: "bool",
-                label: "Remove missing on load",
-                description: "Removes nonexisting songs from library.",
-                default: true
-            }
-        }
+        name: "Library", settings: [
+            "search_paths", "audio_extensions", "recursive_search",
+            "update_library_on_start", "remove_mising_on_load"
+        ]
     },
-    // Playlists settings section
     {
-        name: "Playlist",
-        settings: {
-            control_aliases: {
-                type: "objectList",
-                label: "Control aliases",
-                description: "Alias is a set of control messages that will be" +
-                    " used in its place.",
-                default: []
-            },
-            default_playlist_end_action: {
-                type: "string",
-                label: "Default playlist end action",
-                description: "Alias invocation set as playlist end action.",
-                default: null
-            },
-            simple_sorting: {
-                type: "bool",
-                label: "Simple sorting",
-                description: "Uamp sorts only by the given field.",
-                default: false
-            },
-            shuffle_current: {
-                type: "bool",
-                label: "Shuffle current",
-                description: "Shuffles all songs in the playlist, including " +
-                    "current.",
-                default: true
-            }
-        }
+        name: "Playlist", settings: [
+            "control_aliases", "default_playlist_end_action", "simple_sorting",
+            "shuffle_current"
+        ]
     },
-    // Playback settings section
     {
-        name: "Playback",
-        settings: {
-            play_on_start: {
-                type: "bool",
-                label: "Play on start",
-                description: "Uamp will continue playing when it starts.",
-                default: false
-            },
-            volume_jump: {
-                type: "float",
-                label: "Volume jump",
-                description: "Default change of volume.",
-                default: 2.5
-            },
-            save_playback_pos: {
-                type: "select",
-                label: "Save playback position",
-                description: "Retaining position within current track after " +
-                    "exiting",
-                default: "OnClose",
-                options: ["Never", "On Close", "Always"]
-            },
-            fade_play_pause: {
-                type: "duration",
-                label: "Fade play/pause",
-                description: "Smoothly change volume when playing/pausing.",
-                default: "00:00.15"
-            },
-            gapless: {
-                type: "bool",
-                label: "Gapless",
-                description: "Removes silent parts between songs.",
-                default: true
-            },
-            seek_jump: {
-                type: "duration",
-                label: "Seek jump",
-                description: "Default seek amount when using fast forward and" +
-                    "rewind.",
-                default: "00:10"
-            },
-            previous_timeout: {
-                type: "duration",
-                label: "Previous timeout",
-                description: "Jumping to previous song timeout.",
-                default: null,
-            }
-        }
+        name: "Playback", settings: [
+            "play_on_start", "volume_jump", "save_playback_pos",
+            "fade_play_pause", "gapless", "seek_jump", "previous_timeout"
+        ]
     },
-    // Server settings section
     {
-        name: "Server",
-        settings: {
-            server_address: {
-                type: "string",
-                label: "Server address",
-                description: "Address of the backend HTTP server.",
-                default: "127.0.0.1"
-            },
-            port: {
-                type: "number",
-                label: "Server port",
-                description: "Port of the backend HTTP server.",
-                default: 8267
-            },
-            system_player: {
-                type: "bool",
-                label: "System player",
-                description: "Integrate with the system as media player.",
-                default: true
-            }
-        }
+        name: "Server", settings: [
+            "server_address", "port", "system_player"
+        ]
     }
 ];

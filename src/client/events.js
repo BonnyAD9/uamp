@@ -2,8 +2,8 @@ const AppSingleton = (() => {
     let instance = null;
 
     return {
-        init(data) {
-            instance = new App(data);
+        async init(data) {
+            instance = await App.init(data);
             return instance;
         },
         get() {
@@ -14,8 +14,8 @@ const AppSingleton = (() => {
 
 const eventSource = new EventSource('/api/sub');
 
-eventSource.addEventListener('set-all', e => {
-    const app = AppSingleton.init(JSON.parse(e.data));
+eventSource.addEventListener('set-all', async e => {
+    const app = await AppSingleton.init(JSON.parse(e.data));
     app.displaySongs();
     app.displayPlaylist();
     app.displayAlbums();

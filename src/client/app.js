@@ -3,14 +3,14 @@ const tableTemplate = document.getElementById('songs-template');
 const slider = document.querySelector('.bar .slider hr');
 
 class App {
-    constructor(data) {
+    constructor(data, config) {
         this.library = {
             songs: data.library.songs.map(Song.from),
             tmp_songs: data.library.tmp_songs.map(Song.from),
         };
         this.player = data.player;
         this.position = data.position && Timestamp.from(data.position);
-        this.config = new Config(data.config);
+        this.config = config;
         this.config.render();
 
         this.lastUpdate = performance.now();
@@ -26,6 +26,11 @@ class App {
         this.artist = null;
 
         this.generateLibraryData();
+    }
+
+    static async init(data) {
+        const config = await Config.init(data.config);
+        return new App(data, config);
     }
 
     /**
