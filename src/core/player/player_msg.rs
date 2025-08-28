@@ -65,13 +65,13 @@ impl UampApp {
             self.player.retain(|s| !self.library[s].is_deleted());
         }
 
-        if let Some(t) = self.hard_pause_at {
-            if t <= now {
-                self.player.hard_pause();
-                self.hard_pause_at = None;
-                self.state.seeked = true;
-                self.client_update_seek();
-            }
+        if let Some(t) = self.hard_pause_at
+            && t <= now
+        {
+            self.player.hard_pause();
+            self.hard_pause_at = None;
+            self.state.seeked = true;
+            self.client_update_seek();
         }
     }
 

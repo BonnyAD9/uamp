@@ -51,6 +51,10 @@ impl Library {
         }
     }
 
+    pub fn change(&self) {
+        self.change.set(true);
+    }
+
     /// Get clone of the songs in the library.
     pub fn clone_songs(&mut self) -> AlcVec<Song> {
         self.songs.clone()

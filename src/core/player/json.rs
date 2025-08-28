@@ -83,10 +83,10 @@ impl Player {
         );
 
         res.init_inner(rt);
-        if let Some(p) = play_pos {
-            if let Err(e) = res.play(lib, false).and_then(|_| res.seek_to(p)) {
-                error!("{}", e.log());
-            }
+        if let Some(p) = play_pos
+            && let Err(e) = res.play(lib, false).and_then(|_| res.seek_to(p))
+        {
+            error!("{}", e.log());
         }
         res
     }
@@ -149,10 +149,8 @@ impl Player {
             fs::create_dir_all(par)?;
         }
 
-        if save_pos {
-            if let Some(t) = self.timestamp() {
-                self.playlist_mut().set_play_pos(t.current);
-            }
+        if save_pos && let Some(t) = self.timestamp() {
+            self.playlist_mut().set_play_pos(t.current);
         }
 
         serde_json::to_writer(

@@ -38,6 +38,9 @@ pub enum Error {
     /// An unexpected error.
     #[error("{0}")]
     Unexpected(Box<ErrCtx<&'static str>>),
+    /// Invalid value.
+    #[error("{0}")]
+    InvalidValue(Box<ErrCtx<Cow<'static, str>>>),
     /// Failed to parse arguments.
     #[error(transparent)]
     Pareg(#[from] pareg::ArgError),
@@ -169,6 +172,10 @@ macro_rules! map_ctx {
                 *$ctx = $f;
                 Error::HyperHttp($ctx)
             }
+            Error::InvalidValue(mut $ctx) => {
+                *$ctx = $f;
+                Error::InvalidValue($ctx)
+            }
             $($($p => $pb,)*)?
             e => e,
         }
@@ -186,6 +193,10 @@ impl Error {
 
     pub fn no_stdin_pipe() -> Self {
         Self::InvalidOperation("No stdin pipe.".into())
+    }
+
+    pub fn invalid_value(msg: impl Into<Cow<'static, str>>) -> Self {
+        Self::InvalidValue(msg.into().into())
     }
 
     pub fn http(code: u16, msg: String) -> Self {
@@ -297,6 +308,7 @@ impl Error {
             Error::Hyper(err_ctx) => err_ctx.clone_universal(),
             Error::HyperHttp(err_ctx) => err_ctx.clone_universal(),
             Error::Multiple(v) if v.len() == 1 => v[0].clone_universal(),
+            Error::InvalidValue(v) => v.clone_universal(),
             e => e.to_string().into(),
         }
     }

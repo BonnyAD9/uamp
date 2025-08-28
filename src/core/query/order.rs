@@ -114,10 +114,10 @@ impl SongOrder {
             OrderField::Genre => self.genre(lib, songs),
         }
 
-        if let Some((idx, song)) = cur {
-            if songs[*idx] != song {
-                *idx = songs.iter().position(|s| *s == song).unwrap();
-            }
+        if let Some((idx, song)) = cur
+            && songs[*idx] != song
+        {
+            *idx = songs.iter().position(|s| *s == song).unwrap();
         }
     }
 }

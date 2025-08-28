@@ -21,6 +21,8 @@
 - Fix `rps` message.
 - Properly return errors from control messages.
 - Fix `load-songs` message.
+- Properly handle changes to settings `library_path`, `player_path`,
+  `search_paths`, `audio_extensions`, `recursive_search` and `auto_restart`.
 
 ## v0.5.13
 ### New features

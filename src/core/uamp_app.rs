@@ -62,7 +62,7 @@ pub struct UampApp {
 
     pub(super) state: State,
 
-    file_watch: Option<INotifyWatcher>,
+    pub(super) file_watch: Option<INotifyWatcher>,
 }
 
 impl UampApp {
@@ -324,7 +324,7 @@ impl UampApp {
         self.mpris_routine(ctrl, old);
     }
 
-    fn watch_files(
+    pub fn watch_files(
         rt: RtAndle,
         conf: &Config,
     ) -> Result<Option<INotifyWatcher>> {
