@@ -90,37 +90,31 @@ class Config {
     }
 
     getSettingElement(key, setting) {
+        if (setting.enum) {
+            return this.getSelectSetting(key, setting);
+        }
+
         // TODO: handle nullable
         if (Array.isArray(setting.type)) {
             const types = setting.type.filter(t => t !== "null");
             setting.type = types[0];
         }
 
-        let element;
         switch (setting.type) {
             case "boolean":
-                element = this.getToggleSetting(key);
-                break;
+                return this.getToggleSetting(key, setting);
             case "string":
-                element = this.getInputSetting(key, setting);
-                break;
+                return this.getInputSetting(key, setting);
             case "number":
-                element = this.getFloatSetting(key, setting);
-                break;
-            // case "select":
-            //     return this.getSelectSetting(key, setting);
+                return this.getFloatSetting(key, setting);
             // case "list":
             //     return this.getListSetting(key, setting);
             default:
                 return null;
         }
-
-        element.querySelector('.label').textContent = Config.keyToLabel(key);
-        element.querySelector('.description').textContent = setting.description;
-        return element;
     }
 
-    getToggleSetting(key) {
+    getToggleSetting(key, setting) {
         const clone = toggleTemplate.content.cloneNode(true);
         const toggle = clone.querySelector('.switch-setting');
 
@@ -128,6 +122,7 @@ class Config {
         input.checked = this[key];
         input.onclick = () => this.toggleSwitch(key);
 
+        Config.settingDetails(toggle, key, setting);
         return toggle;
     }
 
@@ -135,11 +130,8 @@ class Config {
         const clone = selectTemplate.content.cloneNode(true);
         const select = clone.querySelector('.select-setting');
 
-        select.querySelector('.label').textContent = setting.label;
-        select.querySelector('.description').textContent = setting.description;
-
         const input = select.querySelector('select');
-        for (const opt of setting.options) {
+        for (const opt of setting.enum) {
             const option = document.createElement('option');
             option.textContent = opt;
             input.appendChild(option);
@@ -150,6 +142,7 @@ class Config {
             this[key] = value;
         });
 
+        Config.settingDetails(select, key, setting);
         return select;
     }
 
@@ -157,18 +150,16 @@ class Config {
         const clone = listTemplate.content.cloneNode(true);
         const list = clone.querySelector('.list-setting');
 
-        list.querySelector('.label').textContent = setting.label;
-        list.querySelector('.description').textContent = setting.description;
-
         const items = list.querySelector('.items');
         const input = list.querySelector('.input-item');
-        console.log(key, this);
+
         for (const item of this[key]) {
             const itemClone = listItemTemplate.content.cloneNode(true);
             itemClone.querySelector('p').textContent = item;
             items.insertBefore(itemClone, input);
         }
 
+        Config.settingDetails(list, key, setting);
         return list;
     }
 
@@ -188,6 +179,7 @@ class Config {
             });
         }
 
+        Config.settingDetails(element, key, setting);
         return element;
     }
 
@@ -200,6 +192,11 @@ class Config {
         })
 
         return element;
+    }
+
+    static settingDetails(element, key, setting) {
+        element.querySelector('.label').textContent = Config.keyToLabel(key);
+        element.querySelector('.description').textContent = setting.description;
     }
 
     static keyToLabel(key) {
