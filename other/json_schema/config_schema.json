@@ -10,14 +10,14 @@
             "description": "The thing that gives you this description"
         },
         "search_paths": {
-            "description": "Paths where to search for music",
+            "description": "Paths where to search for music.",
             "type": "array",
             "items": {
                 "type": "string"
             }
         },
         "recursive_search": {
-            "description": "if true, the directories will be searched recursively",
+            "description": "Search songs recursively, including all subdirectories.",
             "type": "boolean",
             "default": true
         },
@@ -30,7 +30,7 @@
             "type": ["string", "null"]
         },
         "audio_extensions": {
-            "description": "File extensions that are checked as music",
+            "description": "File extensions that are checked as music.",
             "type": "array",
             "items": {
                 "type": "string",
@@ -44,17 +44,17 @@
             ]
         },
         "update_library_on_start": {
-            "description": "when true, uamp will search for new songs every time on start",
+            "description": "Search for new songs on startup.",
             "type": "boolean",
             "default": true
         },
         "remove_missing_on_load": {
-            "description": "when true, uamp will remove songs from library that have invalid path when loading new songs",
+            "description": "Remove songs with invalid paths from the library when loading new songs.",
             "type": "boolean",
             "default": true
         },
         "volume_jump": {
-            "description": "specifies how much the volume should change with heach volume up/down",
+            "description": "Specifies how much the volume should change with heach volume up/down.",
             "type": "number",
             "default": 0.025
         },
@@ -62,10 +62,10 @@
             "description": "When playback position is saved, it can be loaded the next time uamp starts. This means that your song will continue playing at the same place that it was when you closed uamp.",
             "type": "string",
             "default": "Never",
-            "pattern": "Never|OnClose|Always"
+            "enum": ["Never", "OnClose", "Always"]
         },
         "save_timeout": {
-            "description": "When not null, saves all the data every number of seconds specified here",
+            "description": "When not null, saves all the data every number of seconds specified here.",
             "type": ["null", "string"],
             "default": "60",
             "pattern": "^([0-9]*d)?([0-9]*:)?([0-9]*:)?([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])$"
@@ -77,12 +77,12 @@
             "pattern": "^([0-9]*d)?([0-9]*:)?([0-9]*:)?([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])$"
         },
         "gapless": {
-            "description": "Enable/disable gapless playback.",
+            "description": "Enable gapless playback.",
             "type": "boolean",
             "default": "true"
         },
         "seek_jump": {
-            "description": "Determines how much should be seeked with fast-forward/rewind",
+            "description": "Determines how much should be seeked with fast-forward/rewind.",
             "type": "string",
             "default": "10",
             "pattern": "^([0-9]*d)?([0-9]*:)?([0-9]*:)?([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])$"
@@ -93,18 +93,18 @@
             "default": "127.0.0.1"
         },
         "port": {
-            "description": "port number to use",
+            "description": "Port number to use.",
             "type": "integer",
             "default": 8267
         },
         "delete_logs_after": {
-            "description": "Logs are deleted after this time",
+            "description": "Logs are deleted after this time.",
             "type": "string",
             "pattern": "^([0-9]*d)?([0-9]*:)?([0-9]*:)?([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])$",
             "default": "3d"
         },
         "enable_server": {
-            "description": "If true, server will be enabled. If the server is disabled, you cannot control running instance from CLI",
+            "description": "Enable the server to allow controlling the running instance from the CLI.",
             "type": "boolean",
             "default": true
         },
@@ -114,23 +114,23 @@
             "default": true
         },
         "previous_timeout": {
-            "description": "When not null, the action for previous will go to previous only if the last previous action was in the given time, otherwise it will rewind to start",
+            "description": "When not null, the action for previous will go to previous only if the last previous action was in the given time, otherwise it will rewind to start.",
             "type": ["string", "null"],
             "pattern": "^([0-9]*d)?([0-9]*:)?([0-9]*:)?([0-9]*|\\.|[0-9]*\\.[0-9]*|\\.[0-9])$",
             "default": null
         },
         "play_on_start": {
-            "description": "When enabled, uamp will start playing when it starts.",
+            "description": "Start playback automatically when uamp launches.",
             "type": "boolean",
             "default": "false"
         },
         "simple_sorting": {
-            "description": "By default, when you sort songs in the library, they are also sorted by additional properties. Enable this to change that behaviour",
+            "description": "Sort library songs only by the selected property, ignoring secondary properties.",
             "type": "boolean",
             "default": false
         },
         "control_aliases": {
-            "description": "Aliases for actions",
+            "description": "Aliases for actions.",
             "type": "object",
             "additionalProperties": {
                 "description": "Defines what this alias does. Aliases can also have arguments, in that case use '\"alias-name\": \"[arg1, arg2]something:${arg1} ${arg2}'",
@@ -150,7 +150,7 @@
             "default": null
         },
         "client_image_lookup": {
-            "description": "If true, clients will try to lookup song images.",
+            "description": "Clients will look up song images.",
             "type": "boolean",
             "default": true
         },
@@ -172,7 +172,7 @@
             "default": "https://github.com/BonnyAD9/uamp.git"
         },
         "system_player": {
-          "description": "If enabled, uamp will integrate with the system. Only supported on linux where this uses mpris.",
+          "description": "Integrate with the system (Linux only, via MPRIS).",
           "type": "boolean",
           "default": true
         },
