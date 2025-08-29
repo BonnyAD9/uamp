@@ -140,6 +140,7 @@ eventSource.addEventListener('client-changed', _ => window.location.reload());
 
 eventSource.addEventListener('config-changed', e => {
     const app = AppSingleton.get();
+    if (app === null) return;
     app.config = JSON.parse(e.data);
 });
 

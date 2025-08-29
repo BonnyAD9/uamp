@@ -6,16 +6,16 @@ const listTemplate = document.getElementById('list-setting');
 const listItemTemplate = document.getElementById('list-item-setting');
 const inputTemplate = document.getElementById('input-setting');
 
-const colorInput = document.getElementById('themeColor');
-const savedColor = getCookie('themeColor') ?? '#3acbaf';
-colorInput.value = savedColor;
-applyThemeColor(savedColor);
+// const colorInput = document.getElementById('themeColor');
+// const savedColor = getCookie('themeColor') ?? '#3acbaf';
+// colorInput.value = savedColor;
+// applyThemeColor(savedColor);
 
-colorInput.addEventListener('input', () => {
-    const selectedColor = colorInput.value;
-    applyThemeColor(selectedColor);
-    setCookie('themeColor', selectedColor);
-});
+// colorInput.addEventListener('input', () => {
+//     const selectedColor = colorInput.value;
+//     applyThemeColor(selectedColor);
+//     setCookie('themeColor', selectedColor);
+// });
 
 const floatingBarInput = document.getElementById('floatingBar');
 const bar = document.querySelector('section.bar');
@@ -109,8 +109,8 @@ class Config {
                 return this.getNumberSetting(key, setting, true);
             case "integer":
                 return this.getNumberSetting(key, setting, false);
-            // case "list":
-            //     return this.getListSetting(key, setting);
+            case "array":
+                return this.getListSetting(key, setting);
             default:
                 return null;
         }
@@ -219,18 +219,54 @@ class Config {
         return element;
     }
 
+    /**
+     * Gets the list setting element
+     * @param {string} key - setting key
+     * @param {*} setting - setting schema
+     * @returns HTML list setting element
+     */
     getListSetting(key, setting) {
         const clone = listTemplate.content.cloneNode(true);
         const list = clone.querySelector('.list-setting');
-
         const items = list.querySelector('.items');
         const input = list.querySelector('.input-item');
 
-        for (const item of this[key]) {
-            const itemClone = listItemTemplate.content.cloneNode(true);
-            itemClone.querySelector('p').textContent = item;
-            items.insertBefore(itemClone, input);
+        const addItem = (value) => {
+            const itemEl = this.#getListItem(key, value);
+            items.insertBefore(itemEl, input);
         }
+
+        for (const item of this[key]) {
+            addItem(item);
+        }
+
+        const inputEl = input.querySelector('input');
+        const regex =
+            setting.items.pattern ? new RegExp(setting.items.pattern) : null;
+        const isValid = val => regex ? regex.test(val) : true;
+        const validate = () => {
+            inputEl.classList.toggle('invalid', !isValid(inputEl.value))
+        };
+
+        inputEl.addEventListener('input', validate);
+        inputEl.addEventListener('keydown', e => {
+            if (e.key === 'Enter')
+                inputEl.blur();
+            if (e.key === 'Escape') {
+                inputEl.value = '';
+                inputEl.blur();
+            };
+        });
+        inputEl.addEventListener('blur', () => {
+            validate();
+            if (inputEl.value !== '' && isValid(inputEl.value)) {
+                this[key].push(inputEl.value);
+                addItem(inputEl.value);
+
+                inputEl.value = '';
+                this.update(key, this[key]);
+            }
+        });
 
         Config.settingDetails(list, key, setting);
         return list;
@@ -254,6 +290,20 @@ class Config {
 
         Config.settingDetails(element, key, setting);
         return element;
+    }
+
+    #getListItem(key, value) {
+        const itemClone = listItemTemplate.content.cloneNode(true);
+        const item = itemClone.querySelector('.item');
+        item.querySelector('p').textContent = value;
+
+        item.querySelector('img').addEventListener('click', () => {
+            this[key] = this[key].filter(i => i !== value);
+            item.remove();
+            this.update(key, this[key]);
+        });
+
+        return item;
     }
 
     update(key, value) {
@@ -341,7 +391,7 @@ const settingsGroups = [
     },
     {
         name: "Server", settings: [
-            "server_address", "port", "system_player"
+            "server_address", "port", "skin", "system_player"
         ]
     }
 ];
