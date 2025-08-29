@@ -188,6 +188,12 @@
         "cache_path": {
             "description": "Path to folder containing precomputed data from uamp.",
             "type": "string"
+        },
+        "default_run_type": {
+          "description": "The default way that uamp will start up when without arguments.",
+          "type": "string",
+          "pattern": "Background|WebClient",
+          "default": "WebClient"
         }
     }
 }

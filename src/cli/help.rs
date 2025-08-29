@@ -425,6 +425,14 @@ fn print_run_help(color: bool) {
     Sets the server address of for the new instance. Thiss will disable config
     saves for the new instance.
 
+  {'y}-b  --background{'_}
+    Set run mode to Background: start the uamp server. Will block if `-d` is
+    not specified. This is the default run mode.
+
+  {'y}-w  --web{'_}
+    Set run mode to WebClient: start detached uamp server if not already
+    running and than open the web client. In most environments won't block.
+
 {'g}Run messages:{'_}
   Any {'g}control message{'_}. See `{'c}uamp {'b}h {'g}cmsg{'_}` for more info.
 ",

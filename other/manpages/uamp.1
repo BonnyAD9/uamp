@@ -416,6 +416,15 @@ configuration in both places.
 Set address for the HTTP server of the new instance. The new instance will
 not save cafiguration or load it when it updates to preserve different
 configuration in both places.
+.TP
+\fB\fC\-b\fR, \fB\fC\-\-background\fR
+Set run mode to \fB\fCBackground\fR: start the uamp server. Will block if \fB\fC\-d\fR is
+not specified. This is the default run mode.
+.TP
+\fB\fC\-w\fR, \fB\fC\-\-web\fR
+Set run mode to \fB\fCWebClient\fR: start detached uamp server if not already
+running and than open the web client. Shouldn't block \- this is behaviour is
+dependant on the environment, but in most environments it won't.
 .SS Action \fB\fCconfig\fR
 .PP
 \fB\fCconfig\fR [\fB\fC\-h\fR] [\fB\fC\-e\fR] [\fB\fC\-p\fR] [\fB\fC\-\-default\fR] [\fB\fC\-\-\fR]

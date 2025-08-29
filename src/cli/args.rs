@@ -213,11 +213,11 @@ impl Args {
             return Ok(());
         }
 
-        if info.detach {
+        if info.blocking() {
+            self.run = Some(info)
+        } else {
             self.should_exit = true;
             self.actions.push(Action::RunDetached(info));
-        } else {
-            self.run = Some(info)
         }
 
         Ok(())

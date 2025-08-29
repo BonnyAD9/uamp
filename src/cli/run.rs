@@ -1,14 +1,16 @@
 use std::{
     env,
-    process::{Command, Stdio},
+    process::{Child, Command, Stdio},
 };
 
-use log::{info, warn};
+use log::info;
 use pareg::Pareg;
 
 use crate::{
     background_app::run_background_app,
     core::{AnyControlMsg, Error, Result, config::Config},
+    env::RunType,
+    web_client::run_web_client,
 };
 
 use super::{help::help_run, port::Port};
@@ -22,6 +24,8 @@ use super::{help::help_run, port::Port};
 pub struct Run {
     /// True if the new instance should run as a detached process.
     pub detach: bool,
+
+    pub run_type: RunType,
 
     /// Port which should be used for the new instance. If this sit set, the
     /// new instance will have disabled saves of configuration.
@@ -65,6 +69,12 @@ impl Run {
                     self.server_address = Some(args.next_arg()?);
                     self.run = Some(true);
                 }
+                "-b" | "--background" => {
+                    self.run_type = RunType::Background;
+                }
+                "-w" | "--web" => {
+                    self.run_type = RunType::WebClient;
+                }
                 _ => {
                     self.init.push(args.cur_arg()?);
                     self.run = Some(true);
@@ -74,18 +84,22 @@ impl Run {
         Ok(())
     }
 
-    /// Runs the app NOT IN DETACHED MODE. The value of [`Self::detach`] is
-    /// ignored.
-    ///
-    /// # Errors
-    /// - The app fails to start.
+    pub fn blocking(&self) -> bool {
+        !self.detach && matches!(self.run_type, RunType::Background)
+    }
+
     pub fn run_app(self, mut conf: Config) -> Result<()> {
-        if self.detach {
-            warn!("Detach is set to detached when not running as detached.");
+        self.update_config(&mut conf);
+        match self.run_type {
+            RunType::Background => {
+                run_background_app(conf, self.init)?;
+            }
+            RunType::WebClient => {
+                run_web_client(&conf, self.init)?;
+            }
         }
 
-        self.update_config(&mut conf);
-        run_background_app(conf, self.init)
+        Ok(())
     }
 
     /// Runs the app IN DETACHED MODE. The value of [`Self::detach`] is
@@ -93,37 +107,58 @@ impl Run {
     ///
     /// # Errors
     /// - The command fails to spawn a new process.
-    pub fn run_detached(self) -> Result<()> {
-        if !self.detach {
-            warn!("Detached is not set to detached when running as detached");
+    pub fn run_detached(self, conf: &Config) -> Result<()> {
+        match self.run_type {
+            RunType::Background => {
+                run_detached(
+                    &self.init,
+                    self.server_address.as_deref(),
+                    self.port,
+                )?;
+            }
+            RunType::WebClient => {
+                // TODO: avoid cloning
+                let mut conf = conf.clone();
+                self.update_config(&mut conf);
+                run_web_client(&conf, self.init)?;
+            }
         }
-
-        let cmd = env::current_exe()
-            .map_err(|e| Error::from(e).msg("Failed to run detached uamp."))?;
-        let mut cmd = Command::new(cmd);
-        cmd.stdin(Stdio::null());
-        cmd.stdout(Stdio::null());
-
-        cmd.arg("run");
-
-        if let Some(p) = self.port {
-            cmd.args(["-p", &p.to_string()]);
-        }
-        if let Some(a) = self.server_address {
-            cmd.args(["-a", &a]);
-        }
-
-        cmd.args(self.init.into_iter().map(|a| a.to_string()));
-
-        let child = cmd
-            .spawn()
-            .map_err(|e| Error::io(e).msg("Failed to spawn detached uamp."))?;
-        let id = child.id();
-        println!("Spawned detached process with id {id}");
-        info!("Spawned detached process with id {id}");
 
         Ok(())
     }
+}
+
+pub fn run_detached(
+    init: &[AnyControlMsg],
+    adr: Option<&str>,
+    port: Option<u16>,
+) -> Result<Child> {
+    let cmd = env::current_exe()
+        .map_err(|e| Error::from(e).msg("Failed to run detached uamp."))?;
+    let mut cmd = Command::new(cmd);
+    cmd.stdin(Stdio::null());
+    cmd.stdout(Stdio::null());
+    cmd.stderr(Stdio::null());
+
+    cmd.arg("run");
+
+    if let Some(adr) = adr {
+        cmd.args(["-a", adr]);
+    }
+    if let Some(port) = port {
+        cmd.args(["-p", &port.to_string()]);
+    }
+
+    cmd.args(init.iter().map(|a| a.to_string()));
+
+    let child = cmd
+        .spawn()
+        .map_err(|e| Error::io(e).msg("Failed to spawn detached uamp."))?;
+    let id = child.id();
+    println!("Spawned detached process with id {id}");
+    info!("Spawned detached process with id {id}");
+
+    Ok(child)
 }
 
 //===========================================================================//

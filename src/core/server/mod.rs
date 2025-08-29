@@ -109,7 +109,14 @@ impl Server {
             "{}:{}",
             conf.server_address(),
             conf.port()
-        )))?;
+        )))
+        .map_err(|e| {
+            Error::from(e).hint(format!(
+                "Using `{}:{}`",
+                conf.server_address(),
+                conf.port()
+            ))
+        })?;
         Ok(Self { rt, listener })
     }
 
