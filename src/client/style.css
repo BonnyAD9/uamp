@@ -875,7 +875,7 @@ section.screen#playlist .songs thead {
     left: 0;
     right: 0;
     z-index: 20;
-    background-color: var(--bg-dark-trans);
+    background-color: var(--bg-dark);
     backdrop-filter: blur(5px);
 }
 
@@ -884,7 +884,6 @@ section.screen#settings .tabs {
 }
 
 section.screen .tabs>h1 {
-    border-bottom: 1px solid var(--primary);
     padding-right: 10px;
 }
 
@@ -893,29 +892,26 @@ section.screen .tabs>h1 {
     -moz-appearance: none;
     -webkit-appearance: none;
     border: none;
-    border-bottom: 1px solid var(--primary);
     background-color: transparent;
-    color: var(--fg);
+    color: var(--fg-sec);
     padding: 5px 10px;
-    margin-top: 3px;
+    cursor: pointer;
+    text-transform: uppercase;
 }
 
 section.screen#settings .tabs>.tab {
     padding-left: 15px;
     padding-right: 15px;
-    text-transform: uppercase;
 }
 
 .tabs>.tab.active {
-    background-color: var(--bg);
-    border: 1px solid var(--primary);
-    border-bottom: none;
-    border-radius: 5px 5px 0 0;
+    color: var(--fg);
+    text-shadow: 0 0 5px var(--fg-sec);
+    font-weight: 500;
 }
 
 .tabs>.filler {
     flex-grow: 1;
-    border-bottom: 1px solid var(--primary);
 }
 
 .playlist-stack {
