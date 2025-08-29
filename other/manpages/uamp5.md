@@ -421,10 +421,24 @@ options.
 `default_run_mode`
   Selects the default run mode of uamp when without arguments. It may have the
   following values:
-  
+
   - `Background` run the uamp server. This will block.
   - `WebClient` run the uamp server if not running and open the web client.
     This won't block in most environments.
+
+  Default value:
+
+    "default_run_mode": "WebClient"
+
+`web_client_command`
+  Sets the command to run when opening web client. If null use the default
+  browser.
+
+  `${ADDRESS}` in the command will be replaced with the address to the client.
+
+  Default value:
+
+    "web_client_command": null
 
 ### Advanced
 

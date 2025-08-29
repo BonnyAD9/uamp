@@ -1,8 +1,14 @@
-use std::{thread, time::Duration};
+use std::{
+    process::{Command, Stdio},
+    thread,
+    time::Duration,
+};
 
 use crate::{
     cli::run_detached,
-    core::{AnyControlMsg, Result, config::Config, server::client::Client},
+    core::{
+        AnyControlMsg, Error, Result, config::Config, server::client::Client,
+    },
 };
 
 pub fn run_web_client(conf: &Config, init: Vec<AnyControlMsg>) -> Result<()> {
@@ -34,10 +40,31 @@ pub fn run_web_client(conf: &Config, init: Vec<AnyControlMsg>) -> Result<()> {
         thread::sleep(Duration::from_secs(1));
     }
 
-    open::that(format!(
-        "http://{}:{}/app",
-        conf.server_address(),
-        conf.port()
-    ))?;
+    open_web(conf)
+}
+
+fn open_web(conf: &Config) -> Result<()> {
+    let address =
+        format!("http://{}:{}/app", conf.server_address(), conf.port());
+    let Some(cmd) = conf.web_client_command() else {
+        open::that(address)?;
+        return Ok(());
+    };
+
+    let raw_cmd = shell_words::split(cmd)?;
+    let Some(name) = raw_cmd.first() else {
+        return Err(Error::invalid_value(
+            "Missing application in command for web client.",
+        ));
+    };
+
+    let mut cmd = Command::new(name);
+    for arg in &raw_cmd[1..] {
+        cmd.arg(arg.replace("${ADDRESS}", &address));
+    }
+    cmd.stderr(Stdio::null());
+    cmd.stdin(Stdio::null());
+    cmd.stdout(Stdio::null());
+    cmd.spawn()?;
     Ok(())
 }

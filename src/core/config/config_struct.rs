@@ -125,6 +125,10 @@ gen_struct! {
             default_http_client_path()
         },
 
+        web_client_command: Option<String> { pub, pub } => pub(super) () {
+            None
+        },
+
         ; // fields passed by value:
 
         #[doc = "When enabled uamp will sort only by the primary attribute."]
@@ -275,6 +279,7 @@ impl Config {
             force_server: None,
             skin: default_skin(),
             default_run_type: default_default_run_type(),
+            web_client_command: default_web_client_command(),
             change: Cell::new(true),
         }
     }

@@ -9,6 +9,7 @@
 - Add option to open the web client with `uamp run -w`.
 - Add option to configure the default run type when running uamp without
   arguments with `default_run_type`.
+- Add option to specify the web client command with `web_client_command`.
 
 ### Fixes
 - Fix order of `a` and `b` when requesting with `uam i nfo=a..b`.
