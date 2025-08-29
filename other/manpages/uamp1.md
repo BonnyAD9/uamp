@@ -1090,6 +1090,9 @@ These are the GET endpoints:
 `/api/img`
   Get image.
 
+`/app`
+  Application.
+
 POST endpoints:
 
 `/api/ctrl`
