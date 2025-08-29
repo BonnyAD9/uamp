@@ -200,9 +200,9 @@ class App {
             playing !== null ? this.player.playlist.songs[playing] : null;
 
         songsElement.innerHTML = '';
-        for (let i = 0; i < this.songs.length; i++) {
-            const song = this.songs[i];
-            // if (song.deleted === true) continue;
+        for (let i = 0; i < this.library.songs.length; i++) {
+            const song = this.library.songs[i];
+            if (song.deleted === true) continue;
 
             const row = song.getTableRow();
             row.dataset.index = i;
