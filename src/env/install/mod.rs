@@ -70,6 +70,25 @@ pub fn install(root: Option<&Path>, exe: &Path, man: bool) -> Result<()> {
 
         fs::copy(man1, dst1)?;
         fs::copy(man5, dst5)?;
+
+        println!("Installing icons.");
+        let dsti = path_at_root(
+            root,
+            "/usr/share/icons/hicolor/256x256/apps/uamp.png",
+        );
+        let dsts = path_at_root(
+            root,
+            "/usr/share/icons/hicolor/scalable/apps/uamp.svg",
+        );
+        make_parent(&dsti)?;
+        make_parent(&dsts)?;
+        fs::copy("assets/img/icon_light256.png", dsti)?;
+        fs::copy("assets/svg/icon_light.svg", dsts)?;
+
+        println!("Installing desktop file.");
+        let dstd = path_at_root(root, "/usr/share/applications/uamp.desktop");
+        make_parent(&dstd)?;
+        fs::copy("other/uamp.desktop", dstd)?;
     }
 
     println!("Creating client tar.");
