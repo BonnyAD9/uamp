@@ -218,6 +218,12 @@ impl Config {
                         change |= Change::SYSTEM_PLAYER;
                     }
                 }
+                "web_client_command" => {
+                    *self.web_client_command_mut() = from_value(v)?;
+                }
+                "default_run_type" => {
+                    self.default_run_type_set(from_value(v)?);
+                }
                 k => {
                     return Err(Error::invalid_value(format!(
                         "Invalid setting key `{k}`."
