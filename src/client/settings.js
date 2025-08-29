@@ -53,7 +53,7 @@ class Config {
      */
     toggleSwitch(name) {
         if (this[name] === undefined) return;
-        this[name] = !this[name];
+        this.update(name, !this[name]);
     }
 
     render() {
@@ -106,7 +106,9 @@ class Config {
             case "string":
                 return this.getInputSetting(key, setting);
             case "number":
-                return this.getFloatSetting(key, setting);
+                return this.getNumberSetting(key, setting, true);
+            case "integer":
+                return this.getNumberSetting(key, setting, false);
             // case "list":
             //     return this.getListSetting(key, setting);
             default:
@@ -114,6 +116,12 @@ class Config {
         }
     }
 
+    /**
+     * Gets the toggle setting element
+     * @param {string} key - setting key
+     * @param {*} setting - setting schema
+     * @returns HTML toggle setting element
+     */
     getToggleSetting(key, setting) {
         const clone = toggleTemplate.content.cloneNode(true);
         const toggle = clone.querySelector('.switch-setting');
@@ -126,24 +134,89 @@ class Config {
         return toggle;
     }
 
+    /**
+     * Gets the select setting element
+     * @param {string} key - setting key
+     * @param {*} setting - setting schema
+     * @returns HTML select setting element
+     */
     getSelectSetting(key, setting) {
         const clone = selectTemplate.content.cloneNode(true);
         const select = clone.querySelector('.select-setting');
 
         const input = select.querySelector('select');
+        input.addEventListener('change', () => this.update(key, input.value));
         for (const opt of setting.enum) {
             const option = document.createElement('option');
             option.textContent = opt;
+            option.value = opt;
             input.appendChild(option);
         }
-
-        input.addEventListener('change', () => {
-            const value = input.value.replace(' ', '');
-            this[key] = value;
-        });
+        input.value = this[key];
 
         Config.settingDetails(select, key, setting);
         return select;
+    }
+
+    /**
+     * Gets the text setting element
+     * @param {string} key - setting key
+     * @param {*} setting - setting schema
+     * @returns HTML text setting element
+     */
+    getInputSetting(key, setting) {
+        const element = this.#getGenericInput(key, '', setting);
+        const input = element.querySelector('input');
+
+        const regex = setting.pattern ? new RegExp(setting.pattern) : null;
+        const isValid = val => regex ? regex.test(val) : true;
+        const validate = () => {
+            input.classList.toggle('invalid', !isValid(input.value))
+        };
+
+        input.addEventListener('input', validate);
+        input.addEventListener('blur', () => {
+            validate();
+            if (input.value !== this[key] && isValid(input.value))
+                this.update(key, input.value);
+        });
+
+        Config.settingDetails(element, key, setting);
+        return element;
+    }
+
+    /**
+     * Gets the number setting element
+     * @param {string} key - setting key
+     * @param {*} setting - setting schema
+     * @param {boolean} float - whether the number is float or integer
+     * @returns HTML number setting element
+     */
+    getNumberSetting(key, setting, float = true) {
+        const element = this.#getGenericInput(key, 0.0, setting);
+        const input = element.querySelector('input');
+
+        const numfy = val => {
+            if (!float)
+                return val.replace(/[^0-9]/g, '');
+            return val.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+        };
+
+        const defaultValue = float ? 0.0 : 0;
+        const parse = val => {
+            const n = float ? parseFloat(val) : parseInt(val, 10);
+            return isNaN(n) ? defaultValue : n;
+        }
+
+        input.addEventListener('input', () => input.value = numfy(input.value));
+        input.addEventListener('blur', () => {
+            input.value = numfy(input.value);
+            const val = parse(input.value);
+            if (val !== this[key])
+                this.update(key, val);
+        });
+
+        return element;
     }
 
     getListSetting(key, setting) {
@@ -163,35 +236,35 @@ class Config {
         return list;
     }
 
-    getInputSetting(key, setting) {
+    #getGenericInput(key, defaultValue, setting) {
         const clone = inputTemplate.content.cloneNode(true);
         const element = clone.querySelector('.input-setting');
 
         const input = element.querySelector('input');
-        input.value = this[key] ?? '';
+        input.value = this[key] ?? defaultValue;
 
-        if (setting.pattern) {
-            input.addEventListener('input', () => {
-                const regex = new RegExp(setting.pattern);
-                input.classList.remove('invalid');
-                if (!regex.test(input.value))
-                    input.classList.add('invalid');
-            });
-        }
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter')
+                input.blur();
+            if (e.key === 'Escape') {
+                input.value = this[key] ?? defaultValue;
+                input.blur();
+            };
+        });
 
         Config.settingDetails(element, key, setting);
         return element;
     }
 
-    getFloatSetting(key, setting) {
-        const element = this.getInputSetting(key, setting);
-        const input = element.querySelector('input');
-        input.addEventListener('input', () => {
-            input.value =
-                input.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
-        })
-
-        return element;
+    update(key, value) {
+        this[key] = value;
+        fetch('/api/ctrl', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                SetConfig: { [key]: value }
+            })
+        });
     }
 
     static settingDetails(element, key, setting) {
