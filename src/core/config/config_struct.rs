@@ -6,7 +6,7 @@ use crate::{
         Alias, AnyControlMsg, ControlFunction, ControlMsg, DataControlMsg,
         config::default_http_client_path, player::AddPolicy, query::Query,
     },
-    env::install,
+    env::{RunType, install},
     ext::Wrap,
     gen_struct,
 };
@@ -209,6 +209,11 @@ gen_struct! {
         #[doc = "changes."]
         auto_restart: bool { pub, pub } => pub(super) () true,
 
+        #[doc = "The run type to use by default."]
+        default_run_type: RunType { pub, pub } => pub(super) () {
+            RunType::WebClient
+        },
+
         ; // fields that aren't serialized
 
         #[serde(skip_serializing, default = "default_config_path_json")]
@@ -269,6 +274,7 @@ impl Config {
             auto_restart: default_auto_restart(),
             force_server: None,
             skin: default_skin(),
+            default_run_type: default_default_run_type(),
             change: Cell::new(true),
         }
     }

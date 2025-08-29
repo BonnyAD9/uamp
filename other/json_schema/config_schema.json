@@ -179,6 +179,12 @@
         "skin": {
           "description": "Path to skin to use. Should be absolute.",
           "type": "string"
+        },
+        "default_run_type": {
+          "description": "The default way that uamp will start up when without arguments.",
+          "type": "string",
+          "pattern": "Background|WebClient",
+          "default": "WebClient"
         }
     }
 }

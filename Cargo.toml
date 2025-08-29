@@ -28,6 +28,7 @@ itertools = "0.14.0"
 log = "0.4.27"
 mime_guess = "2.0.5"
 notify = "8.1.0"
+open = "5.3.2"
 pareg ="0.10.0"
 # pareg = { path = "../pareg" }
 place_macro = "1.0.0"

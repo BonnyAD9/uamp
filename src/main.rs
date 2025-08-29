@@ -6,14 +6,13 @@ use std::{
     process::ExitCode,
 };
 
-use cli::Run;
 use flexi_logger::LoggerHandle;
 use log::{error, info};
 use pareg::Pareg;
 use termal::{eprintacln, eprintmcln};
 
 use crate::{
-    cli::{Action, Args},
+    cli::{Action, Args, Run},
     core::Result,
 };
 
@@ -22,6 +21,7 @@ mod cli;
 mod core;
 mod env;
 mod ext;
+mod web_client;
 
 fn main() -> ExitCode {
     let _ = match start_logger() {
@@ -61,7 +61,7 @@ fn start() -> Result<()> {
                     .server_address
                     .take()
                     .or_else(|| args.server_address.to_owned());
-                i.run_detached()?;
+                i.run_detached(&conf)?;
             }
             Action::Config(c) => c.act(&conf, &args.props)?,
             Action::Shell(s) => s.act(),
@@ -74,7 +74,11 @@ fn start() -> Result<()> {
     if let Some(info) = args.run {
         info.run_app(conf)?;
     } else if !args.should_exit {
-        Run::default().run_app(conf)?;
+        Run {
+            run_type: conf.default_run_type(),
+            ..Run::default()
+        }
+        .run_app(conf)?;
     }
 
     Ok(())

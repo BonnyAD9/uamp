@@ -418,6 +418,14 @@ options.
 
     "client_image_lookup": true
 
+`default_run_mode`
+  Selects the default run mode of uamp when without arguments. It may have the
+  following values:
+  
+  - `Background` run the uamp server. This will block.
+  - `WebClient` run the uamp server if not running and open the web client.
+    This won't block in most environments.
+
 ### Advanced
 
 This section contains advanced options that normal user has no reason to

@@ -393,6 +393,15 @@ Run action accepts the following options:
   not save cafiguration or load it when it updates to preserve different
   configuration in both places.
 
+`-b`, `--background`
+  Set run mode to `Background`: start the uamp server. Will block if `-d` is
+  not specified. This is the default run mode.
+
+`-w`, `--web`
+  Set run mode to `WebClient`: start detached uamp server if not already
+  running and than open the web client. Shouldn't block - this is behaviour is
+  dependant on the environment, but in most environments it won't.
+
 ### Action `config`
 
 `config` [`-h`] [`-e`] [`-p`] [`--default`] [`--`]

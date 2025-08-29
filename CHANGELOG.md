@@ -6,6 +6,9 @@
 - Allow specifying cnt for `pop`.
 - Add option to check if self update is enabled with `update --enabled`.
 - Add new `internal` action `install`.
+- Add option to open the web client with `uamp run -w`.
+- Add option to configure the default run type when running uamp without
+  arguments with `default_run_type`.
 
 ### Fixes
 - Fix order of `a` and `b` when requesting with `uam i nfo=a..b`.
