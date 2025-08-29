@@ -200,12 +200,13 @@ class App {
             playing !== null ? this.player.playlist.songs[playing] : null;
 
         songsElement.innerHTML = '';
+        let id = 0;
         for (let i = 0; i < this.library.songs.length; i++) {
             const song = this.library.songs[i];
             if (song.deleted === true) continue;
 
             const row = song.getTableRow();
-            row.dataset.index = i;
+            row.dataset.index = id++;
             if (i === current)
                 row.classList.add('active');
             songsElement.appendChild(row);
