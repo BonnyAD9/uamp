@@ -1054,8 +1054,9 @@ would repeat this property will be removed. The property may be:
 ## HTTP server
 
 The HTTP server is primarly used for uamp to comunicate with running instances.
-But the api is made to be usable also by other programs or manually. There are
-currently two endpoints:
+But the api is made to be usable also by other programs or manually.
+
+These are the GET endpoints:
 
 `/api/ctrl`
   Used for receiving control messages. The control messages are passed as query
@@ -1079,6 +1080,20 @@ currently two endpoints:
   responses will fail to be fulfiled, there may be error response in its place.
   The array with responses have the responses in the same order as the
   requested data.
+
+`/api/sub`
+  Endpoint for server sent events.
+
+`/api/marco`
+  Ping endpoint. It will always respond with `polo`.
+
+`/api/img`
+  Get image.
+
+POST endpoints:
+
+`/api/ctrl`
+  Send control message.
 
 ## ENVIRONMENT
 

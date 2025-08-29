@@ -583,7 +583,7 @@ is given by \fIopt\-index\fP\&.
 All arguments after argument given by \fIopt\-index\fP are ignored.
 .TP
 \fB\fCinstall\fR [\fIflags\fP]
-Install uamp according to the flags.
+Install uamp according to the flags. Must be run with CWD being the uamp repository.
 .IP
 This is the default installation with no flags on linux. On other OSs, you
 should specify at least \fB\fC\-\-exe\fR\&.
@@ -1103,8 +1103,9 @@ itself.
 .SH HTTP server
 .PP
 The HTTP server is primarly used for uamp to comunicate with running instances.
-But the api is made to be usable also by other programs or manually. There are
-currently two endpoints:
+But the api is made to be usable also by other programs or manually.
+.PP
+These are the GET endpoints:
 .TP
 \fB\fC/api/ctrl\fR
 Used for receiving control messages. The control messages are passed as query
@@ -1128,6 +1129,20 @@ array (even if it is only one response). Additionaly if only some of the
 responses will fail to be fulfiled, there may be error response in its place.
 The array with responses have the responses in the same order as the
 requested data.
+.TP
+\fB\fC/api/sub\fR
+Endpoint for server sent events.
+.TP
+\fB\fC/api/marco\fR
+Ping endpoint. It will always respond with \fB\fCpolo\fR\&.
+.TP
+\fB\fC/api/img\fR
+Get image.
+.PP
+POST endpoints:
+.TP
+\fB\fC/api/ctrl\fR
+Send control message.
 .SH ENVIRONMENT
 .TP
 \fB\fCRUST_LOG\fR
