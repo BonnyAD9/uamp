@@ -48,8 +48,8 @@ pub enum DataControlMsg {
     Restart(Option<PathBuf>),
     /// Reorder the playlist stack.
     ReorderPlaylistStack(Vec<usize>),
-    /// Play song at the given path as temporary.
-    PlayTmp(PathBuf),
+    /// Play songs at the given paths as temporary.
+    PlayTmp(Vec<PathBuf>),
 }
 
 impl UampApp {
@@ -143,20 +143,12 @@ impl UampApp {
                     ),
                 ));
             }
-            DataControlMsg::PlayTmp(path) => {
-                let id = self.library.add_tmp_path(&path).map_err(|e| {
-                    e.prepend(format!(
-                        "Failed to load song `{:?}`.",
-                        path.to_string_lossy()
-                    ))
-                })?;
+            DataControlMsg::PlayTmp(paths) => {
+                let ids = self.library.add_tmp_paths(&paths)?;
 
-                self.player.push_playlist(
-                    &mut self.library,
-                    vec![id].into(),
-                    true,
-                );
-                self.client_update_tmp_song(id);
+                self.player
+                    .push_playlist(&mut self.library, ids.into(), true);
+                self.client_update_tmp_songs();
             }
         }
 
@@ -213,9 +205,13 @@ impl FromStr for DataControlMsg {
                 let (_, v) = v.split_once("=").unwrap();
                 Ok(DataControlMsg::ReorderPlaylistStack(split_arg(v, ",")?))
             }
-            v if has_any_key!(v, '=', "p", "play") => {
+            v if starts_any!(v, "p=", "play=") => {
+                let (_, v) = v.split_once("=").unwrap();
                 Ok(DataControlMsg::PlayTmp(
-                    val_arg::<&Path>(v, '=')?.canonicalize()?,
+                    split_arg::<&Path>(v, ",")?
+                        .iter()
+                        .map(|p| p.canonicalize())
+                        .try_collect()?,
                 ))
             }
             v => ArgError::UnknownArgument(Box::new(ArgErrCtx::from_msg(
@@ -251,7 +247,9 @@ impl Display for DataControlMsg {
                     ord.iter().map(|a| a.to_string()).join(",")
                 )
             }
-            DataControlMsg::PlayTmp(p) => write!(f, "p={}", p.display()),
+            DataControlMsg::PlayTmp(p) => {
+                write!(f, "p={}", p.iter().map(|a| a.display()).join(","))
+            }
         }
     }
 }

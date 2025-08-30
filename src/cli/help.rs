@@ -520,6 +520,11 @@ fn print_internal_help(color: bool) {
       {'y}--exe {'w}<path>{'_}
         Specify target path for uamp executable. This is path relative to the
         root directory even if it is absolute. Default is `/usr/bin/uamp`.
+
+  {'c}uamp {'b}internal {'r}open {'gr}[file path] [...]{'_}
+    Play the given files in new playlist at the top of the stack. If no
+    instance is running, start new instance. If there are no paths open the
+    web client.
 ",
     )
 }
@@ -620,8 +625,8 @@ fn print_control_messages_help(color: bool) {
   {'r}mute{'gr}[=(true|false)]{'_}
     Mute/Unmute. When without argument, toggle.
     
-  {'r}play p{'w}=<file path>{'_}
-    Play the given file in new playlist on top of the stack.
+  {'r}play p{'w}=<file path>{'gr}[, <file path>[, ...]]{'_}
+    Play the given files in new playlist on top of the stack.
 
   {'r}load-songs{'gr}[=[l|r][-|e|n|m]]{'_}
     Look for new songs. This can be modifed with the load options of the form

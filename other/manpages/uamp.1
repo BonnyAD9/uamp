@@ -608,6 +608,10 @@ Even if enabled, does nothing on non\-unix systems.
     relative to \fB\fCroot\fR even if the path is absolute. By default this is
     \fB\fC/usr/bin/uamp\fR which may not be the correct place for other OSs than
     linux.
+.TP
+\fB\fCopen\fR [\fIaudio\-files\fP]
+Play the given audio files in a running instance. If there is no runing
+instance, start new one. If there are no audio paths, open the web client.
 .SS Message control
 .TP
 \fB\fCpp\fR[\fB\fC=\fR\fIplay\-state\fP], \fB\fCplay\-pause\fR[\fB\fC=\fR\fIplay\-state\fP]
@@ -662,9 +666,11 @@ Mute/Unmute. If \fIB\fP is not specified, toggle between the states.
 \fB\fCfalse\fR \- unmute.
 .RE
 .TP
-\fB\fCp\fR[\fB\fC=\fR\fIaudio\-file\fP], \fB\fCplay\fR[\fB\fC=\fR\fIaudio\-file\fP]
-Load the audio file given by \fIaudio\-file\fP as temporary song into uamp and
+\fB\fCp\fR[\fB\fC=\fR\fIaudio\-files\fP], \fB\fCplay\fR[\fB\fC=\fR\fIaudio\-files\fP]
+Load the audio files given by \fIaudio\-file\fP as temporary song into uamp and
 push it as new playlist to the playlist stack.
+.IP
+\fIaudio\-files\fP is comma separated list of paths.
 .TP
 \fB\fCload\-songs\fR[\fB\fC=\fR[\fB\fCl\fR|\fB\fCr\fR][\fB\fC\-\fR|\fB\fCe\fR|\fB\fCn\fR|\fB\fCm\fR]]
 Load new songs to library from folders specified in configuration. The value

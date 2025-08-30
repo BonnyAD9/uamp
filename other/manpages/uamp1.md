@@ -577,6 +577,10 @@ Integrations:
     `/usr/bin/uamp` which may not be the correct place for other OSs than
     linux.
 
+`open` [*audio-files*]
+  Play the given audio files in a running instance. If there is no runing
+  instance, start new one. If there are no audio paths, open the web client.
+
 ### Message control
 
 `pp`[`=`*play-state*], `play-pause`[`=`*play-state*]
@@ -625,9 +629,11 @@ Integrations:
   - `true` - mute.
   - `false` - unmute.
 
-`p`[`=`*audio-file*], `play`[`=`*audio-file*]
-  Load the audio file given by *audio-file* as temporary song into uamp and
+`p`[`=`*audio-files*], `play`[`=`*audio-files*]
+  Load the audio files given by *audio-file* as temporary song into uamp and
   push it as new playlist to the playlist stack.
+
+  *audio-files* is comma separated list of paths.
 
 `load-songs`[`=`[`l`|`r`][`-`|`e`|`n`|`m`]]
   Load new songs to library from folders specified in configuration. The value
