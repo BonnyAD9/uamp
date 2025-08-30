@@ -180,15 +180,15 @@
                     </div> -->
     
                     <label class="switch-setting setting">
+                        <div class="switch">
+                            <input type="checkbox" id="floatingBar" />
+                            <span class="slider"></span>
+                        </div>
                         <div class="text">
                             <p>Floating music player bar</p>
                             <span>
                                 Music player bar detached from the window edges.
                             </span>
-                        </div>
-                        <div class="switch">
-                            <input type="checkbox" id="floatingBar" />
-                            <span class="slider"></span>
                         </div>
                     </label>
                 </div>
@@ -395,11 +395,11 @@
 
     <template id="toggle-setting">
         <label class="switch-setting setting">
-            <div class="text">
-                <p class="label"></p> <span class="description"></span>
-            </div>
             <div class="switch">
                 <input type="checkbox" /> <span class="slider"></span>
+            </div>
+            <div class="text">
+                <p class="label"></p> <span class="description"></span>
             </div>
         </label>
     </template>
