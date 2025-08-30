@@ -86,8 +86,11 @@ impl UampApp {
     pub fn client_update_tmp_song(&mut self, id: SongId) {
         if let Some(ref d) = self.jobs.server {
             _ = d.strong_send(SubMsg::PlayTmp(
-                PlayTmp::new(self.library[id].clone(), id, &mut self.player)
-                    .into(),
+                PlayTmp::new(
+                    vec![(self.library[id].clone(), id)],
+                    &mut self.player,
+                )
+                .into(),
             ));
         }
     }

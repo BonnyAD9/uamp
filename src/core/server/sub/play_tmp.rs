@@ -9,18 +9,16 @@ use crate::core::{
 
 #[derive(Debug, Clone, Serialize)]
 pub struct PlayTmp {
-    song: Song,
-    tmp_id: SongId,
+    songs: Vec<(Song, SongId)>,
     playlist: Playlist,
     playback: Playback,
     timestamp: Option<Timestamp>,
 }
 
 impl PlayTmp {
-    pub fn new(song: Song, id: SongId, player: &mut Player) -> Self {
+    pub fn new(songs: Vec<(Song, SongId)>, player: &mut Player) -> Self {
         Self {
-            song,
-            tmp_id: id,
+            songs,
             playback: player.playback_state(),
             timestamp: player.timestamp(),
             playlist: player.sub_playlist(),
