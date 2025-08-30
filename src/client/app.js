@@ -522,13 +522,31 @@ navs.forEach(item => {
 });
 
 function showScreen(target) {
-    for (let screen of screens) {
-        screen.classList.remove('active');
-        if (screen.id == target) {
-            screen.classList.add('active');
-        }
-    }
+    screens.forEach(s => s.classList.toggle('active', s.id === target));
+    history.pushState({ page: target }, '');
 }
+
+history.replaceState({ page: 'library' }, '');
+window.addEventListener('popstate', e => {
+    const target = e.state?.page || 'library';
+    screens.forEach(s => s.classList.toggle('active', s.id === target));
+    navs.forEach(
+        p => p.classList.toggle('active', p.dataset.screen === target)
+    );
+});
+
+const sliderTrack = document.querySelector('.bar .slider');
+sliderTrack.addEventListener('click', e => {
+    const rect = sliderTrack.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+
+    const app = AppSingleton.get();
+    const song = app.getPlaying();
+
+    const pos = song.length.fromPercent(percent);
+    apiCtrl(`seek=${pos.format()}`);
+    slider.style.width = `${percent * 100}%`;
+});
 
 function apiCtrl(query) {
     return fetch(`/api/ctrl?${query}`)
