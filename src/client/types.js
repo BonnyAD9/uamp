@@ -276,6 +276,22 @@ class Duration {
     }
 
     /**
+     * Returns a new Duration representing the position within total duration
+     * @param {number} percent - number between 0 and 1
+     * @returns {Duration} new duration
+     */
+    fromPercent(percent) {
+        percent = Math.max(0, Math.min(1, percent));
+
+        const totalNanos = this.secs * 1e9 + this.nanos;
+        const posNanos = Math.floor(totalNanos * percent);
+
+        const secs = Math.floor(posNanos / 1e9);
+        const nanos = posNanos % 1e9;
+        return new Duration(secs, nanos);
+    }
+
+    /**
      * Gets number of seconds in duration
      * @returns {number} number of seconds
      */

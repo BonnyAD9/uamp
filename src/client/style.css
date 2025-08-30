@@ -605,6 +605,20 @@ section.bar.expanded .playlist {
     display: block;
 }
 
+section.bar .playlist::-webkit-scrollbar {
+    width: 4px;
+}
+
+section.bar .playlist::-webkit-scrollbar-thumb {
+    background-color: var(--fg-sec);
+    transition: .3s ease;
+    border-radius: 2px;
+}
+
+section.bar .playlist::-webkit-scrollbar-thumb:hover {
+    background-color: var(--fg-sec2);
+}
+
 section.bar .playlist .songs {
     display: flex;
     flex-direction: column;
@@ -709,7 +723,7 @@ section#settings>div>#settingsContent {
 
 .setting {
     display: flex;
-    gap: 5px;
+    gap: 8px;
     align-items: center;
     border-bottom: 1px solid var(--bg-light);
     padding-bottom: 5px;
@@ -784,9 +798,11 @@ input:checked+.slider:before {
     border-radius: 10px;
     transition: 0.15s ease-in-out;
     cursor: pointer;
+    margin-top: 8px;
 }
 
 .list-setting,
+.select-setting,
 .input-setting {
     display: block;
 }
@@ -875,7 +891,7 @@ section.screen#playlist .songs thead {
     left: 0;
     right: 0;
     z-index: 20;
-    background-color: var(--bg-dark);
+    background-color: var(--bg-dark-trans);
     backdrop-filter: blur(5px);
 }
 
@@ -899,15 +915,9 @@ section.screen .tabs>h1 {
     text-transform: uppercase;
 }
 
-section.screen#settings .tabs>.tab {
-    padding-left: 15px;
-    padding-right: 15px;
-}
-
 .tabs>.tab.active {
     color: var(--fg);
     text-shadow: 0 0 5px var(--fg-sec);
-    font-weight: 500;
 }
 
 .tabs>.filler {
