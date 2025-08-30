@@ -16,6 +16,8 @@ pub enum TabMode {
     Update,
     Internal,
     InternalTabComplete,
+    InternalInstall,
+    InternalOpen,
     Help,
     Invalid,
     Port,
@@ -23,6 +25,8 @@ pub enum TabMode {
     Print,
     UpdateRemote,
     UpdateMode,
+    TrueFalse,
+    Path,
     None,
 }
 
@@ -49,7 +53,14 @@ impl TabComplete {
                 break;
             }
 
-            if matches!(mode, TabMode::Port | TabMode::Color | TabMode::None) {
+            if matches!(
+                mode,
+                TabMode::Port
+                    | TabMode::Color
+                    | TabMode::None
+                    | TabMode::TrueFalse
+                    | TabMode::Path
+            ) {
                 mode = mode2;
                 mode2 = TabMode::Basic;
             }
@@ -97,6 +108,18 @@ impl TabComplete {
                 (TabMode::Internal, "tab-complete") => {
                     mode = TabMode::InternalTabComplete
                 }
+                (TabMode::Internal, "install") => {
+                    mode = TabMode::InternalInstall
+                }
+                (TabMode::Internal, "open") => mode = TabMode::InternalOpen,
+                (TabMode::InternalInstall, "--man") => {
+                    mode2 = mode;
+                    mode = TabMode::TrueFalse;
+                }
+                (TabMode::InternalInstall, "--root" | "--exe") => {
+                    mode2 = mode;
+                    mode = TabMode::Path;
+                }
                 (TabMode::Internal, _) => mode = TabMode::Invalid,
                 (TabMode::InternalTabComplete, _) => mode = TabMode::Basic,
                 (_, "--") => mode = TabMode::Basic,
@@ -121,6 +144,10 @@ impl TabComplete {
             TabMode::Update => update_args(conf, &self.cur, p),
             TabMode::Internal => internal_args(conf, &self.cur, p),
             TabMode::InternalTabComplete => {}
+            TabMode::InternalInstall => {
+                internal_install_args(conf, &self.cur, p)
+            }
+            TabMode::InternalOpen => internal_open_args(conf, &self.cur, p),
             TabMode::Help => help_args(conf, &self.cur, p),
             TabMode::Invalid => {}
             TabMode::Port => port_args(conf, &self.cur, p),
@@ -128,6 +155,8 @@ impl TabComplete {
             TabMode::Print => print_args(conf, &self.cur, p),
             TabMode::UpdateRemote => {}
             TabMode::UpdateMode => update_mode_args(conf, &self.cur, p),
+            TabMode::TrueFalse => true_false_args(conf, &self.cur, p),
+            TabMode::Path => file_args(conf, &self.cur, p),
             TabMode::None => {}
         }
 
@@ -164,9 +193,9 @@ fn instance_args(conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
         },
         "pp=" => [PLAY_PAUSE_ARG],
         "play-pause=" => [PLAY_PAUSE_ARG],
-        "mute=" => [MUTE_ARG],
-        "p=" => file_args,
-        "play=" => file_args,
+        "mute=" => [TRUE_FALSE_ARG],
+        "p=" => file_list_args,
+        "play=" => file_list_args,
         "al=" => alias_args,
         "alias=" => alias_args,
         "restart=" => file_args,
@@ -180,7 +209,7 @@ fn run_args(conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
         },
         "pp=" => [PLAY_PAUSE_ARG],
         "play-pause=" => [PLAY_PAUSE_ARG],
-        "mute=" => [MUTE_ARG],
+        "mute=" => [TRUE_FALSE_ARG],
         "al=" => alias_args,
         "alias=" => alias_args,
         "restart=" => file_args,
@@ -201,6 +230,14 @@ fn update_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
 
 fn internal_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
     select_args(INTERANAL_ARG, arg, p);
+}
+
+fn internal_install_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
+    select_args(INTERNAL_INSTALL_ARG, arg, p);
+}
+
+fn internal_open_args(conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
+    file_args(conf, arg, p);
 }
 
 fn help_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
@@ -225,6 +262,15 @@ fn update_mode_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
 
 fn file_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
     _ = file_args_inner(arg, p);
+}
+
+fn file_list_args(conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
+    let arg = arg.split(",").last().unwrap_or_default();
+    file_args(conf, arg, p);
+}
+
+fn true_false_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
+    select_args(TRUE_FALSE_ARG, arg, p);
 }
 
 fn file_args_inner(arg: &str, p: &impl Fn(CowStr)) -> Result<()> {
@@ -363,6 +409,8 @@ const RUN_ARG: &[&[&str]] = &[
     &["-d", "--detach"],
     &["-p", "--port"],
     &["-a", "--address"],
+    &["-b", "--background"],
+    &["-w", "--web"],
     // ANY_CONTROL_MSG
 ];
 
@@ -391,8 +439,15 @@ const UPDATE_ARG: &[&[&str]] = &[
     &["-m", "--mode"],
 ];
 
-const INTERANAL_ARG: &[&[&str]] =
-    &[&["-h", "-?", "--help"], &["tab-complete"]];
+const INTERANAL_ARG: &[&[&str]] = &[
+    &["-h", "-?", "--help"],
+    &["tab-complete"],
+    &["install"],
+    &["open"],
+];
+
+const INTERNAL_INSTALL_ARG: &[&[&str]] =
+    &[&["--man"], &["--root"], &["--exe"]];
 
 const ANY_CONTROL_MSG: &[&[&str]] = &[
     &["play-pause", "pp"],
@@ -439,4 +494,4 @@ const UPDATE_MODE_ARG: &[&[&str]] = &[
 
 const PLAY_PAUSE_ARG: &[&[&str]] = &[&["play"], &["pause"]];
 
-const MUTE_ARG: &[&[&str]] = &[&["true"], &["false"]];
+const TRUE_FALSE_ARG: &[&[&str]] = &[&["true"], &["false"]];

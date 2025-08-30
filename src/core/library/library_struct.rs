@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use std::{
@@ -126,7 +127,23 @@ impl Library {
     /// # Errors
     /// - The song fails to load from the given path.
     pub fn add_tmp_path(&mut self, path: impl AsRef<Path>) -> Result<SongId> {
-        Ok(self.add_tmp_song(Song::from_path(path)?))
+        Ok(
+            self.add_tmp_song(Song::from_path(path.as_ref()).map_err(
+                |e| {
+                    e.prepend(format!(
+                        "Failed to add tmp song `{}`",
+                        path.as_ref().display()
+                    ))
+                },
+            )?),
+        )
+    }
+
+    pub fn add_tmp_paths(
+        &mut self,
+        paths: &[impl AsRef<Path>],
+    ) -> Result<Vec<SongId>> {
+        paths.iter().map(|a| self.add_tmp_path(a)).try_collect()
     }
 
     /// Checks if song is temporary or not

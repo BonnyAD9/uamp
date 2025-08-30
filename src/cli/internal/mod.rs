@@ -1,11 +1,12 @@
 use pareg::Pareg;
 
 mod install;
+mod open;
 mod tab_complete;
 
 use crate::core::{Result, config::Config};
 
-pub use self::{install::*, tab_complete::*};
+pub use self::{install::*, open::*, tab_complete::*};
 
 use super::help::help_internal;
 
@@ -14,6 +15,7 @@ pub enum Internal {
     None,
     TabComplete(TabComplete),
     Install(Install),
+    Open(Open),
 }
 
 impl Internal {
@@ -29,15 +31,17 @@ impl Internal {
             }
             "tab-complete" => Ok(Self::TabComplete(TabComplete::new(args)?)),
             "install" => Ok(Self::Install(Install::parse(args)?)),
+            "open" => Ok(Self::Open(Open::parse(args)?)),
             _ => args.err_unknown_argument().err()?,
         }
     }
 
-    pub fn act(&self, conf: &Config) -> Result<()> {
+    pub fn act(self, conf: &Config) -> Result<()> {
         match self {
             Self::None => Ok(()),
             Self::TabComplete(t) => t.act(conf),
             Self::Install(i) => i.act(),
+            Self::Open(o) => o.act(conf.clone()),
         }
     }
 }

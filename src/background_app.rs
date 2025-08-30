@@ -2,7 +2,7 @@ use log::{error, trace};
 use tokio::runtime;
 
 use crate::{
-    core::{AnyControlMsg, Error, Msg, Result, UampApp, config::Config},
+    core::{Error, Msg, Result, UampApp, config::Config},
     env::{AppCtrl, Command, rt},
 };
 
@@ -14,7 +14,7 @@ use crate::{
 /// controlled.
 pub fn run_background_app(
     conf: Config,
-    init: Vec<AnyControlMsg>,
+    init: Vec<impl Into<Msg>>,
 ) -> Result<()> {
     let rt = runtime::Builder::new_multi_thread().enable_all().build()?;
     let local = tokio::task::LocalSet::new();
@@ -23,7 +23,7 @@ pub fn run_background_app(
 
 async fn run_bg_async(
     mut conf: Config,
-    init: Vec<AnyControlMsg>,
+    init: Vec<impl Into<Msg>>,
 ) -> Result<()> {
     conf.force_server = Some(true);
     let mut cmd_queue = vec![];

@@ -4,9 +4,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::{
-        config::{self, SongPosSave}, Alias, ControlFunction
+        Alias, ControlFunction,
+        config::{self, SongPosSave},
     },
-    env::{install, RunType},
+    env::{RunType, install},
     ext::Wrap,
 };
 
