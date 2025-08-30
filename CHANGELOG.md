@@ -10,6 +10,8 @@
 - Add option to configure the default run type when running uamp without
   arguments with `default_run_type`.
 - Add option to specify the web client command with `web_client_command`.
+- Add new internal action `open`.
+- Uamp now also installs web client, icons and desktop entry.
 
 ### Fixes
 - Fix order of `a` and `b` when requesting with `uam i nfo=a..b`.
