@@ -23,7 +23,6 @@ use tokio_util::sync::CancellationToken;
 use crate::core::{
     AppCtrl, Error, Job, JobMsg, Msg, Result, RtHandle, UampApp,
     config::Config,
-    library::SongId,
     log_err,
     server::sub::{PlayTmp, SetAll, SetPlaylist},
 };
@@ -83,14 +82,16 @@ impl UampApp {
         }
     }
 
-    pub fn client_update_tmp_song(&mut self, id: SongId) {
+    pub fn client_update_tmp_songs(&mut self) {
         if let Some(ref d) = self.jobs.server {
+            let songs = self
+                .player
+                .playlist()
+                .iter()
+                .map(|i| (self.library[*i].clone(), *i))
+                .collect();
             _ = d.strong_send(SubMsg::PlayTmp(
-                PlayTmp::new(
-                    vec![(self.library[id].clone(), id)],
-                    &mut self.player,
-                )
-                .into(),
+                PlayTmp::new(songs, &mut self.player).into(),
             ));
         }
     }
@@ -109,7 +110,14 @@ impl Server {
             "{}:{}",
             conf.server_address(),
             conf.port()
-        )))?;
+        )))
+        .map_err(|e| {
+            Error::from(e).hint(format!(
+                "Using `{}:{}`",
+                conf.server_address(),
+                conf.port()
+            ))
+        })?;
         Ok(Self { rt, listener })
     }
 

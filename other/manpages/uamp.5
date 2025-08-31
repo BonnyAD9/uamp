@@ -528,6 +528,39 @@ Default value:
 "client_image_lookup": true
 .fi
 .RE
+.TP
+\fB\fCdefault_run_mode\fR
+Selects the default run mode of uamp when without arguments. It may have the
+following values:
+.RS
+.IP \(bu 2
+\fB\fCBackground\fR run the uamp server. This will block.
+.IP \(bu 2
+\fB\fCWebClient\fR run the uamp server if not running and open the web client.
+This won't block in most environments.
+.RE
+.IP
+Default value:
+.PP
+.RS
+.nf
+"default_run_mode": "WebClient"
+.fi
+.RE
+.TP
+\fB\fCweb_client_command\fR
+Sets the command to run when opening web client. If null use the default
+browser.
+.IP
+\fB\fC${ADDRESS}\fR in the command will be replaced with the address to the client.
+.IP
+Default value:
+.PP
+.RS
+.nf
+"web_client_command": null
+.fi
+.RE
 .SS Advanced
 .PP
 This section contains advanced options that normal user has no reason to

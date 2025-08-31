@@ -7,7 +7,7 @@ use crate::{
         Alias, ControlFunction,
         config::{self, SongPosSave},
     },
-    env::install,
+    env::{RunType, install},
     ext::Wrap,
 };
 
@@ -28,6 +28,7 @@ pub struct Config {
     pub delete_logs_after: Wrap<Duration>,
     pub enable_server: bool,
     pub auto_restart: bool,
+    pub web_client_command: Option<String>,
 
     // Could be modified over http.
     pub control_aliases: HashMap<String, ControlFunction>,
@@ -45,6 +46,7 @@ pub struct Config {
     pub seek_jump: Wrap<Duration>,
     pub client_image_lookup: bool,
     pub system_player: bool,
+    pub default_run_type: RunType,
 }
 
 impl Config {
@@ -64,6 +66,7 @@ impl Config {
             delete_logs_after: c.delete_logs_after(),
             enable_server: c.enable_server(),
             auto_restart: c.auto_restart(),
+            web_client_command: c.web_client_command().clone(),
 
             control_aliases: c.control_aliases().clone(),
             default_playlist_end_action: c
@@ -82,6 +85,7 @@ impl Config {
             seek_jump: c.seek_jump(),
             client_image_lookup: c.client_image_lookup(),
             system_player: c.system_player(),
+            default_run_type: c.default_run_type(),
         }
     }
 }

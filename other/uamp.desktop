@@ -1,0 +1,23 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=1.5
+Type=Application
+Terminal=false
+Exec=/usr/bin/uamp internal open %F
+TryExec=/usr/bin/uamp
+Name=Uamp
+Comment=Universal Advanced Music Player
+GenericName=Music Player
+Icon=uamp
+Actions=Exit;Pop
+Categories=AudioVideo;Audio;Player;Music
+StartupWMClass=uamp
+MimeType=audio/mpeg;audio/mpa;audio/mpa-robust;audio/flac;audio/mp4;audio/wav;audio/vnd.wav;audio/x-wav;
+
+[Desktop Action Exit]
+Name=Close server
+Exec=/usr/bin/uamp i x
+
+[Desktop Action Pop]
+Name=Pop current playlist
+Exec=/usr/bin/uamp i pop

@@ -228,7 +228,13 @@ impl PlayerInterface for Mpris {
                 path.display()
             )));
         }
-        self.send_msg(DataControlMsg::PlayTmp(path.into()).into())
+        let path = path.canonicalize().map_err(|e| {
+            fdo::Error::Failed(format!(
+                "Failed to canonicalize path `{}`: {e}",
+                path.display()
+            ))
+        })?;
+        self.send_msg(DataControlMsg::PlayTmp(vec![path]).into())
             .await
     }
 

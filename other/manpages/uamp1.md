@@ -393,6 +393,15 @@ Run action accepts the following options:
   not save cafiguration or load it when it updates to preserve different
   configuration in both places.
 
+`-b`, `--background`
+  Set run mode to `Background`: start the uamp server. Will block if `-d` is
+  not specified. This is the default run mode.
+
+`-w`, `--web`
+  Set run mode to `WebClient`: start detached uamp server if not already
+  running and than open the web client. Shouldn't block - this is behaviour is
+  dependant on the environment, but in most environments it won't.
+
 ### Action `config`
 
 `config` [`-h`] [`-e`] [`-p`] [`--default`] [`--`]
@@ -568,6 +577,10 @@ Integrations:
     `/usr/bin/uamp` which may not be the correct place for other OSs than
     linux.
 
+`open` [*audio-files*]
+  Play the given audio files in a running instance. If there is no runing
+  instance, start new one. If there are no audio paths, open the web client.
+
 ### Message control
 
 `pp`[`=`*play-state*], `play-pause`[`=`*play-state*]
@@ -616,9 +629,11 @@ Integrations:
   - `true` - mute.
   - `false` - unmute.
 
-`p`[`=`*audio-file*], `play`[`=`*audio-file*]
-  Load the audio file given by *audio-file* as temporary song into uamp and
+`p`[`=`*audio-files*], `play`[`=`*audio-files*]
+  Load the audio files given by *audio-file* as temporary song into uamp and
   push it as new playlist to the playlist stack.
+
+  *audio-files* is comma separated list of paths.
 
 `load-songs`[`=`[`l`|`r`][`-`|`e`|`n`|`m`]]
   Load new songs to library from folders specified in configuration. The value
@@ -1045,8 +1060,9 @@ would repeat this property will be removed. The property may be:
 ## HTTP server
 
 The HTTP server is primarly used for uamp to comunicate with running instances.
-But the api is made to be usable also by other programs or manually. There are
-currently two endpoints:
+But the api is made to be usable also by other programs or manually.
+
+These are the GET endpoints:
 
 `/api/ctrl`
   Used for receiving control messages. The control messages are passed as query
@@ -1070,6 +1086,23 @@ currently two endpoints:
   responses will fail to be fulfiled, there may be error response in its place.
   The array with responses have the responses in the same order as the
   requested data.
+
+`/api/sub`
+  Endpoint for server sent events.
+
+`/api/marco`
+  Ping endpoint. It will always respond with `polo`.
+
+`/api/img`
+  Get image.
+
+`/app`
+  Application.
+
+POST endpoints:
+
+`/api/ctrl`
+  Send control message.
 
 ## ENVIRONMENT
 
