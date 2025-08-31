@@ -9,6 +9,8 @@ reliable, and powerful.
 Uamp currently works as playback server controled with CLI, [mpris][mpris]
 which may be integrated into your system or web GUI:
 
+<img width="2050" height="1210" alt="image" src="https://github.com/user-attachments/assets/c18e061d-69eb-47e0-be97-5e1444ad747b" />
+
 ## Configuration
 The configuration is saved in the efault configuration folder on your
 platform. You can use `uamp config` to open the config file with your default
@@ -68,6 +70,30 @@ uamp i play='path/to/file.flac'
 ## How it looks
 Uamp how has web gui:
 
+### Library page
+<img width="2050" height="1210" alt="image" src="https://github.com/user-attachments/assets/37d3a224-350d-412a-b2c2-d782d6d964c2" />
+
+### Now playing
+<img width="2050" height="1210" alt="image" src="https://github.com/user-attachments/assets/81eb7a7b-3821-43df-8915-a6f718bcce73" />
+
+### Playlist
+<img width="2050" height="1210" alt="image" src="https://github.com/user-attachments/assets/bac7554b-6b43-4d5e-b1e0-27e035fbecd8" />
+
+### Albums
+<img width="2050" height="1210" alt="image" src="https://github.com/user-attachments/assets/52492c23-ea66-4c7f-a860-07ddecc81050" />
+
+### Album page
+<img width="2050" height="1210" alt="image" src="https://github.com/user-attachments/assets/36d9704b-f8d9-475c-8856-737b5e063d31" />
+
+### Artists
+<img width="2050" height="1210" alt="image" src="https://github.com/user-attachments/assets/eb8c0411-b6c5-4a53-bb5c-4af2c617cd32" />
+
+### Artist page
+<img width="2050" height="1210" alt="image" src="https://github.com/user-attachments/assets/ec92de01-4c98-4cf1-8143-57a8caf117df" />
+
+### Settings
+<img width="2050" height="1210" alt="image" src="https://github.com/user-attachments/assets/dcf83be0-d2c5-4359-884e-26828dbe42e2" />
+
 ## Possible uamp setup
 This is the way that I have confugred and use uamp:
 
@@ -86,23 +112,23 @@ For example:
 
 Now you can just start playing when you want to by using your global shortcut.
 
-### Endless playback
-If you want to setup endless playback of your songs shuffled you can also:
-
-create alias in `config.json`:
+### Open gui as app with chrome
+Set the setting `web_client_command` to the following value to run uamp web
+client in chrome as app (replace `/chrome/binary` with the binary for chrome.
+It is usually `google-chrome` or `chromium` or use whatever other browser
+that supports web apps):
 ```json
 {
   // ...
-  "control_aliases": {
-    // ...
-    "reset-playlist": "sp sort=rng pj pp=play pap=m spea=reset-playlist"
-  }
+  "web_client_command": "/chrome/binary --app=${ADDRESS} --class=uamp"
 }
 ```
 
-Now you can start the playback with `uamp i al=reset-playlist` and you never
-have to worry about it. It will shuffle all your songs into a playlist and when
-the playlist ends it will reshuffle the playlist and start from the start.
+### Endless playback
+Now you can start the playback with the default alias `uamp i al=endless-mix`
+and you never have to worry about it. It will shuffle all your songs into a
+playlist and when the playlist ends it will reshuffle the playlist and start
+from the start.
 
 When you will load new songs, they will also be automatically mixed in the
 playlist after the currently playing song.
