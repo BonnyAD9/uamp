@@ -498,6 +498,20 @@ fn print_internal_help(color: bool) {
   {'c}uamp {'b}internal {'r}tab-complete {'w}<arg-idx> <uamp-bin> \
            {'gr}[uamp args]{'_}
     Get uamp tab completion for the given arguments.
+
+  {'c}uamp {'b}internal {'r}install {'gr}[{'dy}flags{'gr}]{'_}
+    Install uamp on the system according to the flags. Must be run with CWD
+    being the uamp repository. Flags:
+      {'y}--man {'w}(true|false){'_}
+        Enable/disable man page installation. Enabled by default on linux.
+        
+      {'y}--root {'w}<path>{'_}
+        Specify the root to which uamp will install. If not specified, installs
+        on the system.
+        
+      {'y}--exe {'w}<path>{'_}
+        Specify target path for uamp executable. This is path relative to the
+        root directory even if it is absolute. Default is `/usr/bin/uamp`.
 ",
     )
 }
