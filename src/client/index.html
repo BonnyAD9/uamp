@@ -87,13 +87,13 @@
                 </div>
                 <div class="playlist-controls">
                     <img 
-                        src="assets/svg/point_down.svg" 
+                        src="assets/svg/push.svg" 
                         alt="push playlist"
                         title="Push empty playlist"
                         onclick="apiCtrl('push=none')"
                     />
                     <img 
-                        src="assets/svg/point_up.svg" 
+                        src="assets/svg/pop.svg" 
                         alt="push playlist"
                         title="Pops current playlist"
                         onclick="apiCtrl('pop')"
@@ -121,6 +121,13 @@
     </div>
 
     <section class="bar floating">
+        <img 
+            class="back-arrow" 
+            src="assets/svg/point_up.svg" 
+            onclick="toggleBar()"
+            alt="back arrow" 
+        />
+
         <div class="bar-wrapper">
             <div class="info" onclick="toggleBar()">
                 <div class="info-pic">

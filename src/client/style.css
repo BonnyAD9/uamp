@@ -438,6 +438,24 @@ section.bar.expanded {
     gap: 20px;
 }
 
+section.bar .back-arrow {
+    display: none;
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    object-position: center;
+    transform: rotate(-90deg);
+    z-index: 10;
+    cursor: pointer;
+}
+
+section.bar.expanded .back-arrow {
+    display: block;
+}
+
 section.bar>.bar-wrapper {
     width: 100%;
     height: 100%;
@@ -989,13 +1007,13 @@ section.screen .tabs>h1 {
 .tabs>.playlist-controls {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 10px;
     padding-right: 10px;
 }
 
 .tabs>.playlist-controls img {
-    width: 22px;
-    height: 22px;
+    width: 15px;
+    height: 15px;
     object-fit: contain;
     cursor: pointer;
 }
