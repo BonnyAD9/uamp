@@ -221,8 +221,13 @@ table.songs tr.active p {
     color: var(--primary)
 }
 
-table.songs tr {
+table.songs tbody tr {
     cursor: pointer;
+    transition: .1s ease background-color;
+}
+
+table.songs tbody tr:hover {
+    background-color: var(--bg-light-trans);
 }
 
 table.songs td {
@@ -232,7 +237,7 @@ table.songs td {
 table.songs td.cover {
     width: 100%;
     box-sizing: border-box;
-    padding: 3px 5px 3px 0;
+    padding: 5px 5px 0px 3px;
     display: flex;
     align-items: center;
     justify-content: center;

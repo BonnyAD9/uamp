@@ -379,6 +379,7 @@ function displayAppearanceSettings() {
     const appearSettings = document.getElementById('appearanceSettings');
 
     const floatingBar = (getCookie('floatingBar') ?? 'true') === 'true';
+    bar.classList.toggle('floating', floatingBar);
     const floatingBarToggle = Config.getToggleSetting(
         'floating_music_player_bar', floatingBar,
         { description: 'Music player bar detached from the window edges.' },

@@ -1,5 +1,4 @@
 const songsElement = document.querySelector('#library .songs tbody');
-const tableTemplate = document.getElementById('songs-template');
 const slider = document.querySelector('.bar .slider hr');
 
 class App {
@@ -428,6 +427,8 @@ class App {
      */
     getSongsTable(songs, current, onClick = (_) => { }) {
         const cloned = tableTemplate.content.cloneNode(true);
+        const table = cloned.querySelector('table');
+        table.classList.add('playlist-stack');
 
         const element = cloned.querySelector('tbody');
         element.addEventListener('click', e => onClick(e));
@@ -444,7 +445,7 @@ class App {
             element.appendChild(row);
         }
 
-        return cloned;
+        return table;
     }
 
     libraryClick = e => this.genericSongClick(e, 'any');

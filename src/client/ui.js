@@ -107,12 +107,11 @@ const playlists = document.querySelector('#playlist .playlist-wrapper');
  * Pushes empty playing table to the playlist stack
  */
 function pushPlaylist() {
-    const cloned = tableTemplate.content.cloneNode(true);
-    const tbody = cloned.querySelector('tbody');
-    tbody.addEventListener('click', e => AppSingleton.get().playlistClick(e));
+    const table = getSongsTable(e => AppSingleton.get().playlistClick(e));
+    table.classList.add('playlist-stack');
 
     const playing = playlists.querySelector('.playlist-stack');
-    playlists.insertBefore(cloned, playing);
+    playlists.insertBefore(table, playing);
 }
 
 /**
@@ -199,7 +198,6 @@ function showPlaylist(id) {
 }
 
 const albumInfo = document.querySelector('#album-detail .info')
-const albumSongs = document.querySelector('#album-detail .songs');
 /**
  * Displays album in the album details page
  * @param {Album} album
@@ -214,12 +212,12 @@ function displayAlbum(album) {
     albumInfo.querySelector('.other').textContent =
         `${other}${album.songs.length} songs`;
 
+    const albumSongs = document.querySelector('#album-detail .songs');
     displaySongs(albumSongs, album.songs, false);
 }
 
 const artistInfo = document.querySelector('#artist-detail .info');
 const artistAlbums = document.querySelector('#artist-detail .list');
-const artistSongs = document.querySelector('#artist-detail .songs');
 /**
  * Displays artist in the artist details page
  * @param {Artist} artist
@@ -229,6 +227,7 @@ function displayArtist(artist) {
     artistInfo.querySelector('.other').textContent = artist.getOtherDetails();
 
     displayAlbums(artistAlbums, artist.albums);
+    const artistSongs = document.querySelector('#artist-detail .songs');
     displaySongs(artistSongs, artist.songs);
 }
 
@@ -270,3 +269,38 @@ function displayAlbums(list, albums) {
 function toggleBar() {
     bar.classList.toggle('expanded');
 }
+
+const tableTemplate = document.getElementById('songs-template');
+/**
+ * Gets empty songs table
+ * @param {(e: MouseEvent)} onclick - on click event handler
+ * @returns {HTMLTableElement} empty songs table
+ */
+function getSongsTable(onclick) {
+    const cloned = tableTemplate.content.cloneNode(true);
+    const table = cloned.querySelector('table');
+    const tbody = table.querySelector('tbody');
+    tbody.addEventListener('click', onclick);
+    return table;
+}
+
+function spawnPlaylistTable() {
+    const table = getSongsTable(e => AppSingleton.get().playlistClick(e));
+    table.classList.add('playlist-stack', 'active');
+    document.querySelector('#playlist .playlist-wrapper').appendChild(table);
+}
+
+function spawnAlbumDetailTable() {
+    const table = getSongsTable(e => AppSingleton.get().albumSongClick(e));
+    table.querySelector('.col-img').remove();
+    table.querySelector('thead tr th').remove();
+    document.getElementById('album-detail')
+        .appendChild(table);
+}
+
+document.getElementById('library')
+    .appendChild(getSongsTable(e => AppSingleton.get().libraryClick(e)));
+document.getElementById('artist-detail')
+    .appendChild(getSongsTable(e => AppSingleton.get().playlistClick(e)));
+spawnPlaylistTable();
+spawnAlbumDetailTable();

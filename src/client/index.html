@@ -29,26 +29,6 @@
 
         <section id="library" class="screen active">
             <h1>Library</h1>
-            <table class="songs">
-                <colgroup>
-                    <col class="col-img">
-                    <col class="col-ta">
-                    <col class="col-ay">
-                    <col class="col-lg">
-                    <col class="col-td">
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>Title / Artist</th>
-                        <th>Album / Year</th>
-                        <th>Length / Genre</th>
-                        <th>T / D</th>
-                    </tr>
-                </thead>
-                <tbody onclick="AppSingleton.get().libraryClick(event)">
-                </tbody>
-            </table>
         </section>
 
         <section id="albums" class="screen">
@@ -66,24 +46,6 @@
                     <span class="other"></span>
                 </div>
             </div>
-            <table class="songs">
-                <colgroup>
-                    <col class="col-ta">
-                    <col class="col-ay">
-                    <col class="col-lg">
-                    <col class="col-td">
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th>Title / Artist</th>
-                        <th>Album / Year</th>
-                        <th>Length / Genre</th>
-                        <th>T / D</th>
-                    </tr>
-                </thead>
-                <tbody onclick="AppSingleton.get().albumSongClick(event)">
-                </tbody>
-            </table>
         </section>
 
         <section id="artists" class="screen">
@@ -108,26 +70,6 @@
             ></div>
 
             <h3>Songs</h3>
-            <table class="songs">
-                <colgroup>
-                    <col class="col-img">
-                    <col class="col-ta">
-                    <col class="col-ay">
-                    <col class="col-lg">
-                    <col class="col-td">
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>Title / Artist</th>
-                        <th>Album / Year</th>
-                        <th>Length / Genre</th>
-                        <th>T / D</th>
-                    </tr>
-                </thead>
-                <tbody onclick="AppSingleton.get().artistSongClick(event)">
-                </tbody>
-            </table>
         </section>
 
         <section id="playlist" class="screen">
@@ -154,28 +96,7 @@
                     />
                 </div>
             </div>
-            <div class="playlist-wrapper">
-                <table class="songs playlist-stack active">
-                    <colgroup>
-                        <col class="col-img">
-                        <col class="col-ta">
-                        <col class="col-ay">
-                        <col class="col-lg">
-                        <col class="col-td">
-                    </colgroup>
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>Title / Artist</th>
-                            <th>Album / Year</th>
-                            <th>Length / Genre</th>
-                            <th>T / D</th>
-                        </tr>
-                    </thead>
-                    <tbody onclick="AppSingleton.get().playlistClick(event)">
-                    </tbody>
-                </table>
-            </div>
+            <div class="playlist-wrapper"></div>
         </section>
 
         <section id="settings" class="screen">
@@ -295,21 +216,14 @@
             <div 
                 class="songs" 
                 onclick="AppSingleton.get().barPlaylistClick(event)"
-            >
-                <div class="item">
-                    <p class="ellipsis">
-                        <span class="id">1</span>. <span class="title">Nico And The Niners</span> • <span class="artist">Twenty One Pilots</span>
-                    </p>
-                </div>
-            </div>
+            ></div>
         </div>
 
         <img class="backdrop" src="assets/svg/img_placeholder.svg" />
-        <!-- <img class="backdrop" src="https://www.nova-development.com/sites/default/files/color_swatches/20S-Glacier-White-3.jpg" /> -->
     </section>
 
     <template id="songs-template">
-        <table class="songs playlist-stack">
+        <table class="songs">
             <colgroup>
                 <col class="col-img">
                 <col class="col-ta">
