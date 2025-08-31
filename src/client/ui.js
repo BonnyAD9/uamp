@@ -153,8 +153,7 @@ function removePlaylistRow(id) {
     rows[id].remove();
 }
 
-const playlistTabs = document.querySelector('#playlist .tabs');
-const playlistTabsFiller = playlistTabs.querySelector('.filler');
+const playlistTabs = document.querySelector('#playlist .tabs .tabs-wrapper');
 /**
  * Adds new playlist tab to the end
  */
@@ -166,7 +165,7 @@ function pushPlaylistTab(i = null) {
     tab.textContent = `-${id}`;
     tab.onclick = () => AppSingleton.get().setPlaylistTab(id);
 
-    playlistTabs.insertBefore(tab, playlistTabsFiller);
+    playlistTabs.appendChild(tab);
 }
 
 /**

@@ -23,15 +23,25 @@ class Song {
         path, title, artist, album, track, disc, year, length, genre,
         deleted = false
     ) {
+        /** @type {string} */
         this.path = path;
+        /** @type {string} */
         this.title = title;
+        /** @type {string} */
         this.artist = artist;
+        /** @type {string} */
         this.album = album;
+        /** @type {number} */
         this.track = track;
+        /** @type {number} */
         this.disc = disc;
+        /** @type {number} */
         this.year = year;
+        /** @type {Duration} */
         this.length = length;
+        /** @type {string} */
         this.genre = genre;
+        /** @type {boolean} */
         this.deleted = deleted;
     }
 
@@ -98,7 +108,7 @@ class Song {
 
     /**
      * Gets uamp query for filtering the song
-     * @returns uamp query string
+     * @returns {string} uamp query string
      */
     getQuery() {
         const s = (text) => text.replaceAll('/', '//');
@@ -117,9 +127,13 @@ class Album {
      * @param {Song[]} songs 
      */
     constructor(name, artist, year, songs = []) {
+        /** @type {string} */
         this.name = name;
+        /** @type {string} */
         this.artist = artist;
+        /** @type {number} */
         this.year = year;
+        /** @type {Song[]} */
         this.songs = songs;
     }
 
@@ -146,13 +160,16 @@ class Album {
         return card;
     }
 
+    /** 
+     * Sorts albums songs by track number
+     */
     sortByTrack() {
         this.songs.sort((a, b) => a.track - b.track);
     }
 
     /**
      * Gets uamp query for filtering the album
-     * @returns uamp query string
+     * @returns {string} uamp query string
      */
     getQuery() {
         const s = (text) => text.replaceAll('/', '//');
@@ -183,8 +200,11 @@ class Artist {
      * @param {Album[]} albums
      */
     constructor(name, songs = [], albums = []) {
+        /** @type {string} */
         this.name = name;
+        /** @type {Song[]} */
         this.songs = songs;
+        /** @type {Album[]} */
         this.albums = albums;
     }
 
@@ -221,13 +241,16 @@ class Artist {
 
     /**
      * Gets uamp query for filtering the artist
-     * @returns uamp query string
+     * @returns {string} uamp query string
      */
     getQuery() {
         const s = (text) => text.replaceAll('/', '//');
         return `p=/${s(this.name)}/`;
     }
 
+    /**
+     * Sorts artists albums by release year
+     */
     sortAlbums() {
         this.albums.sort((a, b) => a.year - b.year);
     }
@@ -240,7 +263,9 @@ class Timestamp {
      * @param {Duration} total 
      */
     constructor(current, total) {
+        /** @type {Duration} */
         this.current = current;
+        /** @type {Duration} */
         this.total = total;
     }
 
@@ -259,7 +284,9 @@ class Duration {
      * @param {number} nanos 
      */
     constructor(secs = 0, nanos = 0) {
+        /** @type {number} */
         this.secs = secs;
+        /** @type {number} */
         this.nanos = nanos;
         this.normalize();
     }
@@ -268,6 +295,9 @@ class Duration {
         return new Duration(obj.secs, obj.nanos);
     }
 
+    /**
+     * Normalizes the Duration so the nanos don't exceed one second.
+     */
     normalize() {
         if (this.nanos >= 1e9) {
             this.secs += Math.floor(this.nanos / 1e9);

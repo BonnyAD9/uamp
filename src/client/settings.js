@@ -1,34 +1,12 @@
-const settingsTabs = document.querySelector('#settings .tabs');
+const settingsTabs = document.querySelector('#settings .tabs .tabs-wrapper');
 
+// Setting templates
 const toggleTemplate = document.getElementById('toggle-setting');
 const selectTemplate = document.getElementById('select-setting');
+const inputTemplate = document.getElementById('input-setting');
 const listTemplate = document.getElementById('list-setting');
 const listItemTemplate = document.getElementById('list-item-setting');
-const inputTemplate = document.getElementById('input-setting');
-
-// const colorInput = document.getElementById('themeColor');
-// const savedColor = getCookie('themeColor') ?? '#3acbaf';
-// colorInput.value = savedColor;
-// applyThemeColor(savedColor);
-
-// colorInput.addEventListener('input', () => {
-//     const selectedColor = colorInput.value;
-//     applyThemeColor(selectedColor);
-//     setCookie('themeColor', selectedColor);
-// });
-
-const floatingBarInput = document.getElementById('floatingBar');
-const bar = document.querySelector('section.bar');
-const floatingBarVal = getCookie('floatingBar') ?? 'true';
-const floatingBar = floatingBarVal === 'true';
-floatingBarInput.checked = floatingBar;
-applyFloatingBar(floatingBar);
-
-floatingBarInput.addEventListener('change', () => {
-    const floating = floatingBarInput.checked;
-    applyFloatingBar(floating);
-    setCookie('floatingBar', floating);
-});
+const colorTemplate = document.getElementById('color-setting');
 
 class Config {
     constructor(data, schema) {
@@ -47,15 +25,6 @@ class Config {
         return new Config(data, schema);
     }
 
-    /**
-     * Toggles switch value with the given name.
-     * @param {string} name - name of the switch
-     */
-    toggleSwitch(name) {
-        if (this[name] === undefined) return;
-        this.update(name, !this[name]);
-    }
-
     render() {
         const content = document.querySelector('#settings .settings-wrapper');
 
@@ -68,8 +37,15 @@ class Config {
             else page.remove();
         });
 
-        const filler = settingsTabs.querySelector('.filler');
-        settingsGroups.forEach((group, id) => {
+        const allKeys = Object.keys(this.schema).filter(k => k !== "$schema");
+        const groupedKeys = settingsGroups.flatMap(group => group.settings);
+        const otherKeys = allKeys.filter(k => !groupedKeys.includes(k));
+        settingsGroups.push({ name: "Other", settings: otherKeys });
+
+        for (let id = 0; id < settingsGroups.length; id++) {
+            const group = settingsGroups[id];
+            if (group.settings.length === 0) continue;
+
             const page = document.createElement('div');
             page.classList.add('settings-content');
 
@@ -85,8 +61,12 @@ class Config {
             tab.classList.add('tab');
             tab.textContent = group.name;
             tab.onclick = () => Config.showPage(id + 1);
-            settingsTabs.insertBefore(tab, filler);
-        });
+            settingsTabs.appendChild(tab);
+        }
+    }
+
+    render_appearance() {
+
     }
 
     getSettingElement(key, setting) {
@@ -102,7 +82,9 @@ class Config {
 
         switch (setting.type) {
             case "boolean":
-                return this.getToggleSetting(key, setting);
+                return Config.getToggleSetting(key, this[key], setting,
+                    () => this.update(key, !this[key])
+                );
             case "string":
                 return this.getInputSetting(key, setting);
             case "number":
@@ -119,16 +101,18 @@ class Config {
     /**
      * Gets the toggle setting element
      * @param {string} key - setting key
+     * @param {string} value - setting value
      * @param {*} setting - setting schema
+     * @param {(event: MouseEvent) => void} onclick - click handler
      * @returns HTML toggle setting element
      */
-    getToggleSetting(key, setting) {
+    static getToggleSetting(key, value, setting, onclick) {
         const clone = toggleTemplate.content.cloneNode(true);
         const toggle = clone.querySelector('.switch-setting');
 
         const input = toggle.querySelector('input');
-        input.checked = this[key];
-        input.onclick = () => this.toggleSwitch(key);
+        input.checked = value;
+        input.onclick = onclick;
 
         Config.settingDetails(toggle, key, setting);
         return toggle;
@@ -272,6 +256,26 @@ class Config {
         return list;
     }
 
+    /**
+     * Gets the toggle setting element
+     * @param {string} key - setting key
+     * @param {string} value - setting value
+     * @param {*} setting - setting schema
+     * @param {(e: InputEvent) => void} oninput - input handler
+     * @returns HTML toggle setting element
+     */
+    static getColorSetting(key, value, setting, oninput) {
+        const clone = colorTemplate.content.cloneNode(true);
+        const color = clone.querySelector('.color-setting');
+
+        const input = color.querySelector('input');
+        input.value = value;
+        input.oninput = oninput;
+
+        Config.settingDetails(color, key, setting);
+        return color;
+    }
+
     #getGenericInput(key, defaultValue, setting) {
         const clone = inputTemplate.content.cloneNode(true);
         const element = clone.querySelector('.input-setting');
@@ -345,24 +349,23 @@ class Config {
     }
 }
 
-function applyThemeColor(color) {
-    document.documentElement.style.setProperty('--primary', color);
-}
-
-function applyFloatingBar(floating) {
-    if (floating == true) {
-        bar.classList.add('floating');
-    } else {
-        bar.classList.remove('floating');
-    }
-}
-
+/**
+ * Sets cookie with given name to given value
+ * @param {string} name - name of the cookie
+ * @param {*} value - cookie value
+ * @param {integer} days - days the cookie is valid for
+ */
 function setCookie(name, value, days = 365) {
     const expires = new Date(Date.now() + days * 864e5).toUTCString();
     document.cookie = `${name}=${encodeURIComponent(value)}; ` +
         `expires=${expires}; path=/`;
 }
 
+/**
+ * Gets cookie with the given name
+ * @param {string} name - name of the cookie
+ * @returns {?string} cookie value when found, else null
+ */
 function getCookie(name) {
     return document.cookie.split('; ').reduce((acc, part) => {
         const [k, v] = part.split('=');
@@ -370,7 +373,50 @@ function getCookie(name) {
     }, null);
 }
 
-const settingsGroups = [
+/// Displays appearance settings in its page
+function displayAppearanceSettings() {
+    const appearSettings = document.getElementById('appearanceSettings');
+
+    const floatingBar = (getCookie('floatingBar') ?? 'true') === 'true';
+    const floatingBarToggle = Config.getToggleSetting(
+        'floating_music_player_bar', floatingBar,
+        { description: 'Music player bar detached from the window edges.' },
+        e => {
+            const floating = e.target.checked;
+            bar.classList.toggle('floating', floating);
+            setCookie('floatingBar', floating);
+        }
+    );
+    appearSettings.appendChild(floatingBarToggle);
+
+    const dynamicColor = (getCookie('dynamicColor') ?? 'true') === 'true';
+    const dynamicColorToggle = Config.getToggleSetting(
+        'dynamic_color', dynamicColor, {
+        description: 'Change theme color based on the album art of the ' +
+            'current song.'
+    }, e => {
+        const dynamic = e.target.checked;
+        setCookie('dynamicColor', dynamic);
+        setupDynamicColors(dynamic);
+    });
+    appearSettings.appendChild(dynamicColorToggle);
+
+    const themeColor = getCookie('themeColor') ?? '#3acbaf';
+    const themeColorPicker = Config.getColorSetting(
+        'theme_color', themeColor, {
+        description: 'Primary color used when dynamic color is off.'
+    }, e => {
+        const color = e.target.value;
+        setCookie('themeColor', color);
+        applyThemeColor(color);
+    });
+    appearSettings.appendChild(themeColorPicker);
+}
+
+displayAppearanceSettings();
+
+// Config properties group mapping
+var settingsGroups = [
     {
         name: "Library", settings: [
             "search_paths", "audio_extensions", "recursive_search",
@@ -391,7 +437,17 @@ const settingsGroups = [
     },
     {
         name: "Server", settings: [
-            "server_address", "port", "skin", "system_player"
+            "server_address", "port", "enable_server", "skin", "system_player"
+        ]
+    },
+    {
+        name: "Update", settings: [
+            "update_mode", "update_remote", "auto_restart"
+        ]
+    },
+    {
+        name: "Advanced", settings: [
+            "library_path", "player_path", "cache_path"
         ]
     }
 ];

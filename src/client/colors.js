@@ -63,7 +63,22 @@ function rgbToRgbaCss(rgb, alpha = 1) {
 
 const colorThief = new ColorThief();
 
-songIcon.onload = () => {
+function setupDynamicColors(dynamic) {
+    if (dynamic) {
+        setDynamicColors();
+        songIcon.onload = setDynamicColors;
+    } else {
+        resetColors()
+        songIcon.onload = null;
+    }
+}
+
+function applyThemeColor(color) {
+    if ((getCookie('dynamicColor') ?? 'true') !== 'true')
+        document.documentElement.style.setProperty('--primary', color);
+}
+
+function setDynamicColors() {
     const dominantRgb = colorThief.getColor(songIcon);
     const [h, s, _] = rgbToHsl(...dominantRgb);
     const root = document.documentElement;
@@ -89,4 +104,30 @@ songIcon.onload = () => {
     root.style.setProperty('--fg2', rgbToCss(hslToRgb(h, s, 0.8)));
     root.style.setProperty('--fg-sec', rgbToCss(hslToRgb(h, s * 0.2, 0.53)));
     root.style.setProperty('--fg-sec2', rgbToCss(hslToRgb(h, s * 0.2, 0.4)));
-};
+}
+
+function resetColors() {
+    const root = document.documentElement;
+    root.style.removeProperty('--bg');
+    root.style.removeProperty('--bg-trans');
+    root.style.removeProperty('--bg-lighter');
+    root.style.removeProperty('--bg-light');
+    root.style.removeProperty('--bg-light-trans');
+    root.style.removeProperty('--bg-dark');
+    root.style.removeProperty('--bg-dark-trans');
+    root.style.removeProperty('--fg');
+    root.style.removeProperty('--fg2');
+    root.style.removeProperty('--fg-sec');
+    root.style.removeProperty('--fg-sec2');
+
+    const primary = getCookie('themeColor') ?? '#3acbaf';
+    root.style.setProperty('--primary', primary);
+}
+
+if ((getCookie('dynamicColor') ?? 'true') === 'true') {
+    songIcon.onload = setDynamicColors;
+} else {
+    const color = getCookie('themeColor') ?? '#3acbaf';
+    document.documentElement.style.setProperty('--primary', color);
+    songIcon.onload = null;
+}

@@ -179,6 +179,15 @@
         "skin": {
           "description": "Path to skin to use. Should be absolute.",
           "type": "string"
+        },
+        "auto_restart": {
+            "description": "Automatically restart running instance if it detects changed binary.",
+            "type": "boolean",
+            "default": true
+        },
+        "cache_path": {
+            "description": "Path to folder containing precomputed data from uamp.",
+            "type": "string"
         }
     }
 }

@@ -17,10 +17,13 @@ const eventSource = new EventSource('/api/sub');
 eventSource.addEventListener('set-all', async e => {
     const app = await AppSingleton.init(JSON.parse(e.data));
     app.displaySongs();
-    app.displayPlaylist();
-    app.displayAlbums();
-    app.displayArtists();
-    app.updateAll();
+
+    setTimeout(() => {
+        app.updateAll();
+        app.displayPlaylist();
+        app.displayAlbums();
+        app.displayArtists();
+    }, 0);
 });
 
 eventSource.addEventListener('set-playlist', e => {

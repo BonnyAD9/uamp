@@ -3,13 +3,20 @@ const tableTemplate = document.getElementById('songs-template');
 const slider = document.querySelector('.bar .slider hr');
 
 class App {
+    /**
+     * @param {object} data
+     * @param {Config} config
+     */
     constructor(data, config) {
+        /** @type {{ songs: Song[], tmp_songs: Song[] }} */
         this.library = {
             songs: data.library.songs.map(Song.from),
             tmp_songs: data.library.tmp_songs.map(Song.from),
         };
         this.player = data.player;
+        /** @type {Timestamp} */
         this.position = data.position && Timestamp.from(data.position);
+        /** @type {Config} */
         this.config = config;
         this.config.render();
 
@@ -18,11 +25,16 @@ class App {
 
         this.playlistTab = 0;
 
+        /** @type {Song[]} */
         this.songs = [];
+        /** @type {Album[]} */
         this.albums = [];
+        /** @type {Artist[]} */
         this.artists = [];
 
+        /** @type {?Album} */
         this.album = null;
+        /** @type {?Artist} */
         this.artist = null;
 
         this.generateLibraryData();
@@ -334,8 +346,11 @@ class App {
         let current = 0 + delta;
         if (this.position !== null)
             current = this.position.current.toSecs() + delta;
-        const total = this.getPlaying().length.toSecs();
 
+        const playing = this.getPlaying();
+        if (playing === null) return;
+
+        const total = playing.length.toSecs();
         if (current > total)
             current = total;
 
@@ -359,7 +374,6 @@ class App {
         playlists.querySelectorAll('.playlist-stack')
             .forEach((table, i) => i !== 0 && table.remove());
 
-        const filler = playlistTabs.querySelector('.filler');
         const len = this.player.playlist_stack.length;
         for (let i = 1; i <= len; i++) {
             const id = len - i;
@@ -376,7 +390,7 @@ class App {
             button.classList.add('tab');
             button.textContent = `-${i}`;
             button.onclick = () => this.setPlaylistTab(i);
-            playlistTabs.insertBefore(button, filler);
+            playlistTabs.appendChild(button);
         }
     }
 
@@ -521,15 +535,16 @@ navs.forEach(item => {
     });
 });
 
-function showScreen(target) {
+function showScreen(target, pushHistory = true) {
     screens.forEach(s => s.classList.toggle('active', s.id === target));
-    history.pushState({ page: target }, '');
+    if (pushHistory)
+        history.pushState({ page: target }, '');
 }
 
 history.replaceState({ page: 'library' }, '');
 window.addEventListener('popstate', e => {
     const target = e.state?.page || 'library';
-    screens.forEach(s => s.classList.toggle('active', s.id === target));
+    showScreen(target, false);
     navs.forEach(
         p => p.classList.toggle('active', p.dataset.screen === target)
     );

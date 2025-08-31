@@ -132,12 +132,27 @@
 
         <section id="playlist" class="screen">
             <div class="tabs">
-                <button 
-                    id="playingPlaylist" 
-                    class="tab active"
-                    onclick="AppSingleton.get().setPlaylistTab(0)"
-                >Playing</button>
-                <div class="filler"></div>
+                <div class="tabs-wrapper">
+                    <button 
+                        id="playingPlaylist" 
+                        class="tab active"
+                        onclick="AppSingleton.get().setPlaylistTab(0)"
+                    >Playing</button>
+                </div>
+                <div class="playlist-controls">
+                    <img 
+                        src="assets/svg/point_down.svg" 
+                        alt="push playlist"
+                        title="Push empty playlist"
+                        onclick="apiCtrl('push=none')"
+                    />
+                    <img 
+                        src="assets/svg/point_up.svg" 
+                        alt="push playlist"
+                        title="Pops current playlist"
+                        onclick="apiCtrl('pop')"
+                    />
+                </div>
             </div>
             <div class="playlist-wrapper">
                 <table class="songs playlist-stack active">
@@ -166,31 +181,15 @@
         <section id="settings" class="screen">
             <div class="tabs">
                 <h1>Settings</h1>
-                <button
-                    class="tab active"
-                    onclick="Config.showPage(0)"
-                >Appearance</button>
-                <div class="filler"></div>
+                <div class="tabs-wrapper">
+                    <button
+                        class="tab active"
+                        onclick="Config.showPage(0)"
+                    >Appearance</button>
+                </div>
             </div>
             <div class="settings-wrapper">
-                <div class="settings-content active">
-                    <!-- <div>
-                        <label for="themeColor">Theme color:</label><br />
-                        <input type="color" id="themeColor" />
-                    </div> -->
-    
-                    <label class="switch-setting setting">
-                        <div class="switch">
-                            <input type="checkbox" id="floatingBar" />
-                            <span class="slider"></span>
-                        </div>
-                        <div class="text">
-                            <p>Floating music player bar</p>
-                            <span>
-                                Music player bar detached from the window edges.
-                            </span>
-                        </div>
-                    </label>
+                <div class="settings-content active" id="appearanceSettings">
                 </div>
             </div>
         </section>
@@ -440,6 +439,15 @@
             <input class="form-input" type="text" />
         </label>
     </template>
+
+    <template id="color-setting">
+        <label class="color-setting setting">
+            <input type="color" id="themeColor" />
+            <div class="text">
+                <p class="label"></p> <span class="description"></span>
+            </div>
+        </label>
+    </template>
 </body>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
@@ -447,9 +455,9 @@
 
 <script src="types.js"></script>
 <script src="ui.js"></script>
-<script src="colors.js"></script>
 <script src="app.js"></script>
 <script src="events.js"></script>
 <script src="settings.js"></script>
+<script src="colors.js"></script>
 
 </html>
