@@ -1,4 +1,5 @@
 const settingsTabs = document.querySelector('#settings .tabs .tabs-wrapper');
+const bar = document.querySelector('section.bar');
 
 // Setting templates
 const toggleTemplate = document.getElementById('toggle-setting');

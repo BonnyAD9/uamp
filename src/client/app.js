@@ -410,7 +410,7 @@ class App {
 
         for (let i = 0; i < songs.length; i++) {
             const song = this.library.songs[songs[i]];
-            if (song.deleted === true) continue;
+            if (song === null || song.deleted === true) continue;
 
             const row = song.getTableRow();
             row.dataset.index = i;
