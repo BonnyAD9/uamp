@@ -62,7 +62,18 @@ class App {
         if (playing === null) return null;
 
         const current = this.player.playlist.songs[playing];
-        return this.library.songs[current];
+        return this.getSong(current);
+    }
+
+    /**
+     * Gets song from the library based on the given id
+     * @param {number} id - id of the song
+     * @returns {?Song} song when found, else null
+     */
+    getSong(id) {
+        if (id < 0)
+            return this.library.tmp_songs[-id - 1];
+        return this.library.songs[id];
     }
 
     /**
@@ -205,6 +216,20 @@ class App {
         showPlaylist(id);
     }
 
+    /**
+     * Pushes temporary songs to the library.
+     * @param {*} songs 
+     */
+    pushTmpSongs(songs) {
+        for (const [song, tid] of songs) {
+            const id = -tid - 1;
+            while (this.library.tmp_songs.length <= id) {
+                this.library.tmp_songs.push(Song.empty());
+            }
+            this.library.tmp_songs[id] = Song.from(song);
+        }
+    }
+
 
     displaySongs() {
         const playing = this.player.playlist.current;
@@ -234,8 +259,8 @@ class App {
         playlistElement.innerHTML = '';
         barPlaylist.innerHTML = '';
         for (let i = 0; i < this.player.playlist.songs.length; i++) {
-            const song = this.library.songs[this.player.playlist.songs[i]];
-            if (song.deleted === true) continue;
+            const song = this.getSong(this.player.playlist.songs[i]);
+            if (song === null || song.deleted === true) continue;
 
             const row = song.getTableRow();
             row.dataset.index = i;
@@ -409,7 +434,7 @@ class App {
         element.innerHTML = '';
 
         for (let i = 0; i < songs.length; i++) {
-            const song = this.library.songs[songs[i]];
+            const song = this.getSong(songs[i]);
             if (song === null || song.deleted === true) continue;
 
             const row = song.getTableRow();

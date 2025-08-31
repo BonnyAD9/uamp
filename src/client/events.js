@@ -120,7 +120,15 @@ eventSource.addEventListener('reorder-playlist-stack', e => {
     playlistJumpEvent(app, data.position);
 });
 
-eventSource.addEventListener('play-tmp', e => { });
+eventSource.addEventListener('play-tmp', e => {
+    const app = AppSingleton.get();
+    const data = JSON.parse(e.data);
+
+    app.pushTmpSongs(data.songs);
+    app.setPlaylist(data.playlist);
+    app.setPlayback(data.playback);
+    app.setTimestamp(data.timestamp);
+});
 
 eventSource.addEventListener('new-server', e => {
     const { address, port } = JSON.parse(e.data);

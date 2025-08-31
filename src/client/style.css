@@ -907,6 +907,7 @@ section.screen#playlist .songs thead {
 
 section.screen#settings .tabs {
     height: 45px;
+    justify-content: flex-start;
 }
 
 section.screen .tabs>h1 {

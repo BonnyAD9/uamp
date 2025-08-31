@@ -60,6 +60,12 @@ class Song {
         );
     }
 
+    static empty() {
+        return new Song(
+            '', '', '', '', 0, 0, UNDEF_YEAR, new Duration(0, 0), '', true
+        );
+    }
+
     /**
      * Gets songs release year, checks for not set year
      * @returns {string} songs release year
