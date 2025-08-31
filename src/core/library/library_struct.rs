@@ -85,7 +85,7 @@ impl Library {
 
     pub fn iter(&self) -> impl Iterator<Item = SongId> + '_ {
         (0..self.songs().len())
-            .map(SongId)
+            .map(SongId::norm)
             .filter(|s| !self[s].is_deleted())
     }
 
@@ -131,7 +131,8 @@ impl Library {
 
     /// Checks if song is temporary or not
     pub fn is_tmp(&self, s: SongId) -> bool {
-        s.0 >= self.songs().len() && s.as_tmp() < self.tmp_songs().len()
+        s.as_norm() >= self.songs().len()
+            && s.as_tmp() < self.tmp_songs().len()
     }
 
     /// Gets the change value indicating whether the library was changed since
@@ -150,7 +151,7 @@ impl Library {
 impl Index<SongId> for Library {
     type Output = Song;
     fn index(&self, index: SongId) -> &Self::Output {
-        if index.0 >= self.songs().len() {
+        if index.as_norm() >= self.songs().len() {
             let idx = index.as_tmp();
             if idx >= self.tmp_songs().len()
                 || self.tmp_songs()[idx].is_deleted()
@@ -159,17 +160,17 @@ impl Index<SongId> for Library {
             } else {
                 &self.tmp_songs()[idx]
             }
-        } else if self.songs()[index.0].is_deleted() {
+        } else if self.songs()[index.as_norm()].is_deleted() {
             &self.ghost
         } else {
-            &self.songs()[index.0]
+            &self.songs()[index.as_norm()]
         }
     }
 }
 
 impl IndexMut<SongId> for Library {
     fn index_mut(&mut self, index: SongId) -> &mut Song {
-        if index.0 >= self.songs().len() {
+        if index.as_norm() >= self.songs().len() {
             let idx = index.as_tmp();
             if idx >= self.tmp_songs().len() || self.songs()[idx].is_deleted()
             {
@@ -177,10 +178,10 @@ impl IndexMut<SongId> for Library {
             } else {
                 &mut self.tmp_songs_mut()[idx]
             }
-        } else if self.songs()[index.0].is_deleted() {
+        } else if self.songs()[index.as_norm()].is_deleted() {
             &mut self.ghost
         } else {
-            &mut self.songs_mut()[index.0]
+            &mut self.songs_mut()[index.as_norm()]
         }
     }
 }

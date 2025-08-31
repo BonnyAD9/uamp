@@ -81,7 +81,7 @@ impl UampService {
             "/api/ctrl" => self.handle_ctrl_api(req).await,
             "/api/req" => self.handle_req_api(req).await,
             "/api/sub" => self.handle_sub_api(req).await,
-            "/api/marco" => Ok(string_response("polo")),
+            "/api/marco" => Ok(string_response_cors("polo")),
             "/api/img" => self.handle_img_api(req).await,
             v if v.starts_with("/app/") || v == "/app" => {
                 self.handle_app(v.strip_prefix("/app").unwrap()).await
@@ -436,6 +436,16 @@ fn string_response(s: impl Into<Cow<'static, str>>) -> MyResponse {
     Response::builder()
         .status(200)
         .header("Content-Type", "text/plain; charset=UTF-8")
+        .header("Server", SERVER_HEADER)
+        .body(string_body(s))
+        .expect("Failed to generate string response. This shouldn't happen.")
+}
+
+fn string_response_cors(s: impl Into<Cow<'static, str>>) -> MyResponse {
+    Response::builder()
+        .status(200)
+        .header("Content-Type", "text/plain")
+        .header("Access-Control-Allow-Origin", "*")
         .header("Server", SERVER_HEADER)
         .body(string_body(s))
         .expect("Failed to generate string response. This shouldn't happen.")

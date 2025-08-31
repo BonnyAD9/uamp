@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="style.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="assets/svg/icon.svg">
+    <title>uamp</title>
+</head>
+
+<body>
+    <div class="wrapper">
+        <section class="menu">
+            <div class="logo">
+                <img src="assets/svg/icon.svg" alt="uamp logo">
+                <h1>Uamp</h1>
+            </div>
+
+            <nav>
+                <p class="active" data-screen="library">Library</p>
+                <p data-screen="albums">Albums</p>
+                <p data-screen="artists">Artists</p>
+                <p data-screen="playlist">Playlist</p>
+                <div class="spacer"></div>
+                <p data-screen="settings">Settings</p>
+            </nav>
+        </section>
+
+        <section id="library" class="screen active">
+            <h1>Library</h1>
+        </section>
+
+        <section id="albums" class="screen">
+            <h1>Albums</h1>
+            <div class="list" onclick="AppSingleton.get().albumClick(event)">
+            </div>
+        </section>
+
+        <section id="album-detail" class="screen">
+            <!-- <img class="backdrop" src="assets/svg/img_placeholder.svg" 
+                alt="album cover" /> -->
+            <div class="album-detail-wrapper">
+                <div class="info">
+                    <img src="assets/svg/img_placeholder.svg" alt="album cover" />
+                    <div class="details">
+                        <h2 class="name"></h2>
+                        <p class="artist"></p>
+                        <span class="other"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="artists" class="screen">
+            <h1>Artists</h1>
+            <table class="songs">
+                <tbody onclick="AppSingleton.get().artistClick(event)"></tbody>
+            </table>
+        </section>
+
+        <section id="artist-detail" class="screen">
+            <div class="info">
+                <div class="details">
+                    <h2 class="name"></h2>
+                    <p class="other"></p>
+                </div>
+            </div>
+
+            <h3>Albums</h3>
+            <div 
+                class="list" 
+                onclick="AppSingleton.get().albumArtistClick(event)"
+            ></div>
+
+            <h3>Songs</h3>
+        </section>
+
+        <section id="playlist" class="screen">
+            <div class="tabs">
+                <div class="tabs-wrapper">
+                    <button 
+                        id="playingPlaylist" 
+                        class="tab active"
+                        onclick="AppSingleton.get().setPlaylistTab(0)"
+                    >Playing</button>
+                </div>
+                <div class="playlist-controls">
+                    <img 
+                        src="assets/svg/push.svg" 
+                        alt="push playlist"
+                        title="Push empty playlist"
+                        onclick="apiCtrl('push=none')"
+                    />
+                    <img 
+                        src="assets/svg/pop.svg" 
+                        alt="push playlist"
+                        title="Pops current playlist"
+                        onclick="apiCtrl('pop')"
+                    />
+                </div>
+            </div>
+            <div class="playlist-wrapper"></div>
+        </section>
+
+        <section id="settings" class="screen">
+            <div class="tabs">
+                <h1>Settings</h1>
+                <div class="tabs-wrapper">
+                    <button
+                        class="tab active"
+                        onclick="Config.showPage(0)"
+                    >Appearance</button>
+                </div>
+            </div>
+            <div class="settings-wrapper">
+                <div class="settings-content active" id="appearanceSettings">
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <section class="bar floating">
+        <img 
+            class="back-arrow" 
+            src="assets/svg/point_up.svg" 
+            onclick="toggleBar()"
+            alt="back arrow" 
+        />
+
+        <div class="bar-wrapper">
+            <div class="info" onclick="toggleBar()">
+                <div class="info-pic">
+                    <img 
+                        src="assets/svg/img_placeholder.svg" 
+                        alt="song cover"
+                    />
+                </div>
+                <div class="title">
+                    <h3 class="ellipsis">Not Playing...</h3>
+                    <h4 class="ellipsis"></h4>
+                </div>
+            </div>
+
+            <div class="slider">
+                <hr />
+            </div>
+
+            <div class="controls">
+                <img 
+                    class="control"
+                    src="assets/svg/previous.svg" 
+                    onclick="apiCtrl('ps')" 
+                    id="prev"
+                >
+
+                <svg class="control" id="play" onclick="apiCtrl('pp')"
+                    width="20" height="20" viewBox="0 0 10 10" 
+                    version="1.1" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke="#FFF" stroke-linejoin="round" 
+                        stroke-linecap="round" stroke-width="2" fill="#FFF"
+                        d="M 3 2 L 3 2 L 3 8 L 3 8 L 3 2">
+                        <animate 
+                            id="from_pause_to_play_p1"
+                            attributeName="d"
+                            dur="200ms"
+                            begin="indefinite"
+                            fill="freeze"
+                            from="M 3 2 L 3 2 L 3 8 L 3 8 L 3 2"
+                            to="M 3 2 L 5 3.5 L 5 6.5 L 3 8 L 3 2"
+                        />
+                        <animate
+                            id="from_play_to_pause_p1"
+                            attributeName="d"
+                            dur="200ms"
+                            fill="freeze"
+                            begin="indefinite"
+                            from="M 3 2 L 5 3.5 L 5 6.5 L 3 8 L 3 2"
+                            to="M 3 2 L 3 2 L 3 8 L 3 8 L 3 2"
+                        />
+                    </path>
+
+                    <path stroke="#FFF" stroke-linejoin="round" 
+                        stroke-linecap="round" stroke-width="2" fill="#FFF"
+                        d="M 7 2 L 7 2 L 7 8 L 7 8 L 7 2">
+                        <animate 
+                            id="from_pause_to_play_p2"
+                            attributeName="d"
+                            dur="200ms"
+                            fill="freeze"
+                            begin="indefinite"
+                            from="M 7 2 L 7 2 L 7 8 L 7 8 L 7 2"
+                            to="M 6 4.25 L 7 5 L 7 5 L 6 5.78 L 6 4.25"
+                        />
+                        <animate
+                            id="from_play_to_pause_p2"
+                            attributeName="d"
+                            dur="200ms"
+                            fill="freeze"
+                            begin="indefinite"
+                            from="M 6 4.25 L 7 5 L 7 5 L 6 5.78 L 6 4.25"
+                            to="M 7 2 L 7 2 L 7 8 L 7 8 L 7 2"
+                        />
+                    </path>
+                </svg>
+
+                <img 
+                    class="control"
+                    src="assets/svg/next.svg" 
+                    onclick="apiCtrl('ns')" 
+                    id="next"
+                >
+            </div>
+
+            <div class="volume">
+                <img 
+                    class="control"
+                    src="assets/svg/volume_1.svg" 
+                    onclick="apiCtrl('mute')"
+                >
+                <p id="volumeValue">69</p>
+                <input type="range" min="0" max="100" id="volumeSlider">
+            </div>
+        </div>
+
+        <div class="playlist">
+            <div 
+                class="songs" 
+                onclick="AppSingleton.get().barPlaylistClick(event)"
+            ></div>
+        </div>
+
+        <img class="backdrop" src="assets/svg/img_placeholder.svg" />
+    </section>
+
+    <template id="songs-template">
+        <table class="songs">
+            <colgroup>
+                <col class="col-img">
+                <col class="col-ta">
+                <col class="col-ay">
+                <col class="col-lg">
+                <col class="col-td">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Title / Artist</th>
+                    <th>Album / Year</th>
+                    <th>Length / Genre</th>
+                    <th>T / D</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </template>
+
+    <template id="song-template">
+        <tr>
+            <td class="cover">
+                <img 
+                    src="assets/svg/img_placeholder.svg" 
+                    alt="song cover"
+                    loading="lazy"
+                />
+            </td>
+            <td>
+                <p class="title ellipsis"></p>
+                <span class="author ellipsis"><span>
+            </td>
+            <td>
+                <p class="album ellipsis"></p>
+                <span class="year ellipsis"></span>
+            </td>
+            <td>
+                <p class="length ellipsis"></p>
+                <span class="genre ellipsis"><span>
+            </td>
+            <td>
+                <p class="track ellipsis"></p>
+                <span class="disc ellipsis"><span>
+            </td>
+        </tr>
+    </template>
+
+    <template id="album-template">
+        <div class="card">
+            <div class="card-pic">
+                <img src="assets/svg/img_placeholder.svg" alt="album cover" />
+            </div>
+            <div class="details">
+                <p class="name ellipsis"></p>
+                <span class="artist ellipsis"></span>
+            </div>
+        </div>
+    </template>
+
+    <template id="artist-template">
+        <tr>
+            <td>
+                <p class="artist ellipsis"></p>
+                <span class="other ellipsis"><span>
+            </td>
+            <td>
+                <div class="albums-preview"></div>
+            </td>
+        </tr>
+    </template>
+
+    <template id="bar-song-template">
+        <div class="item">
+            <p class="ellipsis">
+                <span class="id"></span>. <span class="title"></span> • 
+                <span class="artist"></span>
+            </p>
+        </div>
+    </template>
+
+    <template id="toggle-setting">
+        <label class="switch-setting setting">
+            <div class="switch">
+                <input type="checkbox" /> <span class="slider"></span>
+            </div>
+            <div class="text">
+                <p class="label"></p> <span class="description"></span>
+            </div>
+        </label>
+    </template>
+
+    <template id="select-setting">
+        <label class="select-setting setting">
+            <div class="text">
+                <p class="label"></p> <span class="description"></span>
+            </div>
+            <select></select>
+        </label>
+    </template>
+
+    <template id="list-setting">
+        <label class="list-setting setting">
+            <div class="text">
+                <p class="label"></p> <span class="description"></span>
+            </div>
+            <div class="items">
+                <div class="item input-item">
+                    <input class="form-input" type="text" />
+                </div>
+            </div>
+        </label>
+    </template>
+
+    <template id="list-item-setting">
+        <div class="item">
+            <img src="assets/svg/trash.svg" alt="trash" /><p></p>
+        </div>
+    </template>
+
+    <template id="input-setting">
+        <label class="input-setting setting">
+            <div class="text">
+                <p class="label"></p> <span class="description"></span>
+            </div>
+            <input class="form-input" type="text" />
+        </label>
+    </template>
+
+    <template id="color-setting">
+        <label class="color-setting setting">
+            <input type="color" id="themeColor" />
+            <div class="text">
+                <p class="label"></p> <span class="description"></span>
+            </div>
+        </label>
+    </template>
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+<!-- <script src="https://unpkg.com/color-thief/dist/color-thief.umd.js"></script> -->
+
+<script src="types.js"></script>
+<script src="ui.js"></script>
+<script src="app.js"></script>
+<script src="events.js"></script>
+<script src="settings.js"></script>
+<script src="colors.js"></script>
+
+</html>
