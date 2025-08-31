@@ -331,6 +331,33 @@ section#artist-detail .info {
     height: auto;
 }
 
+section#album-detail {
+    overflow-y: hidden;
+}
+
+section#album-detail .album-detail-wrapper {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    overflow-y: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+section#album-detail .backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    z-index: -1;
+    filter: blur(30px);
+    opacity: 0.4;
+}
+
 section#album-detail .info img {
     max-height: 100%;
     object-fit: contain;
@@ -365,15 +392,15 @@ section#album-detail .info .details span {
     display: block;
 }
 
+section#album-detail .songs {
+    margin-top: 5px;
+}
+
 section#artist-detail h3 {
     margin-top: 10px;
     margin-bottom: 5px;
     font-weight: normal;
     font-size: 20px;
-}
-
-section#album-detail .songs {
-    margin-top: 5px;
 }
 
 section.bar {

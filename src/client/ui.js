@@ -197,7 +197,8 @@ function showPlaylist(id) {
     }
 }
 
-const albumInfo = document.querySelector('#album-detail .info')
+const albumInfo = document.querySelector('#album-detail .info');
+const albumBackdrop = document.querySelector('#album-detail .backdrop');
 /**
  * Displays album in the album details page
  * @param {Album} album
@@ -205,8 +206,10 @@ const albumInfo = document.querySelector('#album-detail .info')
 function displayAlbum(album) {
     albumInfo.querySelector('img').src =
         Album.getCover(album.artist, album.name);
+    // albumBackdrop.src = Album.getCover(album.artist, album.name, 64);
     albumInfo.querySelector('.name').textContent = album.name;
     albumInfo.querySelector('.artist').textContent = album.artist;
+    albumInfo.query
 
     let other = album.getYear() !== '-' ? `${album.getYear()}  •  ` : '';
     albumInfo.querySelector('.other').textContent =
@@ -294,7 +297,7 @@ function spawnAlbumDetailTable() {
     const table = getSongsTable(e => AppSingleton.get().albumSongClick(e));
     table.querySelector('.col-img').remove();
     table.querySelector('thead tr th').remove();
-    document.getElementById('album-detail')
+    document.querySelector('#album-detail .album-detail-wrapper')
         .appendChild(table);
 }
 
