@@ -17,17 +17,25 @@ use serde::{Deserialize, Serialize};
     Ord,
     Hash,
 )]
-pub struct SongId(pub(super) usize);
+pub struct SongId(isize);
 
 impl SongId {
     /// Makes the ID as temporary at the given index.
     #[inline]
     pub(super) fn tmp(idx: usize) -> SongId {
-        SongId(usize::MAX - idx)
+        Self::norm(usize::MAX - idx)
+    }
+
+    pub(super) fn norm(idx: usize) -> SongId {
+        SongId(idx as isize)
+    }
+
+    pub(super) fn as_norm(&self) -> usize {
+        self.0 as usize
     }
 
     /// Interprets the index in this ID as temporary.
     pub(super) fn as_tmp(&self) -> usize {
-        usize::MAX - self.0
+        usize::MAX - self.as_norm()
     }
 }

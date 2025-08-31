@@ -227,7 +227,7 @@ impl<'a> State<'a> {
 
         if let Some(i) = self.empty.pop() {
             self.songs[i] = song;
-            self.sparse_new.push(SongId(i));
+            self.sparse_new.push(SongId::norm(i));
         } else {
             self.songs.push(song);
         }

@@ -122,7 +122,8 @@ impl UampApp {
                 let new_ids: HashSet<_> = res.sparse_new.iter().collect();
                 self.id_replace(|s, lib| {
                     !lib.is_tmp(s)
-                        && (s.0 >= res.first_new || new_ids.contains(&s))
+                        && (s.as_norm() >= res.first_new
+                            || new_ids.contains(&s))
                 });
             } else {
                 self.library.update(LibraryUpdate::RemoveData);
@@ -134,7 +135,7 @@ impl UampApp {
         self.player.add_songs(
             || {
                 (res.first_new..self.library.songs().len())
-                    .map(SongId)
+                    .map(SongId::norm)
                     .chain(res.sparse_new.iter().copied())
             },
             res.add_policy,
