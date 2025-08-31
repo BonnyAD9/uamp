@@ -12,6 +12,7 @@
 - Add option to specify the web client command with `web_client_command`.
 - Add new internal action `open`.
 - Uamp now also installs web client, icons and desktop entry.
+- Add web client (thanks [Martan03](https://github.com/Martan03))
 
 ### Fixes
 - Fix order of `a` and `b` when requesting with `uam i nfo=a..b`.
