@@ -86,7 +86,7 @@ pub fn install(root: Option<&Path>, exe: &Path, man: bool) -> Result<()> {
         fs::copy("assets/svg/icon_light.svg", dsts)?;
 
         println!("Installing desktop file.");
-        let dstd = path_at_root(root, "/usr/share/applications/uamp.desktop");
+        let dstd = path_at_root(root, "/usr/share/applications/bny-uamp.desktop");
         make_parent(&dstd)?;
         fs::copy("other/uamp.desktop", dstd)?;
     }
