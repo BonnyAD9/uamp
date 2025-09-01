@@ -22,6 +22,7 @@
 - The default action for uamp without arguments is now to launch the web
   client.
 - The `play` control message now supports loading multiple songs.
+- Images in cache now have different naming scheme.
 
 ### Fixes
 - Fix order of `a` and `b` when requesting with `uam i nfo=a..b`.
