@@ -14,6 +14,15 @@
 - Uamp now also installs web client, icons and desktop entry.
 - Add web client (thanks [Martan03](https://github.com/Martan03))
 
+### Breaking changes
+- Tmp songs now have negative id instead of large number. This will break any
+  load from old json where are tmp_songs.
+
+### Changes
+- The default action for uamp without arguments is now to launch the web
+  client.
+- The `play` control message now supports loading multiple songs.
+
 ### Fixes
 - Fix order of `a` and `b` when requesting with `uam i nfo=a..b`.
 - Watch exe even if configuration is not watched.
