@@ -96,9 +96,7 @@ impl RootInterface for Mpris {
     }
 
     async fn desktop_entry(&self) -> fdo::Result<String> {
-        Err(fdo::Error::NotSupported(
-            "uamp has no desktop entry".to_string(),
-        ))
+        Ok("/usr/share/applications/bny-uamp.desktop".to_string())
     }
 
     async fn supported_uri_schemes(&self) -> fdo::Result<Vec<String>> {
