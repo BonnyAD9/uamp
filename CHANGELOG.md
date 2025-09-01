@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.6.1
+### Fixes
+- Fix install location of client.
+
 ## v0.6.0
 ### New features
 - Allow disabling watchin of exe with `"auto_restart": false`.
