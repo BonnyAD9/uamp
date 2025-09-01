@@ -213,8 +213,8 @@ table.songs th {
     padding-bottom: 3px;
 }
 
-table.songs tr:not(:first-child) {
-    border-top: 1px solid var(--bg-light);
+table.songs tbody tr:not(:first-child) {
+    border-bottom: 1px solid var(--bg-light);
 }
 
 table.songs tr.active p {
@@ -224,6 +224,11 @@ table.songs tr.active p {
 table.songs tbody tr {
     cursor: pointer;
     transition: .1s ease background-color;
+    height: 42px;
+}
+
+table.songs tbody tr.spacer {
+    height: 0;
 }
 
 table.songs tbody tr:hover {

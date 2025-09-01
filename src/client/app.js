@@ -26,6 +26,9 @@ class App {
 
         /** @type {Song[]} */
         this.songs = [];
+        /** @type {{ start: number, end: number }} */
+        this.songsBuffer = { start: 0, end: 0 };
+
         /** @type {Album[]} */
         this.albums = [];
         /** @type {Artist[]} */
@@ -37,6 +40,8 @@ class App {
         this.artist = null;
 
         this.generateLibraryData();
+
+        document.querySelector('#library').onscroll = () => this.updateSongs();
     }
 
     static async init(data) {
@@ -230,23 +235,102 @@ class App {
     }
 
 
+    /** Displays songs in the library with virtual scrolling. */
     displaySongs() {
         const playing = this.player.playlist.current;
         const current =
             playing !== null ? this.player.playlist.songs[playing] : null;
 
+        const library = document.querySelector('#library');
         songsElement.innerHTML = '';
-        let id = 0;
-        for (let i = 0; i < this.library.songs.length; i++) {
-            const song = this.library.songs[i];
-            if (song.deleted === true) continue;
 
-            const row = song.getTableRow();
-            row.dataset.index = id++;
-            if (i === current)
-                row.classList.add('active');
-            songsElement.appendChild(row);
+        const top = document.createElement('tr');
+        top.classList.add('spacer', 'spacer-top');
+        songsElement.appendChild(top);
+
+        const bottom = document.createElement('tr');
+        bottom.classList.add('spacer', 'spacer-bottom');
+        songsElement.appendChild(bottom);
+
+        const { start, end } =
+            this.#getBufferPos(library, this.songs.length, top, bottom);
+        this.songsBuffer = { start, end };
+
+        const fragment = document.createDocumentFragment();
+
+        for (let i = start; i < end; i++)
+            fragment.appendChild(this.#getRow(i, current));
+
+        top.after(fragment);
+    }
+
+    /** Updates visible songs in the library based on the scroll position. */
+    updateSongs() {
+        const playing = this.player.playlist.current;
+        const current =
+            playing !== null ? this.player.playlist.songs[playing] : null;
+
+        const library = document.querySelector('#library');
+        const top = songsElement.querySelector('tr.spacer-top');
+        const bottom = songsElement.querySelector('tr.spacer-bottom');
+        const { start, end } =
+            this.#getBufferPos(library, this.songs.length, top, bottom);
+
+        for (let i = this.songsBuffer.start; i > start; i--)
+            top.after(this.#getRow(i, current));
+        for (let i = this.songsBuffer.end; i < end; i++) {
+            bottom.before(this.#getRow(i, current));
         }
+
+        const removeRow = row => {
+            if (row && !row.classList.contains('spacer'))
+                songsElement.removeChild(row);
+        }
+        for (let i = this.songsBuffer.start; i < start; i++)
+            removeRow(top.nextSibling);
+        for (let i = this.songsBuffer.end; i > end; i--)
+            removeRow(bottom.previousSibling);
+
+        this.songsBuffer = { start, end };
+    }
+
+    /**
+     * Gets buffer position for the virtual scrolling and updates spacers
+     * @param {HTMLElement} container - scrollable container
+     * @param {number} songsCnt - total number of songs/rows
+     * @param {HTMLTableRowElement} topSpacer - top spacer row
+     * @param {HTMLTableRowElement} bottomSpacer - bottom spacer row
+     * @returns {{ start: number, end: number }} buffer boundaries
+     */
+    #getBufferPos(container, songsCnt, topSpacer, bottomSpacer) {
+        const viewHeight = container.clientHeight;
+        const rowHeight = 42;
+
+        const visibleCnt = Math.ceil(viewHeight / rowHeight);
+        const buffer = visibleCnt * 2;
+
+        const scrollTop = container.scrollTop;
+        const start = Math.max(0, Math.floor(scrollTop / rowHeight) - buffer);
+        const end = Math.min(songsCnt, start + 2 * buffer);
+
+        topSpacer.style.height = `${start * rowHeight}px`;
+        bottomSpacer.style.height =
+            `${(songsCnt - end) * rowHeight}px`;
+        return { start, end };
+    }
+
+    /**
+     * Gets table row for the given song id
+     * @param {number} id - song id to get the row for
+     * @param {number} current - song id of the currently playing song
+     * @returns {HTMLTableRowElement} table row for the given song id
+     */
+    #getRow(id, current) {
+        const row = this.songs[id].getTableRow();
+        row.dataset.index = id;
+        if (id === current)
+            row.classList.add('active');
+        return row;
     }
 
     displayPlaylist() {
