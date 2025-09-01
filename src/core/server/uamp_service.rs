@@ -331,7 +331,6 @@ impl UampService {
                 entry = Some(e);
                 break;
             }
-            dbg!(&epath);
             if epath == Path::new(sec_path.as_str()) {
                 return Ok(redirect_response(
                     &path_join(["/app", &sec_path]),
@@ -564,7 +563,9 @@ fn path_join<S: AsRef<str>>(paths: impl IntoIterator<Item = S>) -> String {
         match (res.ends_with('/'), s.starts_with('/')) {
             (true, true) => res += &s[1..],
             (false, false) => {
-                res.push('/');
+                if !res.is_empty() {
+                    res.push('/');
+                }
                 res += s;
             }
             _ => res += s,
