@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## future
+### Fixes
+- Properly install desktop file.
+- Fix typo in for `web_client_command` in json schema.
+
 ## v0.6.2
 ### Fixes
 - Fix redirecting to `index.html`.

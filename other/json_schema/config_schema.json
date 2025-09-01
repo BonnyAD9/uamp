@@ -195,7 +195,7 @@
           "pattern": "Background|WebClient",
           "default": "WebClient"
         },
-        "web_clien_tommand": {
+        "web_client_command": {
           "description": "The command used to open web client. If null, use the default browser. `${ADDRESS}` will be replaced with the target address to the web client.",
           "type": "string",
           "default": null
