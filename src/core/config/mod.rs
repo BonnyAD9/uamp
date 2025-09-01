@@ -66,9 +66,7 @@ pub fn default_cache_dir() -> PathBuf {
 }
 
 pub fn default_http_client_path() -> PathBuf {
-    let mut d = get_uamp_dir(dirs::data_local_dir());
-    d.push("skins/default-uamp.tar");
-    d
+    "/usr/share/uamp/skins/default-uamp.tar".into()
 }
 
 /// Gets the default path to json configuration, it is different when debugging
