@@ -240,7 +240,7 @@ impl UampApp {
         {
             res.push(e.prepend("Failed to save play state."));
         }
-        if let Err(e) = self.config.to_default_json() {
+        if let Err(e) = self.config_to_default_json() {
             res.push(e.prepend("Failed to save config."));
         }
 
@@ -262,7 +262,7 @@ impl UampApp {
         {
             res.push(e.prepend("Failed to save play state."));
         }
-        if let Err(e) = self.config.to_default_json() {
+        if let Err(e) = self.config_to_default_json() {
             res.push(e.prepend("Failed to save config."));
         }
 

@@ -5,9 +5,10 @@ use std::{
 };
 
 use log::{error, info};
+use notify::{RecursiveMode, Watcher};
 use serde::Serialize;
 
-use crate::core::{Error, Result};
+use crate::core::{Error, Result, UampApp};
 
 use super::{Config, default_config_dir};
 
@@ -38,17 +39,10 @@ impl Config {
             Ok(f) => f,
             Err(_) => {
                 info!(
-                    "the config file {:?} doesn't exist, creating default",
+                    "the config file {:?} doesn't exist, using default",
                     path.as_ref()
                 );
                 let conf = Config::new(Some(path.as_ref()));
-                if let Err(e) = conf.to_default_json() {
-                    error!(
-                        "failed to save config to file {:?}: {}",
-                        path.as_ref(),
-                        e.log()
-                    );
-                }
                 return Ok(conf);
             }
         };
@@ -58,22 +52,6 @@ impl Config {
         })?;
         conf.config_path = Some(path.as_ref().to_owned());
         Ok(conf)
-    }
-
-    /// Saves the config to the default json file. Doesn't save if there was no
-    /// chagnge since the last save.
-    ///
-    /// # Errors
-    /// - Fails to create parent directory
-    /// - Fails to write to fi
-    pub fn to_default_json(&self) -> Result<()> {
-        if self.changed() {
-            if let Some(p) = &self.config_path {
-                self.to_json_file(p)?;
-            }
-            self.set_change(false);
-        }
-        Ok(())
     }
 
     /// Saves the config to the given json file.
@@ -94,6 +72,30 @@ impl Config {
         let formatter = serde_json::ser::PrettyFormatter::with_indent(b"    ");
         let mut ser = serde_json::Serializer::with_formatter(w, formatter);
         self.serialize(&mut ser)?;
+        Ok(())
+    }
+}
+
+impl UampApp {
+    /// Saves the config to the default json file. Doesn't save if there was no
+    /// chagnge since the last save.
+    ///
+    /// # Errors
+    /// - Fails to create parent directory
+    /// - Fails to write to fi
+    pub fn config_to_default_json(&mut self) -> Result<()> {
+        if self.config.changed() {
+            if let Some(p) = &self.config.config_path {
+                if let Some(ref mut watch) = self.file_watch {
+                    watch.unwatch(p)?;
+                }
+                self.config.to_json_file(p)?;
+                if let Some(ref mut watch) = self.file_watch {
+                    watch.watch(p, RecursiveMode::NonRecursive)?;
+                }
+            }
+            self.config.set_change(false);
+        }
         Ok(())
     }
 }

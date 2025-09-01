@@ -261,12 +261,11 @@ impl UampApp {
 
                 let change = self.config.set_new(conf);
                 self.propagate_config_change(ctrl, change)?;
+                self.config.set_change(false);
             }
             ConfigMsg::Set(cfg) => {
                 let change = self.config.update(cfg)?;
                 self.propagate_config_change(ctrl, change)?;
-
-                self.config.to_default_json()?;
             }
         }
 

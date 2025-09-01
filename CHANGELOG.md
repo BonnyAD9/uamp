@@ -3,6 +3,7 @@
 ## future
 ### Fixes
 - Fix redirecting to `index.html`.
+- Fix saving config.
 
 ## v0.6.1
 ### Fixes
