@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.6.0
 ### New features
 - Allow disabling watchin of exe with `"auto_restart": false`.
 - Allow specifying cnt for `pop`.
