@@ -10,10 +10,10 @@ default = []
 no-self-update = []
 
 [dependencies]
-anyhow = "1.0.98"
-astral-tokio-tar = "0.5.2"
+anyhow = "1.0.99"
+astral-tokio-tar = "0.5.3"
 audiotags = "0.5.0"
-bitflags = { version = "2.9.1", features = [ "serde" ] }
+bitflags = { version = "2.9.3", features = [ "serde" ] }
 const_format = { version = "0.2.34", features = [ "fmt" ] }
 dirs = "6.0.0"
 edit = { version = "0.1.5", features = [ "quoted-env" ] }
@@ -21,29 +21,29 @@ filesan = "0.2.0"
 flexi_logger = "0.31.2"
 futures = "0.3.31"
 http-body-util = "0.1.3"
-hyper = { version = "1.6.0", features = ["client", "server", "http1"] }
+hyper = { version = "1.7.0", features = ["client", "server", "http1"] }
 hyper-util = { version = "0.1.16", features = ["tokio"] }
-image = "0.25.6"
+image = "0.25.7"
 itertools = "0.14.0"
 log = "0.4.27"
 mime_guess = "2.0.5"
-notify = "8.1.0"
+notify = "8.2.0"
 open = "5.3.2"
 pareg ="0.10.0"
 # pareg = { path = "../pareg" }
 place_macro = "1.0.0"
 rand = "0.9.2"
-raplay = { version = "0.4.2", features = ["serde"] }
+raplay = { version = "0.4.3", features = ["serde"] }
 # raplay = { path = "../raplay", features = ["serde"] }
 serde = { version = "1.0.219", features = ["rc"] }
-serde_json = "1.0.142"
+serde_json = "1.0.143"
 shell-words = "1.1.0"
-termal = { version =  "4.0.2", features = ["image", "raw", "events"] }
-thiserror = "2.0.12"
+termal = { version =  "4.1.0", features = ["image", "raw", "events"] }
+thiserror = "2.0.16"
 tokio = { version = "1.47.1", features = ["rt", "sync", "signal", "macros", "net", "rt-multi-thread", "fs"] }
-tokio-util = { version = "0.7.15", features = ["codec"] }
+tokio-util = { version = "0.7.16", features = ["codec"] }
 unidecode = "0.3.0"
-url = "2.5.4"
+url = "2.5.7"
 
 [target.'cfg(unix)'.dependencies]
 mpris-server = "0.9.0"
