@@ -437,6 +437,7 @@ const UPDATE_ARG: &[&[&str]] = &[
     &["--man"],
     &["--no-man"],
     &["-m", "--mode"],
+    &["--update"],
 ];
 
 const INTERANAL_ARG: &[&[&str]] = &[
