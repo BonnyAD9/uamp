@@ -62,7 +62,13 @@ impl Song {
                     ))
                     .err();
             }
-            Err(e) => Err(e)?,
+            Err(e) => {
+                if e.to_string().starts_with("NoTag") {
+                    Box::new(audiotags::FlacTag::new())
+                } else {
+                    Err(e)?
+                }
+            }
         };
 
         let mut s = Song {

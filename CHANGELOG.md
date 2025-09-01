@@ -4,6 +4,7 @@
 ### Fixes
 - Properly install desktop file.
 - Fix typo in for `web_client_command` in json schema.
+- Allow mp3 without tags.
 
 ## v0.6.2
 ### Fixes
