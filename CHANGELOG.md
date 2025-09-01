@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.6.2
 ### Fixes
 - Fix redirecting to `index.html`.
 - Fix saving config.
