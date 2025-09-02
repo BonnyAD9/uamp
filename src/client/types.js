@@ -11,14 +11,14 @@ class Song {
      * @param {number} id
      * @param {string} path
      * @param {string} title
-     * @param {string} artist 
-     * @param {string} album 
-     * @param {number} track 
-     * @param {number} disc 
-     * @param {number} year 
-     * @param {Duration} length 
-     * @param {string} genre 
-     * @param {boolean} deleted 
+     * @param {string} artist
+     * @param {string} album
+     * @param {number} track
+     * @param {number} disc
+     * @param {number} year
+     * @param {Duration} length
+     * @param {string} genre
+     * @param {boolean} deleted
      */
     constructor(
         id, path, title, artist, album, track, disc, year, length, genre,
@@ -124,8 +124,8 @@ class Album {
      * Creates new album
      * @param {string} name
      * @param {string} artist
-     * @param {number} year 
-     * @param {Song[]} songs 
+     * @param {number} year
+     * @param {Song[]} songs
      */
     constructor(name, artist, year, songs = []) {
         /** @type {string} */

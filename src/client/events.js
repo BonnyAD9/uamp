@@ -20,7 +20,8 @@ eventSource.addEventListener('set-all', async e => {
 
     setTimeout(() => {
         app.updateAll();
-        app.displayPlaylist();
+        // app.displayPlaylist();
+        // app.updateBarSongs();
         app.displayAlbums();
         app.displayArtists();
     }, 0);
@@ -45,11 +46,11 @@ eventSource.addEventListener('seek', e => {
 eventSource.addEventListener('quitting', _ => console.log('Quitting...'));
 
 eventSource.addEventListener('set-volume', e => {
-    AppSingleton.get().setVolume(JSON.parse(e.data));
+    AppSingleton.get().player.setVolume(JSON.parse(e.data));
 });
 
 eventSource.addEventListener('set-mute', e => {
-    AppSingleton.get().setMute(JSON.parse(e.data));
+    AppSingleton.get().player.setMute(JSON.parse(e.data));
 });
 
 eventSource.addEventListener('pop-playlist', e => {
@@ -109,7 +110,7 @@ eventSource.addEventListener('play-next', e => {
     app.displayPlaylist();
 });
 
-eventSource.addEventListener('restarting', _ => console.log('Restaring...'));
+eventSource.addEventListener('restarting', _ => console.log('Restarting...'));
 
 eventSource.addEventListener('reorder-playlist-stack', e => {
     const app = AppSingleton.get();

@@ -14,8 +14,9 @@ class App {
                 (s, i) => Song.from(-i - 1, s)
             ),
         };
-        console.log(this.library);
-        this.player = data.player;
+
+        /** @type {Player} */
+        this.player = Player.from(data.player, p => this.#parsePlaylist(p));
         /** @type {Timestamp} */
         this.position = data.position && Timestamp.from(data.position);
         /** @type {Config} */
@@ -29,9 +30,6 @@ class App {
 
         /** @type {Song[]} */
         this.songs = [];
-        /** @type {{ start: number, end: number }} */
-        this.songsBuffer = { start: 0, end: 0 };
-
         /** @type {Album[]} */
         this.albums = [];
         /** @type {Artist[]} */
@@ -42,6 +40,11 @@ class App {
         /** @type {?Artist} */
         this.artist = null;
 
+        /** @type {{ start: number, end: number }} */
+        this.songsBuffer = { start: 0, end: 0 };
+        /** @type {{ start: number, end: number }} */
+        this.barBuffer = { start: 0, end: 0 };
+
         this.generateLibraryData();
 
         document.querySelector('#library').onscroll = () => this.updateSongs();
@@ -50,26 +53,6 @@ class App {
     static async init(data) {
         const config = await Config.init(data.config);
         return new App(data, config);
-    }
-
-    /**
-     * Checks whether player is playing or not
-     * @returns {boolean} true when playing, else false
-     */
-    isPlaying() {
-        return this.player.state === 'Playing';
-    }
-
-    /**
-     * Gets currently playing song
-     * @returns {?Song} playing song if found
-     */
-    getPlaying() {
-        const playing = this.player.playlist.current;
-        if (playing === null) return null;
-
-        const current = this.player.playlist.songs[playing];
-        return this.getSong(current);
     }
 
     /**
@@ -88,9 +71,8 @@ class App {
      * @param {string} playback - playback state to set.
      */
     setPlayback(playback) {
-        this.player.state = playback;
+        this.player.setPlayback(playback);
         this.handleSongProgress();
-        updatePlayBtn(this.isPlaying());
     }
 
     /**
@@ -104,7 +86,7 @@ class App {
         }
 
         this.position = Timestamp.from(timestamp);
-        this.getPlaying().length = Duration.from(timestamp.total);
+        this.player.getPlaying().length = Duration.from(timestamp.total);
         this.displayProgress(0);
     }
 
@@ -114,27 +96,9 @@ class App {
      */
     setCurrent(id) {
         this.player.playlist.current = id;
-        updateCurrent(this.getPlaying());
+        updateCurrent(this.player.getPlaying());
         this.highlightLibrary();
         this.highlightPlaylist();
-    }
-
-    /**
-     * Sets the volume level and updates the UI accordingly.
-     * @param {number} volume - volume level to set (0 to 1).
-     */
-    setVolume(volume) {
-        this.player.volume = volume;
-        updateVolume(volume, this.player.mute);
-    }
-
-    /**
-     * Sets the mute state and updates the UI accordingly.
-     * @param {boolean} mute - boolean indicating whether to mute or unmute.
-     */
-    setMute(mute) {
-        this.player.mute = mute;
-        updateVolume(this.player.volume, mute);
     }
 
     /**
@@ -142,10 +106,11 @@ class App {
      * @param {*} playlist - playlist to set as active.
      */
     setPlaylist(playlist) {
-        this.player.playlist = playlist;
+        this.player.playlist =
+            Playlist.from(playlist, p => this.#parsePlaylist(p));
         this.displayPlaylist();
         this.highlightLibrary();
-        updateCurrent(this.getPlaying());
+        updateCurrent(this.player.getPlaying());
     }
 
     /**
@@ -186,7 +151,7 @@ class App {
 
         this.playlistTab = Math.max(0, this.playlistTab);
         showPlaylist(this.playlistTab);
-        updateCurrent(this.getPlaying());
+        updateCurrent(this.player.getPlaying());
         return prev;
     }
 
@@ -210,7 +175,7 @@ class App {
         this.player.playlist_stack = order.slice(0, -1).map(i => all[len - i]);
 
         showPlaylist(this.playlistTab);
-        updateCurrent(this.getPlaying());
+        updateCurrent(this.player.getPlaying());
         this.highlightLibrary();
     }
 
@@ -241,61 +206,154 @@ class App {
 
     /** Displays songs in the library with virtual scrolling. */
     displaySongs() {
-        const playing = this.player.playlist.current;
-        const current =
-            playing !== null ? this.player.playlist.songs[playing] : null;
-
         const library = document.querySelector('#library');
-        songsElement.innerHTML = '';
-
-        const top = document.createElement('tr');
-        top.classList.add('spacer', 'spacer-top');
-        songsElement.appendChild(top);
-
-        const bottom = document.createElement('tr');
-        bottom.classList.add('spacer', 'spacer-bottom');
-        songsElement.appendChild(bottom);
-
-        const { start, end } =
-            this.#getBufferPos(library, this.songs.length, top, bottom);
-        this.songsBuffer = { start, end };
-
-        const fragment = document.createDocumentFragment();
-
-        for (let i = start; i < end; i++)
-            fragment.appendChild(this.#getRow(i, current));
-
-        top.after(fragment);
+        this.songsBuffer = this.genericDisplaySongs(library, this.songs);
     }
 
     /** Updates visible songs in the library based on the scroll position. */
     updateSongs() {
-        const playing = this.player.playlist.current;
-        const current =
-            playing !== null ? this.player.playlist.songs[playing] : null;
-
         const library = document.querySelector('#library');
-        const top = songsElement.querySelector('tr.spacer-top');
-        const bottom = songsElement.querySelector('tr.spacer-bottom');
-        const { start, end } =
-            this.#getBufferPos(library, this.songs.length, top, bottom);
+        this.songsBuffer =
+            this.genericUpdateSongs(library, this.songs, this.songsBuffer);
+    }
 
-        for (let i = this.songsBuffer.start; i > start; i--)
-            top.after(this.#getRow(i, current));
-        for (let i = this.songsBuffer.end; i < end; i++) {
-            bottom.before(this.#getRow(i, current));
+    /**
+     * Displays songs in the given containers table using virtual scrolling.
+     * @param {HTMLElement} container - scrollable container with songs table
+     * @param {Song[]} songs - list of songs to display
+     * @returns {{ start: number, end: number }} buffer boundaries
+     */
+    genericDisplaySongs(container, songs) {
+        const current = this.player.getPlayingId();
+
+        const table = container.querySelector('table.songs tbody');
+        table.innerHTML = '';
+
+        const top = document.createElement('tr');
+        top.classList.add('spacer', 'spacer-top');
+        table.appendChild(top);
+
+        const bottom = document.createElement('tr');
+        bottom.classList.add('spacer', 'spacer-bottom');
+        table.appendChild(bottom);
+
+        const { start, end } =
+            this.#getBufferPos(container, songs.length, top, bottom);
+
+        const fragment = document.createDocumentFragment();
+        for (let i = start; i < end; i++)
+            fragment.appendChild(this.#getRow(songs, i, current));
+        top.after(fragment);
+
+        return { start, end };
+    }
+
+    createBarSongs() {
+        const current = this.player.getPlayingId();
+        const songs = this.player.playlist.songs;
+
+        const container = document.querySelector('.bar .playlist');
+        const table = container.querySelector('.songs');
+        table.innerHTML = '';
+
+        const top = document.createElement('div');
+        top.classList.add('spacer', 'spacer-top');
+        table.appendChild(top);
+
+        const bottom = document.createElement('div');
+        bottom.classList.add('spacer', 'spacer-bottom');
+        table.appendChild(bottom);
+
+        const { start, end } =
+            this.#getBufferPos(container, songs.length, top, bottom, 32);
+
+        const getItem = id => {
+            const song = this.player.playlist.songs[id];
+            const item = song.getBarRow(id);
+            item.dataset.index = id;
+            if (song.id === current)
+                item.classList.add('active');
+            return item;
+        }
+
+        const fragment = document.createDocumentFragment();
+        for (let i = start; i < end; i++)
+            fragment.appendChild(getItem(i));
+        top.after(fragment);
+
+        return { start, end };
+    }
+
+    updateBarSongs() {
+        const current = this.player.getPlayingId();
+
+        const playlist = document.querySelector('.bar .playlist');
+        const list = playlist.querySelector('.songs');
+
+        const top = list.querySelector('div.spacer-top');
+        const bottom = list.querySelector('div.spacer-bottom');
+        const { start, end } =
+            this.#getBufferPos(playlist, this.player.playlist.songs.length,
+                top, bottom, 32);
+
+        const getItem = id => {
+            const song = this.player.playlist.songs[id];
+            const item = song.getBarRow(id);
+            item.dataset.index = id;
+            if (song.id === current)
+                item.classList.add('active');
+            return item;
+        }
+        for (let i = this.barBuffer.start - 1; i >= start; i--)
+            top.after(getItem(i));
+        for (let i = this.barBuffer.end; i < end; i++) {
+            bottom.before(getItem(i));
+        }
+
+        const removeItem = row => {
+            if (row && !row.classList.contains('spacer'))
+                list.removeChild(row);
+        }
+        for (let i = this.barBuffer.start; i < start; i++)
+            removeItem(top.nextSibling);
+        for (let i = this.barBuffer.end; i > end; i--)
+            removeItem(bottom.previousSibling);
+
+        this.barBuffer = { start, end };
+    }
+
+    /**
+     * Updates songs table in the given container with virtual scrolling.
+     * @param {HTMLElement} container - scrollable container with songs table
+     * @param {Song[]} songs - list of songs to display
+     * @param {{ start: number, end: number }} oldBuffer - old buffer boundaries
+     * @returns {{ start: number, end: number }} buffer boundaries
+     */
+    genericUpdateSongs(container, songs, oldBuffer) {
+        const current = this.player.getPlayingId();
+
+        const table = container.querySelector('table.songs tbody');
+        const top = table.querySelector('tr.spacer-top');
+        const bottom = table.querySelector('tr.spacer-bottom');
+        const { start, end } =
+            this.#getBufferPos(container, songs.length, top, bottom);
+
+        for (let i = oldBuffer.start - 1; i >= start; i--)
+            top.after(this.#getRow(songs, i, current));
+        for (let i = oldBuffer.end; i < end; i++) {
+            bottom.before(this.#getRow(songs, i, current));
         }
 
         const removeRow = row => {
             if (row && !row.classList.contains('spacer'))
-                songsElement.removeChild(row);
+                table.removeChild(row);
         }
-        for (let i = this.songsBuffer.start; i < start; i++)
+        for (let i = oldBuffer.start; i < start; i++)
             removeRow(top.nextSibling);
-        for (let i = this.songsBuffer.end; i > end; i--)
+        for (let i = oldBuffer.end; i > end; i--)
             removeRow(bottom.previousSibling);
 
-        this.songsBuffer = { start, end };
+        return { start, end };
     }
 
     /**
@@ -306,29 +364,29 @@ class App {
      * @param {HTMLTableRowElement} bottomSpacer - bottom spacer row
      * @returns {{ start: number, end: number }} buffer boundaries
      */
-    #getBufferPos(container, songsCnt, topSpacer, bottomSpacer) {
+    #getBufferPos(container, songsCnt, topSpacer, bottomSpacer, row = 42) {
         const viewHeight = container.clientHeight;
-        const rowHeight = 42;
 
-        const visibleCnt = Math.ceil(viewHeight / rowHeight) + 1;
+        const visibleCnt = Math.ceil(viewHeight / row) + 1;
         const scrollTop = container.scrollTop;
-        const start = Math.max(0, Math.floor(scrollTop / rowHeight) - 2);
+        const start = Math.max(0, Math.floor(scrollTop / row) - 2);
         const end = Math.min(songsCnt, start + visibleCnt);
 
-        topSpacer.style.height = `${start * rowHeight}px`;
+        topSpacer.style.height = `${start * row}px`;
         bottomSpacer.style.height =
-            `${(songsCnt - end) * rowHeight}px`;
+            `${(songsCnt - end) * row}px`;
         return { start, end };
     }
 
     /**
      * Gets table row for the given song id
+     * @param {Song[]} songs - list of songs to get the song from
      * @param {number} id - song id to get the row for
      * @param {number} current - song id of the currently playing song
      * @returns {HTMLTableRowElement} table row for the given song id
      */
-    #getRow(id, current) {
-        const song = this.songs[id];
+    #getRow(songs, id, current) {
+        const song = songs[id];
         const row = song.getTableRow();
         row.dataset.index = id;
         if (song.id === current)
@@ -345,7 +403,7 @@ class App {
         playlistElement.innerHTML = '';
         barPlaylist.innerHTML = '';
         for (let i = 0; i < this.player.playlist.songs.length; i++) {
-            const song = this.getSong(this.player.playlist.songs[i]);
+            const song = this.player.playlist.songs[i];
             if (song === null || song.deleted === true) continue;
 
             const row = song.getTableRow();
@@ -383,7 +441,7 @@ class App {
      * Highlights currently playing song in the library
      */
     highlightLibrary() {
-        const song = this.getPlaying();
+        const song = this.player.getPlaying();
 
         const rows = document.querySelectorAll('#library .songs tbody tr');
         for (const row of rows) {
@@ -407,8 +465,8 @@ class App {
         this.handleSongProgress();
         this.displayPlaylistStack();
 
-        updateCurrent(this.getPlaying());
-        updatePlayBtn(this.isPlaying());
+        updateCurrent(this.player.getPlaying());
+        updatePlayBtn(this.player.isPlaying());
         updateVolume(this.player.volume, this.player.mute);
     }
 
@@ -416,7 +474,7 @@ class App {
      * Handles song progress bar updates
      */
     handleSongProgress() {
-        if (this.isPlaying()) {
+        if (this.player.isPlaying()) {
             this.lastUpdate = performance.now();
             this.stopProgress();
             this.rafId = requestAnimationFrame(() => this.updateProgressBar());
@@ -439,7 +497,7 @@ class App {
      * Updates progress bar based on delta time
      */
     updateProgressBar() {
-        if (!this.isPlaying()) return;
+        if (!this.player.isPlaying()) return;
 
         const now = performance.now();
         const delta = (now - this.lastUpdate) / 1000;
@@ -458,7 +516,7 @@ class App {
         if (this.position !== null)
             current = this.position.current.toSecs() + delta;
 
-        const playing = this.getPlaying();
+        const playing = this.player.getPlaying();
         if (playing === null) return;
 
         const total = playing.length.toSecs();
@@ -473,10 +531,6 @@ class App {
             this.position.current.nanos =
                 Math.floor((current % 1) * 1_000_000_000);
         }
-    }
-
-    getDurationSecs(duration) {
-        return duration.secs + duration.nanos / 1_000_000_000;
     }
 
     displayPlaylistStack() {
@@ -522,7 +576,7 @@ class App {
         element.innerHTML = '';
 
         for (let i = 0; i < songs.length; i++) {
-            const song = this.getSong(songs[i]);
+            const song = songs[i];
             if (song === null || song.deleted === true) continue;
 
             const row = song.getTableRow();
@@ -553,7 +607,7 @@ class App {
         if (!row || !table) return;
 
         const first =
-            document.querySelector('#playlist .playlist-stack');
+            document.querySelector('#playlist .playlist-stack table');
         let cmd = '';
         if (table !== first) {
             cmd = `rps=${this.playlistTab}&`;
@@ -632,6 +686,16 @@ class App {
         this.artists = Array.from(artists.values());
         this.artists.sort((a, b) => a.name.localeCompare(b.name));
         this.artists.forEach(artist => artist.sortAlbums());
+    }
+
+    #parsePlaylist(playlist) {
+        let parsed = [];
+        for (const id of playlist) {
+            const song = this.getSong(id);
+            if (song === null || song.deleted === true) continue;
+            parsed.push(song);
+        }
+        return parsed;
     }
 }
 
