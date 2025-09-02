@@ -54,7 +54,7 @@ function updateVolume(volume, mute = false) {
     volumeSlider.value = perVolume;
     volumeValue.textContent = perVolume;
 
-    const level = Math.ceil(volume * 4);
+    const level = volume === 1.0 ? 4 : Math.ceil(volume * 3);
     let icon = `${mute ? 'no_' : ''}volume_${level}.svg`;
     volumeIcon.src = `assets/svg/${icon}`;
 }
@@ -75,7 +75,7 @@ function highlightLibrary(index) {
 function highlightPlaylist(index) {
     const table = document.querySelector('#playlist .playlist-stack tbody');
     const rows = table.querySelectorAll('tr');
-    this.highlightPlaying(index, rows);
+    highlightPlaying(index, rows);
 }
 
 const barPlaylist = document.querySelector('.bar .playlist .songs');
@@ -85,7 +85,7 @@ const barPlaylist = document.querySelector('.bar .playlist .songs');
  */
 function highlightBarPlaylist(index) {
     const items = barPlaylist.querySelectorAll('.item');
-    this.highlightPlaying(index, items);
+    highlightPlaying(index, items);
 }
 
 /**
@@ -271,6 +271,8 @@ function displayAlbums(list, albums) {
 
 function toggleBar() {
     bar.classList.toggle('expanded');
+    if (bar.classList.contains('expanded'))
+        setTimeout(() => AppSingleton.get().createBarSongs(), 200);
 }
 
 const tableTemplate = document.getElementById('songs-template');

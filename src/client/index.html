@@ -223,11 +223,14 @@
             </div>
         </div>
 
-        <div class="playlist">
+        <div class="playlist" onscroll="AppSingleton.get().updateBarSongs()">
             <div 
                 class="songs" 
                 onclick="AppSingleton.get().barPlaylistClick(event)"
-            ></div>
+            >
+                <div class="spacer spacer-top"></div>
+                <div class="spacer spacer-bottom"></div>
+            </div>
         </div>
 
         <img class="backdrop" src="assets/svg/img_placeholder.svg" />
@@ -380,6 +383,7 @@
 
 <script src="types.js"></script>
 <script src="ui.js"></script>
+<script src="player.js"></script>
 <script src="app.js"></script>
 <script src="events.js"></script>
 <script src="settings.js"></script>

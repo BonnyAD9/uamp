@@ -307,6 +307,7 @@ table.songs td .albums-preview img {
 
 .list .card img {
     width: 100%;
+    aspect-ratio: 1 / 1;
     object-fit: contain;
 }
 
@@ -653,6 +654,7 @@ section.bar .playlist {
     overflow: hidden;
     overflow-y: auto;
     max-height: 80%;
+    height: 100%;
     margin: auto 0;
 }
 
@@ -677,7 +679,6 @@ section.bar .playlist::-webkit-scrollbar-thumb:hover {
 section.bar .playlist .songs {
     display: flex;
     flex-direction: column;
-    gap: 14px;
     max-width: 80%;
     width: 100%;
     margin: 0 auto;
@@ -703,6 +704,7 @@ section.bar:not(.expanded) .backdrop {
 
 section.bar .playlist .item {
     cursor: pointer;
+    height: 32px;
 }
 
 section.bar .playlist p {
