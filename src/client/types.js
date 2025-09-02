@@ -8,6 +8,7 @@ const artistTemplate = document.getElementById('artist-template');
 class Song {
     /**
      * Creates new song
+     * @param {number} id
      * @param {string} path
      * @param {string} title
      * @param {string} artist 
@@ -20,9 +21,11 @@ class Song {
      * @param {boolean} deleted 
      */
     constructor(
-        path, title, artist, album, track, disc, year, length, genre,
+        id, path, title, artist, album, track, disc, year, length, genre,
         deleted = false
     ) {
+        /** @type {number} */
+        this.id = id;
         /** @type {string} */
         this.path = path;
         /** @type {string} */
@@ -45,24 +48,16 @@ class Song {
         this.deleted = deleted;
     }
 
-    static from(obj) {
+    static from(id, obj) {
         return new Song(
-            obj.path,
-            obj.title,
-            obj.artist,
-            obj.album,
-            obj.track,
-            obj.disc,
-            obj.year,
-            Duration.from(obj.length),
-            obj.genre,
-            obj.deleted
+            id, obj.path, obj.title, obj.artist, obj.album, obj.track, obj.disc,
+            obj.year, Duration.from(obj.length), obj.genre, obj.deleted
         );
     }
 
-    static empty() {
+    static empty(id) {
         return new Song(
-            '', '', '', '', 0, 0, UNDEF_YEAR, new Duration(0, 0), '', true
+            id, '', '', '', '', 0, 0, UNDEF_YEAR, new Duration(0, 0), '', true
         );
     }
 
