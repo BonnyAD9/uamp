@@ -9,9 +9,12 @@ class App {
     constructor(data, config) {
         /** @type {{ songs: Song[], tmp_songs: Song[] }} */
         this.library = {
-            songs: data.library.songs.map(Song.from),
-            tmp_songs: data.library.tmp_songs.map(Song.from),
+            songs: data.library.songs.map((s, i) => Song.from(i, s)),
+            tmp_songs: data.library.tmp_songs.map(
+                (s, i) => Song.from(-i - 1, s)
+            ),
         };
+        console.log(this.library);
         this.player = data.player;
         /** @type {Timestamp} */
         this.position = data.position && Timestamp.from(data.position);
@@ -228,9 +231,10 @@ class App {
         for (const [song, tid] of songs) {
             const id = -tid - 1;
             while (this.library.tmp_songs.length <= id) {
-                this.library.tmp_songs.push(Song.empty());
+                const eid = -this.library.tmp_songs.length;
+                this.library.tmp_songs.push(Song.empty(eid));
             }
-            this.library.tmp_songs[id] = Song.from(song);
+            this.library.tmp_songs[id] = Song.from(tid, song);
         }
     }
 
@@ -306,12 +310,10 @@ class App {
         const viewHeight = container.clientHeight;
         const rowHeight = 42;
 
-        const visibleCnt = Math.ceil(viewHeight / rowHeight);
-        const buffer = visibleCnt * 2;
-
+        const visibleCnt = Math.ceil(viewHeight / rowHeight) + 1;
         const scrollTop = container.scrollTop;
-        const start = Math.max(0, Math.floor(scrollTop / rowHeight) - buffer);
-        const end = Math.min(songsCnt, start + 2 * buffer);
+        const start = Math.max(0, Math.floor(scrollTop / rowHeight) - 2);
+        const end = Math.min(songsCnt, start + visibleCnt);
 
         topSpacer.style.height = `${start * rowHeight}px`;
         bottomSpacer.style.height =
@@ -326,9 +328,10 @@ class App {
      * @returns {HTMLTableRowElement} table row for the given song id
      */
     #getRow(id, current) {
-        const row = this.songs[id].getTableRow();
+        const song = this.songs[id];
+        const row = song.getTableRow();
         row.dataset.index = id;
-        if (id === current)
+        if (song.id === current)
             row.classList.add('active');
         return row;
     }
