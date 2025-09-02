@@ -127,4 +127,15 @@ class Player {
         this.mute = mute;
         updateVolume(this.volume, mute);
     }
+
+    /**
+     * Gets playlist by its ID
+     * @param {number} id - ID of the playlist (0 for current, 1+ for stack)
+     * @returns {Playlist|null} playlist if found, else null
+     */
+    getPlaylist(id) {
+        if (id === 0)
+            return this.playlist;
+        return this.playlist_stack[id - 1] || null;
+    }
 }

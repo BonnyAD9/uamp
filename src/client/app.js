@@ -43,11 +43,15 @@ class App {
         /** @type {{ start: number, end: number }} */
         this.songsBuffer = { start: 0, end: 0 };
         /** @type {{ start: number, end: number }} */
+        this.playlistBuffer = { start: 0, end: 0 };
+        /** @type {{ start: number, end: number }} */
         this.barBuffer = { start: 0, end: 0 };
 
         this.generateLibraryData();
 
         document.querySelector('#library').onscroll = () => this.updateSongs();
+        document.querySelector('#playlist').onscroll =
+            () => this.updatePlaylist();
     }
 
     static async init(data) {
@@ -108,7 +112,8 @@ class App {
     setPlaylist(playlist) {
         this.player.playlist =
             Playlist.from(playlist, p => this.#parsePlaylist(p));
-        this.displayPlaylist();
+        if (this.playlistTab === 0)
+            this.displayPlaylist();
         this.highlightLibrary();
         updateCurrent(this.player.getPlaying());
     }
@@ -186,6 +191,7 @@ class App {
     setPlaylistTab(id) {
         this.playlistTab = id;
         showPlaylist(id);
+        this.displayPlaylist(this.player.getPlaylist(id));
     }
 
     /**
@@ -207,26 +213,44 @@ class App {
     /** Displays songs in the library with virtual scrolling. */
     displaySongs() {
         const library = document.querySelector('#library');
-        this.songsBuffer = this.genericDisplaySongs(library, this.songs);
+        const table = library.querySelector('table.songs tbody');
+        this.songsBuffer = this.genericDisplaySongs(library, table, this.songs);
+    }
+
+    displayPlaylist(playlist = null) {
+        const container = document.querySelector('#playlist');
+        const table = container.querySelector('.playlist-stack.active tbody');
+
+        const songs = playlist ? playlist.songs : this.player.playlist.songs;
+        this.playlistBuffer = this.genericDisplaySongs(container, table, songs);
     }
 
     /** Updates visible songs in the library based on the scroll position. */
     updateSongs() {
         const library = document.querySelector('#library');
-        this.songsBuffer =
-            this.genericUpdateSongs(library, this.songs, this.songsBuffer);
+        const table = library.querySelector('table.songs tbody');
+        this.songsBuffer = this.genericUpdateSongs(
+            library, table, this.songs, this.songsBuffer
+        );
+    }
+
+    updatePlaylist() {
+        const playlist = document.querySelector('#playlist');
+        const table = playlist.querySelector('.playlist-stack.active tbody');
+        this.playlistBuffer = this.genericUpdateSongs(
+            playlist, table, this.player.playlist.songs, this.playlistBuffer
+        );
     }
 
     /**
      * Displays songs in the given containers table using virtual scrolling.
      * @param {HTMLElement} container - scrollable container with songs table
+     * @param {HTMLElement} table - songs table body
      * @param {Song[]} songs - list of songs to display
      * @returns {{ start: number, end: number }} buffer boundaries
      */
-    genericDisplaySongs(container, songs) {
+    genericDisplaySongs(container, table, songs) {
         const current = this.player.getPlayingId();
-
-        const table = container.querySelector('table.songs tbody');
         table.innerHTML = '';
 
         const top = document.createElement('tr');
@@ -244,6 +268,40 @@ class App {
         for (let i = start; i < end; i++)
             fragment.appendChild(this.#getRow(songs, i, current));
         top.after(fragment);
+
+        return { start, end };
+    }
+
+    /**
+     * Updates songs table in the given container with virtual scrolling.
+     * @param {HTMLElement} container - scrollable container with songs table
+     * @param {HTMLElement} table - songs table body
+     * @param {Song[]} songs - list of songs to display
+     * @param {{ start: number, end: number }} oldBuffer - old buffer boundaries
+     * @returns {{ start: number, end: number }} buffer boundaries
+     */
+    genericUpdateSongs(container, table, songs, oldBuffer) {
+        const current = this.player.getPlayingId();
+
+        const top = table.querySelector('tr.spacer-top');
+        const bottom = table.querySelector('tr.spacer-bottom');
+        const { start, end } =
+            this.#getBufferPos(container, songs.length, top, bottom);
+
+        for (let i = oldBuffer.start - 1; i >= start; i--)
+            top.after(this.#getRow(songs, i, current));
+        for (let i = oldBuffer.end; i < end; i++) {
+            bottom.before(this.#getRow(songs, i, current));
+        }
+
+        const removeRow = row => {
+            if (row && !row.classList.contains('spacer'))
+                table.removeChild(row);
+        }
+        for (let i = oldBuffer.start; i < start; i++)
+            removeRow(top.nextSibling);
+        for (let i = oldBuffer.end; i > end; i--)
+            removeRow(bottom.previousSibling);
 
         return { start, end };
     }
@@ -323,40 +381,6 @@ class App {
     }
 
     /**
-     * Updates songs table in the given container with virtual scrolling.
-     * @param {HTMLElement} container - scrollable container with songs table
-     * @param {Song[]} songs - list of songs to display
-     * @param {{ start: number, end: number }} oldBuffer - old buffer boundaries
-     * @returns {{ start: number, end: number }} buffer boundaries
-     */
-    genericUpdateSongs(container, songs, oldBuffer) {
-        const current = this.player.getPlayingId();
-
-        const table = container.querySelector('table.songs tbody');
-        const top = table.querySelector('tr.spacer-top');
-        const bottom = table.querySelector('tr.spacer-bottom');
-        const { start, end } =
-            this.#getBufferPos(container, songs.length, top, bottom);
-
-        for (let i = oldBuffer.start - 1; i >= start; i--)
-            top.after(this.#getRow(songs, i, current));
-        for (let i = oldBuffer.end; i < end; i++) {
-            bottom.before(this.#getRow(songs, i, current));
-        }
-
-        const removeRow = row => {
-            if (row && !row.classList.contains('spacer'))
-                table.removeChild(row);
-        }
-        for (let i = oldBuffer.start; i < start; i++)
-            removeRow(top.nextSibling);
-        for (let i = oldBuffer.end; i > end; i--)
-            removeRow(bottom.previousSibling);
-
-        return { start, end };
-    }
-
-    /**
      * Gets buffer position for the virtual scrolling and updates spacers
      * @param {HTMLElement} container - scrollable container
      * @param {number} songsCnt - total number of songs/rows
@@ -392,34 +416,6 @@ class App {
         if (song.id === current)
             row.classList.add('active');
         return row;
-    }
-
-    displayPlaylist() {
-        const playing = this.player.playlist.current;
-        const playlistElement =
-            document.querySelector('#playlist .playlist-stack tbody');
-        const barPlaylist = document.querySelector('.bar .playlist .songs')
-
-        playlistElement.innerHTML = '';
-        barPlaylist.innerHTML = '';
-        for (let i = 0; i < this.player.playlist.songs.length; i++) {
-            const song = this.player.playlist.songs[i];
-            if (song === null || song.deleted === true) continue;
-
-            const row = song.getTableRow();
-            row.dataset.index = i;
-
-            const item = song.getBarRow(i);
-            item.dataset.index = i;
-
-            if (i === playing) {
-                row.classList.add('active');
-                item.classList.add('active');
-            }
-
-            playlistElement.appendChild(row);
-            barPlaylist.appendChild(item);
-        }
     }
 
     displayAlbums() {
@@ -709,6 +705,10 @@ navs.forEach(item => {
 
         const targetId = item.dataset.screen;
         showScreen(targetId);
+        if (targetId === 'playlist') {
+            const app = AppSingleton.get();
+            app.displayPlaylist(app.player.getPlaylist(app.playlistTab));
+        }
     });
 });
 

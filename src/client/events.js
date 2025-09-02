@@ -97,7 +97,8 @@ eventSource.addEventListener('push-playlist-with-cur', e => {
 eventSource.addEventListener('queue', e => {
     const app = AppSingleton.get();
     app.player.playlist.songs.push(...JSON.parse(e.data));
-    app.displayPlaylist();
+    if (app.playlistTab === 0)
+        app.displayPlaylist();
 });
 
 eventSource.addEventListener('play-next', e => {
@@ -107,7 +108,8 @@ eventSource.addEventListener('play-next', e => {
     if (current === null) return;
 
     app.player.playlist.songs.splice(current + 1, 0, ...JSON.parse(e.data));
-    app.displayPlaylist();
+    if (app.playlistTab === 0)
+        app.displayPlaylist();
 });
 
 eventSource.addEventListener('restarting', _ => console.log('Restarting...'));
