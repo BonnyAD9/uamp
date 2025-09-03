@@ -111,6 +111,16 @@ class Player {
     }
 
     /**
+     * Sets the current song index in the playlist.
+     * @param {?number} id - index of the current song in the playlist.
+     */
+    setCurrent(id) {
+        this.playlist.current = id;
+        this.highlightPlaying();
+        updateCurrent(this.getPlaying());
+    }
+
+    /**
      * Sets the volume level and updates the UI accordingly.
      * @param {number} volume - volume level to set (0 to 1).
      */
@@ -137,5 +147,14 @@ class Player {
         if (id === 0)
             return this.playlist;
         return this.playlist_stack[id - 1] || null;
+    }
+
+    /** Highlights currently playing song */
+    highlightPlaying() {
+        const id = this.getPlayingId();
+        highlightLibrary(id);
+        highlightPlaylist(id);
+        highlightAlbumSong(id);
+        highlightArtistSong(id);
     }
 }

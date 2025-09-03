@@ -95,26 +95,17 @@ class App {
     }
 
     /**
-     * Sets the current song index in the playlist.
-     * @param {?number} id - index of the current song in the playlist.
-     */
-    setCurrent(id) {
-        this.player.playlist.current = id;
-        updateCurrent(this.player.getPlaying());
-        this.highlightLibrary();
-        this.highlightPlaylist();
-    }
-
-    /**
      * Sets the active playlist to the given one, updates UI.
      * @param {*} playlist - playlist to set as active.
      */
     setPlaylist(playlist) {
         this.player.playlist =
             Playlist.from(playlist, p => this.#parsePlaylist(p));
-        if (this.playlistTab === 0)
+        if (this.playlistTab === 0) {
             this.displayPlaylist();
-        this.highlightLibrary();
+            this.createBarSongs();
+        }
+        this.player.highlightPlaying();
         updateCurrent(this.player.getPlaying());
     }
 
@@ -181,7 +172,7 @@ class App {
 
         showPlaylist(this.playlistTab);
         updateCurrent(this.player.getPlaying());
-        this.highlightLibrary();
+        this.player.highlightPlaying();
     }
 
     /**
@@ -344,7 +335,6 @@ class App {
 
     updateBarSongs() {
         const current = this.player.getPlayingId();
-
         const playlist = document.querySelector('.bar .playlist');
         const list = playlist.querySelector('.songs');
 
@@ -354,18 +344,10 @@ class App {
             this.#getBufferPos(playlist, this.player.playlist.songs.length,
                 top, bottom, 32);
 
-        const getItem = id => {
-            const song = this.player.playlist.songs[id];
-            const item = song.getBarRow(id);
-            item.dataset.index = id;
-            if (song.id === current)
-                item.classList.add('active');
-            return item;
-        }
         for (let i = this.barBuffer.start - 1; i >= start; i--)
-            top.after(getItem(i));
+            top.after(this.#getItem(i, current));
         for (let i = this.barBuffer.end; i < end; i++) {
-            bottom.before(getItem(i));
+            bottom.before(this.#getItem(i, current));
         }
 
         const removeItem = row => {
@@ -413,9 +395,26 @@ class App {
         const song = songs[id];
         const row = song.getTableRow();
         row.dataset.index = id;
+        row.dataset.songId = song.id;
         if (song.id === current)
             row.classList.add('active');
         return row;
+    }
+
+    /**
+     * Gets bar playlist item for the given song id
+     * @param {number} id - song id to get the row for
+     * @param {number} current - song id of the currently playing song
+     * @returns {HTMLTableRowElement} table row for the given song id
+     */
+    #getItem(id, current) {
+        const song = this.player.playlist.songs[id];
+        const item = song.getBarRow(id);
+        item.dataset.index = id;
+        item.dataset.songId = song.id;
+        if (song.id === current)
+            item.classList.add('active');
+        return item;
     }
 
     displayAlbums() {
@@ -433,29 +432,6 @@ class App {
         });
     }
 
-    /**
-     * Highlights currently playing song in the library
-     */
-    highlightLibrary() {
-        const song = this.player.getPlaying();
-
-        const rows = document.querySelectorAll('#library .songs tbody tr');
-        for (const row of rows) {
-            row.classList.remove('active');
-            if (song === this.songs[row.dataset.index]) {
-                row.classList.add('active');
-            }
-        }
-    }
-
-    /**
-     * Highlights currently playing song in the playlist
-     */
-    highlightPlaylist() {
-        highlightPlaylist(this.player.playlist.current);
-        highlightBarPlaylist(this.player.playlist.current);
-    }
-
     updateAll() {
         this.displayProgress(0);
         this.handleSongProgress();
@@ -466,9 +442,7 @@ class App {
         updateVolume(this.player.volume, this.player.mute);
     }
 
-    /**
-     * Handles song progress bar updates
-     */
+    /** Handles song progress bar updates */
     handleSongProgress() {
         if (this.player.isPlaying()) {
             this.lastUpdate = performance.now();
@@ -479,9 +453,7 @@ class App {
         }
     }
 
-    /**
-     * Stops the song progres bar updates
-     */
+    /** Stops the song progres bar updates */
     stopProgress() {
         if (this.radId !== null) {
             cancelAnimationFrame(this.rafId);
@@ -489,9 +461,7 @@ class App {
         }
     }
 
-    /**
-     * Updates progress bar based on delta time
-     */
+    /** Updates progress bar based on delta time */
     updateProgressBar() {
         if (!this.player.isPlaying()) return;
 
@@ -626,7 +596,7 @@ class App {
         if (!card) return;
 
         this.album = albums[card.dataset.index];
-        displayAlbum(this.album);
+        displayAlbum(this.album, this.player.getPlayingId());
         showScreen('album-detail');
     }
 
@@ -639,13 +609,13 @@ class App {
         const album = e.target.closest('.albums-preview img');
         if (!album) {
             this.artist = artist;
-            displayArtist(this.artist);
+            displayArtist(this.artist, this.player.getPlayingId());
             showScreen('artist-detail');
             return;
         }
 
         this.album = artist.albums[album.dataset.index];
-        displayAlbum(this.album);
+        displayAlbum(this.album, this.player.getPlayingId());
         showScreen('album-detail');
     }
 

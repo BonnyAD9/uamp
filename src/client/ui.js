@@ -59,46 +59,28 @@ function updateVolume(volume, mute = false) {
     volumeIcon.src = `assets/svg/${icon}`;
 }
 
-/**
- * Highlights song with with given index in the library
- * @param {?number} index - song index in the library
- */
-function highlightLibrary(index) {
-    const rows = document.querySelectorAll('#library .songs tbody tr');
-    this.highlightPlaying(index, rows)
+const highlightLibrary = id =>
+    highlightPlaying(id, document.querySelector('#library .songs tbody'));
+const highlightPlaylist = id => {
+    highlightPlaying(
+        id, document.querySelector('#playlist .playlist-stack tbody')
+    );
+    highlightPlaying(id, document.querySelector('.bar .playlist .songs'));
 }
+const highlightAlbumSong = id =>
+    highlightPlaying(id, document.querySelector('#album-detail .songs tbody'));
+const highlightArtistSong = id =>
+    highlightPlaying(id, document.querySelector('#artist-detail .songs tbody'));
 
 /**
- * Highlights song with given index in the playlist
- * @param {?number} index - song index in the playlist
+ * Highlights song with given index in the given song elements
+ * @param {?number} songId - index of the song to highlight
+ * @param {HTMLElement} container - element containing the songs
  */
-function highlightPlaylist(index) {
-    const table = document.querySelector('#playlist .playlist-stack tbody');
-    const rows = table.querySelectorAll('tr');
-    highlightPlaying(index, rows);
-}
-
-const barPlaylist = document.querySelector('.bar .playlist .songs');
-/**
- * Highlights songs with given index in the playlist
- * @param {?number} index - song index in the playlist
- */
-function highlightBarPlaylist(index) {
-    const items = barPlaylist.querySelectorAll('.item');
-    highlightPlaying(index, items);
-}
-
-/**
- * Highlights song with given index in the given song rows
- * @param {?number} index - index of the song to highlight
- * @param {NodeListOf<HTMLTableRowElement>} rows - song table rows
- */
-function highlightPlaying(index, rows) {
-    for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        row.classList.remove('active');
-        if (index === i)
-            row.classList.add('active');
+function highlightPlaying(songId, container) {
+    for (const child of container.children) {
+        const id = child.dataset.songId;
+        child.classList.toggle('active', Number(id) === songId);
     }
 }
 
@@ -203,20 +185,19 @@ const albumBackdrop = document.querySelector('#album-detail .backdrop');
  * Displays album in the album details page
  * @param {Album} album
  */
-function displayAlbum(album) {
+function displayAlbum(album, id) {
     albumInfo.querySelector('img').src =
         Album.getCover(album.artist, album.name);
     // albumBackdrop.src = Album.getCover(album.artist, album.name, 64);
     albumInfo.querySelector('.name').textContent = album.name;
     albumInfo.querySelector('.artist').textContent = album.artist;
-    albumInfo.query
 
     let other = album.getYear() !== '-' ? `${album.getYear()}  •  ` : '';
     albumInfo.querySelector('.other').textContent =
         `${other}${album.songs.length} songs`;
 
     const albumSongs = document.querySelector('#album-detail .songs');
-    displaySongs(albumSongs, album.songs, false);
+    displaySongs(albumSongs, album.songs, false, id);
 }
 
 const artistInfo = document.querySelector('#artist-detail .info');
@@ -225,13 +206,13 @@ const artistAlbums = document.querySelector('#artist-detail .list');
  * Displays artist in the artist details page
  * @param {Artist} artist
  */
-function displayArtist(artist) {
+function displayArtist(artist, id) {
     artistInfo.querySelector('.name').textContent = artist.name;
     artistInfo.querySelector('.other').textContent = artist.getOtherDetails();
 
     displayAlbums(artistAlbums, artist.albums);
     const artistSongs = document.querySelector('#artist-detail .songs');
-    displaySongs(artistSongs, artist.songs);
+    displaySongs(artistSongs, artist.songs, true, id);
 }
 
 /**
@@ -240,16 +221,18 @@ function displayArtist(artist) {
  * @param {Song[]} songs - songs to be displayed
  * @param {boolean} icons - whether to display icons
  */
-function displaySongs(table, songs, icons = true) {
+function displaySongs(table, songs, icons = true, id = null) {
     const body = table.querySelector('tbody');
     body.innerHTML = '';
 
     songs.forEach((song, i) => {
         const row = song.getTableRow();
         row.dataset.index = i;
-
+        row.dataset.songId = song.id;
         if (!icons)
             row.querySelector('.cover').remove();
+        if (id === song.id)
+            row.classList.add('active')
 
         body.appendChild(row);
     });
