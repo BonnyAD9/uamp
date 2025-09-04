@@ -1,3 +1,9 @@
+import App from "./app.js";
+import './colors.js';
+import {
+    getSongsTable, spawnAlbumDetailTable, spawnPlaylistTable
+} from "./ui.js";
+
 const AppSingleton = (() => {
     let instance = null;
 
@@ -11,6 +17,7 @@ const AppSingleton = (() => {
         }
     }
 })();
+window.AppSingleton = AppSingleton;
 
 const eventSource = new EventSource('/api/sub');
 
@@ -20,8 +27,6 @@ eventSource.addEventListener('set-all', async e => {
 
     setTimeout(() => {
         app.updateAll();
-        // app.displayPlaylist();
-        // app.updateBarSongs();
         app.displayAlbums();
         app.displayArtists();
     }, 0);
