@@ -1,3 +1,5 @@
+import Album from "./library/album.js";
+
 const pausePlayP1 = document.getElementById("from_pause_to_play_p1");
 const playPauseP1 = document.getElementById("from_play_to_pause_p1");
 const pausePlayP2 = document.getElementById("from_pause_to_play_p2");
@@ -6,7 +8,7 @@ const playPauseP2 = document.getElementById("from_play_to_pause_p2");
  * Updates the play button based on the playing state
  * @param {boolean} playing - whether player is playing or not
  */
-function updatePlayBtn(playing) {
+export function updatePlayBtn(playing) {
     if (playing) {
         playPauseP1.beginElement();
         playPauseP2.beginElement();
@@ -16,7 +18,7 @@ function updatePlayBtn(playing) {
     }
 }
 
-const songIcon = document.querySelector('.bar .info .info-pic img');
+export const songIcon = document.querySelector('.bar .info .info-pic img');
 const songTitle = document.querySelector('.bar .info .title h3');
 const songArtist = document.querySelector('.bar .info .title h4');
 const barBackdrop = document.querySelector('.bar .backdrop');
@@ -24,7 +26,7 @@ const barBackdrop = document.querySelector('.bar .backdrop');
  * Updates the currently playing song info
  * @param {?Song} song - currently playing song
  */
-function updateCurrent(song) {
+export function updateCurrent(song) {
     if (song === null) {
         songTitle.textContent = 'Not Playing...';
         songArtist.textContent = '';
@@ -49,7 +51,7 @@ const volumeIcon = document.querySelector('.volume img');
  * @param {number} volume - current playback volume
  * @param {boolean} mute - mute state
  */
-function updateVolume(volume, mute = false) {
+export function updateVolume(volume, mute = false) {
     const perVolume = Math.round(volume * 100);
     volumeSlider.value = perVolume;
     volumeValue.textContent = perVolume;
@@ -59,17 +61,17 @@ function updateVolume(volume, mute = false) {
     volumeIcon.src = `assets/svg/${icon}`;
 }
 
-const highlightLibrary = id =>
+export const highlightLibrary = id =>
     highlightPlaying(id, document.querySelector('#library .songs tbody'));
-const highlightPlaylist = id => {
+export const highlightPlaylist = id => {
     highlightPlaying(
         id, document.querySelector('#playlist .playlist-stack tbody')
     );
     highlightPlaying(id, document.querySelector('.bar .playlist .songs'));
 }
-const highlightAlbumSong = id =>
+export const highlightAlbumSong = id =>
     highlightPlaying(id, document.querySelector('#album-detail .songs tbody'));
-const highlightArtistSong = id =>
+export const highlightArtistSong = id =>
     highlightPlaying(id, document.querySelector('#artist-detail .songs tbody'));
 
 /**
@@ -77,18 +79,18 @@ const highlightArtistSong = id =>
  * @param {?number} songId - index of the song to highlight
  * @param {HTMLElement} container - element containing the songs
  */
-function highlightPlaying(songId, container) {
+export function highlightPlaying(songId, container) {
     for (const child of container.children) {
         const id = child.dataset.songId;
         child.classList.toggle('active', Number(id) === songId);
     }
 }
 
-const playlists = document.querySelector('#playlist .playlist-wrapper');
+export const playlists = document.querySelector('#playlist .playlist-wrapper');
 /**
  * Pushes empty playing table to the playlist stack
  */
-function pushPlaylist() {
+export function pushPlaylist() {
     const table = getSongsTable(e => AppSingleton.get().playlistClick(e));
     table.classList.add('playlist-stack');
 
@@ -99,7 +101,7 @@ function pushPlaylist() {
 /**
  * Pops playlist from the playlist stack, sets the playing table as well
  */
-function popPlaylist() {
+export function popPlaylist() {
     const tables = playlists.querySelectorAll('.playlist-stack');
     if (tables.length < 2) return;
 
@@ -111,7 +113,7 @@ function popPlaylist() {
  * Reorders playlists based on the given indexes.
  * @param {number[]} indexes - reorder indexes containing all playlists.
  */
-function reorderPlaylists(indexes) {
+export function reorderPlaylists(indexes) {
     const wrapper = document.querySelector('.playlist-wrapper');
     const tables =
         Array.from(wrapper.querySelectorAll('#playlist .playlist-stack'));
@@ -124,7 +126,7 @@ function reorderPlaylists(indexes) {
  * Removes row of the playing playlist based on the given row ID
  * @param {number} id - row ID to be removed
  */
-function removePlaylistRow(id) {
+export function removePlaylistRow(id) {
     const table = playlists.querySelector('#playlist .playlist-stack tbody');
     const rows = table.querySelectorAll('tr');
     if (rows.length <= id) return;
@@ -134,11 +136,12 @@ function removePlaylistRow(id) {
     rows[id].remove();
 }
 
-const playlistTabs = document.querySelector('#playlist .tabs .tabs-wrapper');
+export const playlistTabs =
+    document.querySelector('#playlist .tabs .tabs-wrapper');
 /**
  * Adds new playlist tab to the end
  */
-function pushPlaylistTab(i = null) {
+export function pushPlaylistTab(i = null) {
     const tab = document.createElement('button');
     tab.classList.add('tab');
 
@@ -152,7 +155,7 @@ function pushPlaylistTab(i = null) {
 /**
  * Removes the last playlist tab
  */
-function popPlaylistTab() {
+export function popPlaylistTab() {
     const tabs = playlistTabs.querySelectorAll('.tab:not(#playingPlaylist)');
     if (tabs.length == 0) return;
     tabs[tabs.length - 1].remove();
@@ -162,7 +165,7 @@ function popPlaylistTab() {
  * Displays a playlist based on its ID in the playlist stack
  * @param {number} id - ID of the playlist stack
  */
-function showPlaylist(id) {
+export function showPlaylist(id) {
     const tabs = playlistTabs.querySelectorAll('.tab');
     const playlistStacks = playlists.querySelectorAll('.playlist-stack');
 
@@ -185,7 +188,7 @@ const albumBackdrop = document.querySelector('#album-detail .backdrop');
  * Displays album in the album details page
  * @param {Album} album
  */
-function displayAlbum(album, id) {
+export function displayAlbum(album, id) {
     albumInfo.querySelector('img').src =
         Album.getCover(album.artist, album.name);
     // albumBackdrop.src = Album.getCover(album.artist, album.name, 64);
@@ -206,7 +209,7 @@ const artistAlbums = document.querySelector('#artist-detail .list');
  * Displays artist in the artist details page
  * @param {Artist} artist
  */
-function displayArtist(artist, id) {
+export function displayArtist(artist, id) {
     artistInfo.querySelector('.name').textContent = artist.name;
     artistInfo.querySelector('.other').textContent = artist.getOtherDetails();
 
@@ -221,7 +224,7 @@ function displayArtist(artist, id) {
  * @param {Song[]} songs - songs to be displayed
  * @param {boolean} icons - whether to display icons
  */
-function displaySongs(table, songs, icons = true, id = null) {
+export function displaySongs(table, songs, icons = true, id = null) {
     const body = table.querySelector('tbody');
     body.innerHTML = '';
 
@@ -243,7 +246,7 @@ function displaySongs(table, songs, icons = true, id = null) {
  * @param {HTMLDivElement} list
  * @param {Album[]} albums
  */
-function displayAlbums(list, albums) {
+export function displayAlbums(list, albums) {
     list.innerHTML = '';
     albums.forEach((album, i) => {
         const card = album.getCard();
@@ -252,19 +255,21 @@ function displayAlbums(list, albums) {
     });
 }
 
-function toggleBar() {
+const bar = document.querySelector('section.bar');
+export function toggleBar() {
     bar.classList.toggle('expanded');
     if (bar.classList.contains('expanded'))
         setTimeout(() => AppSingleton.get().createBarSongs(), 200);
 }
+window.toggleBar = toggleBar;
 
-const tableTemplate = document.getElementById('songs-template');
+export const tableTemplate = document.getElementById('songs-template');
 /**
  * Gets empty songs table
  * @param {(e: MouseEvent)} onclick - on click event handler
  * @returns {HTMLTableElement} empty songs table
  */
-function getSongsTable(onclick) {
+export function getSongsTable(onclick) {
     const cloned = tableTemplate.content.cloneNode(true);
     const table = cloned.querySelector('table');
     const tbody = table.querySelector('tbody');
@@ -272,13 +277,13 @@ function getSongsTable(onclick) {
     return table;
 }
 
-function spawnPlaylistTable() {
+export function spawnPlaylistTable() {
     const table = getSongsTable(e => AppSingleton.get().playlistClick(e));
     table.classList.add('playlist-stack', 'active');
     document.querySelector('#playlist .playlist-wrapper').appendChild(table);
 }
 
-function spawnAlbumDetailTable() {
+export function spawnAlbumDetailTable() {
     const table = getSongsTable(e => AppSingleton.get().albumSongClick(e));
     table.querySelector('.col-img').remove();
     table.querySelector('thead tr th').remove();
@@ -289,6 +294,6 @@ function spawnAlbumDetailTable() {
 document.getElementById('library')
     .appendChild(getSongsTable(e => AppSingleton.get().libraryClick(e)));
 document.getElementById('artist-detail')
-    .appendChild(getSongsTable(e => AppSingleton.get().playlistClick(e)));
+    .appendChild(getSongsTable(e => AppSingleton.get().artistSongClick(e)));
 spawnPlaylistTable();
 spawnAlbumDetailTable();

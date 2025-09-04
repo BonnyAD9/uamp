@@ -1,22 +1,29 @@
-const songsElement = document.querySelector('#library .songs tbody');
+import Duration from "./helper/duration.js";
+import Timestamp from "./helper/timestamp.js";
+import Album from "./library/album.js";
+import Artist from "./library/artist.js";
+import Library from "./library/library.js";
+import Song from "./library/song.js";
+import Player from "./player/player.js";
+import Playlist from "./player/playlist.js";
+import Config from "./settings.js";
+import {
+    displayAlbum, displayAlbums, displayArtist, playlists, playlistTabs,
+    popPlaylist, popPlaylistTab, pushPlaylist, pushPlaylistTab,
+    reorderPlaylists, showPlaylist, tableTemplate, updateCurrent, updatePlayBtn, updateVolume
+} from "./ui.js";
+
 const slider = document.querySelector('.bar .slider hr');
 
-class App {
+export default class App {
     /**
      * @param {object} data
      * @param {Config} config
      */
     constructor(data, config) {
-        /** @type {{ songs: Song[], tmp_songs: Song[] }} */
-        this.library = {
-            songs: data.library.songs.map((s, i) => Song.from(i, s)),
-            tmp_songs: data.library.tmp_songs.map(
-                (s, i) => Song.from(-i - 1, s)
-            ),
-        };
-
+        this.library = new Library(data.library);
         /** @type {Player} */
-        this.player = Player.from(data.player, p => this.#parsePlaylist(p));
+        this.player = new Player(data.player, this.library);
         /** @type {Timestamp} */
         this.position = data.position && Timestamp.from(data.position);
         /** @type {Config} */
@@ -27,13 +34,6 @@ class App {
         this.rafId = null;
 
         this.playlistTab = 0;
-
-        /** @type {Song[]} */
-        this.songs = [];
-        /** @type {Album[]} */
-        this.albums = [];
-        /** @type {Artist[]} */
-        this.artists = [];
 
         /** @type {?Album} */
         this.album = null;
@@ -46,8 +46,6 @@ class App {
         this.playlistBuffer = { start: 0, end: 0 };
         /** @type {{ start: number, end: number }} */
         this.barBuffer = { start: 0, end: 0 };
-
-        this.generateLibraryData();
 
         document.querySelector('#library').onscroll = () => this.updateSongs();
         document.querySelector('#playlist').onscroll =
@@ -66,8 +64,8 @@ class App {
      */
     getSong(id) {
         if (id < 0)
-            return this.library.tmp_songs[-id - 1];
-        return this.library.songs[id];
+            return this.library.tmpSongs[-id - 1];
+        return this.library.allSongs[id];
     }
 
     /**
@@ -99,8 +97,7 @@ class App {
      * @param {*} playlist - playlist to set as active.
      */
     setPlaylist(playlist) {
-        this.player.playlist =
-            Playlist.from(playlist, p => this.#parsePlaylist(p));
+        this.player.playlist = new Playlist(playlist, this.library);
         if (this.playlistTab === 0) {
             this.displayPlaylist();
             this.createBarSongs();
@@ -148,6 +145,7 @@ class App {
         this.playlistTab = Math.max(0, this.playlistTab);
         showPlaylist(this.playlistTab);
         updateCurrent(this.player.getPlaying());
+        this.displayPlaylist();
         return prev;
     }
 
@@ -182,7 +180,7 @@ class App {
     setPlaylistTab(id) {
         this.playlistTab = id;
         showPlaylist(id);
-        this.displayPlaylist(this.player.getPlaylist(id));
+        this.displayPlaylist();
     }
 
     /**
@@ -192,11 +190,11 @@ class App {
     pushTmpSongs(songs) {
         for (const [song, tid] of songs) {
             const id = -tid - 1;
-            while (this.library.tmp_songs.length <= id) {
-                const eid = -this.library.tmp_songs.length;
-                this.library.tmp_songs.push(Song.empty(eid));
+            while (this.library.tmpSongs.length <= id) {
+                const eid = -this.library.tmpSongs.length;
+                this.library.tmpSongs.push(Song.empty(eid));
             }
-            this.library.tmp_songs[id] = Song.from(tid, song);
+            this.library.tmpSongs[id] = Song.from(tid, song);
         }
     }
 
@@ -205,14 +203,15 @@ class App {
     displaySongs() {
         const library = document.querySelector('#library');
         const table = library.querySelector('table.songs tbody');
-        this.songsBuffer = this.genericDisplaySongs(library, table, this.songs);
+        this.songsBuffer =
+            this.genericDisplaySongs(library, table, this.library.songs);
     }
 
-    displayPlaylist(playlist = null) {
+    displayPlaylist() {
         const container = document.querySelector('#playlist');
         const table = container.querySelector('.playlist-stack.active tbody');
 
-        const songs = playlist ? playlist.songs : this.player.playlist.songs;
+        const songs = this.player.getPlaylist(this.playlistTab).songs;
         this.playlistBuffer = this.genericDisplaySongs(container, table, songs);
     }
 
@@ -221,15 +220,16 @@ class App {
         const library = document.querySelector('#library');
         const table = library.querySelector('table.songs tbody');
         this.songsBuffer = this.genericUpdateSongs(
-            library, table, this.songs, this.songsBuffer
+            library, table, this.library.songs, this.songsBuffer
         );
     }
 
     updatePlaylist() {
         const playlist = document.querySelector('#playlist');
         const table = playlist.querySelector('.playlist-stack.active tbody');
+        const songs = this.player.getPlaylist(this.playlistTab).songs;
         this.playlistBuffer = this.genericUpdateSongs(
-            playlist, table, this.player.playlist.songs, this.playlistBuffer
+            playlist, table, songs, this.playlistBuffer
         );
     }
 
@@ -264,6 +264,7 @@ class App {
     }
 
     /**
+     * TODO: playlist stack should highlight only their song
      * Updates songs table in the given container with virtual scrolling.
      * @param {HTMLElement} container - scrollable container with songs table
      * @param {HTMLElement} table - songs table body
@@ -419,13 +420,13 @@ class App {
 
     displayAlbums() {
         const albums = document.querySelector('#albums .list');
-        displayAlbums(albums, this.albums);
+        displayAlbums(albums, this.library.albums);
     }
 
     displayArtists() {
         const artists = document.querySelector('#artists .songs tbody');
         artists.innerHTML = '';
-        this.artists.forEach((artist, i) => {
+        this.library.artists.forEach((artist, i) => {
             const row = artist.getTableRow();
             row.dataset.index = i;
             artists.appendChild(row);
@@ -588,7 +589,7 @@ class App {
         apiCtrl(`pj=${item.dataset.index}`);
     }
 
-    albumClick = (e) => this.genericAlbumClick(e, this.albums);
+    albumClick = (e) => this.genericAlbumClick(e, this.library.albums);
     albumArtistClick = (e) => this.genericAlbumClick(e, this.artist.albums);
 
     genericAlbumClick(e, albums) {
@@ -604,7 +605,7 @@ class App {
         const row = e.target.closest('tr');
         if (!row) return;
 
-        const artist = this.artists[row.dataset.index];
+        const artist = this.library.artists[row.dataset.index];
 
         const album = e.target.closest('.albums-preview img');
         if (!album) {
@@ -617,51 +618,6 @@ class App {
         this.album = artist.albums[album.dataset.index];
         displayAlbum(this.album, this.player.getPlayingId());
         showScreen('album-detail');
-    }
-
-    generateLibraryData() {
-        const albums = new Map();
-        const artists = new Map();
-
-        for (const song of this.library.songs) {
-            if (song.deleted) continue;
-
-            this.songs.push(song);
-            const artistKey = song.artist.trim().toLowerCase();
-            if (!artists.has(artistKey)) {
-                artists.set(artistKey, new Artist(song.artist));
-            }
-
-            const artist = artists.get(artistKey);
-            artist.songs.push(song);
-
-            const albumKey = `${song.album.trim().toLowerCase()}::${artistKey}`;
-            if (!albums.has(albumKey)) {
-                albums.set(
-                    albumKey,
-                    new Album(song.album, song.artist, song.year)
-                );
-                artist.albums.push(albums.get(albumKey));
-            }
-            albums.get(albumKey).songs.push(song);
-        }
-
-        this.albums = Array.from(albums.values());
-        this.albums.forEach(album => album.sortByTrack());
-
-        this.artists = Array.from(artists.values());
-        this.artists.sort((a, b) => a.name.localeCompare(b.name));
-        this.artists.forEach(artist => artist.sortAlbums());
-    }
-
-    #parsePlaylist(playlist) {
-        let parsed = [];
-        for (const id of playlist) {
-            const song = this.getSong(id);
-            if (song === null || song.deleted === true) continue;
-            parsed.push(song);
-        }
-        return parsed;
     }
 }
 
@@ -677,7 +633,7 @@ navs.forEach(item => {
         showScreen(targetId);
         if (targetId === 'playlist') {
             const app = AppSingleton.get();
-            app.displayPlaylist(app.player.getPlaylist(app.playlistTab));
+            app.displayPlaylist();
         }
     });
 });
@@ -721,3 +677,4 @@ function apiCtrl(query) {
             console.error('Fetch error:', error);
         });
 }
+window.apiCtrl = apiCtrl;

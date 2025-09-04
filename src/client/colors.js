@@ -1,3 +1,6 @@
+import { getCookie } from "./settings.js";
+import { songIcon } from "./ui.js";
+
 function rgbToHsl(r, g, b) {
     r /= 255;
     g /= 255;
@@ -63,7 +66,7 @@ function rgbToRgbaCss(rgb, alpha = 1) {
 
 const colorThief = new ColorThief();
 
-function setupDynamicColors(dynamic) {
+export function setupDynamicColors(dynamic) {
     if (dynamic) {
         setDynamicColors();
         songIcon.onload = setDynamicColors;
@@ -73,12 +76,12 @@ function setupDynamicColors(dynamic) {
     }
 }
 
-function applyThemeColor(color) {
+export function applyThemeColor(color) {
     if ((getCookie('dynamicColor') ?? 'true') !== 'true')
         document.documentElement.style.setProperty('--primary', color);
 }
 
-function setDynamicColors() {
+export function setDynamicColors() {
     const dominantRgb = colorThief.getColor(songIcon);
     const [h, s, _] = rgbToHsl(...dominantRgb);
     const root = document.documentElement;
@@ -106,7 +109,7 @@ function setDynamicColors() {
     root.style.setProperty('--fg-sec2', rgbToCss(hslToRgb(h, s * 0.2, 0.4)));
 }
 
-function resetColors() {
+export function resetColors() {
     const root = document.documentElement;
     root.style.removeProperty('--bg');
     root.style.removeProperty('--bg-trans');

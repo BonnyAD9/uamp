@@ -1,3 +1,5 @@
+import { applyThemeColor, setupDynamicColors } from "./colors.js";
+
 const settingsTabs = document.querySelector('#settings .tabs .tabs-wrapper');
 const bar = document.querySelector('section.bar');
 
@@ -9,7 +11,7 @@ const listTemplate = document.getElementById('list-setting');
 const listItemTemplate = document.getElementById('list-item-setting');
 const colorTemplate = document.getElementById('color-setting');
 
-class Config {
+export default class Config {
     constructor(data, schema) {
         this.schema = schema;
         Object.assign(this, data);
@@ -27,6 +29,7 @@ class Config {
     }
 
     render() {
+        displayAppearanceSettings();
         const content = document.querySelector('#settings .settings-wrapper');
 
         settingsTabs.querySelectorAll('.tab').forEach((tab, i) => {
@@ -64,10 +67,6 @@ class Config {
             tab.onclick = () => Config.showPage(id + 1);
             settingsTabs.appendChild(tab);
         }
-    }
-
-    render_appearance() {
-
     }
 
     getSettingElement(key, setting) {
@@ -356,7 +355,7 @@ class Config {
  * @param {*} value - cookie value
  * @param {integer} days - days the cookie is valid for
  */
-function setCookie(name, value, days = 365) {
+export function setCookie(name, value, days = 365) {
     const expires = new Date(Date.now() + days * 864e5).toUTCString();
     document.cookie = `${name}=${encodeURIComponent(value)}; ` +
         `expires=${expires}; path=/`;
@@ -367,7 +366,7 @@ function setCookie(name, value, days = 365) {
  * @param {string} name - name of the cookie
  * @returns {?string} cookie value when found, else null
  */
-function getCookie(name) {
+export function getCookie(name) {
     return document.cookie.split('; ').reduce((acc, part) => {
         const [k, v] = part.split('=');
         return k === name ? decodeURIComponent(v) : acc;
@@ -414,8 +413,6 @@ function displayAppearanceSettings() {
     });
     appearSettings.appendChild(themeColorPicker);
 }
-
-displayAppearanceSettings();
 
 // Config properties group mapping
 var settingsGroups = [
