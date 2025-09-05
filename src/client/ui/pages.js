@@ -1,4 +1,4 @@
-import Album from "./library/album.js";
+import Album from "../library/album.js";
 
 const albumsList = document.querySelector('#albums .list');
 /**
