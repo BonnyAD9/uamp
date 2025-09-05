@@ -348,6 +348,7 @@ export default class Config {
         }
     }
 }
+window.Config = Config;
 
 /**
  * Sets cookie with given name to given value

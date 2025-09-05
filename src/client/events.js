@@ -1,5 +1,6 @@
 import App from "./app.js";
 import './colors.js';
+import { removePlaylistRow } from "./ui/tables.js";
 
 const AppSingleton = (() => {
     let instance = null;

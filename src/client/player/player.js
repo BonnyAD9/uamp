@@ -1,7 +1,7 @@
+import { updateCurrent, updatePlayBtn, updateVolume } from "../ui/bar.js";
 import {
-    highlightAlbumSong, highlightArtistSong, highlightLibrary,
-    highlightPlaylist, updateCurrent, updatePlayBtn, updateVolume
-} from "../ui.js";
+    highlightAlbumSong, highlightArtistSong, highlightLibrary, highlightPlaylist
+} from "../ui/tables.js";
 import Playlist from "./playlist.js";
 
 export default class Player {

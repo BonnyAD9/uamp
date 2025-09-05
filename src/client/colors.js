@@ -1,5 +1,6 @@
 import { getCookie } from "./settings.js";
-import { songIcon } from "./ui.js";
+
+const songIcon = document.querySelector('.bar .info .info-pic img');
 
 function rgbToHsl(r, g, b) {
     r /= 255;

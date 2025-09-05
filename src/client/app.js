@@ -7,11 +7,12 @@ import Song from "./library/song.js";
 import Player from "./player/player.js";
 import Playlist from "./player/playlist.js";
 import Config from "./settings.js";
+import { updateCurrent, updatePlayBtn, updateVolume } from "./ui/bar.js";
+import { displayAlbum, displayAlbums, displayArtist, displayArtists } from "./ui/pages.js";
 import {
-    displayAlbum, displayAlbums, displayArtist, playlists, playlistTabs,
-    popPlaylist, popPlaylistTab, pushPlaylist, pushPlaylistTab,
-    reorderPlaylists, showPlaylist, tableTemplate, updateCurrent, updatePlayBtn, updateVolume
-} from "./ui.js";
+    displayPlaylistStack, popPlaylist, pushPlaylist, reorderPlaylists,
+    showPlaylist
+} from "./ui/tables.js";
 import VirtualTable from "./ui/virtual_table.js";
 
 const slider = document.querySelector('.bar .slider hr');
@@ -40,13 +41,6 @@ export default class App {
         this.album = null;
         /** @type {?Artist} */
         this.artist = null;
-
-        /** @type {{ start: number, end: number }} */
-        this.songsBuffer = { start: 0, end: 0 };
-        /** @type {{ start: number, end: number }} */
-        this.playlistBuffer = { start: 0, end: 0 };
-        /** @type {{ start: number, end: number }} */
-        this.barBuffer = { start: 0, end: 0 };
 
         this.libraryTable = new VirtualTable(
             () => this.library.songs,
@@ -120,7 +114,6 @@ export default class App {
             this.playlistTab += 1;
 
         pushPlaylist();
-        pushPlaylistTab();
         this.setPlaylist(playlist);
         showPlaylist(this.playlistTab);
     }
@@ -141,7 +134,6 @@ export default class App {
             this.player.playlist = this.player.playlist_stack.pop();
 
             popPlaylist();
-            popPlaylistTab();
             this.playlistTab -= 1;
         }
 
@@ -207,20 +199,8 @@ export default class App {
     displayPlaylist = () => this.playlistTable.render();
     createBarSongs = () => this.barPlaylistTable.render();
 
-    displayAlbums() {
-        const albums = document.querySelector('#albums .list');
-        displayAlbums(albums, this.library.albums);
-    }
-
-    displayArtists() {
-        const artists = document.querySelector('#artists .songs tbody');
-        artists.innerHTML = '';
-        this.library.artists.forEach((artist, i) => {
-            const row = artist.getTableRow();
-            row.dataset.index = i;
-            artists.appendChild(row);
-        });
-    }
+    displayAlbums = () => displayAlbums(this.library.albums);
+    displayArtists = () => displayArtists(this.library.artists);
 
     updateAll() {
         this.displayProgress(0);
@@ -290,59 +270,7 @@ export default class App {
     }
 
     displayPlaylistStack() {
-        playlistTabs.querySelectorAll('.tab:not(#playingPlaylist)')
-            .forEach(tab => tab.remove());
-        playlists.querySelectorAll('.playlist-stack')
-            .forEach((table, i) => i !== 0 && table.remove());
-
-        const len = this.player.playlist_stack.length;
-        for (let i = 1; i <= len; i++) {
-            const id = len - i;
-            const playlist = this.player.playlist_stack[id];
-
-            const cloned = this.getSongsTable(
-                playlist.songs,
-                playlist.current,
-                (e) => this.playlistClick(e)
-            );
-            playlists.appendChild(cloned);
-
-            const button = document.createElement('button');
-            button.classList.add('tab');
-            button.textContent = `-${i}`;
-            button.onclick = () => this.setPlaylistTab(i);
-            playlistTabs.appendChild(button);
-        }
-    }
-
-    /**
-     * Creates new songs table with the given songs
-     * @param {Array} songs - array of songs.
-     * @param {number} current - index of the current song.
-     * @param {Function} onClick - optional click handler for each song.
-     * @returns {HTMLTableElement}
-     */
-    getSongsTable(songs, current, onClick = (_) => { }) {
-        const cloned = tableTemplate.content.cloneNode(true);
-        const table = cloned.querySelector('table');
-        table.classList.add('playlist-stack');
-
-        const element = cloned.querySelector('tbody');
-        element.addEventListener('click', e => onClick(e));
-        element.innerHTML = '';
-
-        for (let i = 0; i < songs.length; i++) {
-            const song = songs[i];
-            if (song === null || song.deleted === true) continue;
-
-            const row = song.getTableRow();
-            row.dataset.index = i;
-            if (i === current)
-                row.classList.add('active');
-            element.appendChild(row);
-        }
-
-        return table;
+        displayPlaylistStack(this.player.playlist_stack.length);
     }
 
     libraryClick = e => this.genericSongClick(e, 'any');

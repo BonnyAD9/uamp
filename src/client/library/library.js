@@ -14,7 +14,7 @@ export default class Library {
         this.tmpSongs = library.tmp_songs.map((s, i) => Song.from(-i - 1, s));
 
         /** @type {Song[]} */
-        this.songs = []
+        this.songs = [];
         /** @type {Album[]} */
         this.albums = [];
         /** @type {Artist[]} */
