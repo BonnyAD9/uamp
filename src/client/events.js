@@ -1,8 +1,5 @@
 import App from "./app.js";
 import './colors.js';
-import {
-    getSongsTable, spawnAlbumDetailTable, spawnPlaylistTable
-} from "./ui.js";
 
 const AppSingleton = (() => {
     let instance = null;
