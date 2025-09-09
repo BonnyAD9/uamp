@@ -376,7 +376,7 @@ sliderTrack.addEventListener('click', e => {
     const percent = (e.clientX - rect.left) / rect.width;
 
     const app = AppSingleton.get();
-    const song = app.getPlaying();
+    const song = app.player.getPlaying();
 
     const pos = song.length.fromPercent(percent);
     apiCtrl(`seek=${pos.format()}`);
