@@ -69,6 +69,10 @@ pub fn default_http_client_path() -> PathBuf {
     "/usr/share/uamp/skins/default-uamp.tar".into()
 }
 
+pub fn default_plugin_folder() -> PathBuf {
+    "/usr/share/uamp/plugins".into()
+}
+
 /// Gets the default path to json configuration, it is different when debugging
 pub fn default_config_path() -> PathBuf {
     default_config_dir().join("config.json")
