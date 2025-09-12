@@ -72,6 +72,7 @@ void FfmpegDecoder::read(std::span<char> buf, std::size_t &written) {
     }
     while (buf.size() > written) {
         if (!_ps.read_frame(_pkt)) {
+            // TODO: drain decoder
             return; // EOF
         }
 
