@@ -41,7 +41,12 @@ struct DecoderPluginSourceImpl {
     err: unsafe extern "C" fn(*mut c_void) -> CError,
     set_volume: Option<unsafe extern "C" fn(*mut c_void, CVolumeIterator)>,
     set_config: unsafe extern "C" fn(*mut c_void, *const CDeviceConfig),
-    read: unsafe extern "C" fn(*mut c_void, *mut c_void, usize, CSampleFormat) -> usize,
+    read: unsafe extern "C" fn(
+        *mut c_void,
+        *mut c_void,
+        usize,
+        CSampleFormat,
+    ) -> usize,
     preferred_config:
         Option<unsafe extern "C" fn(*mut c_void) -> CDeviceConfig>,
     seek: Option<

@@ -21,7 +21,8 @@ Checks: '
   -readability-identifier-length,
   -readability-qualified-auto,
   -readability-implicit-bool-conversion,
-  -readability-named-parameter'
+  -readability-named-parameter,
+  -readability-math-missing-parentheses'
 FormatStyle: file
 
 CheckOptions:

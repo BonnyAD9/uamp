@@ -1,4 +1,4 @@
-use crate::core::plugin::ctypes::{CErrorType, CString};
+use crate::core::plugin::ctypes::CString;
 
 #[repr(C)]
 pub struct CError {

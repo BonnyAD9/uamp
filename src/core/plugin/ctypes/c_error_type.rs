@@ -13,7 +13,7 @@ impl CErrorType {
             0 => Some(Self::NoError),
             1 => Some(Self::Recoverable),
             2 => Some(Self::Fatal),
-            _ => None
+            _ => None,
         }
     }
 }

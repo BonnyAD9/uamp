@@ -467,7 +467,10 @@ impl UampApp {
             for d in read_dir(d)? {
                 let d = d?;
                 let p = d.path();
-                if p.is_file() {
+                if p.is_file()
+                    && let Some(ext) = p.extension()
+                    && ext == "so"
+                {
                     log_err("Failed to load plugin.", self.load_plugin(p));
                 }
             }

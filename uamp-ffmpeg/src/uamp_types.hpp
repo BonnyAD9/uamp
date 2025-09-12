@@ -4,8 +4,8 @@
 #include <cstdint>
 
 extern "C" {
-    
-enum class SampleFormat: std::int32_t {
+
+enum class SampleFormat : std::int32_t {
     UNKNOWN = 0,
     I8 = -8,
     I16 = -16,
@@ -37,7 +37,7 @@ struct String {
     void (*free)(const char *, std::size_t);
 };
 
-enum class ErrorType: std::int32_t {
+enum class ErrorType : std::int32_t {
     NO_ERROR = 0,
     RECOVERABLE = 1,
     FATAL = 2,
@@ -63,9 +63,7 @@ struct VolumeIterator {
     std::size_t cur_channel;
 };
 
-enum class PluginType : std::int32_t {
-    DECODER = 1
-};
+enum class PluginType : std::int32_t { DECODER = 1 };
 
 struct PluginConfig {
     std::uint32_t version;

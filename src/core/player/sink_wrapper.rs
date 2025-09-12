@@ -8,7 +8,7 @@ use raplay::{
 };
 
 use crate::core::{
-    Result,
+    Error, Result,
     library::{Library, LibraryUpdate, SongId},
     plugin::DecoderPlugin,
 };
@@ -233,13 +233,17 @@ impl SinkWrapper {
             Err(e) => e,
         };
 
+        let mut errs = vec![err.into()];
+
         for d in &self.decoder_plugins {
-            if let Ok(d) = d.open(p.as_ref()) {
-                return Ok(d);
+            match d.open(p.as_ref()) {
+                Ok(d) => return Ok(d),
+                Err(e) => errs.push(e),
             }
         }
 
-        Err(err.into())
+        Error::multiple(errs)?;
+        unreachable!();
     }
 
     fn load_inner(&mut self, src: Box<dyn Source>, play: bool) -> Result<()> {

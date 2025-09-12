@@ -25,7 +25,8 @@ impl From<CDeviceConfig> for DeviceConfig {
         DeviceConfig {
             channel_count: value.channel_count,
             sample_rate: value.sample_rate,
-            sample_format: CSampleFormat::from_value(value.sample_format).into(),
+            sample_format: CSampleFormat::from_value(value.sample_format)
+                .into(),
         }
     }
 }

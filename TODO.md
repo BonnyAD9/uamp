@@ -8,6 +8,7 @@
 - Grououping by albums and artists
 
 # known issues
+- Invalid playlist end action (on config save?)
 - *Lavish* -> *For a better day* wont play?
 - Mpris images not working (*im a loser*)
 - When playing some flac files, log will show error with end of stream. This is
