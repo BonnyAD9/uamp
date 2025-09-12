@@ -3,5 +3,5 @@ use crate::core::plugin::ctypes::{CErrorType, CString};
 #[repr(C)]
 pub struct CError {
     pub msg: CString,
-    pub typ: CErrorType,
+    pub typ: i32,
 }

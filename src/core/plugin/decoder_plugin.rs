@@ -15,6 +15,7 @@ use raplay::{
 };
 
 const CURRENT_VERSION: u32 = 0x00_001_000;
+const MAX_ERRS: usize = 1000;
 
 use crate::core::{
     Error, Result,
@@ -40,7 +41,7 @@ struct DecoderPluginSourceImpl {
     err: unsafe extern "C" fn(*mut c_void) -> CError,
     set_volume: Option<unsafe extern "C" fn(*mut c_void, CVolumeIterator)>,
     set_config: unsafe extern "C" fn(*mut c_void, *const CDeviceConfig),
-    read: unsafe extern "C" fn(*mut c_void, usize, CSampleFormat) -> usize,
+    read: unsafe extern "C" fn(*mut c_void, *mut c_void, usize, CSampleFormat) -> usize,
     preferred_config:
         Option<unsafe extern "C" fn(*mut c_void) -> CDeviceConfig>,
     seek: Option<
@@ -150,11 +151,11 @@ struct DecoderPluginSource {
 impl DecoderPluginSource {
     fn get_errors(&self) -> anyhow::Result<()> {
         let mut fatal = None;
-        loop {
+        for _ in 0..MAX_ERRS {
             let err = unsafe { (self.imp.err)(*self.data) };
-            match err.typ {
-                CErrorType::NoError => break,
-                CErrorType::Fatal if fatal.is_none() => {
+            match CErrorType::from_id(err.typ) {
+                Some(CErrorType::NoError) => break,
+                Some(CErrorType::Fatal) if fatal.is_none() => {
                     fatal =
                         Some(anyhow!("plugin {}: {}", self.imp.name, err.msg));
                 }
@@ -194,6 +195,7 @@ impl Source for DecoderPluginSource {
         let size = match buffer {
             SampleBufferMut::I8(items) => unsafe {
                 (self.imp.read)(
+                    *self.data,
                     *items as *mut _ as *mut c_void,
                     items.len(),
                     CSampleFormat::I8,
@@ -201,6 +203,7 @@ impl Source for DecoderPluginSource {
             },
             SampleBufferMut::I16(items) => unsafe {
                 (self.imp.read)(
+                    *self.data,
                     *items as *mut _ as *mut c_void,
                     items.len(),
                     CSampleFormat::I16,
@@ -208,6 +211,7 @@ impl Source for DecoderPluginSource {
             },
             SampleBufferMut::I32(items) => unsafe {
                 (self.imp.read)(
+                    *self.data,
                     *items as *mut _ as *mut c_void,
                     items.len(),
                     CSampleFormat::I32,
@@ -215,6 +219,7 @@ impl Source for DecoderPluginSource {
             },
             SampleBufferMut::I64(items) => unsafe {
                 (self.imp.read)(
+                    *self.data,
                     *items as *mut _ as *mut c_void,
                     items.len(),
                     CSampleFormat::I64,
@@ -222,6 +227,7 @@ impl Source for DecoderPluginSource {
             },
             SampleBufferMut::U8(items) => unsafe {
                 (self.imp.read)(
+                    *self.data,
                     *items as *mut _ as *mut c_void,
                     items.len(),
                     CSampleFormat::U8,
@@ -229,6 +235,7 @@ impl Source for DecoderPluginSource {
             },
             SampleBufferMut::U16(items) => unsafe {
                 (self.imp.read)(
+                    *self.data,
                     *items as *mut _ as *mut c_void,
                     items.len(),
                     CSampleFormat::U16,
@@ -236,6 +243,7 @@ impl Source for DecoderPluginSource {
             },
             SampleBufferMut::U32(items) => unsafe {
                 (self.imp.read)(
+                    *self.data,
                     *items as *mut _ as *mut c_void,
                     items.len(),
                     CSampleFormat::U32,
@@ -243,6 +251,7 @@ impl Source for DecoderPluginSource {
             },
             SampleBufferMut::U64(items) => unsafe {
                 (self.imp.read)(
+                    *self.data,
                     *items as *mut _ as *mut c_void,
                     items.len(),
                     CSampleFormat::U64,
@@ -250,6 +259,7 @@ impl Source for DecoderPluginSource {
             },
             SampleBufferMut::F32(items) => unsafe {
                 (self.imp.read)(
+                    *self.data,
                     *items as *mut _ as *mut c_void,
                     items.len(),
                     CSampleFormat::F32,
@@ -257,6 +267,7 @@ impl Source for DecoderPluginSource {
             },
             SampleBufferMut::F64(items) => unsafe {
                 (self.imp.read)(
+                    *self.data,
                     *items as *mut _ as *mut c_void,
                     items.len(),
                     CSampleFormat::F64,
@@ -349,11 +360,11 @@ unsafe fn get_errors(
     name: &str,
 ) -> anyhow::Result<()> {
     let mut fatal = None;
-    loop {
+    for _ in 0..MAX_ERRS {
         let err = unsafe { err(d) };
-        match err.typ {
-            CErrorType::NoError => break,
-            CErrorType::Fatal if fatal.is_none() => {
+        match CErrorType::from_id(err.typ) {
+            Some(CErrorType::NoError) => break,
+            Some(CErrorType::Fatal) if fatal.is_none() => {
                 fatal = Some(anyhow!("plugin {name}: {}", err.msg));
             }
             _ => {

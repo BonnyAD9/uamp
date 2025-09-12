@@ -6,7 +6,7 @@ use std::{ffi::c_char, fmt::Display};
 pub struct CString {
     data: *const c_char,
     len: usize,
-    free: unsafe extern "C" fn(*const u8, usize),
+    free: unsafe extern "C" fn(*const c_char, usize),
 }
 
 impl Display for CString {
@@ -20,6 +20,6 @@ impl Display for CString {
 
 impl Drop for CString {
     fn drop(&mut self) {
-        unsafe { (self.free)(self.data as *const _, self.len) };
+        unsafe { (self.free)(self.data, self.len) };
     }
 }

@@ -18,6 +18,25 @@ pub enum CSampleFormat {
     F64 = 6400,
 }
 
+impl CSampleFormat {
+    pub fn from_value(v: i32) -> Self {
+        match v {
+            -8 => Self::I8,
+            -16 => Self::I16,
+            -24 => Self::I24,
+            -32 => Self::I32,
+            -64 => Self::I64,
+            8 => Self::U8,
+            16 => Self::U16,
+            32 => Self::U16,
+            64 => Self::U64,
+            3200 => Self::F32,
+            6400 => Self::F64,
+            _ => Self::Unknown,
+        }
+    }
+}
+
 impl From<SampleFormat> for CSampleFormat {
     fn from(value: SampleFormat) -> Self {
         match value {

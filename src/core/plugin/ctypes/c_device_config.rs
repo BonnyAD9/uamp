@@ -7,7 +7,7 @@ use crate::core::plugin::ctypes::CSampleFormat;
 pub struct CDeviceConfig {
     pub channel_count: u32,
     pub sample_rate: u32,
-    pub sample_format: CSampleFormat,
+    pub sample_format: i32, // CSampleFormat
 }
 
 impl From<DeviceConfig> for CDeviceConfig {
@@ -15,7 +15,7 @@ impl From<DeviceConfig> for CDeviceConfig {
         Self {
             channel_count: value.channel_count,
             sample_rate: value.sample_rate,
-            sample_format: value.sample_format.into(),
+            sample_format: CSampleFormat::from(value.sample_format) as i32,
         }
     }
 }
@@ -25,7 +25,7 @@ impl From<CDeviceConfig> for DeviceConfig {
         DeviceConfig {
             channel_count: value.channel_count,
             sample_rate: value.sample_rate,
-            sample_format: value.sample_format.into(),
+            sample_format: CSampleFormat::from_value(value.sample_format).into(),
         }
     }
 }

@@ -1,0 +1,26 @@
+---
+BasedOnStyle: LLVM
+IndentWidth: 4
+---
+Language: Cpp
+AccessModifierOffset: -4
+AlignAfterOpenBracket: BlockIndent
+AllowShortFunctionsOnASingleLine: Inline
+BinPackArguments: false
+BinPackParameters: false
+BreakAfterAttributes: Always
+BreakConstructorInitializers: AfterColon
+ColumnLimit: 79
+Cpp11BracedListStyle: false
+IncludeBlocks: Regroup
+IncludeCategories:
+    - Regex: '<[^.]*>'
+      Priority: 1
+    - Regex: '^<.*\.h>$'
+      Priority: 2
+    - Regex: '".*"$'
+      Priority: 3
+PackConstructorInitializers: NextLine
+SpaceAfterTemplateKeyword: false
+SpaceInEmptyBlock: true
+PenaltyReturnTypeOnItsOwnLine: 200
