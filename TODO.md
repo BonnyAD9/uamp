@@ -2,9 +2,7 @@
 - Custom format for listing songs.
 - TUI
 - Tag editor
-- HTTP client
 - GUI
-- Images
 - Grououping by albums and artists
 
 # known issues
