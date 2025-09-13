@@ -91,6 +91,8 @@ pub enum Error {
     HyperHttp(Box<ErrCtx<hyper::http::Error>>),
     #[error("{}", .0.iter().map(|a| a.to_string()).join(""))]
     Multiple(Vec<Error>),
+    #[error("{0}")]
+    Libloading(Box<ErrCtx<libloading::Error>>),
 }
 
 macro_rules! map_ctx {
@@ -175,6 +177,10 @@ macro_rules! map_ctx {
             Error::InvalidValue(mut $ctx) => {
                 *$ctx = $f;
                 Error::InvalidValue($ctx)
+            }
+            Error::Libloading(mut $ctx) => {
+                *$ctx = $f;
+                Error::Libloading($ctx)
             }
             $($($p => $pb,)*)?
             e => e,
@@ -309,6 +315,7 @@ impl Error {
             Error::HyperHttp(err_ctx) => err_ctx.clone_universal(),
             Error::Multiple(v) if v.len() == 1 => v[0].clone_universal(),
             Error::InvalidValue(v) => v.clone_universal(),
+            Error::Libloading(v) => v.clone_universal(),
             e => e.to_string().into(),
         }
     }
@@ -363,6 +370,7 @@ impl_from!(
     std::net::AddrParseError => AddrParse,
     hyper::Error => Hyper,
     hyper::http::Error => HyperHttp,
+    libloading::Error => Libloading,
 );
 
 #[cfg(unix)]

@@ -8,8 +8,10 @@
 - Grououping by albums and artists
 
 # known issues
+- Invalid playlist end action (on config save?)
 - *Lavish* -> *For a better day* wont play?
 - Mpris images not working (*im a loser*)
+- Use ratag, skip symphonia for unsupported codecs.
 - When playing some flac files, log will show error with end of stream. This is
   bug has been fixed in symphona, but it is not yet released.
 - When output device doesn't support required sample rate, aliasing may occur.

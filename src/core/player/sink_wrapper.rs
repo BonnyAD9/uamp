@@ -1,4 +1,4 @@
-use std::{fmt::Debug, fs::File, time::Duration};
+use std::{fmt::Debug, fs::File, path::Path, time::Duration};
 
 use log::{error, warn};
 use raplay::{
@@ -8,8 +8,9 @@ use raplay::{
 };
 
 use crate::core::{
-    Result,
+    Error, Result,
     library::{Library, LibraryUpdate, SongId},
+    plugin::DecoderPlugin,
 };
 
 /// Wrapps the sink
@@ -18,6 +19,7 @@ pub struct SinkWrapper {
     sink: Sink,
     /// Configuration for symph sources
     symph: symph::Options,
+    decoder_plugins: Vec<DecoderPlugin>,
 }
 
 impl SinkWrapper {
@@ -34,7 +36,12 @@ impl SinkWrapper {
         Self {
             sink,
             symph: symph::Options::default(),
+            decoder_plugins: vec![],
         }
+    }
+
+    pub fn add_decoder_plugin(&mut self, plugin: DecoderPlugin) {
+        self.decoder_plugins.push(plugin)
     }
 
     /// Plays the given song.
@@ -48,16 +55,16 @@ impl SinkWrapper {
         id: SongId,
         play: bool,
     ) -> Result<()> {
-        let src = self.load_symph(lib, id)?;
+        let src = self.load_song(lib, id)?;
         self.unprefetch();
-        self.load_inner(Box::new(src), play)?;
+        self.load_inner(src, play)?;
         Ok(())
     }
 
     /// Prefetch the given song.
     pub fn prefetch(&mut self, lib: &mut Library, id: SongId) -> Result<()> {
-        let src = self.load_symph(lib, id)?;
-        self.sink.prefetch(Some(Box::new(src)))?;
+        let src = self.load_song(lib, id)?;
+        self.sink.prefetch(Some(src))?;
         Ok(())
     }
 
@@ -83,7 +90,7 @@ impl SinkWrapper {
         let src = if let Some(src) = src {
             src
         } else {
-            Box::new(self.load_symph(lib, id)?)
+            self.load_song(lib, id)?
         };
 
         self.load_inner(src, play)?;
@@ -199,9 +206,12 @@ impl SinkWrapper {
         Ok(())
     }
 
-    fn load_symph(&mut self, lib: &mut Library, id: SongId) -> Result<Symph> {
-        let file = File::open(lib[id].path())?;
-        let src = Symph::try_new(file, &self.symph)?;
+    fn load_song(
+        &mut self,
+        lib: &mut Library,
+        id: SongId,
+    ) -> Result<Box<dyn Source>> {
+        let src = self.choose_decoder(lib[id].path())?;
 
         const SMALL_TIME: f64 = 0.1;
 
@@ -214,6 +224,26 @@ impl SinkWrapper {
         }
 
         Ok(src)
+    }
+
+    fn choose_decoder(&self, p: impl AsRef<Path>) -> Result<Box<dyn Source>> {
+        let file = File::open(p.as_ref())?;
+        let err = match Symph::try_new(file.try_clone()?, &self.symph) {
+            Ok(s) => return Ok(Box::new(s)),
+            Err(e) => e,
+        };
+
+        let mut errs = vec![err.into()];
+
+        for d in &self.decoder_plugins {
+            match d.open(p.as_ref()) {
+                Ok(d) => return Ok(d),
+                Err(e) => errs.push(e),
+            }
+        }
+
+        Error::multiple(errs)?;
+        unreachable!();
     }
 
     fn load_inner(&mut self, src: Box<dyn Source>, play: bool) -> Result<()> {

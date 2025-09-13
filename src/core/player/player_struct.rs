@@ -10,6 +10,7 @@ use crate::{
         config::Config,
         library::{Library, SongId},
         log_err,
+        plugin::DecoderPlugin,
         server::sub,
     },
     ext::AlcVec,
@@ -42,6 +43,10 @@ gen_struct! {
 }
 
 impl Player {
+    pub fn add_decoder_plugin(&mut self, plugin: DecoderPlugin) {
+        self.inner.add_decoder_plugin(plugin);
+    }
+
     pub fn change(&self) {
         self.change.set(true);
     }

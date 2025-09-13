@@ -4,7 +4,9 @@ use std::{cell::Cell, collections::HashMap, path::PathBuf, time::Duration};
 use crate::{
     core::{
         Alias, AnyControlMsg, ControlFunction, ControlMsg, DataControlMsg,
-        config::default_http_client_path, player::AddPolicy, query::Query,
+        config::{default_http_client_path, default_plugin_folder},
+        player::AddPolicy,
+        query::Query,
     },
     env::{RunType, install},
     ext::Wrap,
@@ -127,6 +129,10 @@ gen_struct! {
 
         web_client_command: Option<String> { pub, pub } => pub(super) () {
             None
+        },
+
+        plugin_folders: Vec<PathBuf> { pub, pub } => pub(super) () {
+            vec![default_plugin_folder()]
         },
 
         ; // fields passed by value:
@@ -280,6 +286,7 @@ impl Config {
             skin: default_skin(),
             default_run_type: default_default_run_type(),
             web_client_command: default_web_client_command(),
+            plugin_folders: default_plugin_folders(),
             change: Cell::new(true),
         }
     }

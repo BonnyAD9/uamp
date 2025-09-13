@@ -2,9 +2,9 @@
 use std::os::unix::process::CommandExt;
 use std::{
     env,
-    fs::{self, DirEntry},
+    fs::{self, DirEntry, read_dir},
     mem,
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::{self, Command},
     time::{Duration, Instant},
 };
@@ -16,7 +16,7 @@ use tokio::signal::unix::SignalKind;
 
 use crate::core::{
     AppCtrl, Error, Jobs, Result, RtAndle, RtHandle, State, library::Song,
-    log_err, msg::Msg,
+    log_err, msg::Msg, plugin::Plugin,
 };
 
 use super::{
@@ -131,6 +131,8 @@ impl UampApp {
         if app.config.system_player() {
             app.enable_system_player();
         }
+
+        log_err("Failed to load plugins.", app.load_plugins());
 
         Ok(app)
     }
@@ -453,6 +455,35 @@ impl UampApp {
         if let Some(pos) = self.player.timestamp() {
             arg(&ControlMsg::SeekTo(pos.current).to_string());
         }
+    }
+
+    /// DONT CALL MULTIPLE TIMES it would load the plugins twice
+    fn load_plugins(&mut self) -> Result<()> {
+        for d in self.config.plugin_folders().clone() {
+            if !d.exists() {
+                continue;
+            }
+
+            for d in read_dir(d)? {
+                let d = d?;
+                let p = d.path();
+                if p.is_file()
+                    && let Some(ext) = p.extension()
+                    && ext == "so"
+                {
+                    log_err("Failed to load plugin.", self.load_plugin(p));
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn load_plugin(&mut self, p: impl AsRef<Path>) -> Result<()> {
+        match Plugin::load(p)? {
+            Plugin::Decoder(d) => self.player.add_decoder_plugin(d),
+        }
+        Ok(())
     }
 }
 
