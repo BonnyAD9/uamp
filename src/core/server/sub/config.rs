@@ -29,6 +29,7 @@ pub struct Config {
     pub enable_server: bool,
     pub auto_restart: bool,
     pub web_client_command: Option<String>,
+    pub plugin_folders: Vec<PathBuf>,
 
     // Could be modified over http.
     pub control_aliases: HashMap<String, ControlFunction>,
@@ -67,6 +68,7 @@ impl Config {
             enable_server: c.enable_server(),
             auto_restart: c.auto_restart(),
             web_client_command: c.web_client_command().clone(),
+            plugin_folders: c.plugin_folders().clone(),
 
             control_aliases: c.control_aliases().clone(),
             default_playlist_end_action: c

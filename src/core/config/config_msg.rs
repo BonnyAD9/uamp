@@ -224,6 +224,9 @@ impl Config {
                 "default_run_type" => {
                     self.default_run_type_set(from_value(v)?);
                 }
+                "plugin_folders" => {
+                    *self.plugin_folders_mut() = from_value(v)?;
+                }
                 k => {
                     return Err(Error::invalid_value(format!(
                         "Invalid setting key `{k}`."
