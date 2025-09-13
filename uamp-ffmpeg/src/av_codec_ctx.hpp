@@ -65,6 +65,8 @@ public:
         return true;
     }
 
+    void flush_buffers() { avcodec_flush_buffers(get()); }
+
     AVCodecContext &operator*() { return *get(); }
 
     AVCodecContext *operator->() { return get(); }

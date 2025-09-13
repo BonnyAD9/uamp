@@ -22,6 +22,12 @@ public:
 
     DeviceConfig preferred_config();
 
+    void seek(double secs);
+
+    double get_pos();
+
+    double get_length();
+
 private:
     void read_frames(std::span<char> buf, std::size_t &written);
     void read_frame(std::span<char> buf, std::size_t &written);
@@ -34,6 +40,8 @@ private:
     std::optional<std::size_t> _frame_continue;
     bool _drained = false;
     bool _resend_pkt = false;
+
+    std::int64_t _pos = 0;
 
     std::optional<int> _resample;
     std::optional<int> _rechannel;

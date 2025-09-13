@@ -7,6 +7,7 @@
 #include <string_view>
 #include <vector>
 
+#include "duration.hpp"
 #include "ffmpeg_decoder.hpp"
 #include "sample_format.hpp"
 #include "uamp_types.hpp"
@@ -58,6 +59,12 @@ struct State {
 
 } // namespace ufd
 
+static constexpr DecoderPluginFlags operator|(
+    DecoderPluginFlags l, DecoderPluginFlags r
+) {
+    return DecoderPluginFlags(std::uint32_t(l) | std::uint32_t(r));
+}
+
 extern "C" {
 
 PluginConfig uamp_plugin_config{
@@ -68,7 +75,8 @@ PluginConfig uamp_plugin_config{
 
 DecoderPluginConfig uamp_plugin_decoder_config{
     .version = 0x00'001'000,
-    .flags = DecoderPluginFlags::CONFIG,
+    .flags = DecoderPluginFlags::CONFIG | DecoderPluginFlags::SEEK |
+             DecoderPluginFlags::SEEK_BY | DecoderPluginFlags::GET_TIME,
 };
 
 void *uamp_decoder_open(const char *path, std::size_t path_len) {
@@ -178,6 +186,96 @@ DeviceConfig uamp_decoder_preferred_config(void *d) {
                 );
             }
             res = state->decoder->preferred_config();
+        } catch (std::exception &ex) {
+            if (state) {
+                state->errors.emplace_back(ex.what());
+            }
+        } catch (...) {
+            if (state) {
+                state->errors.emplace_back("Failed to get preffered config.");
+            }
+        }
+        // NOLINTNEXTLINE(bugprone-empty-catch)
+    } catch (...) {
+    }
+
+    return res;
+}
+
+Timestamp uamp_decoder_seek(void *d, Duration time) {
+    auto *state = reinterpret_cast<ufd::State *>(d);
+    Timestamp res{};
+    try {
+        try {
+            if (!state || !state->decoder) {
+                throw std::runtime_error(
+                    "Cannot get preferred config: Decoder not initialized."
+                );
+            }
+            state->decoder->seek(ufd::dur_to_secs(time));
+            res.current = ufd::secs_to_dur(state->decoder->get_pos());
+            res.total = ufd::secs_to_dur(state->decoder->get_length());
+        } catch (std::exception &ex) {
+            if (state) {
+                state->errors.emplace_back(ex.what());
+            }
+        } catch (...) {
+            if (state) {
+                state->errors.emplace_back("Failed to get preffered config.");
+            }
+        }
+        // NOLINTNEXTLINE(bugprone-empty-catch)
+    } catch (...) {
+    }
+
+    return res;
+}
+
+Timestamp uamp_decoder_seek_by(void *d, Duration time, bool forward) {
+    auto *state = reinterpret_cast<ufd::State *>(d);
+    Timestamp res{};
+    try {
+        try {
+            if (!state || !state->decoder) {
+                throw std::runtime_error(
+                    "Cannot get preferred config: Decoder not initialized."
+                );
+            }
+            auto pos = state->decoder->get_pos();
+            auto len = state->decoder->get_length();
+            auto chn = ufd::dur_to_secs(time);
+            pos = std::clamp(forward ? pos + chn : pos - chn, 0., len);
+            state->decoder->seek(pos);
+            res.current = ufd::secs_to_dur(state->decoder->get_pos());
+            res.total = ufd::secs_to_dur(len);
+        } catch (std::exception &ex) {
+            if (state) {
+                state->errors.emplace_back(ex.what());
+            }
+        } catch (...) {
+            if (state) {
+                state->errors.emplace_back("Failed to get preffered config.");
+            }
+        }
+        // NOLINTNEXTLINE(bugprone-empty-catch)
+    } catch (...) {
+    }
+
+    return res;
+}
+
+Timestamp uamp_decoder_get_time(void *d) {
+    auto *state = reinterpret_cast<ufd::State *>(d);
+    Timestamp res{};
+    try {
+        try {
+            if (!state || !state->decoder) {
+                throw std::runtime_error(
+                    "Cannot get preferred config: Decoder not initialized."
+                );
+            }
+            res.current = ufd::secs_to_dur(state->decoder->get_pos());
+            res.total = ufd::secs_to_dur(state->decoder->get_length());
         } catch (std::exception &ex) {
             if (state) {
                 state->errors.emplace_back(ex.what());

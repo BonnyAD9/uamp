@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <stdexcept>
 
@@ -57,6 +58,12 @@ public:
         }
         check_av_error(res);
         return true;
+    }
+
+    void seek_frame(
+        int stream, std::int64_t timestamp, int flags = AVSEEK_FLAG_BACKWARD
+    ) {
+        check_av_error(av_seek_frame(get(), stream, timestamp, flags));
     }
 
     AVFormatContext &operator*() { return *get(); }

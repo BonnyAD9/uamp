@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <stdexcept>
 
+#include <libavutil/rational.h>
 #include <libavutil/samplefmt.h>
 
 #include "av_codec_ctx.hpp"
@@ -99,8 +100,27 @@ void FfmpegDecoder::read(std::span<char> buf, std::size_t &written) {
     }
 }
 
+void FfmpegDecoder::seek(double secs) {
+    _pos = av_rescale_q(
+        std::int64_t(secs * AV_TIME_BASE),
+        AV_TIME_BASE_Q,
+        _ps->streams[_stream]->time_base
+    );
+    _ps.seek_frame(_stream, _pos);
+    _avctx.flush_buffers();
+}
+
+double FfmpegDecoder::get_pos() {
+    return double(_pos) * av_q2d(_ps->streams[_stream]->time_base);
+}
+
+double FfmpegDecoder::get_length() {
+    return double(_ps->duration) / AV_TIME_BASE;
+}
+
 void FfmpegDecoder::read_frames(std::span<char> buf, std::size_t &written) {
     while (buf.size() > written && _avctx.receive_frame(_frame)) {
+        _pos = _frame->pts;
         read_frame(buf, written);
     }
 }
