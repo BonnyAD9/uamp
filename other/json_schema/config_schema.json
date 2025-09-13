@@ -199,6 +199,16 @@
           "description": "The command used to open web client. If null, use the default browser. `${ADDRESS}` will be replaced with the target address to the web client.",
           "type": "string",
           "default": null
+        },
+        "plugin_folders": {
+            "description": "Paths to folders which are searched for plugins.",
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "default": [
+                "/usr/share/uamp/plugins"
+            ]
         }
     }
 }

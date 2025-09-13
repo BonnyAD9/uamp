@@ -1,6 +1,9 @@
 # CHANGELOG
 
 ## future
+### New features
+- Support for decoder plugins.
+
 ### Fixes
 - Properly install desktop file.
 - Fix typo in for `web_client_command` in json schema.
