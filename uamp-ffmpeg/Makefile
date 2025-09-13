@@ -39,4 +39,5 @@ tidy: debug
 check: fmt cppcheck tidy
 
 .PHONY: clean
+clean:
 	-rm -rf target

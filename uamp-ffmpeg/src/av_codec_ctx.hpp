@@ -45,10 +45,16 @@ public:
         check_av_error(avcodec_open2(get(), codec, nullptr));
     }
 
-    void send_packet(AVPacket &pkt) {
-        // TODO: handle EAGAIN
-        check_av_error(avcodec_send_packet(get(), &*pkt));
+    bool send_packet(AVPacket &pkt) {
+        auto res = avcodec_send_packet(get(), &*pkt);
+        if (res == AVERROR(EAGAIN)) {
+            return false;
+        }
+        check_av_error(res);
+        return true;
     }
+
+    void send_packet() { check_av_error(avcodec_send_packet(get(), nullptr)); }
 
     bool receive_frame(AVFrame &frame) {
         auto res = avcodec_receive_frame(get(), &*frame);

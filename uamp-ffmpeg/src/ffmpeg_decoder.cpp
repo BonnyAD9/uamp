@@ -70,22 +70,38 @@ void FfmpegDecoder::read(std::span<char> buf, std::size_t &written) {
     if (_frame_continue) {
         read_frame(buf, written);
     }
+    if (_drained) {
+        return;
+    }
     while (buf.size() > written) {
-        if (!_ps.read_frame(_pkt)) {
-            // TODO: drain decoder
-            return; // EOF
+        if (!_resend_pkt) {
+            if (!_ps.read_frame(_pkt)) {
+                // EOF
+                _drained = true;
+                _avctx.send_packet();
+                read_frames(buf, written);
+                return;
+            }
+
+            if (_pkt->stream_index != _stream) {
+                _pkt.unref();
+                continue;
+            }
         }
 
-        if (_pkt->stream_index != _stream) {
+        if (_avctx.send_packet(_pkt)) {
             _pkt.unref();
-            continue;
+            _resend_pkt = false;
+        } else {
+            _resend_pkt = true;
         }
+        read_frames(buf, written);
+    }
+}
 
-        _avctx.send_packet(_pkt); // TODO: handle eagain
-
-        while (buf.size() > written && _avctx.receive_frame(_frame)) {
-            read_frame(buf, written);
-        }
+void FfmpegDecoder::read_frames(std::span<char> buf, std::size_t &written) {
+    while (buf.size() > written && _avctx.receive_frame(_frame)) {
+        read_frame(buf, written);
     }
 }
 

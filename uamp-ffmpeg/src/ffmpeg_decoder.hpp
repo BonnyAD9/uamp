@@ -23,6 +23,7 @@ public:
     DeviceConfig preferred_config();
 
 private:
+    void read_frames(std::span<char> buf, std::size_t &written);
     void read_frame(std::span<char> buf, std::size_t &written);
 
     AVFmtCtx _ps;
@@ -31,6 +32,8 @@ private:
     AVFrame _frame;
     int _stream;
     std::optional<std::size_t> _frame_continue;
+    bool _drained = false;
+    bool _resend_pkt = false;
 
     std::optional<int> _resample;
     std::optional<int> _rechannel;
