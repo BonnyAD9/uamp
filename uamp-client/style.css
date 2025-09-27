@@ -187,6 +187,10 @@ table.songs thead {
     width: 100%;
 }
 
+table.songs thead th span {
+    cursor: pointer;
+}
+
 table.songs tbody {
     width: 100%;
 }

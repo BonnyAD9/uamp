@@ -20,6 +20,15 @@ export default class Duration {
     static from(obj) {
         return new Duration(obj.secs, obj.nanos);
     }
+    
+    /**
+     * Compares current duration with the given one
+     * @param {Duration} other - duration to be compared to
+     * @return {int} 1 if current is larger, else -1
+     */
+    cmp(other) {
+        
+    }
 
     /** Normalizes the Duration so the nanos don't exceed one second. */
     normalize() {

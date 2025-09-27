@@ -38,7 +38,7 @@
         </section>
 
         <section id="album-detail" class="screen">
-            <!-- <img class="backdrop" src="assets/svg/img_placeholder.svg" 
+            <!-- <img class="backdrop" src="assets/svg/img_placeholder.svg"
                 alt="album cover" /> -->
             <div class="album-detail-wrapper">
                 <div class="info">
@@ -68,8 +68,8 @@
             </div>
 
             <h3>Albums</h3>
-            <div 
-                class="list" 
+            <div
+                class="list"
                 onclick="AppSingleton.get().albumArtistClick(event)"
             ></div>
 
@@ -79,21 +79,21 @@
         <section id="playlist" class="screen">
             <div class="tabs">
                 <div class="tabs-wrapper">
-                    <button 
-                        id="playingPlaylist" 
+                    <button
+                        id="playingPlaylist"
                         class="tab active"
                         onclick="AppSingleton.get().setPlaylistTab(0)"
                     >Playing</button>
                 </div>
                 <div class="playlist-controls">
-                    <img 
-                        src="assets/svg/push.svg" 
+                    <img
+                        src="assets/svg/push.svg"
                         alt="push playlist"
                         title="Push empty playlist"
                         onclick="apiCtrl('push=none')"
                     />
-                    <img 
-                        src="assets/svg/pop.svg" 
+                    <img
+                        src="assets/svg/pop.svg"
                         alt="push playlist"
                         title="Pops current playlist"
                         onclick="apiCtrl('pop')"
@@ -121,18 +121,18 @@
     </div>
 
     <section class="bar floating">
-        <img 
-            class="back-arrow" 
-            src="assets/svg/point_up.svg" 
+        <img
+            class="back-arrow"
+            src="assets/svg/point_up.svg"
             onclick="toggleBar()"
-            alt="back arrow" 
+            alt="back arrow"
         />
 
         <div class="bar-wrapper">
             <div class="info" onclick="toggleBar()">
                 <div class="info-pic">
-                    <img 
-                        src="assets/svg/img_placeholder.svg" 
+                    <img
+                        src="assets/svg/img_placeholder.svg"
                         alt="song cover"
                     />
                 </div>
@@ -147,20 +147,20 @@
             </div>
 
             <div class="controls">
-                <img 
+                <img
                     class="control"
-                    src="assets/svg/previous.svg" 
-                    onclick="apiCtrl('ps')" 
+                    src="assets/svg/previous.svg"
+                    onclick="apiCtrl('ps')"
                     id="prev"
                 >
 
                 <svg class="control" id="play" onclick="apiCtrl('pp')"
-                    width="20" height="20" viewBox="0 0 10 10" 
+                    width="20" height="20" viewBox="0 0 10 10"
                     version="1.1" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke="#FFF" stroke-linejoin="round" 
+                    <path stroke="#FFF" stroke-linejoin="round"
                         stroke-linecap="round" stroke-width="2" fill="#FFF"
                         d="M 3 2 L 3 2 L 3 8 L 3 8 L 3 2">
-                        <animate 
+                        <animate
                             id="from_pause_to_play_p1"
                             attributeName="d"
                             dur="200ms"
@@ -180,10 +180,10 @@
                         />
                     </path>
 
-                    <path stroke="#FFF" stroke-linejoin="round" 
+                    <path stroke="#FFF" stroke-linejoin="round"
                         stroke-linecap="round" stroke-width="2" fill="#FFF"
                         d="M 7 2 L 7 2 L 7 8 L 7 8 L 7 2">
-                        <animate 
+                        <animate
                             id="from_pause_to_play_p2"
                             attributeName="d"
                             dur="200ms"
@@ -204,18 +204,18 @@
                     </path>
                 </svg>
 
-                <img 
+                <img
                     class="control"
-                    src="assets/svg/next.svg" 
-                    onclick="apiCtrl('ns')" 
+                    src="assets/svg/next.svg"
+                    onclick="apiCtrl('ns')"
                     id="next"
                 >
             </div>
 
             <div class="volume">
-                <img 
+                <img
                     class="control"
-                    src="assets/svg/volume_1.svg" 
+                    src="assets/svg/volume_1.svg"
                     onclick="apiCtrl('mute')"
                 >
                 <p id="volumeValue">69</p>
@@ -224,8 +224,8 @@
         </div>
 
         <div class="playlist">
-            <div 
-                class="songs" 
+            <div
+                class="songs"
                 onclick="AppSingleton.get().barPlaylistClick(event)"
             >
                 <div class="spacer spacer-top"></div>
@@ -248,10 +248,22 @@
             <thead>
                 <tr>
                     <th></th>
-                    <th>Title / Artist</th>
-                    <th>Album / Year</th>
-                    <th>Length / Genre</th>
-                    <th>T / D</th>
+                    <th>
+                        <span data-sort="title">Title</span> /
+                        <span data-sort="artist">Artist</span>
+                    </th>
+                    <th>
+                        <span data-sort="album">Album</span> /
+                        <span data-sort="year">Year</span>
+                    </th>
+                    <th>
+                        <span data-sort="length">Length</span> /
+                        <span data-sort="genre">Genre</span>
+                    </th>
+                    <th>
+                        <span data-sort="track">T</span> /
+                        <span data-sort="disc">D</span>
+                    </th>
                 </tr>
             </thead>
             <tbody>
@@ -262,8 +274,8 @@
     <template id="song-template">
         <tr>
             <td class="cover">
-                <img 
-                    src="assets/svg/img_placeholder.svg" 
+                <img
+                    src="assets/svg/img_placeholder.svg"
                     alt="song cover"
                     loading="lazy"
                 />
@@ -314,7 +326,7 @@
     <template id="bar-song-template">
         <div class="item">
             <p class="ellipsis">
-                <span class="id"></span>. <span class="title"></span> • 
+                <span class="id"></span>. <span class="title"></span> •
                 <span class="artist"></span>
             </p>
         </div>

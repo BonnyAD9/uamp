@@ -1,6 +1,7 @@
 import Album from "./album.js";
 import Artist from "./artist.js";
 import Song from "./song.js";
+import Songs from "./songs.js";
 
 export default class Library {
     /**
@@ -13,8 +14,8 @@ export default class Library {
         /** @type {Song[]} */
         this.tmpSongs = library.tmp_songs.map((s, i) => Song.from(-i - 1, s));
 
-        /** @type {Song[]} */
-        this.songs = [];
+        /** @type {Songs} */
+        this.songs = new Songs();
         /** @type {Album[]} */
         this.albums = [];
         /** @type {Artist[]} */

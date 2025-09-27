@@ -1,3 +1,6 @@
+import Duration from "../helper/duration.js";
+import Song from "./song.js";
+
 export default class Songs {
     /**
      * Creates new songs
@@ -11,8 +14,19 @@ export default class Songs {
         this.sort = sort;
         /** @type {boolean} */
         this.ascending = ascending;
+    }
 
-        this.#sortSongs();
+    /** Gets the songs */
+    get() {
+        return this.songs;
+    }
+
+    /**
+     * Pushes the given song to the songs list
+     * @param {Song} song - song to be added
+     */
+    push(song) {
+        this.songs.push(song);
     }
 
     /**
@@ -27,7 +41,7 @@ export default class Songs {
     }
 
     /**
-     * Toggles sorting - if key for the first time -> ascending, 
+     * Toggles sorting - if key for the first time -> ascending,
      * second -> descending, third -> back to original order.
      * @param {string} key - key to toggle sort by
      */
@@ -35,10 +49,10 @@ export default class Songs {
         if (this.sort === key) {
             this.ascending = !this.ascending;
             if (this.ascending) {
-                this.key === 'id';
+                this.sort = "id";
             }
         } else {
-            this.key = key;
+            this.sort = key;
             this.ascending = true;
         }
         this.#sortSongs();
@@ -49,16 +63,16 @@ export default class Songs {
         this.songs = this.songs.sort((a, b) => {
             let valA = a[this.sort];
             let valB = b[this.sort];
-            if (typeof valA === 'Duration') {
+            if (valA instanceof Duration) {
                 valA = valA.toNanos();
                 valB = valB.toNanos();
             }
 
             let result;
-            if (typeof valA === 'string') {
-                result = valA.localeCompare(
-                    valB, undefined, { sensitivity: 'accent' }
-                );
+            if (typeof valA === "string") {
+                result = valA.localeCompare(valB, undefined, {
+                    sensitivity: "accent",
+                });
             } else {
                 result = valA - valB;
             }
