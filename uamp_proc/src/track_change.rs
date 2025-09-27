@@ -125,8 +125,8 @@ fn ref_field(
 ) -> Result<TokenStream> {
     let (get_vis, set_vis) = parse_visibility(attr, |_| Ok(false))?;
 
-    let seti = format_ident!("set_{id}");
-    let geti = format_ident!("mut_{id}");
+    let seti = format_ident!("mut_{id}");
+    let geti = format_ident!("get_{id}");
 
     let res = quote! {
         #get_vis fn #geti(&self) -> &#ty {
