@@ -69,11 +69,7 @@ pub fn punctuated_streams(
 }
 
 pub fn extract_only_ident(tks: TokenStream) -> Option<Ident> {
-    let mut tks = tks.into_iter();
-    let id = tks.next()?;
-    if tks.next().is_some() {
-        return None;
-    }
+    let id = get_one(tks.span(), tks).ok()?;
 
     match id {
         TokenTree::Ident(id) => Some(id),
@@ -88,7 +84,7 @@ pub fn get_one<I: Spanned>(
     let mut tks = tks.into_iter();
     let one = tks.next().ok_or(Error::span(span, "One component."))?;
     if let Some(t) = tks.next() {
-        Error::span(t.span(), "Expected only one argument.").err()
+        Error::span(t.span(), "Expected only one component.").err()
     } else {
         Ok(one)
     }
