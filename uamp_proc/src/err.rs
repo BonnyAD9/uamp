@@ -46,7 +46,7 @@ impl From<Error> for TokenStream {
         let msg = value.to_string();
         let span = value.get_span();
         quote_spanned! { span =>
-            runtime_error(#msg);
+            compile_error!(#msg);
         }
     }
 }
