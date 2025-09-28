@@ -94,7 +94,7 @@ impl UampApp {
                     watch.watch(p, RecursiveMode::NonRecursive)?;
                 }
             }
-            self.config.set_change(false);
+            self.config.reset_change();
         }
         Ok(())
     }

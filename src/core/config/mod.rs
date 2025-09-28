@@ -1,6 +1,8 @@
 mod cache_size;
+mod change;
 mod config_msg;
 mod config_struct;
+pub mod default;
 mod json;
 mod song_pos_save;
 
@@ -13,7 +15,8 @@ use std::path::PathBuf;
 use const_format::{concatc, str_splice};
 
 pub use self::{
-    cache_size::*, config_msg::*, config_struct::*, song_pos_save::*,
+    cache_size::*, change::*, config_msg::*, config_struct::*,
+    song_pos_save::*,
 };
 
 /// Unique app identifier, it is different when debugging.

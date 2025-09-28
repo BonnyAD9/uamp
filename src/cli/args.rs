@@ -64,10 +64,10 @@ impl Args {
         let mut res = Config::from_default_json();
 
         if let Some(v) = self.port {
-            res.port_set(v);
+            res.set_port(v);
         }
         if let Some(v) = &self.server_address {
-            *res.server_address_mut() = v.to_owned();
+            *res.mut_server_address() = v.to_owned();
         }
 
         if res.changed() {

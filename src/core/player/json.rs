@@ -46,7 +46,7 @@ impl Player {
         if let Some(p) = conf.player_path() {
             self.save_to_json(save_pos, p)?;
         }
-        self.set_change(false);
+        self.reset_change();
         Ok(())
     }
 
@@ -150,7 +150,7 @@ impl Player {
         }
 
         if save_pos && let Some(t) = self.timestamp() {
-            self.playlist_mut().set_play_pos(t.current);
+            self.mut_playlist().set_play_pos(t.current);
         }
 
         serde_json::to_writer(
@@ -167,7 +167,7 @@ impl Player {
                 .msg("Failed to save player state to json.")
         })?;
 
-        self.playlist_mut().pop_play_pos();
+        self.mut_playlist().pop_play_pos();
         Ok(())
     }
 }

@@ -135,18 +135,18 @@ impl UampApp {
             }
             ControlMsg::Shuffle => {
                 self.player
-                    .playlist_mut()
+                    .mut_playlist()
                     .shuffle(self.config.shuffle_current());
                 self.client_update_set_playlist(|p| {
                     SubMsg::SetPlaylist(p.into())
                 });
             }
             ControlMsg::SetVolume(v) => {
-                self.player.set_volume(v.clamp(0., 1.));
+                self.player.change_volume(v.clamp(0., 1.));
                 self.client_update(SubMsg::SetVolume(self.player.volume()));
             }
             ControlMsg::VolumeUp(m) => {
-                self.player.set_volume(
+                self.player.change_volume(
                     (self.player.volume()
                         + m.unwrap_or(self.config.volume_jump()))
                     .clamp(0., 1.),
@@ -154,7 +154,7 @@ impl UampApp {
                 self.client_update(SubMsg::SetVolume(self.player.volume()));
             }
             ControlMsg::VolumeDown(m) => {
-                self.player.set_volume(
+                self.player.change_volume(
                     (self.player.volume()
                         - m.unwrap_or(self.config.volume_jump()))
                     .clamp(0., 1.),
@@ -168,7 +168,7 @@ impl UampApp {
                 )));
             }
             ControlMsg::Mute(b) => {
-                self.player.set_mute(b.unwrap_or(!self.player.mute()));
+                self.player.enable_mute(b.unwrap_or(!self.player.mute()));
                 self.client_update(SubMsg::SetMute(self.player.mute()));
             }
             ControlMsg::LoadNewSongs(opts) => {
@@ -204,7 +204,7 @@ impl UampApp {
                 self.client_update_seek();
             }
             ControlMsg::SortPlaylist(ord) => {
-                self.player.playlist_mut().sort(
+                self.player.mut_playlist().sort(
                     &self.library,
                     self.config.simple_sorting(),
                     ord,
@@ -227,7 +227,7 @@ impl UampApp {
                 });
             }
             ControlMsg::SetPlaylistAddPolicy(policy) => {
-                self.player.playlist_mut().add_policy = policy;
+                self.player.mut_playlist().add_policy = policy;
                 self.client_update(SubMsg::SetPlaylistAddPolicy(policy));
             }
             ControlMsg::Save => self.save_all(false, ctrl)?,

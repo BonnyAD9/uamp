@@ -1,5 +1,6 @@
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use uamp_proc::TrackChange;
 
 use std::{
     cell::Cell,
@@ -7,7 +8,7 @@ use std::{
     path::Path,
 };
 
-use crate::{core::Result, ext::AlcVec, gen_struct};
+use crate::{core::Result, ext::AlcVec};
 
 use super::{LibraryUpdate, Song, SongId};
 
@@ -15,32 +16,38 @@ use super::{LibraryUpdate, Song, SongId};
 //                                   Public                                  //
 //===========================================================================//
 
-gen_struct! {
-    #[derive(Serialize, Deserialize, Debug)]
-    pub Library {
-        // Fields passed by reference
-        #[doc = "The songs in library. ACCESS VIA GETTER/SETTER whenever"]
-        #[doc = "possible."]
-        pub(super) songs: AlcVec<Song> { pub(super), pub(super) },
-        #[doc = "Temporary songs in the library. They are automatically"]
-        #[doc = "removed from library when they are removed from playlist."]
-        #[doc = "ACCESS VIA GETTER/SETTER whenever possible."]
-        #[serde(default)]
-        pub(super) tmp_songs: AlcVec<Song> { pub(super), pub(super) },
-        // albums: Vec<SongId> { pri, pri },
-        ; // Fields passed by value
-        ; // Other fields
-        /// invalid song
-        #[serde(skip, default = "default_ghost")]
-        ghost: Song,
-        #[serde(skip)]
-        pub(super) lib_update: LibraryUpdate,
-        ; // attributes for the auto field
-        #[serde(skip)]
-    }
+#[derive(Serialize, Deserialize, Debug, TrackChange)]
+pub struct Library {
+    // Fields passed by reference
+    /// The songs in library. ACCESS VIA GETTER/SETTER whenever
+    /// possible.
+    #[track_ref(pub, pub)]
+    pub(super) songs: AlcVec<Song>,
+    /// Temporary songs in the library. They are automatically
+    /// removed from library when they are removed from playlist.
+    /// ACCESS VIA GETTER/SETTER whenever possible.
+    #[serde(default)]
+    #[track_ref(pub, pub)]
+    pub(super) tmp_songs: AlcVec<Song>,
+
+    // Other fields
+    /// invalid song
+    #[serde(skip, default = "default_ghost")]
+    ghost: Song,
+    #[serde(skip)]
+    pub(super) lib_update: LibraryUpdate,
+
+    // attributes for the auto field
+    #[serde(skip)]
+    #[tracker(Cell::set)]
+    change: Cell<bool>,
 }
 
 impl Library {
+    pub(super) fn reset_change(&self) {
+        self.set_change(false);
+    }
+
     /// Creates empty library
     pub fn new() -> Self {
         Library {
@@ -110,14 +117,14 @@ impl Library {
     /// Add temporary song that will be automatically removed when it is
     /// removed from playlist.
     pub fn add_tmp_song(&mut self, song: Song) -> SongId {
-        for (i, s) in self.tmp_songs_mut().iter_mut().enumerate() {
+        for (i, s) in self.mut_tmp_songs().iter_mut().enumerate() {
             if s.is_deleted() {
                 *s = song;
                 return SongId::tmp(i);
             }
         }
 
-        self.tmp_songs_mut().vec_mut().push(song);
+        self.mut_tmp_songs().vec_mut().push(song);
         SongId::tmp(self.tmp_songs.len() - 1)
     }
 
@@ -157,12 +164,6 @@ impl Library {
     pub(super) fn get_change(&self) -> bool {
         self.change.get()
     }
-
-    /// Sets the change value indicating whether the library was changed since
-    /// the last save. Use with caution.
-    pub(super) fn set_change(&self, val: bool) {
-        self.change.set(val);
-    }
 }
 
 impl Index<SongId> for Library {
@@ -193,12 +194,12 @@ impl IndexMut<SongId> for Library {
             {
                 &mut self.ghost
             } else {
-                &mut self.tmp_songs_mut()[idx]
+                &mut self.mut_tmp_songs()[idx]
             }
         } else if self.songs()[index.as_norm()].is_deleted() {
             &mut self.ghost
         } else {
-            &mut self.songs_mut()[index.as_norm()]
+            &mut self.mut_songs()[index.as_norm()]
         }
     }
 }

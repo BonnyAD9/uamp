@@ -168,10 +168,10 @@ pub fn run_detached(
 impl Run {
     fn update_config(&self, conf: &mut Config) {
         if let Some(v) = self.port {
-            conf.port_set(v);
+            conf.set_port(v);
         }
         if let Some(v) = &self.server_address {
-            *conf.server_address_mut() = v.to_owned();
+            *conf.mut_server_address() = v.to_owned();
         }
 
         if conf.changed() {
