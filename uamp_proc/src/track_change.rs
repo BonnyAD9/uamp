@@ -86,7 +86,6 @@ fn value_field(
     })?;
 
     let seti = format_ident!("set_{id}");
-    let geti = format_ident!("get_{id}");
 
     let mut set = if eqc {
         quote! {
@@ -108,7 +107,7 @@ fn value_field(
     };
 
     let get = quote! {
-        #get_vis fn #geti(&self) -> #ty {
+        #get_vis fn #id(&self) -> #ty {
             self.#id.clone()
         }
     };
@@ -126,10 +125,9 @@ fn ref_field(
     let (get_vis, set_vis) = parse_visibility(attr, |_| Ok(false))?;
 
     let seti = format_ident!("mut_{id}");
-    let geti = format_ident!("get_{id}");
 
     let res = quote! {
-        #get_vis fn #geti(&self) -> &#ty {
+        #get_vis fn #id(&self) -> &#ty {
             &self.#id
         }
 
@@ -171,8 +169,10 @@ fn tracker(
         return Error::span(span, "Missing setter function.").err();
     };
 
+    let vis = set_vis.unwrap_or_default().then(|| quote! { pub });
+
     let res = quote! {
-        #set_vis fn set_change(&self, v: bool) {
+        #vis fn set_change(&self, v: bool) {
             #set(&self.#id, v);
         }
     };

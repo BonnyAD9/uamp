@@ -114,7 +114,7 @@ impl UampApp {
 
         let old_cnt = self.library.songs().len();
 
-        *self.library.songs_mut() = mem::take(&mut res.songs).into();
+        *self.library.mut_songs() = mem::take(&mut res.songs).into();
         if res.removed {
             if res.first_new < old_cnt || !res.sparse_new.is_empty() {
                 // New songs ids replaced old song ids.

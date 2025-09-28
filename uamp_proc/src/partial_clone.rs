@@ -36,6 +36,7 @@ pub fn derive_partial_clone_impl(item: TokenStream) -> Result<TokenStream> {
 
     let mut vis = None;
     let mut clone_ty = None;
+    let mut ty_attrs = TokenStream::new();
 
     for attr in item.attrs {
         let id = path_to_string(attr.path());
@@ -64,9 +65,7 @@ pub fn derive_partial_clone_impl(item: TokenStream) -> Result<TokenStream> {
         };
         clone_ty = Some(arg);
 
-        if let Some(arg) = args.next() {
-            return Error::span(arg.span(), "Too many arguments.").err();
-        }
+        ty_attrs.extend(args.flatten());
     }
 
     let Some(vis) = vis else {
@@ -99,6 +98,7 @@ pub fn derive_partial_clone_impl(item: TokenStream) -> Result<TokenStream> {
             }
         }
 
+        #ty_attrs
         #vis struct #clone_ty {
             #fields
         }

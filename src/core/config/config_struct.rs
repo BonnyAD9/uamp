@@ -1,239 +1,249 @@
 use serde::{Deserialize, Serialize};
 use std::{cell::Cell, collections::HashMap, path::PathBuf, time::Duration};
+use uamp_proc::{JsonValueUpdate, PartialClone, TrackChange};
 
 use crate::{
     core::{
-        Alias, AnyControlMsg, ControlFunction, ControlMsg, DataControlMsg,
-        config::{default_http_client_path, default_plugin_folder},
-        player::AddPolicy,
-        query::Query,
+        Alias, ControlFunction, Error, Result,
+        config::{Change, default},
     },
     env::{RunType, install},
     ext::Wrap,
-    gen_struct,
 };
 
-use super::{
-    CacheSize, DEFAULT_PORT, default_cache_dir, default_config_dir,
-    song_pos_save::SongPosSave,
-};
+use super::{CacheSize, song_pos_save::SongPosSave};
 
-gen_struct! {
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    JsonValueUpdate,
+    PartialClone,
+    TrackChange,
+)]
+#[serde(
+    tag = "$schema",
+    rename = "https://raw.githubusercontent.com/BonnyAD9/uamp/master/other/json_schema/config_schema.json"
+)]
+#[json_value_update(
+    Result<Change>,
+    k => return Err(Error::invalid_value(format!("Invalid setting key `{k}`."))),
+    Change::empty(),
+)]
+#[partial_clone(
+    pub,
+    ConfigClone,
     #[derive(Debug, Clone, Serialize, Deserialize)]
-    #[serde(
-        tag = "$schema",
-        rename = "https://raw.githubusercontent.com/BonnyAD9/uamp/master/other/json_schema/config_schema.json"
-    )]
-    pub Config {
-        // Fields passed by reference
+)]
+pub struct Config {
+    // Fields passed by reference
+    /// Folders where to look for songs.
+    #[track_ref(pub, pub)]
+    #[serde(default = "default::search_paths")]
+    search_paths: Vec<PathBuf>,
 
-        #[doc = "Folders where to look for songs."]
-        search_paths: Vec<PathBuf> { pub, pub } => pub(super) () {
-            if let Some(dir) = dirs::audio_dir() {
-                vec![dir]
-            } else {
-                vec![PathBuf::from(".")]
-            }
-        },
+    /// Path to library data file.
+    #[track_ref(pub, pub)]
+    #[serde(default = "default::library_path")]
+    #[value_change(Change::LIBRARY_PATH)]
+    library_path: Option<PathBuf>,
 
-        #[doc = "Path to library data file."]
-        library_path: Option<PathBuf> { pub, pub } => pub(super) () {
-            Some(default_config_dir().join("library.json"))
-        },
+    /// Path to player data file.
+    #[track_ref(pub, pub)]
+    #[serde(default = "default::player_path")]
+    #[value_change(Change::PLAYER_PATH)]
+    player_path: Option<PathBuf>,
 
-        #[doc = "Path to player data file."]
-        player_path: Option<PathBuf> { pub, pub } => pub(super) () {
-            Some(default_config_dir().join("player.json"))
-        },
+    /// Path to uamp cache folder
+    #[track_ref(pub, pub)]
+    #[serde(default = "default::cache_path")]
+    #[value_change(Change::CACHE_PATH)]
+    cache_path: PathBuf,
 
-        #[doc = "Path to uamp cache folder"]
-        cache_path: PathBuf { pub, pub } => pub(super) () {
-            default_cache_dir()
-        },
+    /// File extensions that will be used to recognize audio files.
+    #[track_ref(pub, pub)]
+    #[serde(default = "default::audio_extensions")]
+    #[value_change(Change::AUDIO_EXTENSIONS)]
+    audio_extensions: Vec<String>,
 
-        #[doc = "File extensions that will be used to recognize audio files."]
-        audio_extensions: Vec<String> { pub, pub } => pub(super) () {
-            vec![
-                "flac".to_owned(),
-                "mp3".to_owned(),
-                "m4a".to_owned(),
-                "mp4".to_owned(),
-            ]
-        },
+    /// Address of server that is used to control uamp.
+    #[track_ref(pub, pub)]
+    #[serde(default = "default::server_address")]
+    #[value_change(Change::SERVER_ADDRESS)]
+    server_address: String,
 
-        #[doc = "Address of server that is used to control uamp."]
-        server_address: String { pub, pub } => pub(super) () {
-            "127.0.0.1".to_owned()
-        },
+    /// Aliases for groups of control actions.
+    #[track_ref(pub, pub)]
+    #[serde(default = "default::control_aliases")]
+    control_aliases: HashMap<String, ControlFunction>,
 
-        #[doc = "Aliases for groups of control actions."]
-        control_aliases: HashMap<String, ControlFunction> { pub, pub } =>
-        pub(super) () {
-            fn end_action(s: &str) -> AnyControlMsg {
-                DataControlMsg::SetPlaylistEndAction(Some(Alias::new(
-                    s.into()
-                ))).into()
-            }
+    /// This will be used as playlist end action if the end action
+    /// is not set.
+    #[track_ref(pub, pub)]
+    #[serde(default)]
+    default_playlist_end_action: Option<Alias>,
 
-            [
-                ("repeat".into(), [
-                    ControlMsg::PlaylistJump(0).into(),
-                    ControlMsg::PlayPause(Some(true)).into(),
-                    end_action("repeat"),
-                ].into()),
-                ("repeat-once".into(), [
-                    ControlMsg::PlaylistJump(0).into(),
-                    ControlMsg::PlayPause(Some(true)).into(),
-                    DataControlMsg::SetPlaylistEndAction(None).into(),
-                ].into()),
-                ("endless-mix".into(), [
-                    DataControlMsg::SetPlaylist(Query::all_rng()).into(),
-                    ControlMsg::PlaylistJump(0).into(),
-                    ControlMsg::PlayPause(Some(true)).into(),
-                    ControlMsg::SetPlaylistAddPolicy(AddPolicy::MixIn).into(),
-                    end_action("endless-mix"),
-                ].into()),
-                ("pcont".into(), [
-                    ControlMsg::PopPlaylist(1).into(),
-                    ControlMsg::PlayPause(Some(true)).into(),
-                ].into()),
-                (
-                    "palb".into(),
-                    "[name]:push=a:${name}@+a pp=play spea=pcont"
-                        .parse()
-                        .unwrap()
-                ),
-            ].into()
-        },
+    /// Determines how uamp will self update.
+    #[track_ref(pub, pub)]
+    #[serde(default)]
+    update_mode: install::UpdateMode,
 
-        #[doc = "This will be used as playlist end action if the end action"]
-        #[doc = "is not set."]
-        default_playlist_end_action: Option<Alias> { pub, pub } =>
-        pub(super) () {
-            None
-        },
+    /// Determines the repository fro which uamp will update.
+    #[track_ref(pub, pub)]
+    #[serde(default = "default::update_remote")]
+    update_remote: String,
 
-        #[doc = "Determines how uamp will self update."]
-        update_mode: install::UpdateMode { pub, pub } => pub(super) () {
-            Default::default()
-        },
+    #[track_ref(pub, pub)]
+    #[serde(default = "default::skin")]
+    #[value_change(Change::SKIN)]
+    skin: PathBuf,
 
-        #[doc = "Determines the repository fro which uamp will update."]
-        update_remote: String { pub, pub } => pub(super) () {
-            install::DEFAULT_REMOTE.to_owned()
-        },
+    #[track_ref(pub, pub)]
+    #[serde(default)]
+    web_client_command: Option<String>,
 
-        skin: PathBuf { pub, pub } => pub(super) () {
-            default_http_client_path()
-        },
+    #[track_ref(pub, pub)]
+    #[serde(default = "default::plugin_folders")]
+    plugin_folders: Vec<PathBuf>,
 
-        web_client_command: Option<String> { pub, pub } => pub(super) () {
-            None
-        },
+    // fields passed by value:
+    /// When enabled uamp will sort only by the primary attribute.
+    #[track_value(pub, pub, eq)]
+    #[serde(default)]
+    simple_sorting: bool,
 
-        plugin_folders: Vec<PathBuf> { pub, pub } => pub(super) () {
-            vec![default_plugin_folder()]
-        },
+    /// When enabled, uamp will start playing immidietly when it
+    /// starts.
+    #[track_value(pub, pub, eq)]
+    #[serde(default)]
+    play_on_start: bool,
 
-        ; // fields passed by value:
+    /// When disabled the currently playing song will be inserted to
+    /// the first position in playlist after shuffling.
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::shuffle_current")]
+    shuffle_current: bool,
 
-        #[doc = "When enabled uamp will sort only by the primary attribute."]
-        simple_sorting: bool { pub, pub } => pub(super) () false,
+    /// Determines whether to recursively traverse directories when
+    /// searching for new songs.
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::recursive_search")]
+    #[value_change(Change::RECURSIVE_SEARCH)]
+    recursive_search: bool,
 
-        #[doc = "When enabled, uamp will start playing immidietly when it"]
-        #[doc = "starts."]
-        play_on_start: bool { pub, pub } => pub(super) () false,
+    /// When enabled, uamp will automatically look for new songs
+    /// immidietly when it starts.
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::update_library_on_start")]
+    update_library_on_start: bool,
 
-        #[doc = "When disabled the currently playing song will be inserted to"]
-        #[doc = "the first position in playlist after shuffling."]
-        shuffle_current: bool { pub, pub } => pub(super) () true,
+    /// When enbled, non existing songs will be removed from library
+    /// when looking for new songs.
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::remove_missing_on_load")]
+    remove_missing_on_load: bool,
 
-        #[doc = "Determines whether to recursively traverse directories when"]
-        #[doc = "searching for new songs."]
-        recursive_search: bool { pub, pub } => pub(super) () true,
+    /// Determines how much the volumes changes with volume up/down
+    /// message.
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::volume_jump")]
+    volume_jump: f32,
 
-        #[doc = "When enabled, uamp will automatically look for new songs"]
-        #[doc = "immidietly when it starts."]
-        update_library_on_start: bool { pub, pub } => pub(super) () true,
+    /// Determines whether the playback position is saved.
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::save_playback_pos")]
+    save_playback_pos: SongPosSave,
 
-        #[doc = "When enbled, non existing songs will be removed from library"]
-        #[doc = "when looking for new songs."]
-        remove_missing_on_load: bool { pub, pub } => pub(super) () true,
+    /// Determines how often uamp automatically saves its state.
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::save_timeout")]
+    save_timeout: Option<Wrap<Duration>>,
 
-        #[doc = "Determines how much the volumes changes with volume up/down"]
-        #[doc = "message."]
-        volume_jump: f32 { pub, pub } => pub(super) () 0.025,
+    /// Sets length of the volume fade of song on play/pause.
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::fade_play_pause")]
+    #[value_change(Change::FADE_PLAY_PAUSE)]
+    fade_play_pause: Wrap<Duration>,
 
-        #[doc = "Determines whether the playback position is saved."]
-        save_playback_pos: SongPosSave { pub, pub } => pub(super) () {
-            SongPosSave::OnClose
-        },
+    /// Enable/Disable gapless playback.
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::gapless")]
+    #[value_change(Change::GAPLESS)]
+    gapless: bool,
 
-        #[doc = "Determines how often uamp automatically saves its state."]
-        save_timeout: Option<Wrap<Duration>> { pub, pub } => pub(super) () {
-            Some(Wrap(Duration::from_secs(60)))
-        },
+    /// Detemines how much uamp seeks with fast forward/rewind
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::seek_jump")]
+    seek_jump: Wrap<Duration>,
 
-        #[doc = "Sets length of the volume fade of song on play/pause."]
-        fade_play_pause: Wrap<Duration> { pub, pub } => pub(super) () {
-            Wrap(Duration::from_millis(150))
-        },
+    /// The port of the server that is used to control uamp.
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::port")]
+    #[value_change(Change::PORT)]
+    port: u16,
 
-        #[doc = "Enable/Disable gapless playback."]
-        gapless: bool { pub, pub } => pub(super) () true,
+    /// Determines how old must logs be so that they are
+    /// automatically deleted.
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::delete_logs_after")]
+    delete_logs_after: Wrap<Duration>,
 
-        #[doc = "Detemines how much uamp seeks with fast forward/rewind"]
-        seek_jump: Wrap<Duration> { pub, pub } => pub(super) () {
-            Wrap(Duration::from_secs(10))
-        },
+    /// Enable/Disable server that is used to control uamp. Server
+    /// is sometimes forced to be enabled and so this has somtimes
+    /// no effect.
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::enable_server")]
+    #[value_change(Change::ENABLE_SERVER)]
+    enable_server: bool,
 
-        #[doc = "The port of the server that is used to control uamp."]
-        port: u16 { pub, pub } => pub(super) () DEFAULT_PORT,
+    /// When jumping to the start of the song, if the command is
+    /// issued again within this time, previous song will be played.
+    #[track_value(pub, pub, eq)]
+    #[serde(default)]
+    previous_timeout: Option<Wrap<Duration>>,
 
-        #[doc = "Determines how old must logs be so that they are"]
-        #[doc = "automatically deleted."]
-        delete_logs_after: Wrap<Duration> { pub, pub } => pub(super) () {
-            // 3 days
-            Wrap(Duration::from_secs(60 * 60 * 24 * 3))
-        },
+    /// If this is true, clients will try to lookup images.
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::client_image_lookup")]
+    client_image_lookup: bool,
 
-        #[doc = "Enable/Disable server that is used to control uamp. Server"]
-        #[doc = "is sometimes forced to be enabled and so this has somtimes"]
-        #[doc = "no effect."]
-        enable_server: bool { pub, pub } => pub(super) () true,
+    /// If enabled, uamp will integrate with the system.
+    ///
+    /// This is implemented only on linux (unix) using mpris.
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::system_player")]
+    #[value_change(Change::SYSTEM_PLAYER)]
+    system_player: bool,
 
-        #[doc = "When jumping to the start of the song, if the command is"]
-        #[doc = "issued again within this time, previous song will be played."]
-        previous_timeout: Option<Wrap<Duration>> { pub, pub }
-            => pub(super) () None,
+    /// If true, uamp will automatically restart when its binary
+    /// changes.
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::auto_restart")]
+    #[value_change(Change::AUTO_RESTART)]
+    auto_restart: bool,
 
-        #[doc = "If this is true, clients will try to lookup images."]
-        client_image_lookup: bool { pub, pub } => pub(super) () true,
+    /// The run type to use by default.
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::default_run_type")]
+    default_run_type: RunType,
 
-        #[doc = "If enabled, uamp will integrate with the system."]
-        #[doc = ""]
-        #[doc = "This is implemented only on linux (unix) using mpris."]
-        system_player: bool { pub, pub } => pub(super) () true,
+    // fields that aren't serialized
+    #[serde(skip_serializing, default = "default::config_path")]
+    #[no_update]
+    #[no_clone]
+    pub config_path: Option<PathBuf>,
+    #[serde(skip_serializing, default)]
+    #[no_update]
+    #[no_clone]
+    pub force_server: Option<bool>,
 
-        #[doc = "If true, uamp will automatically restart when its binary"]
-        #[doc = "changes."]
-        auto_restart: bool { pub, pub } => pub(super) () true,
-
-        #[doc = "The run type to use by default."]
-        default_run_type: RunType { pub, pub } => pub(super) () {
-            RunType::WebClient
-        },
-
-        ; // fields that aren't serialized
-
-        #[serde(skip_serializing, default = "default_config_path_json")]
-        pub config_path: Option<PathBuf>,
-        #[serde(skip_serializing, default)]
-        pub force_server: Option<bool>,
-
-        ; // attributes for the auto field
-        #[serde(skip)]
-    }
+    // attributes for the auto field
+    #[serde(skip)]
+    #[tracker(Cell::set)]
+    #[no_update]
+    #[no_clone]
+    change: Cell<bool>,
 }
 
 //===========================================================================//
@@ -246,6 +256,14 @@ impl Config {
         self.change.get()
     }
 
+    pub fn change(&self) {
+        self.set_change(true);
+    }
+
+    pub fn reset_change(&self) {
+        self.set_change(false);
+    }
+
     /// Creates new config with the given config path
     pub fn new<P>(config_path: Option<P>) -> Self
     where
@@ -253,47 +271,8 @@ impl Config {
     {
         Config {
             config_path: config_path.map(|p| p.into()),
-            search_paths: default_search_paths(),
-            recursive_search: default_recursive_search(),
-            library_path: default_library_path(),
-            player_path: default_player_path(),
-            cache_path: default_cache_path(),
-            audio_extensions: default_audio_extensions(),
-            update_library_on_start: default_update_library_on_start(),
-            remove_missing_on_load: default_remove_missing_on_load(),
-            volume_jump: default_volume_jump(),
-            save_playback_pos: default_save_playback_pos(),
-            save_timeout: default_save_timeout(),
-            fade_play_pause: default_fade_play_pause(),
-            gapless: default_gapless(),
-            seek_jump: default_seek_jump(),
-            port: default_port(),
-            server_address: default_server_address(),
-            control_aliases: default_control_aliases(),
-            default_playlist_end_action: default_default_playlist_end_action(),
-            update_mode: default_update_mode(),
-            update_remote: default_update_remote(),
-            delete_logs_after: default_delete_logs_after(),
-            enable_server: default_enable_server(),
-            shuffle_current: default_shuffle_current(),
-            previous_timeout: default_previous_timeout(),
-            play_on_start: default_play_on_start(),
-            simple_sorting: default_simple_sorting(),
-            client_image_lookup: default_client_image_lookup(),
-            system_player: default_system_player(),
-            auto_restart: default_auto_restart(),
-            force_server: None,
-            skin: default_skin(),
-            default_run_type: default_default_run_type(),
-            web_client_command: default_web_client_command(),
-            plugin_folders: default_plugin_folders(),
-            change: Cell::new(true),
+            ..Default::default()
         }
-    }
-
-    /// Sets the change to the given value. Use with caution.
-    pub(super) fn set_change(&self, value: bool) {
-        self.change.set(value);
     }
 
     pub fn get_cache_cover_path(&self, size: CacheSize) -> PathBuf {
@@ -303,14 +282,24 @@ impl Config {
     pub fn should_start_server(&self) -> bool {
         self.force_server.unwrap_or(self.enable_server())
     }
+
+    pub(super) fn update(&mut self, up: serde_json::Value) -> Result<Change> {
+        let serde_json::Value::Object(obj) = up else {
+            return Err(Error::invalid_value("Expected json object."));
+        };
+
+        self.change();
+
+        self.update_from_json_object(obj)
+    }
 }
 
 impl Default for Config {
     fn default() -> Self {
-        Config::new(Some(default_config_dir()))
+        Config {
+            config_path: default::config_path(),
+            change: Cell::new(true),
+            ..serde_json::from_str("{}").unwrap()
+        }
     }
-}
-
-fn default_config_path_json() -> Option<PathBuf> {
-    Some(default_config_dir().join("config.json"))
 }

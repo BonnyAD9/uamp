@@ -35,7 +35,7 @@ pub fn derive_json_value_update_impl(
         let arm = if let Some(val_chng) = val_chng {
             quote! {
                 #id_str => {
-                    self.ident = from_value(v)?;
+                    self.#ident = from_value(v)?;
                     changes.add_change(#val_chng);
                 }
             }
@@ -80,7 +80,7 @@ pub fn derive_json_value_update_impl(
 
         if let Some(arg) = args.next() {
             changes = Some(quote! {
-                let changes = #arg;
+                let mut changes = #arg;
             });
         }
 

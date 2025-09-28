@@ -102,7 +102,7 @@ impl Library {
             jobs.run(Job::LIBRARY_SAVE);
         }
 
-        self.set_change(false);
+        self.reset_change();
 
         Ok(())
     }

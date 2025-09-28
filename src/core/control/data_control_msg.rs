@@ -62,7 +62,7 @@ impl UampApp {
         match msg {
             DataControlMsg::Alias(name) => return self.invoke_alias(&name),
             DataControlMsg::SetPlaylistEndAction(act) => {
-                self.player.playlist_mut().on_end = act.clone();
+                self.player.mut_playlist().on_end = act.clone();
                 self.client_update(SubMsg::SetPlaylistEndAction(act.into()));
             }
             DataControlMsg::SetPlaylist(q) => {
@@ -112,7 +112,7 @@ impl UampApp {
                     self.config.simple_sorting(),
                     &self.player,
                 )?;
-                self.player.playlist_mut().extend(songs.iter().copied());
+                self.player.mut_playlist().extend(songs.iter().copied());
                 self.client_update(SubMsg::Queue(songs.into()));
             }
             DataControlMsg::PlayNext(q) => {
@@ -121,7 +121,7 @@ impl UampApp {
                     self.config.simple_sorting(),
                     &self.player,
                 )?;
-                self.player.playlist_mut().play_next(songs.iter().copied());
+                self.player.mut_playlist().play_next(songs.iter().copied());
                 self.client_update(SubMsg::PlayNext(songs.into()));
             }
             DataControlMsg::Restart(exe) => {

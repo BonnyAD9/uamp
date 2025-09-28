@@ -3,6 +3,7 @@ use std::{cell::Cell, mem, time::Duration};
 use itertools::Itertools;
 use log::{error, info, warn};
 use raplay::{CallbackInfo, Timestamp};
+use uamp_proc::TrackChange;
 
 use crate::{
     core::{
@@ -14,7 +15,6 @@ use crate::{
         server::sub,
     },
     ext::AlcVec,
-    gen_struct,
 };
 
 use super::{
@@ -26,20 +26,25 @@ use super::{
 //                                   Public                                  //
 //===========================================================================//
 
-gen_struct! {
-    #[derive(Debug)]
-    pub Player {
-        // Reference
-        playlist: Playlist { pub, pub },
-        playlist_stack: Vec<Playlist> { pub, pub },
-        ; // value
-        volume: f32 { pub, pri },
-        mute: bool { pub, pri },
-        ; // other
-        state: Playback,
-        inner: SinkWrapper,
-        playlist_ended: bool,
-    }
+#[derive(Debug, TrackChange)]
+pub struct Player {
+    // Reference
+    #[track_ref(pub, pub)]
+    playlist: Playlist,
+    #[track_ref(pub, pub)]
+    playlist_stack: Vec<Playlist>,
+
+    #[track_value(pub, eq)]
+    volume: f32,
+    #[track_value(pub, eq)]
+    mute: bool,
+
+    state: Playback,
+    inner: SinkWrapper,
+    playlist_ended: bool,
+
+    #[tracker(Cell::set)]
+    change: Cell<bool>,
 }
 
 impl Player {
@@ -49,6 +54,10 @@ impl Player {
 
     pub fn change(&self) {
         self.change.set(true);
+    }
+
+    pub(super) fn reset_change(&self) {
+        self.set_change(false);
     }
 
     /// Play/Pause.
@@ -77,8 +86,8 @@ impl Player {
     ///
     /// - `volume`: Value from 0 to 1 (can be outside of this range but it may
     ///   result in distorted audio). It is on square root scale.
-    pub fn set_volume(&mut self, volume: f32) {
-        self.volume_set(volume);
+    pub fn change_volume(&mut self, volume: f32) {
+        self.set_volume(volume);
         if !self.mute() {
             self.inner.set_volume(volume);
         }
@@ -88,9 +97,9 @@ impl Player {
     ///
     /// - `mute`: when `true` the audio will be muted. This doesn't affect the
     ///   field `volume`.
-    pub fn set_mute(&mut self, mute: bool) {
+    pub fn enable_mute(&mut self, mute: bool) {
         let vol = if mute { 0. } else { self.volume() };
-        self.mute_set(mute);
+        self.set_mute(mute);
         self.inner.set_volume(vol);
     }
 
@@ -101,7 +110,7 @@ impl Player {
         playlist: Playlist,
         play: bool,
     ) {
-        *self.playlist_mut() = playlist;
+        *self.mut_playlist() = playlist;
         self.try_load(lib, self.playlist().current(), play, false);
     }
 
@@ -121,7 +130,7 @@ impl Player {
 
     /// Plays the `n`th next song in the playlist
     pub fn play_next(&mut self, lib: &mut Library, n: usize) {
-        let id = self.playlist_mut().nth_next(n);
+        let id = self.mut_playlist().nth_next(n);
         if id.is_none() {
             self.playlist_ended = true;
         }
@@ -130,7 +139,7 @@ impl Player {
 
     /// Plays the `n`th previous song in the playlist
     pub fn play_prev(&mut self, lib: &mut Library, n: usize) {
-        let id = self.playlist_mut().nth_prev(n);
+        let id = self.mut_playlist().nth_prev(n);
         self.try_load_state(lib, id, false);
     }
 
@@ -141,7 +150,7 @@ impl Player {
             .current_idx()
             .map(|i| i + 1 == index)
             .unwrap_or_default();
-        let id = self.playlist_mut().jump_to(index);
+        let id = self.mut_playlist().jump_to(index);
         self.try_load_state(lib, id, pf);
     }
 
@@ -161,20 +170,20 @@ impl Player {
         play: bool,
     ) {
         if let Some(t) = self.timestamp() {
-            self.playlist_mut().set_play_pos(t.current)
+            self.mut_playlist().set_play_pos(t.current)
         }
 
-        let old = mem::replace(self.playlist_mut(), playlist);
-        self.playlist_stack_mut().push(old);
+        let old = mem::replace(self.mut_playlist(), playlist);
+        self.mut_playlist_stack().push(old);
         self.try_load(lib, self.playlist.current(), play, false);
     }
 
     /// Pushes new playlist to the stack without changing the play staty by
     /// moving the now playing song to the start of the new playlist.
     pub fn push_with_cur(&mut self, mut songs: AlcVec<SongId>) {
-        songs.splice(0..0, self.playlist_mut().pop_current());
-        let old = mem::replace(self.playlist_mut(), songs.into());
-        self.playlist_stack_mut().push(old);
+        songs.splice(0..0, self.mut_playlist().pop_current());
+        let old = mem::replace(self.mut_playlist(), songs.into());
+        self.mut_playlist_stack().push(old);
         self.inner.unprefetch();
         self.inner.do_prefetch_notify(true);
     }
@@ -189,14 +198,14 @@ impl Player {
         let Some(playlist) = self.playlist_stack.pop() else {
             return;
         };
-        *self.playlist_mut() = playlist;
+        *self.mut_playlist() = playlist;
         if self.try_load(
             lib,
             self.playlist.current(),
             self.is_playing(),
             false,
         ) {
-            self.playlist_mut().pop_play_pos().map(|p| self.seek_to(p));
+            self.mut_playlist().pop_play_pos().map(|p| self.seek_to(p));
         }
     }
 
@@ -217,9 +226,9 @@ impl Player {
                 break;
             };
 
-            let pl = mem::take(self.playlist_mut());
+            let pl = mem::take(self.mut_playlist());
             p.flatten(pl);
-            *self.playlist_mut() = p;
+            *self.mut_playlist() = p;
         }
 
         if reprefetch {
@@ -230,6 +239,10 @@ impl Player {
     /// Sets the fade duration for play/pause
     pub fn fade_play_pause(&mut self, t: Duration) {
         self.inner.fade_play_pause(t);
+    }
+
+    pub fn gapless(&mut self, enable: bool) {
+        self.inner.set_gapless(enable);
     }
 
     /// Configures the player
@@ -286,8 +299,8 @@ impl Player {
 
     /// Retain only songs that match the predicate.
     pub fn retain(&mut self, mut f: impl FnMut(&SongId) -> bool) {
-        self.playlist_mut().retain(&mut f);
-        for p in self.playlist_stack_mut() {
+        self.mut_playlist().retain(&mut f);
+        for p in self.mut_playlist_stack() {
             p.retain(&mut f)
         }
         self.inner.unprefetch();
@@ -319,8 +332,8 @@ impl Player {
         mut songs: impl FnMut() -> I,
         policy: Option<AddPolicy>,
     ) {
-        self.playlist_mut().add_songs(songs(), policy);
-        for p in self.playlist_stack_mut() {
+        self.mut_playlist().add_songs(songs(), policy);
+        for p in self.mut_playlist_stack() {
             p.add_songs(songs(), policy);
         }
     }
@@ -361,13 +374,13 @@ impl Player {
 
         order_vec.extend(order.iter().rev().map(|i| stack_len - i - 1));
 
-        let mut playlists = std::mem::take(self.playlist_stack_mut());
+        let mut playlists = std::mem::take(self.mut_playlist_stack());
         if let Some(t) = self.timestamp() {
-            self.playlist_mut().set_play_pos(t.current)
+            self.mut_playlist().set_play_pos(t.current)
         }
-        playlists.push(mem::replace(self.playlist_mut(), vec![].into()));
+        playlists.push(mem::replace(self.mut_playlist(), vec![].into()));
 
-        *self.playlist_stack_mut() = order_vec
+        *self.mut_playlist_stack() = order_vec
             .into_iter()
             .map(|a| std::mem::take(&mut playlists[a]))
             .collect();
@@ -454,15 +467,10 @@ impl Player {
         self.change.get()
     }
 
-    /// Sets value indicating whether there was any change since the last save.
-    pub(super) fn set_change(&self, val: bool) {
-        self.change.set(val);
-    }
-
     /// Move to the next song without loading it because it was successfully
     /// prefetched.
     pub(super) fn prefetch_success(&mut self) {
-        self.playlist_mut().nth_next(1);
+        self.mut_playlist().nth_next(1);
     }
 
     /// Prefetch the next song if available.

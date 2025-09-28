@@ -19,7 +19,7 @@ impl UampApp {
                 Ok(())
             }
             Err(e) => {
-                self.library.set_change(true);
+                self.library.change();
                 e.prepend("Failed to save library.").err()
             }
         }
