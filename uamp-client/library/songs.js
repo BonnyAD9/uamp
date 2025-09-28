@@ -14,6 +14,8 @@ export default class Songs {
         this.sort = sort;
         /** @type {boolean} */
         this.ascending = ascending;
+
+        this.#sortSongs();
     }
 
     /** Gets the songs */
@@ -27,6 +29,19 @@ export default class Songs {
      */
     push(song) {
         this.songs.push(song);
+        this.#sortSongs();
+    }
+
+    /**
+     * Gets the order in the uamp order format
+     * @returns {string} uamp order query
+     */
+    getOrderQuery() {
+        if (this.sort === "id") {
+            return this.ascending ? "" : "rev";
+        }
+        const dir = this.ascending ? "/" : "\\";
+        return `${dir}-${this.sort}`;
     }
 
     /**

@@ -1,5 +1,8 @@
+import Song from "./song.js";
+import Songs from "./songs.js";
+
 const UNDEF_YEAR = 2147483647;
-const albumTemplate = document.getElementById('album-template');
+const albumTemplate = document.getElementById("album-template");
 
 export default class Album {
     /**
@@ -16,8 +19,8 @@ export default class Album {
         this.artist = artist;
         /** @type {number} */
         this.year = year;
-        /** @type {Song[]} */
-        this.songs = songs;
+        /** @type {Songs} */
+        this.songs = new Songs(songs, "track");
     }
 
     /**
@@ -25,7 +28,7 @@ export default class Album {
      * @returns {string} songs release year
      */
     getYear() {
-        return this.year == UNDEF_YEAR ? '-' : `${this.year}`;
+        return this.year == UNDEF_YEAR ? "-" : `${this.year}`;
     }
 
     /**
@@ -34,20 +37,19 @@ export default class Album {
      */
     getCard() {
         const cloned = albumTemplate.content.cloneNode(true);
-        const card = cloned.querySelector('.card');
+        const card = cloned.querySelector(".card");
 
-        card.querySelector('img').src =
-            Album.getCover(this.artist, this.name);
-        card.querySelector('.name').textContent = this.name;
-        card.querySelector('.artist').textContent = this.artist;
+        card.querySelector("img").src = Album.getCover(this.artist, this.name);
+        card.querySelector(".name").textContent = this.name;
+        card.querySelector(".artist").textContent = this.artist;
         return card;
     }
 
-    /** 
+    /**
      * Sorts albums songs by track number
      */
     sortByTrack() {
-        this.songs.sort((a, b) => a.track - b.track);
+        this.songs.sortBy("track", true);
     }
 
     /**
@@ -55,7 +57,7 @@ export default class Album {
      * @returns {string} uamp query string
      */
     getQuery() {
-        const s = (text) => text.replaceAll('/', '//');
+        const s = (text) => text.replaceAll("/", "//");
         return `p=/${s(this.artist)}/.a=/${s(this.name)}/@/t`;
     }
 
@@ -66,11 +68,11 @@ export default class Album {
      * @return {string} API URL
      */
     static getCover(artist, album, size = null) {
-        let req = `/api/img?artist=${encodeURIComponent(artist)}&album=` +
+        let req =
+            `/api/img?artist=${encodeURIComponent(artist)}&album=` +
             `${encodeURIComponent(album)}&or=` +
-            encodeURIComponent('/app/assets/svg/img_placeholder.svg');
-        if (size !== null)
-            req += `&size=${size}`;
+            encodeURIComponent("/app/assets/svg/img_placeholder.svg");
+        if (size !== null) req += `&size=${size}`;
         return req;
     }
 }

@@ -1,4 +1,6 @@
 import Album from "./album.js";
+import Song from "./song.js";
+import Songs from "./songs.js";
 
 const artistTemplate = document.getElementById('artist-template');
 
@@ -12,8 +14,8 @@ export default class Artist {
     constructor(name, songs = [], albums = []) {
         /** @type {string} */
         this.name = name;
-        /** @type {Song[]} */
-        this.songs = songs;
+        /** @type {Songs} */
+        this.songs = new Songs(songs);
         /** @type {Album[]} */
         this.albums = albums;
     }

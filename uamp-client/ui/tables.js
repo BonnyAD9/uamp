@@ -118,13 +118,18 @@ const tableTemplate = document.getElementById("songs-template");
  * @param {string[]} classes - classes to be added on the table
  * @returns {HTMLTableElement} empty songs table
  */
-function getTable(onclick, classes = []) {
+function getTable(onclick, sortHandler = null, classes = []) {
     const cloned = tableTemplate.content.cloneNode(true);
     const table = cloned.querySelector("table");
     table.classList.add(...classes);
 
     const tbody = table.querySelector("tbody");
     tbody.addEventListener("click", onclick);
+
+    if (sortHandler != null) {
+        addTableSort(table, sortHandler);
+    }
+
     return table;
 }
 
@@ -155,6 +160,7 @@ export function displayPlaylistStack(n) {
     for (let i = 1; i <= n; i++) {
         const cloned = getTable(
             (e) => AppSingleton.get().playlistClick(e),
+            null,
             ["playlist-stack"],
         );
         playlists.appendChild(cloned);
@@ -164,26 +170,31 @@ export function displayPlaylistStack(n) {
 
 /** Spawns all the songs tables */
 function spawnTables() {
-    document
-        .getElementById("library")
-        .appendChild(getTable((e) => AppSingleton.get().libraryClick(e)));
-    addTableSort(document.querySelector("#library .songs"), (key) =>
-        AppSingleton.get().sortSongs(key),
+    const libTable = getTable(
+        e => AppSingleton.get().libraryClick(e),
+        key => AppSingleton.get().sortSongs(key),
     );
-
-    document
-        .getElementById("artist-detail")
-        .appendChild(getTable((e) => AppSingleton.get().artistSongClick(e)));
+    document.getElementById("library").appendChild(libTable);
+    
+    const artTable = getTable(
+        e => AppSingleton.get().artistSongClick(e),
+        key => AppSingleton.get().sortArtistSongs(key),
+    );
+    document.getElementById("artist-detail").appendChild(artTable);
     document
         .querySelector("#playlist .playlist-wrapper")
         .appendChild(
             getTable(
                 (e) => AppSingleton.get().playlistClick(e),
+                null,
                 ["playlist-stack", "active"],
             ),
         );
 
-    const table = getTable((e) => AppSingleton.get().albumSongClick(e));
+    const table = getTable(
+        e => AppSingleton.get().albumSongClick(e),
+        key => AppSingleton.get().sortAlbumSongs(key),
+    );
     table.querySelector(".col-img").remove();
     table.querySelector("thead tr th").remove();
     document

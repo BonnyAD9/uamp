@@ -11,8 +11,10 @@ import { updateCurrent, updatePlayBtn, updateVolume } from "./ui/bar.js";
 import {
     displayAlbum,
     displayAlbums,
+    displayAlbumSongs,
     displayArtist,
     displayArtists,
+    displayArtistSongs,
 } from "./ui/pages.js";
 import {
     displayPlaylistStack,
@@ -216,6 +218,16 @@ export default class App {
         this.library.songs.toggleSort(key);
         this.libraryTable.render();
     };
+    sortAlbumSongs = (key) => {
+        if (!this.album) return;
+        this.album.songs.toggleSort(key);
+        displayAlbumSongs(this.album, this.player.getPlayingId());
+    };
+    sortArtistSongs = (key) => {
+        if (!this.artist) return;
+        this.artist.songs.toggleSort(key);
+        displayArtistSongs(this.artist, this.player.getPlayingId());
+    };
 
     updateAll() {
         this.displayProgress(0);
@@ -288,16 +300,24 @@ export default class App {
         displayPlaylistStack(this.player.playlist_stack.length);
     }
 
-    libraryClick = (e) => this.genericSongClick(e, "any");
-    albumSongClick = (e) => this.genericSongClick(e, this.album.getQuery());
-    artistSongClick = (e) => this.genericSongClick(e, this.artist.getQuery());
+    libraryClick = (e) => this.songClickHandler(e, this.library.songs.get());
+    albumSongClick = (e) => this.songClickHandler(e, this.album.songs.get());
+    artistSongClick = (e) => this.songClickHandler(e, this.artist.songs.get());
 
-    genericSongClick(e, query) {
+    songClickHandler(e, songs) {
         const row = e.target.closest("tr");
         if (!row) return;
 
-        const encodedQuery = encodeURIComponent(query);
-        apiCtrl(`sp=${encodedQuery}&pj=${row.dataset.index}&pp=play`);
+        apiPushPlaylist(songs, row.dataset.index);
+    }
+
+    genericSongClick(e, query, sort = "") {
+        const row = e.target.closest("tr");
+        if (!row) return;
+
+        const encQuery = encodeURIComponent(query);
+        const sortQuery = sort === "" ? "" : `&sort=${sort}`;
+        apiCtrl(`sp=${encQuery}${sortQuery}&pj=${row.dataset.index}&pp=play`);
     }
 
     playlistClick(e) {
@@ -396,7 +416,25 @@ sliderTrack.addEventListener("click", (e) => {
     slider.style.width = `${percent * 100}%`;
 });
 
-function apiCtrl(query) {
+/**
+ * Sends an API request to push playlist
+ * @param {Song[]} songs - songs to be pushed to the playlist
+ * @param {number} pos - playing song in the playlist
+ */
+async function apiPushPlaylist(songs, pos) {
+    const data = {
+        songs: songs.map((s) => s.id),
+        position: Number(pos),
+        play: true,
+    };
+    return fetch("/api/ctrl", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ SetPlaylist: data }),
+    });
+}
+
+async function apiCtrl(query) {
     return fetch(`/api/ctrl?${query}`)
         .then((res) => {
             if (!res.ok) {
