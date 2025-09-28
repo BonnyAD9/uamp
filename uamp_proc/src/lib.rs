@@ -1,6 +1,7 @@
 mod err;
 mod helpers;
 mod json_value_update;
+mod partial_clone;
 mod track_change;
 
 pub(crate) use self::{err::*, helpers::*};
@@ -19,6 +20,11 @@ pub fn derive_json_value_update(item: TokenStream) -> TokenStream {
     extract_stream(json_value_update::derive_json_value_update_impl(
         item.into(),
     ))
+}
+
+#[proc_macro_derive(PartialClone, attributes(partial_clone, no_clone))]
+pub fn derive_partial_clone(item: TokenStream) -> TokenStream {
+    extract_stream(partial_clone::derive_partial_clone_impl(item.into()))
 }
 
 fn extract_stream(s: Result<proc_macro2::TokenStream>) -> TokenStream {
