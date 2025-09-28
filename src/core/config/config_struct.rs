@@ -230,8 +230,6 @@ pub struct Config {
 
     // fields that aren't serialized
     #[serde(skip_serializing, default = "default::config_path")]
-    #[no_update]
-    #[no_clone]
     pub config_path: Option<PathBuf>,
     #[serde(skip_serializing, default)]
     #[no_update]
