@@ -7,6 +7,7 @@
 - Allow mp3 without tags.
 - Add `update --enabled` to tab completion.
 - Advertize desktop file in mpris.
+- Properly propagate configuration change of `fade_play_pause` and `gapless`.
 
 ## v0.6.2
 ### Fixes
