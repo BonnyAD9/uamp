@@ -1,6 +1,10 @@
 # CHANGELOG
 
 ## future
+### New features
+- Plugin support.
+- New plugin `uamp-ffmpeg`.
+
 ### Fixes
 - Properly install desktop file.
 - Fix typo in for `web_client_command` in json schema.
