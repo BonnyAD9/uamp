@@ -22,6 +22,15 @@ export default class Songs {
     get() {
         return this.songs;
     }
+    
+    /**
+     * Sets the songs to the given list, sorts them based on set sorting
+     * @param {Song[]} songs - songs list
+     */
+    set(songs) {
+        this.songs = songs;
+        this.#sortSongs();
+    }
 
     /**
      * Pushes the given song to the songs list

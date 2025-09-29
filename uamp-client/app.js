@@ -234,7 +234,7 @@ export default class App {
             this.album.songs.ascending,
         );
     };
-    sortArtistSongs = (key) =>{
+    sortArtistSongs = (key) => {
         if (!this.artist) return;
         this.artist.songs.toggleSort(key);
         displayArtistSongs(this.artist, this.player.getPlayingId());
@@ -243,6 +243,11 @@ export default class App {
             this.artist.songs.ascending,
         );
     };
+    
+    searchLibrary = (e) => {
+        this.library.searchLibrary(e.target.value);
+        this.libraryTable.render();
+    }
 
     updateAll() {
         this.displayProgress(0);

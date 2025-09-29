@@ -28,7 +28,16 @@
         </section>
 
         <section id="library" class="screen active">
-            <h1>Library</h1>
+            <div class="header">
+                <h1>Library</h1>
+                <input
+                    class="form-input"
+                    id="library-search"
+                    type="search"
+                    placeholder="Search library..."
+                    oninput="AppSingleton.get().searchLibrary(event)"
+                />
+            </div>
         </section>
 
         <section id="albums" class="screen">

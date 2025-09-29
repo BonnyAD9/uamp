@@ -10,7 +10,7 @@ export function displayAlbums(albums) {
 }
 
 function genericDisplayAlbums(albumsList, albums) {
-    albumsList.innerHTML = '';
+    albumsList.innerHTML = "";
     albums.forEach((album, i) => {
         const card = album.getCard();
         card.dataset.index = i;

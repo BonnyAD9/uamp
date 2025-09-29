@@ -22,6 +22,11 @@ export default class Library {
         this.artists = [];
 
         this.#generate();
+
+        const input = document.getElementById("library-search");
+        if (input.value) {
+            this.searchLibrary(input.value);
+        }
     }
 
     /**
@@ -30,9 +35,32 @@ export default class Library {
      * @returns {?Song} song when found, else null
      */
     getSong(id) {
-        if (id < 0)
-            return this.tmpSongs[-id - 1];
+        if (id < 0) return this.tmpSongs[-id - 1];
         return this.allSongs[id];
+    }
+
+    /**
+     * Applies the library search query and saves the result to songs.
+     * Resets the search when the query is empty.
+     * @param {string} query - search query
+     */
+    searchLibrary(query) {
+        const q = query.trim().toLowerCase();
+        if (!q) {
+            this.songs.set(this.allSongs.filter((s) => !s.deleted));
+            return;
+        }
+
+        const queried = this.allSongs.filter((s) => {
+            if (s.deleted) return false;
+
+            return (
+                s.title.toLowerCase().includes(q) ||
+                s.artist.toLowerCase().includes(q) ||
+                s.album.toLowerCase().includes(q)
+            );
+        });
+        this.songs.set(queried);
     }
 
     /** Generates albums and artists (TODO: try refactor + album push()) */
@@ -56,7 +84,7 @@ export default class Library {
             if (!albums.has(albumKey)) {
                 albums.set(
                     albumKey,
-                    new Album(song.album, song.artist, song.year)
+                    new Album(song.album, song.artist, song.year),
                 );
                 artist.albums.push(albums.get(albumKey));
             }
@@ -64,10 +92,10 @@ export default class Library {
         }
 
         this.albums = Array.from(albums.values());
-        this.albums.forEach(album => album.sortByTrack());
+        this.albums.forEach((album) => album.sortByTrack());
 
         this.artists = Array.from(artists.values());
         this.artists.sort((a, b) => a.name.localeCompare(b.name));
-        this.artists.forEach(artist => artist.sortAlbums());
+        this.artists.forEach((artist) => artist.sortAlbums());
     }
 }
