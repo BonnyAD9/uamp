@@ -28,6 +28,29 @@ function highlightPlaying(songId, container) {
     }
 }
 
+export const displayLibrarySort = (key, dir) =>
+    displaySort(document.querySelector('#library .songs'), key, dir);
+export const displayArtistSongsSort = (key, dir) =>
+    displaySort(document.querySelector('#artist-detail .songs'), key, dir);
+export const displayAlbumSongsSort = (key, dir) =>
+    displaySort(document.querySelector('#album-detail .songs'), key, dir);
+
+/**
+ * Displays the sorting in the thead of the table
+ * @param {HTMLTableElement} table - table to which thead should display sort
+ * @param {string} key - key of the sorting
+ * @param {bool} direction - ascending when true, else descending
+ */
+function displaySort(table, key, direction) {
+    const attrs = table.querySelectorAll('thead th span');
+    attrs.forEach(attr => {
+        attr.classList.remove('sorted', 'asc', 'desc');
+        if (attr.dataset.sort === key) {
+            attr.classList.add('sorted', direction ? 'asc' : 'desc');
+        }
+    });
+}
+
 const playlists = document.querySelector("#playlist .playlist-wrapper");
 const playlistTabs = document.querySelector("#playlist .tabs .tabs-wrapper");
 /** Pushes empty playing table to the playlist stack and adds new tab */

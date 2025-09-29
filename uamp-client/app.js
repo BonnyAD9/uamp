@@ -17,6 +17,9 @@ import {
     displayArtistSongs,
 } from "./ui/pages.js";
 import {
+    displayAlbumSongsSort,
+    displayArtistSongsSort,
+    displayLibrarySort,
     displayPlaylistStack,
     popPlaylist,
     pushPlaylist,
@@ -217,16 +220,28 @@ export default class App {
     sortSongs = (key) => {
         this.library.songs.toggleSort(key);
         this.libraryTable.render();
+        displayLibrarySort(
+            this.library.songs.sort,
+            this.library.songs.ascending,
+        );
     };
     sortAlbumSongs = (key) => {
         if (!this.album) return;
         this.album.songs.toggleSort(key);
         displayAlbumSongs(this.album, this.player.getPlayingId());
+        displayAlbumSongsSort(
+            this.album.songs.sort,
+            this.album.songs.ascending,
+        );
     };
-    sortArtistSongs = (key) => {
+    sortArtistSongs = (key) =>{
         if (!this.artist) return;
         this.artist.songs.toggleSort(key);
         displayArtistSongs(this.artist, this.player.getPlayingId());
+        displayArtistSongsSort(
+            this.artist.songs.sort,
+            this.artist.songs.ascending,
+        );
     };
 
     updateAll() {
