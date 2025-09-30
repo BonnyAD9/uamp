@@ -57,6 +57,7 @@ const playlistTabs = document.querySelector("#playlist .tabs .tabs-wrapper");
 export function pushPlaylist() {
     const table = getTable(
         (e) => AppSingleton.get().playlistClick(e),
+        null,
         ["playlist-stack"],
     );
 
