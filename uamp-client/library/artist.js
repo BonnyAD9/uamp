@@ -25,7 +25,7 @@ export default class Artist {
      * @returns {string} the details string
      */
     getOtherDetails() {
-        return `${this.albums.length} albums  •  ${this.songs.length} songs`;
+        return `${this.albums.length} albums  •  ${this.songs.len()} songs`;
     }
 
     /**

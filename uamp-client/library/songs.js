@@ -22,7 +22,7 @@ export default class Songs {
     get() {
         return this.songs;
     }
-    
+
     /**
      * Sets the songs to the given list, sorts them based on set sorting
      * @param {Song[]} songs - songs list
@@ -39,6 +39,14 @@ export default class Songs {
     push(song) {
         this.songs.push(song);
         this.#sortSongs();
+    }
+
+    /**
+     * Gets the songs count
+     * @returns number of songs
+     */
+    len() {
+        return this.songs.length;
     }
 
     /**

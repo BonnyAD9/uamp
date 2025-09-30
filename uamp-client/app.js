@@ -48,6 +48,8 @@ export default class App {
         this.lastUpdate = performance.now();
         this.rafId = null;
 
+        this.searchTimeout = null;
+
         this.playlistTab = 0;
 
         /** @type {?Album} */
@@ -243,10 +245,24 @@ export default class App {
             this.artist.songs.ascending,
         );
     };
-    
-    searchLibrary = (e) => {
+
+    searchLibrary = this.searchDebounce((e) => {
         this.library.searchLibrary(e.target.value);
         this.libraryTable.render();
+    });
+    searchAlbums = this.searchDebounce((e) => {
+        this.library.searchAlbums(e.target.value);
+        this.displayAlbums();
+    });
+    searchArtists = this.searchDebounce((e) => {
+        this.library.searchArtists(e.target.value);
+        this.displayArtists();
+    });
+    searchDebounce(searchFn, delay = 100) {
+        return (e) => {
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(() => searchFn(e), delay);
+        };
     }
 
     updateAll() {

@@ -41,7 +41,16 @@
         </section>
 
         <section id="albums" class="screen">
-            <h1>Albums</h1>
+            <div class="header">
+                <h1>Albums</h1>
+                <input
+                    class="form-input"
+                    id="albums-search"
+                    type="search"
+                    placeholder="Search albums..."
+                    oninput="AppSingleton.get().searchAlbums(event)"
+                />
+            </div>
             <div class="list" onclick="AppSingleton.get().albumClick(event)">
             </div>
         </section>
@@ -62,7 +71,16 @@
         </section>
 
         <section id="artists" class="screen">
-            <h1>Artists</h1>
+            <div class="header">
+                <h1>Albums</h1>
+                <input
+                    class="form-input"
+                    id="artists-search"
+                    type="search"
+                    placeholder="Search artists..."
+                    oninput="AppSingleton.get().searchArtists(event)"
+                />
+            </div>
             <table class="songs">
                 <tbody onclick="AppSingleton.get().artistClick(event)"></tbody>
             </table>

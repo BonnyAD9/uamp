@@ -35,7 +35,7 @@ export function displayAlbum(album, id) {
 
     let other = album.getYear() !== "-" ? `${album.getYear()}  •  ` : "";
     albumInfo.querySelector(".other").textContent =
-        `${other}${album.songs.get().length} songs`;
+        `${other}${album.songs.len()} songs`;
 
     displayAlbumSongs(album, id);
 }

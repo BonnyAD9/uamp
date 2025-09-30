@@ -11,6 +11,11 @@ export default class Library {
     constructor(library) {
         /** @type {Song[]} */
         this.allSongs = library.songs.map((s, i) => Song.from(i, s));
+        /** @type {Album[]} */
+        this.allAlbums = [];
+        /** @type {Artist[]} */
+        this.allArtists = [];
+
         /** @type {Song[]} */
         this.tmpSongs = library.tmp_songs.map((s, i) => Song.from(-i - 1, s));
 
@@ -22,11 +27,7 @@ export default class Library {
         this.artists = [];
 
         this.#generate();
-
-        const input = document.getElementById("library-search");
-        if (input.value) {
-            this.searchLibrary(input.value);
-        }
+        this.#filterLists();
     }
 
     /**
@@ -63,6 +64,33 @@ export default class Library {
         this.songs.set(queried);
     }
 
+    searchAlbums(query) {
+        const q = query.trim().toLowerCase();
+        if (!q) {
+            this.albums = this.allAlbums;
+            return;
+        }
+
+        this.albums = this.allAlbums.filter((a) => {
+            return (
+                a.artist.toLowerCase().includes(q) ||
+                a.name.toLowerCase().includes(q)
+            );
+        });
+    }
+
+    searchArtists(query) {
+        const q = query.trim().toLowerCase();
+        if (!q) {
+            this.artists = this.allArtists;
+            return;
+        }
+
+        this.artists = this.allArtists.filter((a) =>
+            a.name.toLowerCase().includes(q),
+        );
+    }
+
     /** Generates albums and artists (TODO: try refactor + album push()) */
     #generate() {
         const albums = new Map();
@@ -91,11 +119,30 @@ export default class Library {
             albums.get(albumKey).songs.push(song);
         }
 
-        this.albums = Array.from(albums.values());
-        this.albums.forEach((album) => album.sortByTrack());
+        this.allAlbums = Array.from(albums.values());
+        this.allAlbums.forEach((album) => album.sortByTrack());
+        this.albums = this.allAlbums;
 
-        this.artists = Array.from(artists.values());
-        this.artists.sort((a, b) => a.name.localeCompare(b.name));
-        this.artists.forEach((artist) => artist.sortAlbums());
+        this.allArtists = Array.from(artists.values());
+        this.allArtists.sort((a, b) => a.name.localeCompare(b.name));
+        this.allArtists.forEach((artist) => artist.sortAlbums());
+        this.artists = this.allArtists;
+    }
+
+    #filterLists() {
+        const libSearch = document.getElementById("library-search");
+        if (libSearch.value) {
+            this.searchLibrary(libSearch.value);
+        }
+
+        const albumSearch = document.getElementById("albums-search");
+        if (albumSearch.value) {
+            this.searchAlbums(albumSearch.value);
+        }
+
+        const artistSearch = document.getElementById("artists-search");
+        if (artistSearch.value) {
+            this.searchArtists(artistSearch.value);
+        }
     }
 }
