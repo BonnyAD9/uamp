@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.6.3
 ### New features
 - Plugin support.
 - New plugin `uamp-ffmpeg`.
