@@ -1,3 +1,7 @@
+import App from "./app.js";
+import './colors.js';
+import { removePlaylistRow } from "./ui/tables.js";
+
 const AppSingleton = (() => {
     let instance = null;
 
@@ -11,6 +15,7 @@ const AppSingleton = (() => {
         }
     }
 })();
+window.AppSingleton = AppSingleton;
 
 const eventSource = new EventSource('/api/sub');
 
@@ -20,7 +25,6 @@ eventSource.addEventListener('set-all', async e => {
 
     setTimeout(() => {
         app.updateAll();
-        app.displayPlaylist();
         app.displayAlbums();
         app.displayArtists();
     }, 0);
@@ -45,11 +49,11 @@ eventSource.addEventListener('seek', e => {
 eventSource.addEventListener('quitting', _ => console.log('Quitting...'));
 
 eventSource.addEventListener('set-volume', e => {
-    AppSingleton.get().setVolume(JSON.parse(e.data));
+    AppSingleton.get().player.setVolume(JSON.parse(e.data));
 });
 
 eventSource.addEventListener('set-mute', e => {
-    AppSingleton.get().setMute(JSON.parse(e.data));
+    AppSingleton.get().player.setMute(JSON.parse(e.data));
 });
 
 eventSource.addEventListener('pop-playlist', e => {
@@ -96,7 +100,10 @@ eventSource.addEventListener('push-playlist-with-cur', e => {
 eventSource.addEventListener('queue', e => {
     const app = AppSingleton.get();
     app.player.playlist.songs.push(...JSON.parse(e.data));
-    app.displayPlaylist();
+    if (app.playlistTab === 0) {
+        app.displayPlaylist();
+        app.createBarSongs();
+    }
 });
 
 eventSource.addEventListener('play-next', e => {
@@ -106,10 +113,13 @@ eventSource.addEventListener('play-next', e => {
     if (current === null) return;
 
     app.player.playlist.songs.splice(current + 1, 0, ...JSON.parse(e.data));
-    app.displayPlaylist();
+    if (app.playlistTab === 0) {
+        app.displayPlaylist();
+        app.createBarSongs();
+    }
 });
 
-eventSource.addEventListener('restarting', _ => console.log('Restaring...'));
+eventSource.addEventListener('restarting', _ => console.log('Restarting...'));
 
 eventSource.addEventListener('reorder-playlist-stack', e => {
     const app = AppSingleton.get();
@@ -156,7 +166,7 @@ eventSource.addEventListener('config-changed', e => {
 });
 
 function playlistJumpEvent(app, data) {
-    app.setCurrent(data.position);
+    app.player.setCurrent(data.position);
     app.setPlayback(data.playback);
     app.setTimestamp(data.timestamp);
 }
