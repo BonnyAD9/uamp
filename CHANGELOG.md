@@ -4,6 +4,11 @@
 ### New features
 - Plugin support.
 - New plugin `uamp-ffmpeg`.
+- Search in client.
+- Sort in client.
+
+### Changes
+- Optimize large song lists in client.
 
 ### Fixes
 - Properly install desktop file.
@@ -12,6 +17,7 @@
 - Add `update --enabled` to tab completion.
 - Advertize desktop file in mpris.
 - Properly propagate configuration change of `fade_play_pause` and `gapless`.
+- Add song highlighting to artists and albums.
 
 ## v0.6.2
 ### Fixes
