@@ -95,7 +95,7 @@ pub fn install(root: Option<&Path>, exe: &Path, man: bool) -> Result<()> {
     println!("Creating client tar.");
     let client_dst = path_at_root(root, config::default_http_client_path());
     make_parent(&client_dst)?;
-    run_single_tokio(tar_contents_of("src/client", client_dst))?;
+    run_single_tokio(tar_contents_of("uamp-client", client_dst))?;
 
     printcln!(
         "{'g}Success!{'_} uamp v{} is installed.",
