@@ -8,6 +8,7 @@
 - Grououping by albums and artists
 
 # known issues
+- Uamp doesn't save.
 - Invalid playlist end action (on config save?)
 - *Lavish* -> *For a better day* wont play?
 - Mpris images not working (*im a loser*)
