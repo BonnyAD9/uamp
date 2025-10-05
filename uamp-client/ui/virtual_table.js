@@ -1,3 +1,5 @@
+import Song from "../library/song.js";
+
 export default class VirtualTable {
     /**
      * Creates new virtual table
@@ -18,9 +20,9 @@ export default class VirtualTable {
         /** @type {number} */
         this.rowHeight = isTable ? 42 : 32;
         /** @type {(Song, number) => HTMLElement} */
-        this.getSongElement = isTable ?
-            (song, _) => song.getTableRow() :
-            (song, id) => song.getBarRow(id);
+        this.getSongElement = isTable
+            ? (song, _) => song.getTableRow()
+            : (song, id) => song.getBarRow(id);
         /** @type {() => number} */
         this.getCurrentId = getCurrentId;
 
@@ -29,7 +31,7 @@ export default class VirtualTable {
         /** @type {number} */
         this.end = 0;
 
-        this.container.addEventListener('scroll', () => this.update());
+        this.container.addEventListener("scroll", () => this.update());
     }
 
     /** Displays songs in the given containers table using virtual scrolling. */
@@ -38,14 +40,14 @@ export default class VirtualTable {
         const songs = this.getSongs();
 
         const table = this.container.querySelector(this.tableSelector);
-        table.innerHTML = '';
+        table.innerHTML = "";
 
-        const top = document.createElement('tr');
-        top.classList.add('spacer', 'spacer-top');
+        const top = document.createElement("tr");
+        top.classList.add("spacer", "spacer-top");
         table.appendChild(top);
 
-        const bottom = document.createElement('tr');
-        bottom.classList.add('spacer', 'spacer-bottom');
+        const bottom = document.createElement("tr");
+        bottom.classList.add("spacer", "spacer-bottom");
         table.appendChild(bottom);
 
         const { start, end } = this.#getBufferPos(songs.length, top, bottom);
@@ -65,8 +67,8 @@ export default class VirtualTable {
         const songs = this.getSongs();
 
         const table = this.container.querySelector(this.tableSelector);
-        const top = table.querySelector('.spacer-top');
-        const bottom = table.querySelector('.spacer-bottom');
+        const top = table.querySelector(".spacer-top");
+        const bottom = table.querySelector(".spacer-bottom");
         const { start, end } = this.#getBufferPos(songs.length, top, bottom);
 
         for (let i = this.start - 1; i >= start; i--)
@@ -75,14 +77,12 @@ export default class VirtualTable {
             bottom.before(this.#getRow(songs, i, current));
         }
 
-        const removeRow = row => {
-            if (row && !row.classList.contains('spacer'))
+        const removeRow = (row) => {
+            if (row && !row.classList.contains("spacer"))
                 table.removeChild(row);
-        }
-        for (let i = this.start; i < start; i++)
-            removeRow(top.nextSibling);
-        for (let i = this.end; i > end; i--)
-            removeRow(bottom.previousSibling);
+        };
+        for (let i = this.start; i < start; i++) removeRow(top.nextSibling);
+        for (let i = this.end; i > end; i--) removeRow(bottom.previousSibling);
 
         this.start = start;
         this.end = end;
@@ -90,6 +90,7 @@ export default class VirtualTable {
 
     /**
      * Gets buffer position for the virtual scrolling and updates spacers
+     * @param {number} songCnt - total number of songs in the virtual table
      * @param {HTMLElement} topSpacer - top spacer row
      * @param {HTMLElement} bottomSpacer - bottom spacer row
      * @returns {{ start: number, end: number }} buffer boundaries
@@ -97,7 +98,7 @@ export default class VirtualTable {
     #getBufferPos(songCnt, topSpacer, bottomSpacer) {
         const viewHeight = this.container.clientHeight;
 
-        const visibleCnt = Math.ceil(viewHeight / this.rowHeight) + 1;
+        const visibleCnt = Math.ceil(viewHeight / this.rowHeight) + 3;
         const scrollTop = this.container.scrollTop;
         const start = Math.max(0, Math.floor(scrollTop / this.rowHeight) - 2);
         const end = Math.min(songCnt, start + visibleCnt);
@@ -119,8 +120,7 @@ export default class VirtualTable {
         const row = this.getSongElement(song, id);
         row.dataset.index = id;
         row.dataset.songId = song.id;
-        if (song.id === current)
-            row.classList.add('active');
+        if (song.id === current) row.classList.add("active");
         return row;
     }
 }

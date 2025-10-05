@@ -121,6 +121,7 @@ export default class Library {
 
         this.allAlbums = Array.from(albums.values());
         this.allAlbums.forEach((album) => album.sortByTrack());
+        this.allAlbums.sort((a, b) => a.year - b.year);
         this.albums = this.allAlbums;
 
         this.allArtists = Array.from(artists.values());

@@ -118,12 +118,14 @@ section.screen {
 }
 
 @-moz-document url-prefix() {
-    section.screen {
+    section.screen,
+    section#album-detail .album-detail-wrapper {
         scrollbar-width: thin;
         scrollbar-color: var(--fg-sec) transparent;
     }
 }
 
+section#album-detail .album-detail-wrapper::-webkit-scrollbar,
 section.screen::-webkit-scrollbar {
     width: 4px;
 }
@@ -132,12 +134,14 @@ section.screen::-webkit-scrollbar-track {
     margin-bottom: 70px;
 }
 
+section#album-detail .album-detail-wrapper::-webkit-scrollbar-thumb,
 section.screen::-webkit-scrollbar-thumb {
     background-color: var(--fg-sec);
     transition: 0.3s ease;
     border-radius: 2px;
 }
 
+section#album-detail .album-detail-wrapper::-webkit-scrollbar-thumb:hover,
 section.screen::-webkit-scrollbar-thumb:hover {
     background-color: var(--fg-sec2);
 }
@@ -1089,6 +1093,12 @@ section.screen .tabs > h1 {
 
 .playlist-stack.active {
     display: table;
+}
+
+.nosel {
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 @media screen and (max-width: 1800px) {
