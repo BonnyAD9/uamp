@@ -418,6 +418,13 @@ export default class App {
         toggleBar();
         showScreen("artist-detail");
     }
+
+    albumBarClick(artist, album) {
+        this.album = this.library.getAlbumByKey(artist, album);
+        displayAlbum(this.album, this.player.getPlayingId());
+        toggleBar();
+        showScreen("album-detail");
+    }
 }
 
 const navs = document.querySelectorAll("nav p");

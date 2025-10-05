@@ -40,9 +40,28 @@ export default class Library {
         return this.allSongs[id];
     }
 
+    /**
+     * Gets artist by its name
+     * @param {string} name - artist name
+     * @returns {Artist|null} found artist or null
+     */
     getArtistByName(name) {
         return this.allArtists.find(
             (a) => a.name.toLowerCase() === name.toLowerCase(),
+        );
+    }
+
+    /**
+     * Gets album by its keys
+     * @param {string} artist - name of the author of the album
+     * @param {string} name - album name
+     * @returns {Album|null} found album or null
+     */
+    getAlbumByKey(artist, name) {
+        return this.allAlbums.find(
+            (a) =>
+                a.name.toLowerCase() === name.toLowerCase() &&
+                a.artist.toLowerCase() === artist.toLowerCase(),
         );
     }
 
