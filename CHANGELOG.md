@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.6.4
 ### Fixes
 - Uamp often wouldn't save when it should.
 - Uamp would panic with `pop=0` when there is single playlist.
