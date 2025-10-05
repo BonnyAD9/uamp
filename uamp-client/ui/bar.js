@@ -20,9 +20,7 @@ export function updatePlayBtn(playing) {
 
 const songIcon = document.querySelector(".bar .info .info-pic img");
 const songTitle = document.querySelector(".bar .info .title h3");
-const songTitleExp = document.querySelector(".bar .info-title h3");
 const songArtist = document.querySelector(".bar .info .title h4");
-const songArtistExp = document.querySelector(".bar .info-title h4");
 const barBackdrop = document.querySelector(".bar .backdrop");
 /**
  * Updates the currently playing song info
@@ -31,18 +29,15 @@ const barBackdrop = document.querySelector(".bar .backdrop");
 export function updateCurrent(song) {
     if (song === null) {
         songTitle.textContent = "Not Playing...";
-        songTitleExp.textContent = "Not Playing...";
         songArtist.textContent = "";
-        songArtistExp.textContent = "";
         return;
     }
 
     songIcon.src = Album.getCover(song.artist, song.album);
+    songIcon.onclick = (e) => openAlbum(e, song.artist, song.album);
     barBackdrop.src = Album.getCover(song.artist, song.album, 64);
     songTitle.textContent = song.title;
-    songTitleExp.textContent = song.title;
     songArtist.textContent = song.artist;
-    songArtistExp.textContent = song.artist;
 }
 
 const volumeSlider = document.getElementById("volumeSlider");
@@ -74,3 +69,15 @@ export function toggleBar() {
         setTimeout(() => AppSingleton.get().createBarSongs(), 200);
 }
 window.toggleBar = toggleBar;
+
+function openAlbum(e, artist, album) {
+    if (!bar.classList.contains("expanded")) return;
+    e.stopPropagation();
+    AppSingleton.get().albumBarClick(artist, album);
+}
+
+document.getElementById("bar-artist").addEventListener("click", (e) => {
+    if (!bar.classList.contains("expanded")) return;
+    e.stopPropagation();
+    AppSingleton.get().artistBarClick(e);
+});
