@@ -193,7 +193,7 @@ impl Player {
     pub fn pop_playlist(&mut self, lib: &mut Library, n: usize) {
         let len = self.playlist_stack.len();
         self.playlist_stack
-            .splice(len - n.wrapping_sub(1).min(len - 1).., []);
+            .splice(len - n.wrapping_sub(1).min(len.saturating_sub(1)).., []);
 
         let Some(playlist) = self.playlist_stack.pop() else {
             return;

@@ -3,6 +3,7 @@
 ## future
 ### Fixes
 - Uamp often wouldn't save when it should.
+- Uamp would panic with `pop=0` when there is single playlist.
 
 ## v0.6.3
 ### New features
