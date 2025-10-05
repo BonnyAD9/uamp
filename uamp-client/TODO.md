@@ -8,6 +8,5 @@
 - Playlist header and search
 - Settings search
 - Search input styling (some browser display delete text button)
-- Now playing playlist virtual scroll
 - Now playing playlist fade on edges (idk how)
-- Remove online JS library import
+- Make dynamic colors better

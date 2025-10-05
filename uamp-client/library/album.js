@@ -1,7 +1,7 @@
 import Song from "./song.js";
 import Songs from "./songs.js";
 
-const UNDEF_YEAR = 2147483647;
+const UNDEF_YEAR = 0;
 const albumTemplate = document.getElementById("album-template");
 
 export default class Album {

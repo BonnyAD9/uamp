@@ -121,7 +121,14 @@ export default class Library {
 
         this.allAlbums = Array.from(albums.values());
         this.allAlbums.forEach((album) => album.sortByTrack());
-        this.allAlbums.sort((a, b) => a.year - b.year);
+        this.allAlbums.sort((a, b) => {
+            const diff = b.year - a.year;
+            if (diff !== 0) return diff;
+
+            return a.name.localeCompare(b.name, undefined, {
+                sensitivity: "accent",
+            });
+        });
         this.albums = this.allAlbums;
 
         this.allArtists = Array.from(artists.values());

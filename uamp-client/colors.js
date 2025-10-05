@@ -1,6 +1,6 @@
 import { getCookie } from "./settings.js";
 
-const songIcon = document.querySelector('.bar .info .info-pic img');
+const songIcon = document.querySelector(".bar .info .info-pic img");
 
 function rgbToHsl(r, g, b) {
     r /= 255;
@@ -17,13 +17,13 @@ function rgbToHsl(r, g, b) {
         s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
         switch (max) {
             case r:
-                h = ((g - b) / d) + (g < b ? 6 : 0);
+                h = (g - b) / d + (g < b ? 6 : 0);
                 break;
             case g:
-                h = ((b - r) / d) + 2;
+                h = (b - r) / d + 2;
                 break;
             case b:
-                h = ((r - g) / d) + 4;
+                h = (r - g) / d + 4;
                 break;
         }
         h /= 6;
@@ -72,14 +72,14 @@ export function setupDynamicColors(dynamic) {
         setDynamicColors();
         songIcon.onload = setDynamicColors;
     } else {
-        resetColors()
+        resetColors();
         songIcon.onload = null;
     }
 }
 
 export function applyThemeColor(color) {
-    if ((getCookie('dynamicColor') ?? 'true') !== 'true')
-        document.documentElement.style.setProperty('--primary', color);
+    if ((getCookie("dynamicColor") ?? "true") !== "true")
+        document.documentElement.style.setProperty("--primary", color);
 }
 
 export function setDynamicColors() {
@@ -88,50 +88,50 @@ export function setDynamicColors() {
     const root = document.documentElement;
 
     const bg = hslToRgb(h, s * 0.3, 0.1);
-    root.style.setProperty('--bg', rgbToCss(bg))
-    root.style.setProperty('--bg-trans', rgbToRgbaCss(bg, 0.6));
+    root.style.setProperty("--bg", rgbToCss(bg));
+    root.style.setProperty("--bg-trans", rgbToRgbaCss(bg, 0.6));
 
     const bgLight = hslToRgb(h, s * 0.4, 0.14);
-    root.style.setProperty('--bg-light', rgbToCss(bgLight));
-    root.style.setProperty('--bg-light-trans', rgbToRgbaCss(bgLight, 0.6));
+    root.style.setProperty("--bg-light", rgbToCss(bgLight));
+    root.style.setProperty("--bg-light-trans", rgbToRgbaCss(bgLight, 0.6));
 
     const bgLighter = hslToRgb(h, s * 0.5, 0.18);
-    root.style.setProperty('--bg-lighter', rgbToCss(bgLighter));
+    root.style.setProperty("--bg-lighter", rgbToCss(bgLighter));
 
     const bgDark = hslToRgb(h, s * 0.3, 0.07);
-    root.style.setProperty('--bg-dark', rgbToCss(bgDark));
-    root.style.setProperty('--bg-dark-trans', rgbToRgbaCss(bgDark, 0.6));
+    root.style.setProperty("--bg-dark", rgbToCss(bgDark));
+    root.style.setProperty("--bg-dark-trans", rgbToRgbaCss(bgDark, 0.6));
 
-    root.style.setProperty('--primary', rgbToCss(hslToRgb(h, s, 0.5)));
+    root.style.setProperty("--primary", rgbToCss(hslToRgb(h, s, 0.5)));
 
-    root.style.setProperty('--fg', rgbToCss(hslToRgb(h, s, 0.93)));
-    root.style.setProperty('--fg2', rgbToCss(hslToRgb(h, s, 0.8)));
-    root.style.setProperty('--fg-sec', rgbToCss(hslToRgb(h, s * 0.2, 0.53)));
-    root.style.setProperty('--fg-sec2', rgbToCss(hslToRgb(h, s * 0.2, 0.4)));
+    root.style.setProperty("--fg", rgbToCss(hslToRgb(h, s, 0.93)));
+    root.style.setProperty("--fg2", rgbToCss(hslToRgb(h, s, 0.8)));
+    root.style.setProperty("--fg-sec", rgbToCss(hslToRgb(h, s * 0.2, 0.53)));
+    root.style.setProperty("--fg-sec2", rgbToCss(hslToRgb(h, s * 0.2, 0.4)));
 }
 
 export function resetColors() {
     const root = document.documentElement;
-    root.style.removeProperty('--bg');
-    root.style.removeProperty('--bg-trans');
-    root.style.removeProperty('--bg-lighter');
-    root.style.removeProperty('--bg-light');
-    root.style.removeProperty('--bg-light-trans');
-    root.style.removeProperty('--bg-dark');
-    root.style.removeProperty('--bg-dark-trans');
-    root.style.removeProperty('--fg');
-    root.style.removeProperty('--fg2');
-    root.style.removeProperty('--fg-sec');
-    root.style.removeProperty('--fg-sec2');
+    root.style.removeProperty("--bg");
+    root.style.removeProperty("--bg-trans");
+    root.style.removeProperty("--bg-lighter");
+    root.style.removeProperty("--bg-light");
+    root.style.removeProperty("--bg-light-trans");
+    root.style.removeProperty("--bg-dark");
+    root.style.removeProperty("--bg-dark-trans");
+    root.style.removeProperty("--fg");
+    root.style.removeProperty("--fg2");
+    root.style.removeProperty("--fg-sec");
+    root.style.removeProperty("--fg-sec2");
 
-    const primary = getCookie('themeColor') ?? '#3acbaf';
-    root.style.setProperty('--primary', primary);
+    const primary = getCookie("themeColor") ?? "#3acbaf";
+    root.style.setProperty("--primary", primary);
 }
 
-if ((getCookie('dynamicColor') ?? 'true') === 'true') {
+if ((getCookie("dynamicColor") ?? "true") === "true") {
     songIcon.onload = setDynamicColors;
 } else {
-    const color = getCookie('themeColor') ?? '#3acbaf';
-    document.documentElement.style.setProperty('--primary', color);
+    const color = getCookie("themeColor") ?? "#3acbaf";
+    document.documentElement.style.setProperty("--primary", color);
     songIcon.onload = null;
 }
