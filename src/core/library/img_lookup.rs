@@ -35,11 +35,14 @@ pub fn lookup_image(
         '_',
         filesan::Mode::ALL,
     );
+    if name == "queen - a day at the races.jpg" {
+        println!("hi");
+    }
     ImageLookup {
         rt_path,
         cache,
-        artist: &simple_str(artist),
-        album: &simple_str(album),
+        artist,
+        album,
         name: &name,
     }
     .lookup(size)
@@ -213,7 +216,11 @@ impl ImageLookup<'_> {
         let lookup_names: &[Cow<'static, str>] = &[
             // Uamp way
             filesan::escape_str(
-                &format!("{} - {}", self.artist, self.album),
+                &format!(
+                    "{} - {}",
+                    simple_str(self.artist),
+                    simple_str(self.album)
+                ),
                 '_',
                 filesan::Mode::ALL,
             )

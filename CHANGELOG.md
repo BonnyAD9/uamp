@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## future
+### Fixes
+- Fix winamp style image lookup.
+
 ## v0.6.4
 ### Fixes
 - Uamp often wouldn't save when it should.

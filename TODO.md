@@ -8,7 +8,6 @@
 - Grououping by albums and artists
 
 # known issues
-- Winamp style image lookup doesn't work.
 - Restart doesn't work.
 - Invalid playlist end action (on config save?)
 - *Lavish* -> *For a better day* wont play?
