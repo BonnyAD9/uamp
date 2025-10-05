@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## future
+### Fixes
+- Uamp often wouldn't save when it should.
+
 ## v0.6.3
 ### New features
 - Plugin support.

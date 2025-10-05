@@ -132,6 +132,7 @@ fn ref_field(
         }
 
         #set_vis fn #seti(&mut self) -> &mut #ty {
+            self.set_change(true);
             &mut self.#id
         }
     };
