@@ -2,7 +2,7 @@ import Album from "./album.js";
 import Song from "./song.js";
 import Songs from "./songs.js";
 
-const artistTemplate = document.getElementById('artist-template');
+const artistTemplate = document.getElementById("artist-template");
 
 export default class Artist {
     /**
@@ -34,14 +34,14 @@ export default class Artist {
      */
     getTableRow() {
         const cloned = artistTemplate.content.cloneNode(true);
-        const row = cloned.querySelector('tr');
+        const row = cloned.querySelector("tr");
 
-        row.querySelector('.artist').textContent = this.name;
-        row.querySelector('.other').textContent = this.getOtherDetails();
+        row.querySelector(".artist").textContent = this.name;
+        row.querySelector(".other").textContent = this.getOtherDetails();
 
-        const albums = row.querySelector('.albums-preview');
+        const albums = row.querySelector(".albums-preview");
         this.albums.forEach((album, i) => {
-            const img = document.createElement('img');
+            const img = document.createElement("img");
             img.src = Album.getCover(album.artist, album.name, 64);
             img.title = album.name;
             img.dataset.index = i;
@@ -56,7 +56,7 @@ export default class Artist {
      * @returns {string} uamp query string
      */
     getQuery() {
-        const s = (text) => text.replaceAll('/', '//');
+        const s = (text) => text.replaceAll("/", "//");
         return `p=/${s(this.name)}/`;
     }
 
@@ -64,6 +64,6 @@ export default class Artist {
      * Sorts artists albums by release year
      */
     sortAlbums() {
-        this.albums.sort((a, b) => a.year - b.year);
+        this.albums.sort((a, b) => b.year - a.year);
     }
 }

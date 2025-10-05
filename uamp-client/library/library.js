@@ -40,6 +40,12 @@ export default class Library {
         return this.allSongs[id];
     }
 
+    getArtistByName(name) {
+        return this.allArtists.find(
+            (a) => a.name.toLowerCase() === name.toLowerCase(),
+        );
+    }
+
     /**
      * Applies the library search query and saves the result to songs.
      * Resets the search when the query is empty.

@@ -7,7 +7,12 @@ import Song from "./library/song.js";
 import Player from "./player/player.js";
 import Playlist from "./player/playlist.js";
 import Config from "./settings.js";
-import { updateCurrent, updatePlayBtn, updateVolume } from "./ui/bar.js";
+import {
+    toggleBar,
+    updateCurrent,
+    updatePlayBtn,
+    updateVolume,
+} from "./ui/bar.js";
 import {
     displayAlbum,
     displayAlbums,
@@ -405,6 +410,13 @@ export default class App {
         this.album = artist.albums[album.dataset.index];
         displayAlbum(this.album, this.player.getPlayingId());
         showScreen("album-detail");
+    }
+
+    artistBarClick(e) {
+        this.artist = this.library.getArtistByName(e.target.textContent);
+        displayArtist(this.artist, this.player.getPlayingId());
+        toggleBar();
+        showScreen("artist-detail");
     }
 }
 
