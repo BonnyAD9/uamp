@@ -533,7 +533,6 @@ section.bar > .bar-wrapper {
 section.bar.expanded > .bar-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 10px;
     overflow: hidden;
     justify-content: center;
 }
@@ -548,6 +547,7 @@ section.bar .slider {
 section.bar.expanded .slider {
     flex-shrink: 0;
     max-width: 75%;
+    margin-bottom: 10px;
 }
 
 section.bar:not(.expanded) .slider {
@@ -560,6 +560,17 @@ section.bar .slider > hr {
     width: 0%;
     border: 2px solid var(--primary);
     border-radius: 2px;
+}
+
+section.bar .slider-timestamp {
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    display: none;
+}
+
+section.bar.expanded .slider-timestamp {
+    display: flex;
 }
 
 section.bar .info {
@@ -633,11 +644,14 @@ section.bar .info > .title h3 {
     color: var(--fg);
 }
 
-section.bar .info > .title h4 {
+section.bar .info > .title h4,
+section.bar .slider-timestamp span {
     font-size: 11px;
     font-weight: normal;
     color: var(--fg2);
     padding-left: 3px;
+    display: flex;
+    gap: 5px;
 }
 
 section.bar.expanded .info > .title h4 {
