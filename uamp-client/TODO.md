@@ -1,6 +1,5 @@
 # TODO
 
-- Display album and timestamp on now playing page
 - Fix song progress bar (thumb, update while dragging)
 - Album and artist sorting
 - Less vibrant page headers

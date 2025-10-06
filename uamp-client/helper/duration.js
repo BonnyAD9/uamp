@@ -2,7 +2,7 @@ export default class Duration {
     /**
      * Creates new duration
      * @param {number} secs
-     * @param {number} nanos 
+     * @param {number} nanos
      */
     constructor(secs = 0, nanos = 0) {
         /** @type {number} */
@@ -19,15 +19,6 @@ export default class Duration {
      */
     static from(obj) {
         return new Duration(obj.secs, obj.nanos);
-    }
-    
-    /**
-     * Compares current duration with the given one
-     * @param {Duration} other - duration to be compared to
-     * @return {int} 1 if current is larger, else -1
-     */
-    cmp(other) {
-        
     }
 
     /** Normalizes the Duration so the nanos don't exceed one second. */
@@ -78,8 +69,8 @@ export default class Duration {
         const minutes = Math.floor(this.secs / 60);
         const seconds = this.secs % 60;
         if (minutes == 0 && seconds == 0) {
-            return '-';
+            return "-:--";
         }
-        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        return `${minutes}:${seconds.toString().padStart(2, "0")}`;
     }
 }

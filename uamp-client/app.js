@@ -11,6 +11,7 @@ import {
     toggleBar,
     updateCurrent,
     updatePlayBtn,
+    updateTimestamp,
     updateVolume,
 } from "./ui/bar.js";
 import {
@@ -334,6 +335,7 @@ export default class App {
             this.position.current.nanos = Math.floor(
                 (current % 1) * 1_000_000_000,
             );
+            updateTimestamp(this.position.current);
         }
     }
 

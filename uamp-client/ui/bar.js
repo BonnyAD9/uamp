@@ -18,9 +18,20 @@ export function updatePlayBtn(playing) {
     }
 }
 
+const timestampCur = document.getElementById("timestamp-cur");
+const timestampTotal = document.getElementById("timestamp-total");
+/**
+ * Update the current timestamp of the playing song
+ * @param {Duration} time - current time
+ */
+export function updateTimestamp(time) {
+    timestampCur.textContent = time.format();
+}
+
 const songIcon = document.querySelector(".bar .info .info-pic img");
 const songTitle = document.querySelector(".bar .info .title h3");
-const songArtist = document.querySelector(".bar .info .title h4");
+const songArtist = document.getElementById("bar-artist");
+const songAlbum = document.getElementById("bar-album");
 const barBackdrop = document.querySelector(".bar .backdrop");
 /**
  * Updates the currently playing song info
@@ -34,10 +45,14 @@ export function updateCurrent(song) {
     }
 
     songIcon.src = Album.getCover(song.artist, song.album);
-    songIcon.onclick = (e) => openAlbum(e, song.artist, song.album);
     barBackdrop.src = Album.getCover(song.artist, song.album, 64);
+
     songTitle.textContent = song.title;
     songArtist.textContent = song.artist;
+    songAlbum.textContent = song.album;
+    songAlbum.onclick = (e) => openAlbum(e, song.artist, song.album);
+
+    timestampTotal.textContent = song.length.format();
 }
 
 const volumeSlider = document.getElementById("volumeSlider");
@@ -76,7 +91,7 @@ function openAlbum(e, artist, album) {
     AppSingleton.get().albumBarClick(artist, album);
 }
 
-document.getElementById("bar-artist").addEventListener("click", (e) => {
+songArtist.addEventListener("click", (e) => {
     if (!bar.classList.contains("expanded")) return;
     e.stopPropagation();
     AppSingleton.get().artistBarClick(e);
