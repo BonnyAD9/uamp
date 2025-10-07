@@ -11,6 +11,7 @@ import {
     toggleBar,
     updateCurrent,
     updatePlayBtn,
+    updatePlaylistMask,
     updateTimestamp,
     updateVolume,
 } from "./ui/bar.js";
@@ -222,7 +223,10 @@ export default class App {
     /** Displays songs with virtual scrolling. */
     displaySongs = () => this.libraryTable.render();
     displayPlaylist = () => this.playlistTable.render();
-    createBarSongs = () => this.barPlaylistTable.render();
+    createBarSongs = () => {
+        this.barPlaylistTable.render();
+        updatePlaylistMask();
+    };
 
     displayAlbums = () => displayAlbums(this.library.albums);
     displayArtists = () => displayArtists(this.library.artists);
