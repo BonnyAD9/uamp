@@ -34,6 +34,10 @@ export const displayArtistSongsSort = (key, dir) =>
     displaySort(document.querySelector("#artist-detail .songs"), key, dir);
 export const displayAlbumSongsSort = (key, dir) =>
     displaySort(document.querySelector("#album-detail .songs"), key, dir);
+export const displayAlbumsSort = (key, dir) =>
+    displaySort(document.querySelector("#albums .header table"), key, dir);
+export const displayArtistsSort = (key, dir) =>
+    displaySort(document.querySelector("#artists .header table"), key, dir);
 
 /**
  * Displays the sorting in the thead of the table

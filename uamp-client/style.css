@@ -250,14 +250,14 @@ thead th span:first-of-type.sorted::before {
     opacity: 1;
 }
 
-thead th span:last-of-type.sorted::after {
+thead th span:last-of-type:not(:first-of-type).sorted::after {
     content: "▲";
     left: auto;
     opacity: 1;
 }
 
 thead th span:first-of-type.sorted.desc::before,
-thead th span:last-of-type.sorted.desc::after {
+thead th span:last-of-type:not(:first-of-type).sorted.desc::after {
     content: "▼";
 }
 
