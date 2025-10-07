@@ -202,3 +202,12 @@ export function spawnScreens() {
 
     spawnTables();
 }
+
+document.querySelectorAll(".search-wrapper").forEach((wrapper) => {
+    const btn = wrapper.querySelector("button");
+    const input = wrapper.querySelector('input[type="search"]');
+    btn.addEventListener("click", () => {
+        input.value = "";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+});
