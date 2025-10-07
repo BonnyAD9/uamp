@@ -24,7 +24,9 @@ import {
 } from "./ui/pages.js";
 import {
     displayAlbumSongsSort,
+    displayAlbumsSort,
     displayArtistSongsSort,
+    displayArtistsSort,
     displayLibrarySort,
     displayPlaylistStack,
     popPlaylist,
@@ -222,8 +224,8 @@ export default class App {
     displayPlaylist = () => this.playlistTable.render();
     createBarSongs = () => this.barPlaylistTable.render();
 
-    displayAlbums = () => displayAlbums(this.library.albums.get());
-    displayArtists = () => displayArtists(this.library.artists.get());
+    displayAlbums = () => displayAlbums(this.library.albums);
+    displayArtists = () => displayArtists(this.library.artists);
 
     sortSongs = (key) => {
         this.library.songs.toggleSort(key);
@@ -247,6 +249,16 @@ export default class App {
             this.artist.songs.key,
             this.artist.songs.ascending,
         );
+    };
+
+    sortAlbums = (key) => {
+        this.library.albums.toggleSort(key);
+        this.displayAlbums();
+    };
+
+    sortArtists = (key) => {
+        this.library.artists.toggleSort(key);
+        this.displayArtists();
     };
 
     searchLibrary = this.searchDebounce((e) => {

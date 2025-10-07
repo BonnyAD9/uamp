@@ -8,13 +8,14 @@ export default class Sorter {
      * Creates new generic sorter
      * @param {string} defaultKey - default sorting key
      * @param {any[]} arr - array to implement sorting for
-     * @param {bool} ascending - true for ascending, false descending
+     * @param {bool} defaultAscending - true for ascending, false descending
      */
-    constructor(defaultKey, arr = [], ascending = true) {
+    constructor(defaultKey, arr = [], defaultAscending = true) {
         this.arr = arr;
         this.key = defaultKey;
         this.defaultKey = defaultKey;
-        this.ascending = ascending;
+        this.ascending = defaultAscending;
+        this.defaultAscending = defaultAscending;
 
         this.sort();
     }
@@ -66,8 +67,9 @@ export default class Sorter {
     toggleSort(key) {
         if (this.key === key) {
             this.ascending = !this.ascending;
-            if (this.ascending) {
+            if (this.ascending && this.key !== this.defaultKey) {
                 this.key = this.defaultKey;
+                this.ascending = this.defaultAscending;
             }
         } else {
             this.key = key;
@@ -80,6 +82,11 @@ export default class Sorter {
     static #cmp(valA, valB) {
         if (valA instanceof Duration) {
             return valA.cmp(valB);
+        }
+
+        if (valA instanceof Sorter) {
+            valA = valA.len();
+            valB = valB.len();
         }
 
         if (Array.isArray(valA)) {
