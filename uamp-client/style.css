@@ -178,6 +178,10 @@ section.screen .screen-wrapper {
     padding: 0px 5px 70px 5px;
 }
 
+section.screen#albums .screen-wrapper {
+    padding-top: 5px;
+}
+
 table {
     border-collapse: collapse;
     width: 100%;

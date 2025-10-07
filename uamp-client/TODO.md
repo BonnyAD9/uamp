@@ -9,3 +9,5 @@
 - Now playing playlist fade on edges (idk how)
 - Make dynamic colors better
 - Better history API support
+- Add genre to albums and sort by it
+- Don't sort on push and sort after

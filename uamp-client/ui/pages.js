@@ -130,12 +130,43 @@ function getSongsHeader(sortHandler = null) {
     return table;
 }
 
+function getCustomHeader(labels, sortHandler = null) {
+    const table = document.createElement("table");
+    const thead = document.createElement("thead");
+
+    let row = document.createElement("tr");
+    labels.forEach((label) => {
+        const span = document.createElement("span");
+        const key = label.trim().toLowerCase().replace(/\s+/g, "-");
+        span.addEventListener("click", () => console.log(key));
+        span.textContent = label;
+
+        const th = document.createElement("th");
+        th.appendChild(span);
+        row.appendChild(th);
+    });
+
+    thead.appendChild(row);
+    table.appendChild(thead);
+    return table;
+}
+
 function libraryScreen() {
     const header = getSongsHeader((key) => AppSingleton.get().sortSongs(key));
     document.querySelector("#library .header").appendChild(header);
 
     const table = getHeaderlessTable((e) => AppSingleton.get().libraryClick(e));
     document.querySelector("#library .screen-wrapper").appendChild(table);
+}
+
+function albumsScreen() {
+    const header = getCustomHeader(["Year", "Name", "Artist", "Songs"]);
+    document.querySelector("#albums .header").appendChild(header);
+}
+
+function artistsScreen() {
+    const header = getCustomHeader(["Name", "Albums", "Songs"]);
+    document.querySelector("#artists .header").appendChild(header);
 }
 
 function playlistScreen() {
@@ -151,6 +182,8 @@ function playlistScreen() {
 
 export function spawnScreens() {
     libraryScreen();
+    albumsScreen();
+    artistsScreen();
     playlistScreen();
 
     spawnTables();

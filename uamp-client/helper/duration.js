@@ -30,6 +30,17 @@ export default class Duration {
     }
 
     /**
+     * Compares two durations
+     * @param {Duration} other - duration to be compared to current
+     * @returns {number} pos. number if current greater, neg. if other, 0 equal
+     */
+    cmp(other) {
+        const diff = this.secs - other.secs;
+        if (diff != 0) return diff;
+        return this.nanos - other.nanos;
+    }
+
+    /**
      * Returns a new Duration representing the position within total duration
      * @param {number} percent - number between 0 and 1
      * @returns {Duration} new duration
