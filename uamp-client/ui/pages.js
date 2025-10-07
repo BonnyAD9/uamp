@@ -1,4 +1,5 @@
 import Album from "../library/album.js";
+import { getHeaderlessTable, spawnTables } from "./tables.js";
 
 const albumsList = document.querySelector("#albums .list");
 /**
@@ -107,4 +108,50 @@ function displaySongs(table, songs, icons = true, id = null) {
 
         body.appendChild(row);
     });
+}
+
+/**
+ * Gets the songs header table element for use in the screen header
+ * @param {(string) => void} sortHandler - function handling the song sorting
+ * @returns {HTMLTableElement} - table for displaying the songs header
+ */
+function getSongsHeader(sortHandler = null) {
+    const template = document.getElementById("songs-template");
+    const cloned = template.content.cloneNode(true);
+
+    const table = cloned.querySelector("table");
+    table.classList.remove("songs");
+
+    if (!sortHandler) return table;
+
+    table.querySelectorAll("thead th span").forEach((label) => {
+        label.addEventListener("click", () => sortHandler(label.dataset.sort));
+    });
+    return table;
+}
+
+function libraryScreen() {
+    const header = getSongsHeader((key) => AppSingleton.get().sortSongs(key));
+    document.querySelector("#library .header").appendChild(header);
+
+    const table = getHeaderlessTable((e) => AppSingleton.get().libraryClick(e));
+    document.querySelector("#library .screen-wrapper").appendChild(table);
+}
+
+function playlistScreen() {
+    const header = getSongsHeader(null);
+    document.querySelector("#playlist .header").appendChild(header);
+
+    const table = getHeaderlessTable(
+        (e) => AppSingleton.get().playlistClick(e),
+        ["playlist-stack", "active"],
+    );
+    document.querySelector("#playlist .playlist-wrapper").appendChild(table);
+}
+
+export function spawnScreens() {
+    libraryScreen();
+    playlistScreen();
+
+    spawnTables();
 }
