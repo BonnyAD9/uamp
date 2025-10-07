@@ -118,6 +118,7 @@ section.screen {
 
 @-moz-document url-prefix() {
     section.screen,
+    section.bar .playlist,
     section#album-detail .album-detail-wrapper {
         scrollbar-width: thin;
         scrollbar-color: var(--fg-sec) transparent;
@@ -125,6 +126,7 @@ section.screen {
 }
 
 section#album-detail .album-detail-wrapper::-webkit-scrollbar,
+section.bar .playlist::-webkit-scrollbar,
 section.screen::-webkit-scrollbar {
     width: 4px;
 }
@@ -134,6 +136,7 @@ section.screen::-webkit-scrollbar-track {
 }
 
 section#album-detail .album-detail-wrapper::-webkit-scrollbar-thumb,
+section.bar .playlist::-webkit-scrollbar-thumb,
 section.screen::-webkit-scrollbar-thumb {
     background-color: var(--fg-sec);
     transition: 0.3s ease;
@@ -141,6 +144,7 @@ section.screen::-webkit-scrollbar-thumb {
 }
 
 section#album-detail .album-detail-wrapper::-webkit-scrollbar-thumb:hover,
+section.bar .playlist::-webkit-scrollbar-thumb:hover,
 section.screen::-webkit-scrollbar-thumb:hover {
     background-color: var(--fg-sec2);
 }
@@ -172,6 +176,7 @@ section.screen .header .form-input {
 
 section.screen h1 {
     font-size: 30px;
+    color: var(--fg2);
 }
 
 section.screen .screen-wrapper {
@@ -746,24 +751,15 @@ section.bar .playlist {
     max-height: 80%;
     height: 100%;
     margin: auto 0;
+
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+    mask-repeat: no-repeat;
+    mask-size: 100% 100%;
 }
 
 section.bar.expanded .playlist {
     display: block;
-}
-
-section.bar .playlist::-webkit-scrollbar {
-    width: 4px;
-}
-
-section.bar .playlist::-webkit-scrollbar-thumb {
-    background-color: var(--fg-sec);
-    transition: 0.3s ease;
-    border-radius: 2px;
-}
-
-section.bar .playlist::-webkit-scrollbar-thumb:hover {
-    background-color: var(--fg-sec2);
 }
 
 section.bar .playlist .songs {
@@ -1042,6 +1038,7 @@ section.screen#playlist .songs thead {
     display: flex;
     align-items: center;
     overflow: hidden;
+    gap: 5px;
 }
 
 .tabs .tabs-wrapper {

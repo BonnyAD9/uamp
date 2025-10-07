@@ -96,3 +96,28 @@ songArtist.addEventListener("click", (e) => {
     e.stopPropagation();
     AppSingleton.get().artistBarClick(e);
 });
+
+const playlist = bar.querySelector(".playlist");
+export function updatePlaylistMask() {
+    const atTop = playlist.scrollTop === 0;
+    const atBottom =
+        playlist.scrollHeight - playlist.scrollTop === playlist.clientHeight;
+
+    let gradient =
+        "linear-gradient(to bottom, transparent, black 20%," +
+        "black 80%, transparent)";
+
+    if (atTop && atBottom) {
+        gradient = "none";
+    } else if (atTop) {
+        gradient = "linear-gradient(to bottom, black 80%, transparent)";
+    } else if (atBottom) {
+        gradient = "linear-gradient(to bottom, transparent, black 20%)";
+    }
+
+    playlist.style.webkitMaskImage = gradient;
+    playlist.style.maskImage = gradient;
+}
+
+playlist.addEventListener("scroll", updatePlaylistMask);
+window.addEventListener("resize", updatePlaylistMask);
