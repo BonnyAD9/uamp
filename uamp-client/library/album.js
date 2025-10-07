@@ -1,5 +1,5 @@
 import Song from "./song.js";
-import Songs from "./songs.js";
+import Sorter from "./sorter.js";
 
 const UNDEF_YEAR = 0;
 const albumTemplate = document.getElementById("album-template");
@@ -19,8 +19,8 @@ export default class Album {
         this.artist = artist;
         /** @type {number} */
         this.year = year;
-        /** @type {Songs} */
-        this.songs = new Songs(songs, "track");
+        /** @type {Sorter} */
+        this.songs = new Sorter("track", songs);
     }
 
     /**

@@ -222,14 +222,14 @@ export default class App {
     displayPlaylist = () => this.playlistTable.render();
     createBarSongs = () => this.barPlaylistTable.render();
 
-    displayAlbums = () => displayAlbums(this.library.albums);
-    displayArtists = () => displayArtists(this.library.artists);
+    displayAlbums = () => displayAlbums(this.library.albums.get());
+    displayArtists = () => displayArtists(this.library.artists.get());
 
     sortSongs = (key) => {
         this.library.songs.toggleSort(key);
         this.libraryTable.render();
         displayLibrarySort(
-            this.library.songs.sort,
+            this.library.songs.key,
             this.library.songs.ascending,
         );
     };
@@ -237,17 +237,14 @@ export default class App {
         if (!this.album) return;
         this.album.songs.toggleSort(key);
         displayAlbumSongs(this.album, this.player.getPlayingId());
-        displayAlbumSongsSort(
-            this.album.songs.sort,
-            this.album.songs.ascending,
-        );
+        displayAlbumSongsSort(this.album.songs.key, this.album.songs.ascending);
     };
     sortArtistSongs = (key) => {
         if (!this.artist) return;
         this.artist.songs.toggleSort(key);
         displayArtistSongs(this.artist, this.player.getPlayingId());
         displayArtistSongsSort(
-            this.artist.songs.sort,
+            this.artist.songs.key,
             this.artist.songs.ascending,
         );
     };
@@ -383,7 +380,7 @@ export default class App {
         apiCtrl(`pj=${item.dataset.index}`);
     }
 
-    albumClick = (e) => this.genericAlbumClick(e, this.library.albums);
+    albumClick = (e) => this.genericAlbumClick(e, this.library.albums.get());
     albumArtistClick = (e) => this.genericAlbumClick(e, this.artist.albums);
 
     genericAlbumClick(e, albums) {
@@ -399,7 +396,7 @@ export default class App {
         const row = e.target.closest("tr");
         if (!row) return;
 
-        const artist = this.library.artists[row.dataset.index];
+        const artist = this.library.artists.get()[row.dataset.index];
 
         const album = e.target.closest(".albums-preview img");
         if (!album) {
