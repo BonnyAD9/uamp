@@ -1010,6 +1010,37 @@ input:checked + .slider:before {
     border: 1px solid red;
 }
 
+.search-wrapper {
+    position: relative;
+}
+
+.search-wrapper input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
+}
+
+.search-wrapper button {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: transparent;
+    outline: none;
+    border: none;
+    appearance: none;
+    color: var(--primary);
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s ease;
+}
+
+.search-wrapper:has(input:not(:placeholder-shown)) button {
+    opacity: 1;
+    pointer-events: auto;
+}
+
 .ellipsis {
     white-space: nowrap;
     overflow: hidden;

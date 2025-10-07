@@ -31,13 +31,17 @@
             <div class="header">
                 <div class="header-row">
                     <h1>Library</h1>
-                    <input
-                        class="form-input"
-                        id="library-search"
-                        type="search"
-                        placeholder="Search library..."
-                        oninput="AppSingleton.get().searchLibrary(event)"
-                    />
+
+                    <div class="search-wrapper">
+                        <input
+                            class="form-input"
+                            id="library-search"
+                            type="search"
+                            placeholder="Search library..."
+                            oninput="AppSingleton.get().searchLibrary(event)"
+                        />
+                        <button type="button">X</button>
+                    </div>
                 </div>
             </div>
             <div class="screen-wrapper"></div>
