@@ -28,32 +28,18 @@
         </section>
 
         <section id="library" class="screen active">
-            <screen-header title="Library"></screen-header>
-            <!--<div class="header">
-                <div class="header-row">
-                    <h1>Library</h1>
-
-                    <search-bar
-                        id="library-search"
-                        placeholder="Search library..."
-                        oninput="AppSingleton.get().searchLibrary(event)"
-                    />
-                </div>
-            </div>-->
+            <screen-header
+                title="Library"
+                oninput="AppSingleton.get().searchLibrary(event)"
+            ></screen-header>
             <div class="screen-wrapper"></div>
         </section>
 
         <section id="albums" class="screen">
-            <div class="header">
-                <div class="header-row">
-                    <h1>Albums</h1>
-                    <search-bar
-                        id="albums-search"
-                        placeholder="Search albums..."
-                        oninput="AppSingleton.get().searchAlbums(event)"
-                    />
-                </div>
-            </div>
+            <screen-header
+                title="Albums"
+                oninput="AppSingleton.get().searchAlbums(event)"
+            ></screen-header>
             <div class="screen-wrapper">
                 <div
                     class="list"
@@ -78,16 +64,10 @@
         </section>
 
         <section id="artists" class="screen">
-            <div class="header">
-                <div class="header-row">
-                    <h1>Artists</h1>
-                    <search-bar
-                        id="artists-search"
-                        placeholder="Search artists..."
-                        oninput="AppSingleton.get().searchArtists(event)"
-                    />
-                </div>
-            </div>
+            <screen-header
+                title="Artists"
+                oninput="AppSingleton.get().searchArtists(event)"
+            />
             <div class="screen-wrapper">
                 <table class="songs">
                     <tbody onclick="AppSingleton.get().artistClick(event)">
