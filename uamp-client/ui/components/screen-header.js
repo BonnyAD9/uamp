@@ -17,7 +17,7 @@ class ScreenHeader extends HTMLElement {
             search.setAttribute("id", `${key}-search`);
             search.setAttribute("placeholder", `Search ${key}...`);
             search.setAttribute("oninput", oninput);
-            this.querySelector("header-row").appendChild(search);
+            this.querySelector(".header-row").appendChild(search);
         }
     }
 }
