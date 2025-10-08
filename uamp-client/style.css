@@ -164,10 +164,14 @@ section.screen .header {
 
 section.screen .header .header-row {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     max-width: 100%;
     overflow: hidden;
+}
+
+section.screen .header .header-row .filler {
+    flex-grow: 1;
 }
 
 section.screen .header .form-input {

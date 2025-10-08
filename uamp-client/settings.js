@@ -1,15 +1,15 @@
 import { applyThemeColor, setupDynamicColors } from "./colors.js";
 
-const settingsTabs = document.querySelector('#settings .tabs .tabs-wrapper');
-const bar = document.querySelector('section.bar');
+const settingsTabs = document.querySelector("#settings .tabs .tabs-wrapper");
+const bar = document.querySelector("section.bar");
 
 // Setting templates
-const toggleTemplate = document.getElementById('toggle-setting');
-const selectTemplate = document.getElementById('select-setting');
-const inputTemplate = document.getElementById('input-setting');
-const listTemplate = document.getElementById('list-setting');
-const listItemTemplate = document.getElementById('list-item-setting');
-const colorTemplate = document.getElementById('color-setting');
+const toggleTemplate = document.getElementById("toggle-setting");
+const selectTemplate = document.getElementById("select-setting");
+const inputTemplate = document.getElementById("input-setting");
+const listTemplate = document.getElementById("list-setting");
+const listItemTemplate = document.getElementById("list-item-setting");
+const colorTemplate = document.getElementById("color-setting");
 
 export default class Config {
     constructor(data, schema) {
@@ -18,51 +18,50 @@ export default class Config {
     }
 
     static async init(data) {
-        const schema = await fetch('assets/config_schema.json')
-            .then(res => {
-                if (!res.ok) throw new Error('failed to load config');
+        const schema = await fetch("assets/config_schema.json")
+            .then((res) => {
+                if (!res.ok) throw new Error("failed to load config");
                 return res.json();
             })
-            .then(res => res.properties)
-            .catch(_ => null);
+            .then((res) => res.properties)
+            .catch((_) => null);
         return new Config(data, schema);
     }
 
     render() {
         displayAppearanceSettings();
-        const content = document.querySelector('#settings .settings-wrapper');
+        const content = document.querySelector("#settings .settings-wrapper");
 
-        settingsTabs.querySelectorAll('.tab').forEach((tab, i) => {
-            if (i == 0) tab.classList.add('active');
+        settingsTabs.querySelectorAll(".tab").forEach((tab, i) => {
+            if (i == 0) tab.classList.add("active");
             else tab.remove();
         });
-        content.querySelectorAll('.settings-content').forEach((page, i) => {
-            if (i == 0) page.classList.add('active');
+        content.querySelectorAll(".settings-content").forEach((page, i) => {
+            if (i == 0) page.classList.add("active");
             else page.remove();
         });
 
-        const allKeys = Object.keys(this.schema).filter(k => k !== "$schema");
-        const groupedKeys = settingsGroups.flatMap(group => group.settings);
-        const otherKeys = allKeys.filter(k => !groupedKeys.includes(k));
+        const allKeys = Object.keys(this.schema).filter((k) => k !== "$schema");
+        const groupedKeys = settingsGroups.flatMap((group) => group.settings);
+        const otherKeys = allKeys.filter((k) => !groupedKeys.includes(k));
         settingsGroups.push({ name: "Other", settings: otherKeys });
 
         for (let id = 0; id < settingsGroups.length; id++) {
             const group = settingsGroups[id];
             if (group.settings.length === 0) continue;
 
-            const page = document.createElement('div');
-            page.classList.add('settings-content');
+            const page = document.createElement("div");
+            page.classList.add("settings-content");
 
             for (const key of group.settings) {
-                const setting =
-                    this.getSettingElement(key, this.schema[key]);
+                const setting = this.getSettingElement(key, this.schema[key]);
                 if (setting === null) continue;
                 page.appendChild(setting);
             }
             content.appendChild(page);
 
-            const tab = document.createElement('button');
-            tab.classList.add('tab');
+            const tab = document.createElement("button");
+            tab.classList.add("tab");
             tab.textContent = group.name;
             tab.onclick = () => Config.showPage(id + 1);
             settingsTabs.appendChild(tab);
@@ -76,14 +75,14 @@ export default class Config {
 
         // TODO: handle nullable
         if (Array.isArray(setting.type)) {
-            const types = setting.type.filter(t => t !== "null");
+            const types = setting.type.filter((t) => t !== "null");
             setting.type = types[0];
         }
 
         switch (setting.type) {
             case "boolean":
-                return Config.getToggleSetting(key, this[key], setting,
-                    () => this.update(key, !this[key])
+                return Config.getToggleSetting(key, this[key], setting, () =>
+                    this.update(key, !this[key]),
                 );
             case "string":
                 return this.getInputSetting(key, setting);
@@ -108,9 +107,9 @@ export default class Config {
      */
     static getToggleSetting(key, value, setting, onclick) {
         const clone = toggleTemplate.content.cloneNode(true);
-        const toggle = clone.querySelector('.switch-setting');
+        const toggle = clone.querySelector(".switch-setting");
 
-        const input = toggle.querySelector('input');
+        const input = toggle.querySelector("input");
         input.checked = value;
         input.onclick = onclick;
 
@@ -126,12 +125,12 @@ export default class Config {
      */
     getSelectSetting(key, setting) {
         const clone = selectTemplate.content.cloneNode(true);
-        const select = clone.querySelector('.select-setting');
+        const select = clone.querySelector(".select-setting");
 
-        const input = select.querySelector('select');
-        input.addEventListener('change', () => this.update(key, input.value));
+        const input = select.querySelector("select");
+        input.addEventListener("change", () => this.update(key, input.value));
         for (const opt of setting.enum) {
-            const option = document.createElement('option');
+            const option = document.createElement("option");
             option.textContent = opt;
             option.value = opt;
             input.appendChild(option);
@@ -149,17 +148,17 @@ export default class Config {
      * @returns HTML text setting element
      */
     getInputSetting(key, setting) {
-        const element = this.#getGenericInput(key, '', setting);
-        const input = element.querySelector('input');
+        const element = this.#getGenericInput(key, "", setting);
+        const input = element.querySelector("input");
 
         const regex = setting.pattern ? new RegExp(setting.pattern) : null;
-        const isValid = val => regex ? regex.test(val) : true;
+        const isValid = (val) => (regex ? regex.test(val) : true);
         const validate = () => {
-            input.classList.toggle('invalid', !isValid(input.value))
+            input.classList.toggle("invalid", !isValid(input.value));
         };
 
-        input.addEventListener('input', validate);
-        input.addEventListener('blur', () => {
+        input.addEventListener("input", validate);
+        input.addEventListener("blur", () => {
             validate();
             if (input.value !== this[key] && isValid(input.value))
                 this.update(key, input.value);
@@ -178,26 +177,27 @@ export default class Config {
      */
     getNumberSetting(key, setting, float = true) {
         const element = this.#getGenericInput(key, 0.0, setting);
-        const input = element.querySelector('input');
+        const input = element.querySelector("input");
 
-        const numfy = val => {
-            if (!float)
-                return val.replace(/[^0-9]/g, '');
-            return val.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+        const numfy = (val) => {
+            if (!float) return val.replace(/[^0-9]/g, "");
+            return val.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
         };
 
         const defaultValue = float ? 0.0 : 0;
-        const parse = val => {
+        const parse = (val) => {
             const n = float ? parseFloat(val) : parseInt(val, 10);
             return isNaN(n) ? defaultValue : n;
-        }
+        };
 
-        input.addEventListener('input', () => input.value = numfy(input.value));
-        input.addEventListener('blur', () => {
+        input.addEventListener(
+            "input",
+            () => (input.value = numfy(input.value)),
+        );
+        input.addEventListener("blur", () => {
             input.value = numfy(input.value);
             const val = parse(input.value);
-            if (val !== this[key])
-                this.update(key, val);
+            if (val !== this[key]) this.update(key, val);
         });
 
         return element;
@@ -211,43 +211,43 @@ export default class Config {
      */
     getListSetting(key, setting) {
         const clone = listTemplate.content.cloneNode(true);
-        const list = clone.querySelector('.list-setting');
-        const items = list.querySelector('.items');
-        const input = list.querySelector('.input-item');
+        const list = clone.querySelector(".list-setting");
+        const items = list.querySelector(".items");
+        const input = list.querySelector(".input-item");
 
         const addItem = (value) => {
             const itemEl = this.#getListItem(key, value);
             items.insertBefore(itemEl, input);
-        }
+        };
 
         for (const item of this[key]) {
             addItem(item);
         }
 
-        const inputEl = input.querySelector('input');
-        const regex =
-            setting.items.pattern ? new RegExp(setting.items.pattern) : null;
-        const isValid = val => regex ? regex.test(val) : true;
+        const inputEl = input.querySelector("input");
+        const regex = setting.items.pattern
+            ? new RegExp(setting.items.pattern)
+            : null;
+        const isValid = (val) => (regex ? regex.test(val) : true);
         const validate = () => {
-            inputEl.classList.toggle('invalid', !isValid(inputEl.value))
+            inputEl.classList.toggle("invalid", !isValid(inputEl.value));
         };
 
-        inputEl.addEventListener('input', validate);
-        inputEl.addEventListener('keydown', e => {
-            if (e.key === 'Enter')
+        inputEl.addEventListener("input", validate);
+        inputEl.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") inputEl.blur();
+            if (e.key === "Escape") {
+                inputEl.value = "";
                 inputEl.blur();
-            if (e.key === 'Escape') {
-                inputEl.value = '';
-                inputEl.blur();
-            };
+            }
         });
-        inputEl.addEventListener('blur', () => {
+        inputEl.addEventListener("blur", () => {
             validate();
-            if (inputEl.value !== '' && isValid(inputEl.value)) {
+            if (inputEl.value !== "" && isValid(inputEl.value)) {
                 this[key].push(inputEl.value);
                 addItem(inputEl.value);
 
-                inputEl.value = '';
+                inputEl.value = "";
                 this.update(key, this[key]);
             }
         });
@@ -266,9 +266,9 @@ export default class Config {
      */
     static getColorSetting(key, value, setting, oninput) {
         const clone = colorTemplate.content.cloneNode(true);
-        const color = clone.querySelector('.color-setting');
+        const color = clone.querySelector(".color-setting");
 
-        const input = color.querySelector('input');
+        const input = color.querySelector("input");
         input.value = value;
         input.oninput = oninput;
 
@@ -278,18 +278,17 @@ export default class Config {
 
     #getGenericInput(key, defaultValue, setting) {
         const clone = inputTemplate.content.cloneNode(true);
-        const element = clone.querySelector('.input-setting');
+        const element = clone.querySelector(".input-setting");
 
-        const input = element.querySelector('input');
+        const input = element.querySelector("input");
         input.value = this[key] ?? defaultValue;
 
-        input.addEventListener('keydown', e => {
-            if (e.key === 'Enter')
-                input.blur();
-            if (e.key === 'Escape') {
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") input.blur();
+            if (e.key === "Escape") {
                 input.value = this[key] ?? defaultValue;
                 input.blur();
-            };
+            }
         });
 
         Config.settingDetails(element, key, setting);
@@ -298,11 +297,11 @@ export default class Config {
 
     #getListItem(key, value) {
         const itemClone = listItemTemplate.content.cloneNode(true);
-        const item = itemClone.querySelector('.item');
-        item.querySelector('p').textContent = value;
+        const item = itemClone.querySelector(".item");
+        item.querySelector("p").textContent = value;
 
-        item.querySelector('img').addEventListener('click', () => {
-            this[key] = this[key].filter(i => i !== value);
+        item.querySelector("img").addEventListener("click", () => {
+            this[key] = this[key].filter((i) => i !== value);
             item.remove();
             this.update(key, this[key]);
         });
@@ -312,38 +311,38 @@ export default class Config {
 
     update(key, value) {
         this[key] = value;
-        fetch('/api/ctrl', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        fetch("/api/ctrl", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                SetConfig: { [key]: value }
-            })
+                SetConfig: { [key]: value },
+            }),
         });
     }
 
     static settingDetails(element, key, setting) {
-        element.querySelector('.label').textContent = Config.keyToLabel(key);
-        element.querySelector('.description').textContent = setting.description;
+        element.querySelector(".label").textContent = Config.keyToLabel(key);
+        element.querySelector(".description").textContent = setting.description;
     }
 
     static keyToLabel(key) {
-        const label = key.replaceAll('_', ' ');
+        const label = key.replaceAll("_", " ");
         return label.charAt(0).toUpperCase() + label.slice(1);
     }
 
     static showPage(id) {
-        const tabs = settingsTabs.querySelectorAll('.tab');
-        const pages = document.querySelectorAll('#settings .settings-content');
+        const tabs = settingsTabs.querySelectorAll(".tab");
+        const pages = document.querySelectorAll("#settings .settings-content");
 
         for (let i = 0; i < tabs.length; i++) {
             const tab = tabs[i];
             const page = pages[i];
 
-            tab.classList.remove('active');
-            page.classList.remove('active');
+            tab.classList.remove("active");
+            page.classList.remove("active");
             if (i === id) {
-                tab.classList.add('active');
-                page.classList.add('active');
+                tab.classList.add("active");
+                page.classList.add("active");
             }
         }
     }
@@ -358,8 +357,8 @@ window.Config = Config;
  */
 export function setCookie(name, value, days = 365) {
     const expires = new Date(Date.now() + days * 864e5).toUTCString();
-    document.cookie = `${name}=${encodeURIComponent(value)}; ` +
-        `expires=${expires}; path=/`;
+    document.cookie =
+        `${name}=${encodeURIComponent(value)}; ` + `expires=${expires}; path=/`;
 }
 
 /**
@@ -368,86 +367,112 @@ export function setCookie(name, value, days = 365) {
  * @returns {?string} cookie value when found, else null
  */
 export function getCookie(name) {
-    return document.cookie.split('; ').reduce((acc, part) => {
-        const [k, v] = part.split('=');
+    return document.cookie.split("; ").reduce((acc, part) => {
+        const [k, v] = part.split("=");
         return k === name ? decodeURIComponent(v) : acc;
     }, null);
 }
 
 /// Displays appearance settings in its page
 function displayAppearanceSettings() {
-    const appearSettings = document.getElementById('appearanceSettings');
+    const appearSettings = document.getElementById("appearanceSettings");
 
-    const floatingBar = (getCookie('floatingBar') ?? 'true') === 'true';
-    bar.classList.toggle('floating', floatingBar);
+    const floatingBar = (getCookie("floatingBar") ?? "true") === "true";
+    bar.classList.toggle("floating", floatingBar);
     const floatingBarToggle = Config.getToggleSetting(
-        'floating_music_player_bar', floatingBar,
-        { description: 'Music player bar detached from the window edges.' },
-        e => {
+        "floating_music_player_bar",
+        floatingBar,
+        { description: "Music player bar detached from the window edges." },
+        (e) => {
             const floating = e.target.checked;
-            bar.classList.toggle('floating', floating);
-            setCookie('floatingBar', floating);
-        }
+            bar.classList.toggle("floating", floating);
+            setCookie("floatingBar", floating);
+        },
     );
     appearSettings.appendChild(floatingBarToggle);
 
-    const dynamicColor = (getCookie('dynamicColor') ?? 'true') === 'true';
+    const dynamicColor = (getCookie("dynamicColor") ?? "true") === "true";
     const dynamicColorToggle = Config.getToggleSetting(
-        'dynamic_color', dynamicColor, {
-        description: 'Change theme color based on the album art of the ' +
-            'current song.'
-    }, e => {
-        const dynamic = e.target.checked;
-        setCookie('dynamicColor', dynamic);
-        setupDynamicColors(dynamic);
-    });
+        "dynamic_color",
+        dynamicColor,
+        {
+            description:
+                "Change theme color based on the album art of the " +
+                "current song.",
+        },
+        (e) => {
+            const dynamic = e.target.checked;
+            setCookie("dynamicColor", dynamic);
+            setupDynamicColors(dynamic);
+        },
+    );
     appearSettings.appendChild(dynamicColorToggle);
 
-    const themeColor = getCookie('themeColor') ?? '#3acbaf';
+    const themeColor = getCookie("themeColor") ?? "#3acbaf";
     const themeColorPicker = Config.getColorSetting(
-        'theme_color', themeColor, {
-        description: 'Primary color used when dynamic color is off.'
-    }, e => {
-        const color = e.target.value;
-        setCookie('themeColor', color);
-        applyThemeColor(color);
-    });
+        "theme_color",
+        themeColor,
+        {
+            description: "Primary color used when dynamic color is off.",
+        },
+        (e) => {
+            const color = e.target.value;
+            setCookie("themeColor", color);
+            applyThemeColor(color);
+        },
+    );
     appearSettings.appendChild(themeColorPicker);
 }
 
 // Config properties group mapping
 var settingsGroups = [
     {
-        name: "Library", settings: [
-            "search_paths", "audio_extensions", "recursive_search",
-            "update_library_on_start", "remove_missing_on_load"
-        ]
+        name: "Library",
+        settings: [
+            "search_paths",
+            "audio_extensions",
+            "recursive_search",
+            "update_library_on_start",
+            "remove_missing_on_load",
+        ],
     },
     {
-        name: "Playlist", settings: [
-            "control_aliases", "default_playlist_end_action", "simple_sorting",
-            "shuffle_current"
-        ]
+        name: "Playlist",
+        settings: [
+            "control_aliases",
+            "default_playlist_end_action",
+            "simple_sorting",
+            "shuffle_current",
+        ],
     },
     {
-        name: "Playback", settings: [
-            "play_on_start", "volume_jump", "save_playback_pos",
-            "fade_play_pause", "gapless", "seek_jump", "previous_timeout"
-        ]
+        name: "Playback",
+        settings: [
+            "play_on_start",
+            "volume_jump",
+            "save_playback_pos",
+            "fade_play_pause",
+            "gapless",
+            "seek_jump",
+            "previous_timeout",
+        ],
     },
     {
-        name: "Server", settings: [
-            "server_address", "port", "enable_server", "skin", "system_player"
-        ]
+        name: "Server",
+        settings: [
+            "server_address",
+            "port",
+            "enable_server",
+            "skin",
+            "system_player",
+        ],
     },
     {
-        name: "Update", settings: [
-            "update_mode", "update_remote", "auto_restart"
-        ]
+        name: "Update",
+        settings: ["update_mode", "update_remote", "auto_restart"],
     },
     {
-        name: "Advanced", settings: [
-            "library_path", "player_path", "cache_path"
-        ]
-    }
+        name: "Advanced",
+        settings: ["library_path", "player_path", "cache_path"],
+    },
 ];
