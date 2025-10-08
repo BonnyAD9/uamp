@@ -1,5 +1,6 @@
 import App from "./app.js";
 import "./colors.js";
+import "./ui/components/search-bar.js";
 import { spawnScreens } from "./ui/pages.js";
 import { removePlaylistRow } from "./ui/tables.js";
 
