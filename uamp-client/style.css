@@ -168,10 +168,12 @@ section.screen .header .header-row {
     justify-content: space-between;
     max-width: 100%;
     overflow: hidden;
+    gap: 5px;
 }
 
 section.screen .header .header-row .filler {
     flex-grow: 1;
+    overflow: hidden;
 }
 
 section.screen .header .form-input {
@@ -1076,6 +1078,7 @@ section.screen#playlist .songs thead {
 .tabs {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     overflow: hidden;
     gap: 5px;
 }
