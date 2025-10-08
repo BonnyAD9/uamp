@@ -27,7 +27,6 @@ export default class Library {
         this.artists = new Sorter("name");
 
         this.#generate();
-        this.#filterLists();
     }
 
     /**
@@ -162,22 +161,5 @@ export default class Library {
         this.allArtists.sort((a, b) => a.name.localeCompare(b.name));
         this.allArtists.forEach((artist) => artist.sortAlbums());
         this.artists.set(this.allArtists);
-    }
-
-    #filterLists() {
-        const libSearch = document.getElementById("library-search");
-        if (libSearch.value) {
-            this.searchLibrary(libSearch.value);
-        }
-
-        const albumSearch = document.getElementById("albums-search");
-        if (albumSearch.value) {
-            this.searchAlbums(albumSearch.value);
-        }
-
-        const artistSearch = document.getElementById("artists-search");
-        if (artistSearch.value) {
-            this.searchArtists(artistSearch.value);
-        }
     }
 }
