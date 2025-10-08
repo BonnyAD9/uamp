@@ -32,16 +32,11 @@
                 <div class="header-row">
                     <h1>Library</h1>
 
-                    <div class="search-wrapper">
-                        <input
-                            class="form-input"
-                            id="library-search"
-                            type="search"
-                            placeholder="Search library..."
-                            oninput="AppSingleton.get().searchLibrary(event)"
-                        />
-                        <button type="button">X</button>
-                    </div>
+                    <search-bar
+                        id="library-search"
+                        placeholder="Search library..."
+                        oninput="AppSingleton.get().searchLibrary(event)"
+                    />
                 </div>
             </div>
             <div class="screen-wrapper"></div>
@@ -51,10 +46,8 @@
             <div class="header">
                 <div class="header-row">
                     <h1>Albums</h1>
-                    <input
-                        class="form-input"
+                    <search-bar
                         id="albums-search"
-                        type="search"
                         placeholder="Search albums..."
                         oninput="AppSingleton.get().searchAlbums(event)"
                     />
@@ -87,10 +80,8 @@
             <div class="header">
                 <div class="header-row">
                     <h1>Artists</h1>
-                    <input
-                        class="form-input"
+                    <search-bar
                         id="artists-search"
-                        type="search"
                         placeholder="Search artists..."
                         oninput="AppSingleton.get().searchArtists(event)"
                     />
@@ -466,6 +457,17 @@
                 <p class="label"></p> <span class="description"></span>
             </div>
         </label>
+    </template>
+
+    <template id="search-input">
+        <div class="search-wrapper">
+            <input
+                class="form-input"
+                type="search"
+                placeholder="Search..."
+            />
+            <button type="button">X</button>
+        </div>
     </template>
 </body>
 

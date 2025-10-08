@@ -137,6 +137,12 @@ function getSongsHeader(sortHandler = null) {
     return table;
 }
 
+/**
+ * Gets custom header similar to the songs table header
+ * @param {string[]} labels - labels to be in the header
+ * @param {(string) => void} sortHandler - sort handler when label is clicked
+ * @returns {HTMLTableElement} - table for displaying the custom header
+ */
 function getCustomHeader(labels, sortHandler) {
     const table = document.createElement("table");
     const thead = document.createElement("thead");
