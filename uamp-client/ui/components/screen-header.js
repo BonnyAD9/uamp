@@ -5,10 +5,14 @@ class ScreenHeader extends HTMLElement {
 
     connectedCallback() {
         const template = document.getElementById("screen-header");
-        this.appendChild(template.content.cloneNode(true));
+        const inner = this.innerHTML;
+        this.innerHTML = "";
 
+        this.appendChild(template.content.cloneNode(true));
         const title = this.getAttribute("title") ?? "";
         this.querySelector("h1").textContent = title;
+
+        this.querySelector(".filler").innerHTML = inner;
 
         const oninput = this.getAttribute("oninput");
         if (oninput) {

@@ -8,3 +8,4 @@
 - Add genre to albums and sort by it
 - Don't sort on push and sort after
 - Cool gradient effect
+- Fix playlist double header
