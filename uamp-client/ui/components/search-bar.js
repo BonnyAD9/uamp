@@ -1,14 +1,10 @@
-export class SearchBar extends HTMLElement {
+class SearchBar extends HTMLElement {
     constructor() {
         super();
-        const template = document.getElementById("search-input");
-        this.innerHTML = "";
-        this.appendChild(template.content.cloneNode(true));
     }
 
     connectedCallback() {
         const template = document.getElementById("search-input");
-        this.innerHTML = "";
         this.appendChild(template.content.cloneNode(true));
 
         const input = this.querySelector("input");

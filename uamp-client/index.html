@@ -28,7 +28,8 @@
         </section>
 
         <section id="library" class="screen active">
-            <div class="header">
+            <screen-header title="Library"></screen-header>
+            <!--<div class="header">
                 <div class="header-row">
                     <h1>Library</h1>
 
@@ -38,7 +39,7 @@
                         oninput="AppSingleton.get().searchLibrary(event)"
                     />
                 </div>
-            </div>
+            </div>-->
             <div class="screen-wrapper"></div>
         </section>
 
@@ -457,6 +458,14 @@
                 <p class="label"></p> <span class="description"></span>
             </div>
         </label>
+    </template>
+
+    <template id="screen-header">
+        <div class="header">
+            <div class="header-row">
+                <h1></h1>
+            </div>
+        </div>
     </template>
 
     <template id="search-input">
