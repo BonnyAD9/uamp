@@ -59,9 +59,10 @@ const playlists = document.querySelector("#playlist .playlist-wrapper");
 const playlistTabs = document.querySelector("#playlist .tabs .tabs-wrapper");
 /** Pushes empty playing table to the playlist stack and adds new tab */
 export function pushPlaylist() {
-    const table = getTable((e) => AppSingleton.get().playlistClick(e), null, [
-        "playlist-stack",
-    ]);
+    const table = getHeaderlessTable(
+        (e) => AppSingleton.get().playlistClick(e),
+        ["playlist-stack"],
+    );
 
     const playing = playlists.querySelector(".playlist-stack");
     playlists.insertBefore(table, playing);
@@ -195,9 +196,8 @@ export function displayPlaylistStack(n) {
         .forEach((table, i) => i !== 0 && table.remove());
 
     for (let i = 1; i <= n; i++) {
-        const cloned = getTable(
+        const cloned = getHeaderlessTable(
             (e) => AppSingleton.get().playlistClick(e),
-            null,
             ["playlist-stack"],
         );
         playlists.appendChild(cloned);

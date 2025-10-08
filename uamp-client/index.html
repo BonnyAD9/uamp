@@ -96,46 +96,38 @@
         </section>
 
         <section id="playlist" class="screen">
-            <div class="header">
-                <div class="header-row">
-                    <div class="tabs">
-                        <h1>Playlist</h1>
-
-                        <div class="tabs-wrapper">
-                            <button
-                                id="playingPlaylist"
-                                class="tab active"
-                                onclick="AppSingleton.get().setPlaylistTab(0)"
-                            >Playing</button>
-                        </div>
+            <screen-header title="Playlist">
+                <div class="tabs">
+                    <div class="tabs-wrapper">
+                        <button
+                            id="playingPlaylist"
+                            class="tab active"
+                            onclick="AppSingleton.get().setPlaylistTab(0)"
+                        >Playing</button>
                     </div>
-
-                    <div class="tabs">
-                        <div class="playlist-controls">
-                            <img
-                                src="assets/svg/push.svg"
-                                alt="push playlist"
-                                title="Push empty playlist"
-                                onclick="apiCtrl('push=none')"
-                            />
-                            <img
-                                src="assets/svg/pop.svg"
-                                alt="push playlist"
-                                title="Pops current playlist"
-                                onclick="apiCtrl('pop')"
-                            />
-                        </div>
+                    <div class="playlist-controls">
+                        <img
+                            src="assets/svg/push.svg"
+                            alt="push playlist"
+                            title="Push empty playlist"
+                            onclick="apiCtrl('push=none')"
+                        />
+                        <img
+                            src="assets/svg/pop.svg"
+                            alt="push playlist"
+                            title="Pops current playlist"
+                            onclick="apiCtrl('pop')"
+                        />
                     </div>
                 </div>
-            </div>
+            </screen-header>
 
             <div class="screen-wrapper playlist-wrapper"></div>
         </section>
 
         <section id="settings" class="screen">
-            <div class="header">
+            <screen-header title="Settings">
                 <div class="tabs">
-                    <h1>Settings</h1>
                     <div class="tabs-wrapper">
                         <button
                             class="tab active"
@@ -143,7 +135,7 @@
                         >Appearance</button>
                     </div>
                 </div>
-            </div>
+            </screen-header>
             <div class="screen-wrapper settings-wrapper">
                 <div class="settings-content active" id="appearanceSettings">
                 </div>
