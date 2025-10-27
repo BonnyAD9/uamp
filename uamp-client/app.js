@@ -77,6 +77,8 @@ export default class App {
             "#playlist",
             ".playlist-stack.active tbody",
             () => this.player.getPlaylist(this.playlistTab).getPlayingId(),
+            true,
+            true,
         );
         this.barPlaylistTable = new VirtualTable(
             () => this.player.playlist.songs,
@@ -84,6 +86,7 @@ export default class App {
             ".songs",
             () => this.player.getPlayingId(),
             false,
+            true,
         );
     }
 
