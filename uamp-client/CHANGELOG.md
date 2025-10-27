@@ -1,6 +1,8 @@
 # CHANGELOG
 
 - Albums and artists sorting
-- Option to open album and artist from Now Playing page
-- Current timestamp and album on Now Playing page
-- Now Playing playlist edges fade
+- Now Playing page tweaks
+    - Add current timestamp and album
+    - Option to open album and artist
+    - Playlist edge fade
+- Auto scrolling to playing song in playlists
