@@ -105,6 +105,16 @@ export default class App {
     }
 
     /**
+     * Sets the current song index in the playlist and updates playlist table
+     * @param {?number} id - index of the current song in the playlist
+     */
+    setCurrent(id) {
+        this.player.setCurrent(id);
+        this.playlistTable.render();
+        this.barPlaylistTable.render();
+    }
+
+    /**
      * Sets the timestamp to given value and updates related UI elements.
      * @param {?Timestamp} timestamp - the timestamp to set.
      */

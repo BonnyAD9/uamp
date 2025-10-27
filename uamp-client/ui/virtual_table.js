@@ -33,18 +33,21 @@ export default class VirtualTable {
             : (song, id) => song.getBarRow(id);
         /** @type {() => number} */
         this.getCurrentId = getCurrentId;
-        this.autoScroll = autoScroll;
 
         /** @type {number} */
         this.start = 0;
         /** @type {number} */
         this.end = 0;
 
+        this.autoScroll = false;
+        this.autoScrollEnabled = autoScroll;
+        this.ignoreScroll = false;
         this.container.addEventListener("scroll", () => this.update());
     }
 
     /** Displays songs in the given containers table using virtual scrolling. */
     render() {
+        this.autoScroll = this.autoScrollEnabled;
         const current = this.getCurrentId();
         const songs = this.getSongs();
 
@@ -73,10 +76,19 @@ export default class VirtualTable {
 
         this.start = start;
         this.end = end;
+
+        if (this.autoScroll) {
+            this.ignoreScroll = true;
+            this.container.scrollTop = (start + 2) * this.rowHeight;
+            requestAnimationFrame(() => (this.ignoreScroll = false));
+        }
     }
 
     /** Updates songs table in the given container with virtual scrolling. */
     update() {
+        if (this.ignoreScroll) return;
+
+        this.autoScroll = false;
         const current = this.getCurrentId();
         const songs = this.getSongs();
 
@@ -112,7 +124,7 @@ export default class VirtualTable {
     #getBufferPos(songCnt, topSpacer, bottomSpacer) {
         const viewHeight = this.container.clientHeight;
 
-        const visibleCnt = Math.ceil(viewHeight / this.rowHeight) + 3;
+        const visibleCnt = Math.ceil(viewHeight / this.rowHeight) + 1;
         const scrollTop = this.container.scrollTop;
         const start = Math.max(0, Math.floor(scrollTop / this.rowHeight) - 2);
         const end = Math.min(songCnt, start + visibleCnt);
@@ -126,22 +138,17 @@ export default class VirtualTable {
         const viewHeight = this.container.clientHeight;
         const songCnt = songs.length;
 
-        const visibleCnt = Math.ceil(viewHeight / this.rowHeight);
-        const visible = visibleCnt + 3;
+        const visible = Math.ceil(viewHeight / this.rowHeight);
         const currentPos = songs.findIndex((s) => s.id == current);
 
-        const top = Math.max(0, Math.ceil(currentPos - visibleCnt * 0.5));
-        const max = Math.max(0, songCnt - visibleCnt);
-        const scrollTop = Math.min(top, max);
-
-        const start = Math.max(0, scrollTop - 2);
+        const top = Math.ceil(currentPos - visible * 0.5);
+        const start = Math.max(0, Math.min(top, songCnt - visible));
         const end = Math.min(songCnt, start + visible);
 
         topSpacer.style.height = `${start * this.rowHeight}px`;
         bottomSpacer.style.height = `${(songCnt - end) * this.rowHeight}px`;
-        requestAnimationFrame(() => {
-            this.container.scrollTop = scrollTop * this.rowHeight;
-        });
+
+        console.log(start, currentPos, end);
         return { start, end };
     }
 

@@ -172,7 +172,7 @@ eventSource.addEventListener("config-changed", (e) => {
 });
 
 function playlistJumpEvent(app, data) {
-    app.player.setCurrent(data.position);
+    app.setCurrent(data.position);
     app.setPlayback(data.playback);
     app.setTimestamp(data.timestamp);
 }
