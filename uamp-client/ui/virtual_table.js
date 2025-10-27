@@ -147,8 +147,6 @@ export default class VirtualTable {
 
         topSpacer.style.height = `${start * this.rowHeight}px`;
         bottomSpacer.style.height = `${(songCnt - end) * this.rowHeight}px`;
-
-        console.log(start, currentPos, end);
         return { start, end };
     }
 
