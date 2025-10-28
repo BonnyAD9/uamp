@@ -8,7 +8,6 @@
 - Grououping by albums and artists
 
 # known issues
-- Mpris images not working (*im a loser*)
 - Use ratag, skip symphonia for unsupported codecs.
 - When playing some flac files, log will show error with end of stream. This is
   bug has been fixed in symphona, but it is not yet released.
