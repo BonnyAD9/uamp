@@ -63,14 +63,18 @@ impl Args {
     pub fn make_config(&self) -> Config {
         let mut res = Config::from_default_json();
 
+        let mut no_save = false;
+        
         if let Some(v) = self.port {
             res.set_port(v);
+            no_save = true;
         }
         if let Some(v) = &self.server_address {
             *res.mut_server_address() = v.to_owned();
+            no_save = true;
         }
 
-        if res.changed() {
+        if no_save {
             res.config_path = None;
         }
 

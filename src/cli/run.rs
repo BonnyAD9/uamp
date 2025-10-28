@@ -167,14 +167,17 @@ pub fn run_detached(
 
 impl Run {
     fn update_config(&self, conf: &mut Config) {
+        let mut change = false;
         if let Some(v) = self.port {
             conf.set_port(v);
+            change = true;
         }
         if let Some(v) = &self.server_address {
             *conf.mut_server_address() = v.to_owned();
+            change = true;
         }
 
-        if conf.changed() {
+        if change {
             conf.config_path = None;
         }
     }

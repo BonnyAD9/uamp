@@ -35,9 +35,6 @@ pub fn lookup_image(
         '_',
         filesan::Mode::ALL,
     );
-    if name == "queen - a day at the races.jpg" {
-        println!("hi");
-    }
     ImageLookup {
         rt_path,
         cache,

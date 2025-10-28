@@ -8,7 +8,6 @@
 - Grououping by albums and artists
 
 # known issues
-- Initial config is never written.
 - Restart doesn't work.
 - Invalid playlist end action (on config save?)
 - *Lavish* -> *For a better day* wont play?

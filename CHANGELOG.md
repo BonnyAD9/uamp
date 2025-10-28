@@ -3,6 +3,7 @@
 ## future
 ### Fixes
 - Fix winamp style image lookup.
+- Fix initial config save.
 
 ## v0.6.4
 ### Fixes
