@@ -8,7 +8,6 @@
 - Grououping by albums and artists
 
 # known issues
-- Invalid playlist end action (on config save?)
 - *Lavish* -> *For a better day* wont play?
 - Mpris images not working (*im a loser*)
 - Use ratag, skip symphonia for unsupported codecs.
