@@ -8,7 +8,6 @@
 - Grououping by albums and artists
 
 # known issues
-- *Lavish* -> *For a better day* wont play?
 - Mpris images not working (*im a loser*)
 - Use ratag, skip symphonia for unsupported codecs.
 - When playing some flac files, log will show error with end of stream. This is
