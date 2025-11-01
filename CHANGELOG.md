@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.6.5
 ### GUI
 - Albums and artists sorting
 - Now Playing page tweaks
