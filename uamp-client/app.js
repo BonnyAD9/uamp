@@ -7,7 +7,14 @@ import Song from "./library/song.js";
 import Player from "./player/player.js";
 import Playlist from "./player/playlist.js";
 import Config from "./settings.js";
-import { updateCurrent, updatePlayBtn, updateVolume } from "./ui/bar.js";
+import {
+    toggleBar,
+    updateCurrent,
+    updatePlayBtn,
+    updatePlaylistMask,
+    updateTimestamp,
+    updateVolume,
+} from "./ui/bar.js";
 import {
     displayAlbum,
     displayAlbums,
@@ -18,7 +25,9 @@ import {
 } from "./ui/pages.js";
 import {
     displayAlbumSongsSort,
+    displayAlbumsSort,
     displayArtistSongsSort,
+    displayArtistsSort,
     displayLibrarySort,
     displayPlaylistStack,
     popPlaylist,
@@ -68,6 +77,8 @@ export default class App {
             "#playlist",
             ".playlist-stack.active tbody",
             () => this.player.getPlaylist(this.playlistTab).getPlayingId(),
+            true,
+            true,
         );
         this.barPlaylistTable = new VirtualTable(
             () => this.player.playlist.songs,
@@ -75,6 +86,7 @@ export default class App {
             ".songs",
             () => this.player.getPlayingId(),
             false,
+            true,
         );
     }
 
@@ -90,6 +102,16 @@ export default class App {
     setPlayback(playback) {
         this.player.setPlayback(playback);
         this.handleSongProgress();
+    }
+
+    /**
+     * Sets the current song index in the playlist and updates playlist table
+     * @param {?number} id - index of the current song in the playlist
+     */
+    setCurrent(id) {
+        this.player.setCurrent(id);
+        this.playlistTable.render();
+        this.barPlaylistTable.render();
     }
 
     /**
@@ -214,7 +236,10 @@ export default class App {
     /** Displays songs with virtual scrolling. */
     displaySongs = () => this.libraryTable.render();
     displayPlaylist = () => this.playlistTable.render();
-    createBarSongs = () => this.barPlaylistTable.render();
+    createBarSongs = () => {
+        this.barPlaylistTable.render();
+        updatePlaylistMask();
+    };
 
     displayAlbums = () => displayAlbums(this.library.albums);
     displayArtists = () => displayArtists(this.library.artists);
@@ -223,7 +248,7 @@ export default class App {
         this.library.songs.toggleSort(key);
         this.libraryTable.render();
         displayLibrarySort(
-            this.library.songs.sort,
+            this.library.songs.key,
             this.library.songs.ascending,
         );
     };
@@ -231,19 +256,26 @@ export default class App {
         if (!this.album) return;
         this.album.songs.toggleSort(key);
         displayAlbumSongs(this.album, this.player.getPlayingId());
-        displayAlbumSongsSort(
-            this.album.songs.sort,
-            this.album.songs.ascending,
-        );
+        displayAlbumSongsSort(this.album.songs.key, this.album.songs.ascending);
     };
     sortArtistSongs = (key) => {
         if (!this.artist) return;
         this.artist.songs.toggleSort(key);
         displayArtistSongs(this.artist, this.player.getPlayingId());
         displayArtistSongsSort(
-            this.artist.songs.sort,
+            this.artist.songs.key,
             this.artist.songs.ascending,
         );
+    };
+
+    sortAlbums = (key) => {
+        this.library.albums.toggleSort(key);
+        this.displayAlbums();
+    };
+
+    sortArtists = (key) => {
+        this.library.artists.toggleSort(key);
+        this.displayArtists();
     };
 
     searchLibrary = this.searchDebounce((e) => {
@@ -329,6 +361,7 @@ export default class App {
             this.position.current.nanos = Math.floor(
                 (current % 1) * 1_000_000_000,
             );
+            updateTimestamp(this.position.current);
         }
     }
 
@@ -376,7 +409,7 @@ export default class App {
         apiCtrl(`pj=${item.dataset.index}`);
     }
 
-    albumClick = (e) => this.genericAlbumClick(e, this.library.albums);
+    albumClick = (e) => this.genericAlbumClick(e, this.library.albums.get());
     albumArtistClick = (e) => this.genericAlbumClick(e, this.artist.albums);
 
     genericAlbumClick(e, albums) {
@@ -392,7 +425,7 @@ export default class App {
         const row = e.target.closest("tr");
         if (!row) return;
 
-        const artist = this.library.artists[row.dataset.index];
+        const artist = this.library.artists.get()[row.dataset.index];
 
         const album = e.target.closest(".albums-preview img");
         if (!album) {
@@ -404,6 +437,20 @@ export default class App {
 
         this.album = artist.albums[album.dataset.index];
         displayAlbum(this.album, this.player.getPlayingId());
+        showScreen("album-detail");
+    }
+
+    artistBarClick(e) {
+        this.artist = this.library.getArtistByName(e.target.textContent);
+        displayArtist(this.artist, this.player.getPlayingId());
+        toggleBar();
+        showScreen("artist-detail");
+    }
+
+    albumBarClick(artist, album) {
+        this.album = this.library.getAlbumByKey(artist, album);
+        displayAlbum(this.album, this.player.getPlayingId());
+        toggleBar();
         showScreen("album-detail");
     }
 }

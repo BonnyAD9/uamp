@@ -18,47 +18,40 @@
             </div>
 
             <nav>
-                <p class="active" data-screen="library">Library</p>
-                <p data-screen="albums">Albums</p>
-                <p data-screen="artists">Artists</p>
-                <p data-screen="playlist">Playlist</p>
+                <p class="active nosel" data-screen="library">Library</p>
+                <p class="nosel" data-screen="albums">Albums</p>
+                <p class="nosel" data-screen="artists">Artists</p>
+                <p class="nosel" data-screen="playlist">Playlist</p>
                 <div class="spacer"></div>
-                <p data-screen="settings">Settings</p>
+                <p class="nosel" data-screen="settings">Settings</p>
             </nav>
         </section>
 
         <section id="library" class="screen active">
-            <div class="header">
-                <h1>Library</h1>
-                <input
-                    class="form-input"
-                    id="library-search"
-                    type="search"
-                    placeholder="Search library..."
-                    oninput="AppSingleton.get().searchLibrary(event)"
-                />
-            </div>
+            <screen-header
+                title="Library"
+                oninput="AppSingleton.get().searchLibrary(event)"
+            ></screen-header>
+            <div class="screen-wrapper"></div>
         </section>
 
         <section id="albums" class="screen">
-            <div class="header">
-                <h1>Albums</h1>
-                <input
-                    class="form-input"
-                    id="albums-search"
-                    type="search"
-                    placeholder="Search albums..."
-                    oninput="AppSingleton.get().searchAlbums(event)"
-                />
-            </div>
-            <div class="list" onclick="AppSingleton.get().albumClick(event)">
+            <screen-header
+                title="Albums"
+                oninput="AppSingleton.get().searchAlbums(event)"
+            ></screen-header>
+            <div class="screen-wrapper">
+                <div
+                    class="list"
+                    onclick="AppSingleton.get().albumClick(event)"
+                ></div>
             </div>
         </section>
 
         <section id="album-detail" class="screen">
             <!-- <img class="backdrop" src="assets/svg/img_placeholder.svg"
                 alt="album cover" /> -->
-            <div class="album-detail-wrapper">
+            <div class="screen-wrapper album-detail-wrapper">
                 <div class="info">
                     <img src="assets/svg/img_placeholder.svg" alt="album cover" />
                     <div class="details">
@@ -71,76 +64,79 @@
         </section>
 
         <section id="artists" class="screen">
-            <div class="header">
-                <h1>Albums</h1>
-                <input
-                    class="form-input"
-                    id="artists-search"
-                    type="search"
-                    placeholder="Search artists..."
-                    oninput="AppSingleton.get().searchArtists(event)"
-                />
+            <screen-header
+                title="Artists"
+                oninput="AppSingleton.get().searchArtists(event)"
+            ></screen-header>
+            <div class="screen-wrapper">
+                <table class="songs">
+                    <tbody onclick="AppSingleton.get().artistClick(event)">
+                    </tbody>
+                </table>
             </div>
-            <table class="songs">
-                <tbody onclick="AppSingleton.get().artistClick(event)"></tbody>
-            </table>
         </section>
 
         <section id="artist-detail" class="screen">
-            <div class="info">
-                <div class="details">
-                    <h2 class="name"></h2>
-                    <p class="other"></p>
+            <div class="screen-wrapper">
+                <div class="info">
+                    <div class="details">
+                        <h2 class="name"></h2>
+                        <p class="other"></p>
+                    </div>
                 </div>
+
+                <h3>Albums</h3>
+                <div
+                    class="list"
+                    onclick="AppSingleton.get().albumArtistClick(event)"
+                ></div>
+
+                <h3>Songs</h3>
             </div>
-
-            <h3>Albums</h3>
-            <div
-                class="list"
-                onclick="AppSingleton.get().albumArtistClick(event)"
-            ></div>
-
-            <h3>Songs</h3>
         </section>
 
         <section id="playlist" class="screen">
-            <div class="tabs">
-                <div class="tabs-wrapper">
-                    <button
-                        id="playingPlaylist"
-                        class="tab active"
-                        onclick="AppSingleton.get().setPlaylistTab(0)"
-                    >Playing</button>
+            <screen-header title="Playlist">
+                <div class="tabs">
+                    <div class="tabs-wrapper">
+                        <button
+                            id="playingPlaylist"
+                            class="tab active"
+                            onclick="AppSingleton.get().setPlaylistTab(0)"
+                        >Playing</button>
+                    </div>
+                    <div class="playlist-controls">
+                        <img
+                            src="assets/svg/push.svg"
+                            alt="push playlist"
+                            title="Push empty playlist"
+                            onclick="apiCtrl('push=none')"
+                        />
+                        <img
+                            src="assets/svg/pop.svg"
+                            alt="push playlist"
+                            title="Pops current playlist"
+                            onclick="apiCtrl('pop')"
+                        />
+                    </div>
                 </div>
-                <div class="playlist-controls">
-                    <img
-                        src="assets/svg/push.svg"
-                        alt="push playlist"
-                        title="Push empty playlist"
-                        onclick="apiCtrl('push=none')"
-                    />
-                    <img
-                        src="assets/svg/pop.svg"
-                        alt="push playlist"
-                        title="Pops current playlist"
-                        onclick="apiCtrl('pop')"
-                    />
-                </div>
-            </div>
-            <div class="playlist-wrapper"></div>
+            </screen-header>
+
+            <div class="screen-wrapper playlist-wrapper"></div>
         </section>
 
         <section id="settings" class="screen">
-            <div class="tabs">
-                <h1>Settings</h1>
-                <div class="tabs-wrapper">
-                    <button
-                        class="tab active"
-                        onclick="Config.showPage(0)"
-                    >Appearance</button>
+            <screen-header title="Settings">
+                <div class="tabs">
+                    <div class="tabs-wrapper">
+                        <button
+                            class="tab active"
+                            onclick="Config.showPage(0)"
+                        >Appearance</button>
+                    </div>
                 </div>
-            </div>
-            <div class="settings-wrapper">
+            </screen-header>
+            <div class="screen-wrapper settings-wrapper">
                 <div class="settings-content active" id="appearanceSettings">
                 </div>
             </div>
@@ -165,10 +161,17 @@
                 </div>
                 <div class="title">
                     <h3 class="ellipsis">Not Playing...</h3>
-                    <h4 class="ellipsis"></h4>
+                    <h4 class="ellipsis">
+                        <span id="bar-artist" class="ellipsis"></span> •
+                        <span id="bar-album" class="ellipsis"></span>
+                    </h4>
                 </div>
             </div>
 
+            <div class="slider-timestamp">
+                <span id="timestamp-cur">--:--</span>
+                <span id="timestamp-total">--:--</span>
+            </div>
             <div class="slider">
                 <hr />
             </div>
@@ -298,6 +301,19 @@
         </table>
     </template>
 
+    <template id="songs-headerless-template">
+        <table class="songs">
+            <colgroup>
+                <col class="col-img">
+                <col class="col-ta">
+                <col class="col-ay">
+                <col class="col-lg">
+                <col class="col-td">
+            </colgroup>
+            <tbody></tbody>
+        </table>
+    </template>
+
     <template id="song-template">
         <tr>
             <td class="cover">
@@ -415,9 +431,29 @@
             </div>
         </label>
     </template>
+
+    <template id="screen-header">
+        <div class="header">
+            <div class="header-row">
+                <h1></h1>
+                <div class="filler"></div>
+            </div>
+        </div>
+    </template>
+
+    <template id="search-input">
+        <div class="search-wrapper">
+            <input
+                class="form-input"
+                type="search"
+                placeholder="Search..."
+            />
+            <button type="button">X</button>
+        </div>
+    </template>
 </body>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+<script src="ui/color-thief.js"></script>
 <script type="module" src="events.js"></script>
 
 </html>

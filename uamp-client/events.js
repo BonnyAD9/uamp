@@ -1,6 +1,11 @@
 import App from "./app.js";
-import './colors.js';
+import "./colors.js";
+import "./ui/components/search-bar.js";
+import "./ui/components/screen-header.js";
+import { spawnScreens } from "./ui/pages.js";
 import { removePlaylistRow } from "./ui/tables.js";
+
+spawnScreens();
 
 const AppSingleton = (() => {
     let instance = null;
@@ -12,14 +17,14 @@ const AppSingleton = (() => {
         },
         get() {
             return instance;
-        }
-    }
+        },
+    };
 })();
 window.AppSingleton = AppSingleton;
 
-const eventSource = new EventSource('/api/sub');
+const eventSource = new EventSource("/api/sub");
 
-eventSource.addEventListener('set-all', async e => {
+eventSource.addEventListener("set-all", async (e) => {
     const app = await AppSingleton.init(JSON.parse(e.data));
     app.displaySongs();
 
@@ -30,33 +35,33 @@ eventSource.addEventListener('set-all', async e => {
     }, 0);
 });
 
-eventSource.addEventListener('set-playlist', e => {
+eventSource.addEventListener("set-playlist", (e) => {
     setPlaylistEvent(AppSingleton.get(), JSON.parse(e.data));
 });
 
-eventSource.addEventListener('playback', e => {
+eventSource.addEventListener("playback", (e) => {
     AppSingleton.get().setPlayback(JSON.parse(e.data));
 });
 
-eventSource.addEventListener('playlist-jump', e => {
+eventSource.addEventListener("playlist-jump", (e) => {
     playlistJumpEvent(AppSingleton.get(), JSON.parse(e.data));
 });
 
-eventSource.addEventListener('seek', e => {
+eventSource.addEventListener("seek", (e) => {
     AppSingleton.get().setTimestamp(JSON.parse(e.data));
 });
 
-eventSource.addEventListener('quitting', _ => console.log('Quitting...'));
+eventSource.addEventListener("quitting", (_) => console.log("Quitting..."));
 
-eventSource.addEventListener('set-volume', e => {
+eventSource.addEventListener("set-volume", (e) => {
     AppSingleton.get().player.setVolume(JSON.parse(e.data));
 });
 
-eventSource.addEventListener('set-mute', e => {
+eventSource.addEventListener("set-mute", (e) => {
     AppSingleton.get().player.setMute(JSON.parse(e.data));
 });
 
-eventSource.addEventListener('pop-playlist', e => {
+eventSource.addEventListener("pop-playlist", (e) => {
     const app = AppSingleton.get();
     const data = JSON.parse(e.data);
 
@@ -64,7 +69,7 @@ eventSource.addEventListener('pop-playlist', e => {
     playlistJumpEvent(app, data.playlist);
 });
 
-eventSource.addEventListener('pop-set-playlist', e => {
+eventSource.addEventListener("pop-set-playlist", (e) => {
     const app = AppSingleton.get();
     const data = JSON.parse(e.data);
 
@@ -72,21 +77,21 @@ eventSource.addEventListener('pop-set-playlist', e => {
     setPlaylistEvent(app, data.playlist);
 });
 
-eventSource.addEventListener('set-playlist-add-policy', e => {
+eventSource.addEventListener("set-playlist-add-policy", (e) => {
     const app = AppSingleton.get();
     app.player.playlist.add_policy = JSON.parse(e.data);
 });
 
-eventSource.addEventListener('set-playlist-end-action', e => {
+eventSource.addEventListener("set-playlist-end-action", (e) => {
     const app = AppSingleton.get();
     app.player.playlist.on_end = JSON.parse(e.data);
 });
 
-eventSource.addEventListener('push-playlist', e => {
+eventSource.addEventListener("push-playlist", (e) => {
     pushPlaylistEvent(AppSingleton.get(), JSON.parse(e.data));
 });
 
-eventSource.addEventListener('push-playlist-with-cur', e => {
+eventSource.addEventListener("push-playlist-with-cur", (e) => {
     const app = AppSingleton.get();
     const current = app.player.playlist.current;
     if (current !== null) {
@@ -97,7 +102,7 @@ eventSource.addEventListener('push-playlist-with-cur', e => {
     pushPlaylistEvent(app, JSON.parse(e.data));
 });
 
-eventSource.addEventListener('queue', e => {
+eventSource.addEventListener("queue", (e) => {
     const app = AppSingleton.get();
     app.player.playlist.songs.push(...JSON.parse(e.data));
     if (app.playlistTab === 0) {
@@ -106,7 +111,7 @@ eventSource.addEventListener('queue', e => {
     }
 });
 
-eventSource.addEventListener('play-next', e => {
+eventSource.addEventListener("play-next", (e) => {
     const app = AppSingleton.get();
 
     const current = app.player.playlist.current;
@@ -119,9 +124,9 @@ eventSource.addEventListener('play-next', e => {
     }
 });
 
-eventSource.addEventListener('restarting', _ => console.log('Restarting...'));
+eventSource.addEventListener("restarting", (_) => console.log("Restarting..."));
 
-eventSource.addEventListener('reorder-playlist-stack', e => {
+eventSource.addEventListener("reorder-playlist-stack", (e) => {
     const app = AppSingleton.get();
     const data = JSON.parse(e.data);
 
@@ -130,7 +135,7 @@ eventSource.addEventListener('reorder-playlist-stack', e => {
     playlistJumpEvent(app, data.position);
 });
 
-eventSource.addEventListener('play-tmp', e => {
+eventSource.addEventListener("play-tmp", (e) => {
     const app = AppSingleton.get();
     const data = JSON.parse(e.data);
 
@@ -140,33 +145,34 @@ eventSource.addEventListener('play-tmp', e => {
     app.setTimestamp(data.timestamp);
 });
 
-eventSource.addEventListener('new-server', e => {
+eventSource.addEventListener("new-server", (e) => {
     const { address, port } = JSON.parse(e.data);
     const server = `http://${address}:${port}`;
     const ping = `${server}/api/marco`;
 
     const interval = setInterval(async () => {
-        fetch(ping, { cache: 'no-store' })
-            .then(res => res.text())
-            .then(text => {
-                if (text === 'polo') {
+        fetch(ping, { cache: "no-store" })
+            .then((res) => res.text())
+            .then((text) => {
+                if (text === "polo") {
                     clearInterval(interval);
                     window.location.href = `${server}/app`;
                 }
-            }).catch(_ => { });
+            })
+            .catch((_) => {});
     }, 1000);
 });
 
-eventSource.addEventListener('client-changed', _ => window.location.reload());
+eventSource.addEventListener("client-changed", (_) => window.location.reload());
 
-eventSource.addEventListener('config-changed', e => {
+eventSource.addEventListener("config-changed", (e) => {
     const app = AppSingleton.get();
     if (app === null) return;
     app.config = JSON.parse(e.data);
 });
 
 function playlistJumpEvent(app, data) {
-    app.player.setCurrent(data.position);
+    app.setCurrent(data.position);
     app.setPlayback(data.playback);
     app.setTimestamp(data.timestamp);
 }

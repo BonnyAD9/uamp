@@ -50,15 +50,16 @@ export default class Song {
     }
 
     static from(id, obj) {
+        const year = obj.year === UNDEF_YEAR ? 0 : obj.year;
         return new Song(
             id, obj.path, obj.title, obj.artist, obj.album, obj.track, obj.disc,
-            obj.year, Duration.from(obj.length), obj.genre, obj.deleted
+            year, Duration.from(obj.length), obj.genre, obj.deleted
         );
     }
 
     static empty(id) {
         return new Song(
-            id, '', '', '', '', 0, 0, UNDEF_YEAR, new Duration(0, 0), '', true
+            id, '', '', '', '', 0, 0, 0, new Duration(0, 0), '', true
         );
     }
 
@@ -67,7 +68,7 @@ export default class Song {
      * @returns {string} songs release year
      */
     getYear() {
-        return this.year == UNDEF_YEAR ? '-' : `${this.year}`;
+        return this.year == 0 ? '-' : `${this.year}`;
     }
 
     /**
@@ -114,8 +115,9 @@ export default class Song {
      */
     getQuery() {
         const s = (text) => text.replaceAll('/', '//');
+        const year = this.year === 0 ? UNDEF_YEAR : this.year;
         return `n=/${s(this.title)}/.p=/${s(this.artist)}/.a=/` +
-            `${s(this.album)}/.t=${this.track}.d=${this.disc}.y=${this.year}` +
+            `${s(this.album)}/.t=${this.track}.d=${this.disc}.y=${year}` +
             `.g=/${s(this.genre)}/`;
     }
 }

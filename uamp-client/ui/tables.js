@@ -29,11 +29,15 @@ function highlightPlaying(songId, container) {
 }
 
 export const displayLibrarySort = (key, dir) =>
-    displaySort(document.querySelector('#library .songs'), key, dir);
+    displaySort(document.querySelector("#library .header table"), key, dir);
 export const displayArtistSongsSort = (key, dir) =>
-    displaySort(document.querySelector('#artist-detail .songs'), key, dir);
+    displaySort(document.querySelector("#artist-detail .songs"), key, dir);
 export const displayAlbumSongsSort = (key, dir) =>
-    displaySort(document.querySelector('#album-detail .songs'), key, dir);
+    displaySort(document.querySelector("#album-detail .songs"), key, dir);
+export const displayAlbumsSort = (key, dir) =>
+    displaySort(document.querySelector("#albums .header table"), key, dir);
+export const displayArtistsSort = (key, dir) =>
+    displaySort(document.querySelector("#artists .header table"), key, dir);
 
 /**
  * Displays the sorting in the thead of the table
@@ -42,11 +46,11 @@ export const displayAlbumSongsSort = (key, dir) =>
  * @param {bool} direction - ascending when true, else descending
  */
 function displaySort(table, key, direction) {
-    const attrs = table.querySelectorAll('thead th span');
-    attrs.forEach(attr => {
-        attr.classList.remove('sorted', 'asc', 'desc');
+    const attrs = table.querySelectorAll("thead th span");
+    attrs.forEach((attr) => {
+        attr.classList.remove("sorted", "asc", "desc");
         if (attr.dataset.sort === key) {
-            attr.classList.add('sorted', direction ? 'asc' : 'desc');
+            attr.classList.add("sorted", direction ? "asc" : "desc");
         }
     });
 }
@@ -55,9 +59,8 @@ const playlists = document.querySelector("#playlist .playlist-wrapper");
 const playlistTabs = document.querySelector("#playlist .tabs .tabs-wrapper");
 /** Pushes empty playing table to the playlist stack and adds new tab */
 export function pushPlaylist() {
-    const table = getTable(
+    const table = getHeaderlessTable(
         (e) => AppSingleton.get().playlistClick(e),
-        null,
         ["playlist-stack"],
     );
 
@@ -142,7 +145,7 @@ const tableTemplate = document.getElementById("songs-template");
  * @param {string[]} classes - classes to be added on the table
  * @returns {HTMLTableElement} empty songs table
  */
-function getTable(onclick, sortHandler = null, classes = []) {
+export function getTable(onclick, sortHandler = null, classes = []) {
     const cloned = tableTemplate.content.cloneNode(true);
     const table = cloned.querySelector("table");
     table.classList.add(...classes);
@@ -154,6 +157,17 @@ function getTable(onclick, sortHandler = null, classes = []) {
         addTableSort(table, sortHandler);
     }
 
+    return table;
+}
+
+const tablehlTemplate = document.getElementById("songs-headerless-template");
+export function getHeaderlessTable(onclick, classes = []) {
+    const cloned = tablehlTemplate.content.cloneNode(true);
+    const table = cloned.querySelector("table");
+    table.classList.add(...classes);
+
+    const tbody = table.querySelector("tbody");
+    tbody.addEventListener("click", onclick);
     return table;
 }
 
@@ -182,9 +196,8 @@ export function displayPlaylistStack(n) {
         .forEach((table, i) => i !== 0 && table.remove());
 
     for (let i = 1; i <= n; i++) {
-        const cloned = getTable(
+        const cloned = getHeaderlessTable(
             (e) => AppSingleton.get().playlistClick(e),
-            null,
             ["playlist-stack"],
         );
         playlists.appendChild(cloned);
@@ -193,31 +206,18 @@ export function displayPlaylistStack(n) {
 }
 
 /** Spawns all the songs tables */
-function spawnTables() {
-    const libTable = getTable(
-        e => AppSingleton.get().libraryClick(e),
-        key => AppSingleton.get().sortSongs(key),
-    );
-    document.getElementById("library").appendChild(libTable);
-    
+export function spawnTables() {
     const artTable = getTable(
-        e => AppSingleton.get().artistSongClick(e),
-        key => AppSingleton.get().sortArtistSongs(key),
+        (e) => AppSingleton.get().artistSongClick(e),
+        (key) => AppSingleton.get().sortArtistSongs(key),
     );
-    document.getElementById("artist-detail").appendChild(artTable);
     document
-        .querySelector("#playlist .playlist-wrapper")
-        .appendChild(
-            getTable(
-                (e) => AppSingleton.get().playlistClick(e),
-                null,
-                ["playlist-stack", "active"],
-            ),
-        );
+        .querySelector("#artist-detail .screen-wrapper")
+        .appendChild(artTable);
 
     const table = getTable(
-        e => AppSingleton.get().albumSongClick(e),
-        key => AppSingleton.get().sortAlbumSongs(key),
+        (e) => AppSingleton.get().albumSongClick(e),
+        (key) => AppSingleton.get().sortAlbumSongs(key),
     );
     table.querySelector(".col-img").remove();
     table.querySelector("thead tr th").remove();
@@ -225,4 +225,3 @@ function spawnTables() {
         .querySelector("#album-detail .album-detail-wrapper")
         .appendChild(table);
 }
-spawnTables();

@@ -1,4 +1,10 @@
 import Album from "../library/album.js";
+import {
+    displayAlbumsSort,
+    displayArtistsSort,
+    getHeaderlessTable,
+    spawnTables,
+} from "./tables.js";
 
 const albumsList = document.querySelector("#albums .list");
 /**
@@ -6,7 +12,8 @@ const albumsList = document.querySelector("#albums .list");
  * @param {Album[]} albums
  */
 export function displayAlbums(albums) {
-    genericDisplayAlbums(albumsList, albums);
+    genericDisplayAlbums(albumsList, albums.get());
+    displayAlbumsSort(albums.key, albums.ascending);
 }
 
 function genericDisplayAlbums(albumsList, albums) {
@@ -57,11 +64,12 @@ const artistsList = document.querySelector("#artists .songs tbody");
  */
 export function displayArtists(artists) {
     artistsList.innerHTML = "";
-    artists.forEach((artist, i) => {
+    artists.get().forEach((artist, i) => {
         const row = artist.getTableRow();
         row.dataset.index = i;
         artistsList.appendChild(row);
     });
+    displayArtistsSort(artists.key, artists.ascending);
 }
 
 const artistInfo = document.querySelector("#artist-detail .info");
@@ -108,3 +116,104 @@ function displaySongs(table, songs, icons = true, id = null) {
         body.appendChild(row);
     });
 }
+
+/**
+ * Gets the songs header table element for use in the screen header
+ * @param {(string) => void} sortHandler - function handling the song sorting
+ * @returns {HTMLTableElement} - table for displaying the songs header
+ */
+function getSongsHeader(sortHandler = null) {
+    const template = document.getElementById("songs-template");
+    const cloned = template.content.cloneNode(true);
+
+    const table = cloned.querySelector("table");
+    table.classList.remove("songs");
+
+    if (!sortHandler) return table;
+
+    table.querySelectorAll("thead th span").forEach((label) => {
+        label.addEventListener("click", () => sortHandler(label.dataset.sort));
+    });
+    return table;
+}
+
+/**
+ * Gets custom header similar to the songs table header
+ * @param {string[]} labels - labels to be in the header
+ * @param {(string) => void} sortHandler - sort handler when label is clicked
+ * @returns {HTMLTableElement} - table for displaying the custom header
+ */
+function getCustomHeader(labels, sortHandler) {
+    const table = document.createElement("table");
+    const thead = document.createElement("thead");
+
+    let row = document.createElement("tr");
+    labels.forEach((label) => {
+        const span = document.createElement("span");
+        const key = label.trim().toLowerCase().replace(/\s+/g, "-");
+        span.addEventListener("click", () => sortHandler(key));
+        span.textContent = label;
+        span.dataset.sort = key;
+
+        const th = document.createElement("th");
+        th.appendChild(span);
+        row.appendChild(th);
+    });
+
+    thead.appendChild(row);
+    table.appendChild(thead);
+    return table;
+}
+
+function libraryScreen() {
+    const header = getSongsHeader((key) => AppSingleton.get().sortSongs(key));
+    document.querySelector("#library .header").appendChild(header);
+
+    const table = getHeaderlessTable((e) => AppSingleton.get().libraryClick(e));
+    document.querySelector("#library .screen-wrapper").appendChild(table);
+}
+
+function albumsScreen() {
+    const labels = ["Year", "Name", "Artist", "Songs"];
+    const header = getCustomHeader(labels, (key) =>
+        AppSingleton.get().sortAlbums(key),
+    );
+    document.querySelector("#albums .header").appendChild(header);
+}
+
+function artistsScreen() {
+    const labels = ["Name", "Albums", "Songs"];
+    const header = getCustomHeader(labels, (key) =>
+        AppSingleton.get().sortArtists(key),
+    );
+    document.querySelector("#artists .header").appendChild(header);
+}
+
+function playlistScreen() {
+    const header = getSongsHeader(null);
+    document.querySelector("#playlist .header").appendChild(header);
+
+    const table = getHeaderlessTable(
+        (e) => AppSingleton.get().playlistClick(e),
+        ["playlist-stack", "active"],
+    );
+    document.querySelector("#playlist .playlist-wrapper").appendChild(table);
+}
+
+export function spawnScreens() {
+    libraryScreen();
+    albumsScreen();
+    artistsScreen();
+    playlistScreen();
+
+    spawnTables();
+}
+
+document.querySelectorAll(".search-wrapper").forEach((wrapper) => {
+    const btn = wrapper.querySelector("button");
+    const input = wrapper.querySelector('input[type="search"]');
+    btn.addEventListener("click", () => {
+        input.value = "";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+});
