@@ -102,6 +102,9 @@ where
         if f.sign_minus() {
             flags.set_color(ErrCtxFlags::COLOR_NEVER);
         }
+        if f.sign_plus() {
+            flags.set_color(ErrCtxFlags::COLOR_ALWAYS);
+        }
 
         let color = flags.use_color();
         if self.flags.contains(ErrCtxFlags::SHOW_ERR) {
