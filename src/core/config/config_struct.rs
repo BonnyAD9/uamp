@@ -28,7 +28,7 @@ use super::{CacheSize, song_pos_save::SongPosSave};
 )]
 #[json_value_update(
     Result<Change>,
-    k => return Err(Error::invalid_value(format!("Invalid setting key `{k}`."))),
+    k => return Error::invalid_value().reason(format!("Unknown setting key `{k}`.")).err(),
     Change::empty(),
 )]
 #[partial_clone(
@@ -283,7 +283,7 @@ impl Config {
 
     pub(super) fn update(&mut self, up: serde_json::Value) -> Result<Change> {
         let serde_json::Value::Object(obj) = up else {
-            return Err(Error::invalid_value("Expected json object."));
+            return Err(Error::invalid_value().reason("Expected json object."));
         };
 
         self.change();

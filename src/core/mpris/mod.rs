@@ -36,14 +36,14 @@ impl Mpris {
         self.rt
             .msgs_result(msgs)
             .await
-            .map_err(|e| fdo::Error::Failed(e.log().to_string()))
+            .map_err(|e| fdo::Error::Failed(format!("{e:-}")))
     }
 
     async fn send_zmsg(&self, msg: Msg) -> zbus::Result<()> {
         self.rt
             .msg_result(msg)
             .await
-            .map_err(|e| zbus::Error::Failure(e.log().to_string()))
+            .map_err(|e| zbus::Error::Failure(format!("{e:-}")))
     }
 
     async fn request<T: Send + 'static>(
@@ -53,8 +53,8 @@ impl Mpris {
         self.rt
             .request(|app, _| f(app))
             .await
-            .map_err(|e| fdo::Error::Failed(e.log().to_string()))?
-            .map_err(|e| fdo::Error::Failed(e.log().to_string()))
+            .map_err(|e| fdo::Error::Failed(format!("{e:-}")))?
+            .map_err(|e| fdo::Error::Failed(format!("{e:-}")))
     }
 }
 

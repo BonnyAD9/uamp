@@ -6,7 +6,7 @@ use std::{
 };
 
 use crate::{
-    core::{ErrCtx, Error, Result, config},
+    core::{Error, Result, config},
     env::install::{run_command, see_command, update_mode::UpdateMode},
 };
 
@@ -94,21 +94,17 @@ fn get_latest_version(
         UpdateMode::LatestTag => list
             .latest_tag
             .map(|(c, t)| (c.to_string(), Some(t.to_string())))
-            .ok_or_else(|| {
-                Error::NotFound(ErrCtx::new("No latest tag.").into())
-            }),
-        UpdateMode::LatestCommit => {
-            list.head.map(|c| (c.to_string(), None)).ok_or_else(|| {
-                Error::NotFound(ErrCtx::new("No HEAD on repository.").into())
-            })
-        }
+            .ok_or_else(|| Error::not_found().msg("No latest tag.")),
+        UpdateMode::LatestCommit => list
+            .head
+            .map(|c| (c.to_string(), None))
+            .ok_or_else(|| Error::not_found().msg("No HEAD on repository.")),
         UpdateMode::Branch(b) => list
             .branches
             .get(&b.as_str())
             .map(|c| (c.to_string(), None))
             .ok_or_else(|| {
-                Error::NotFound(ErrCtx::new("No such branch.").into())
-                    .msg(format!("Failed to find branch `{b}`"))
+                Error::not_found().msg(format!("Failed to find branch `{b}`"))
             }),
     }
 }
@@ -140,10 +136,10 @@ fn git_ls(remote: &str) -> Result<Vec<(String, String)>> {
     let mut res = vec![];
     for itm in listing.split('\n') {
         let Some((commit, site)) = itm.split_once('\t') else {
-            return Error::NotFound(
-                ErrCtx::new("Malformed git output.").into(),
-            )
-            .err();
+            return Error::invalid_value()
+                .msg("Failed to list git remote.")
+                .reason("Malformed git output.")
+                .err();
         };
         res.push((commit.trim().to_string(), site.trim().to_string()));
     }

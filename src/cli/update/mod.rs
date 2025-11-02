@@ -3,7 +3,7 @@ use termal::printcln;
 
 use crate::{
     cli::{help::help_update, update::action::Action},
-    core::{ErrCtx, Error, Result, config::Config},
+    core::{Error, Result, config::Config},
     env::install,
 };
 
@@ -68,14 +68,11 @@ impl Update {
 
     fn act_update(&self, conf: &Config) -> Result<()> {
         if !install::ALLOW_SELF_UPDATE && !self.force {
-            return Error::InvalidOperation(
-                ErrCtx::new(
-                    "Uamp self update has been disabled for this build.",
-                )
-                .into(),
-            )
-            .hint("Use `--force` to force the update.")
-            .err();
+            return Error::invalid_operation()
+                .msg("Failed to update.")
+                .reason("Uamp self update has been disabled for this build.")
+                .hint("Use `--force` to force the update.")
+                .err();
         }
 
         let r = install::try_update(

@@ -91,16 +91,14 @@ fn start() -> Result<()> {
 /// - cannot start the logger
 fn start_logger() -> Result<LoggerHandle> {
     flexi_logger::Logger::try_with_env_or_str("warn")
-        .map_err(|e| {
-            Error::Logger(e.into()).msg("Failed to initialize logger.")
-        })?
+        .map_err(|e| Error::new(e).msg("Failed to initialize logger."))?
         .log_to_file(
             flexi_logger::FileSpec::default()
                 .directory(config::default_log_dir()),
         )
         .write_mode(flexi_logger::WriteMode::Direct)
         .start()
-        .map_err(|e| Error::Logger(e.into()).msg("Failed to start logger."))
+        .map_err(|e| Error::new(e).msg("Failed to start logger."))
 }
 
 fn register_panic_hook() {

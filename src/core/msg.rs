@@ -121,7 +121,7 @@ impl RtHandle {
             Ok(vec![])
         }));
         rrecv.await.map_err(|_| {
-            Error::Unexpected("Failed to receive data with request.".into())
+            Error::unexpected().msg("Failed to receive data with request.")
         })
     }
 }
@@ -137,7 +137,7 @@ impl RtAndle {
             Ok(vec![])
         }));
         rrecv.await.map_err(|_| {
-            Error::Unexpected("Failed to receive data with request.".into())
+            Error::unexpected().msg("Failed to receive data with request.")
         })
     }
 }

@@ -5,7 +5,7 @@ use std::{
     process::Command,
 };
 
-use crate::core::{ErrCtx, Error, Result, config};
+use crate::core::{Error, Result, config};
 
 mod update;
 mod update_mode;
@@ -33,10 +33,9 @@ pub fn install(root: Option<&Path>, exe: &Path, man: bool) -> Result<()> {
         println!("Uamp is already installed, using tmp file for move.");
         let tmpexe = exe.with_extension(".tmp");
         if tmpexe.exists() {
-            return Error::Unexpected(
-                ErrCtx::new("Tmp path {tmpexe:?} already exists.").into(),
-            )
-            .err();
+            return Error::unexpected()
+                .msg(format!("Tmp path {tmpexe:?} already exists."))
+                .err();
         }
         fs::copy("target/release/uamp", &tmpexe)?;
         fs::rename(tmpexe, exe)?;
@@ -147,32 +146,12 @@ fn see_command<S: AsRef<OsStr>>(
     cmd.args(args);
 
     let res = cmd.output()?;
-    if res.status.success() {
-        Ok(String::from_utf8_lossy(res.stdout.trim_ascii()).to_string())
-    } else {
-        Error::ChildFailed(
-            ErrCtx::new(String::from_utf8_lossy(&res.stderr).to_string())
-                .into(),
-        )
-        .msg(format!(
-            "Command ({cmd:?}) failed wit exit code `{}`",
-            res.status.code().unwrap_or(1)
-        ))
-        .err()
-    }
+    Error::child_output(&res, Some(&cmd))?;
+    Ok(String::from_utf8_lossy(res.stdout.trim_ascii()).to_string())
 }
 
 fn run_command(cmd: &mut Command) -> Result<()> {
     println!("{cmd:?}");
     let res = cmd.spawn()?.wait()?;
-    if res.success() {
-        Ok(())
-    } else {
-        Error::ChildFailed(ErrCtx::new(String::new()).into())
-            .msg(format!(
-                "Command ({cmd:?}) failed wit exit code `{}`",
-                res.code().unwrap_or(1)
-            ))
-            .err()
-    }
+    Error::child_status(res, None, Some(cmd))
 }

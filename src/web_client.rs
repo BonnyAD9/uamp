@@ -53,9 +53,10 @@ fn open_web(conf: &Config) -> Result<()> {
 
     let raw_cmd = shell_words::split(cmd)?;
     let Some(name) = raw_cmd.first() else {
-        return Err(Error::invalid_value(
-            "Missing application in command for web client.",
-        ));
+        return Error::invalid_value()
+            .msg("Missing application in command for web client.")
+            .inner_first()
+            .err();
     };
 
     let mut cmd = Command::new(name);

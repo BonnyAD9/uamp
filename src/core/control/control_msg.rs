@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::{
-        AppCtrl, Error, Msg, Result, UampApp,
+        AppCtrl, ErrKind, Msg, Result, UampApp,
         library::LoadOpts,
         player::AddPolicy,
         query::SongOrder,
@@ -173,8 +173,10 @@ impl UampApp {
             }
             ControlMsg::LoadNewSongs(opts) => {
                 match self.start_get_new_songs(ctrl, opts) {
-                    Err(e) if matches!(e, Error::InvalidOperation(_)) => {
-                        info!("Cannot load new songs: {}", e.log())
+                    Err(e)
+                        if matches!(e.kind(), ErrKind::InvalidOperation) =>
+                    {
+                        info!("Cannot load new songs: {e:-}")
                     }
                     Err(e) => {
                         return e.prepend("Cannot load new songs.").err();

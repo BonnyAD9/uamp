@@ -55,11 +55,10 @@ async fn run_bg_async(
 
         match msg {
             rt::Msg::Msg(msgs, rsend) => {
-                let res = app
-                    .update_many(&mut AppCtrl::new(&mut cmd_queue), msgs)
-                    .map_err(|e| e.log());
+                let res =
+                    app.update_many(&mut AppCtrl::new(&mut cmd_queue), msgs);
                 if let Err(ref e) = res {
-                    error!("{e}");
+                    error!("{e:-}");
                 }
                 if let Some(rsend) = rsend {
                     _ = rsend.send(res);

@@ -23,7 +23,7 @@ impl Config {
         match Config::from_json(default_config_dir().join("config.json")) {
             Ok(c) => c,
             Err(e) => {
-                error!("Failed to load config: {}", e.log());
+                error!("Failed to load config: {e:-}");
                 Config::default()
             }
         }
@@ -48,7 +48,7 @@ impl Config {
         };
 
         let mut conf: Self = serde_json::from_reader(file).map_err(|e| {
-            Error::SerdeJson(e.into()).msg("Failed to load config from json.")
+            Error::new(e).msg("Failed to load config from json.")
         })?;
         conf.config_path = Some(path.as_ref().to_owned());
         Ok(conf)

@@ -40,10 +40,14 @@ impl Plugin {
             let cfg: Symbol<*const PluginConfig> =
                 lib.get(b"uamp_plugin_config\0")?;
             if (**cfg).version != CURRENT_VERSION {
-                return Err(Error::invalid_value("Invalid plugin version."));
+                return Error::invalid_value()
+                    .msg("Invalid plugin version.")
+                    .err();
             }
             let Some(t) = PluginType::from_id((**cfg).typ) else {
-                return Err(Error::invalid_value("Unknown plugin type."));
+                return Error::invalid_value()
+                    .msg("Unknown plugin type.")
+                    .err();
             };
             let name =
                 CStr::from_ptr((**cfg).name).to_string_lossy().into_owned();

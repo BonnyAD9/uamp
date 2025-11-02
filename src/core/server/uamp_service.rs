@@ -24,7 +24,8 @@ use tokio_util::codec::{BytesCodec, FramedRead};
 use url::Url;
 
 use crate::core::{
-    AnyControlMsg, Error, IdControlMsg, Msg, Result, RtAndle, UampApp,
+    AnyControlMsg, ErrKind, Error, IdControlMsg, Msg, Result, RtAndle,
+    UampApp,
     config::{self, CacheSize},
     library::{Song, img_lookup::lookup_image_path_rt_thread},
     query::Query,
@@ -136,9 +137,8 @@ impl UampService {
                     any_good = true;
                     r
                 }
-                Err(mut e) => {
-                    e = e.log();
-                    let res = RepMsg::Error(e.to_string());
+                Err(e) => {
+                    let res = RepMsg::Error(format!("{e:-}"));
                     first_bad = Some(e);
                     res
                 }
@@ -161,7 +161,7 @@ impl UampService {
         _: Request<Incoming>,
     ) -> Result<MyResponse> {
         let Some(s) = self.data.make_reciever() else {
-            return Err(Error::http(204, "No event source.".into()));
+            return Error::http(204, "No event source.").err();
         };
         let srv = SseService::new(s, self.rt.clone());
         Ok(sse_response(srv))
@@ -187,11 +187,11 @@ impl UampService {
             };
         }
         let Some(album) = album else {
-            return Err(Error::http(400, "Missing album in query.".into()));
+            return Error::http(400, "Missing album in query.").err();
         };
 
         let Some(artist) = artist else {
-            return Err(Error::http(400, "Missing artist in query.".into()));
+            return Error::http(400, "Missing artist in query.").err();
         };
 
         let cache = self.data.cache.read().unwrap().clone();
@@ -257,10 +257,11 @@ impl UampService {
         if matches!(msg, IdControlMsg::SetConfig(_))
             && !self.peer.ip().is_loopback()
         {
-            return Err(Error::http(
+            return Error::http(
                 403,
-                "Only loopback is allowed to modify settings.".into(),
-            ));
+                "Only loopback is allowed to modify settings.",
+            )
+            .err();
         }
 
         self.rt.msg_result(Msg::IdControl(msg)).await?;
@@ -297,10 +298,7 @@ impl UampService {
         path = path.strip_prefix("/").unwrap_or(path);
         let os_path = Path::new(&path);
         if os_path.components().any(|c| c.as_os_str() == "..") {
-            return Err(Error::http(
-                403,
-                "Relative `..` is disallowed.".into(),
-            ));
+            return Error::http(403, "Relative `..` is disallowed.").err();
         }
         let os_path = app_path.join(path);
         if fs::metadata(&os_path).await?.is_dir() {
@@ -340,7 +338,7 @@ impl UampService {
         }
 
         let Some(file) = entry else {
-            return Err(Error::http(404, "No such file.".into()));
+            return Error::http(404, "No such file.").err();
         };
 
         let mime = mime_guess::from_path(file.path()?).first_or_octet_stream();
@@ -410,18 +408,18 @@ impl UampApp {
 }
 
 fn err_response(err: Error) -> MyResponse {
-    let code = match err {
-        Error::InvalidOperation(_)
-        | Error::Pareg(_)
-        | Error::SerdeJson(_)
-        | Error::ShellWords(_) => 400,
-        Error::NotFound(_) => 404,
-        Error::Io(ref e) if e.inner().kind() == ErrorKind::NotFound => 404,
-        Error::Http(_, c) => c,
+    let code = match err.kind() {
+        ErrKind::InvalidOperation
+        | ErrKind::Pareg(_)
+        | ErrKind::SerdeJson(_)
+        | ErrKind::ShellWords(_) => 400,
+        ErrKind::NotFound => 404,
+        ErrKind::Io(e) if e.kind() == ErrorKind::NotFound => 404,
+        ErrKind::Http(c, _) => *c,
         _ => 500,
     };
 
-    let msg = err.log().to_string();
+    let msg = format!("{err:-}");
 
     Response::builder()
         .status(code)
