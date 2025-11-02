@@ -86,16 +86,15 @@ impl Client {
             serde_json::from_slice::<Vec<RepMsg>>(&body_to_vec(res).await?)?;
 
         if res.len() != 1 {
-            return Err(Error::Unexpected(
-                "Response didn't contain correct amount of data.".into(),
-            ));
+            return Err(Error::invalid_value()
+                .reason("Response didn't contain correct amount of data."));
         }
 
         let res = res.pop().unwrap();
         match res {
             RepMsg::Info(i) => Ok(i),
-            RepMsg::Error(e) => Err(Error::Other(anyhow!(e).into())),
-            _ => Err(Error::Unexpected("Unexpected response.".into())),
+            RepMsg::Error(e) => Error::other(anyhow!(e)).err(),
+            _ => Err(Error::invalid_value().msg("Unexpected response.")),
         }
     }
 
@@ -124,16 +123,16 @@ impl Client {
             serde_json::from_slice::<Vec<RepMsg>>(&body_to_vec(res).await?)?;
 
         if res.len() != 1 {
-            return Err(Error::Unexpected(
-                "Response didn't contain correct amount of data.".into(),
-            ));
+            return Error::invalid_value()
+                .msg("Response didn't contain correct amount of data.")
+                .err();
         }
 
         let res = res.pop().unwrap();
         match res {
             RepMsg::Query(s) => Ok(s),
-            RepMsg::Error(e) => Err(Error::Other(anyhow!(e).into())),
-            _ => Err(Error::Unexpected("Unexpected response.".into())),
+            RepMsg::Error(e) => Error::other(anyhow!(e)).err(),
+            _ => Error::invalid_value().msg("Unexpected response.").err(),
         }
     }
 }

@@ -229,7 +229,7 @@ impl<'de> Deserialize<'de> for ControlFunction {
         String::deserialize(deserializer)?
             .parse()
             .map_err(|e: Error| {
-                serde::de::Error::custom(format!("Invalid value: {}", e.log()))
+                serde::de::Error::custom(format!("Invalid value: {e:-}"))
             })
     }
 }

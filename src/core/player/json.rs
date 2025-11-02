@@ -86,7 +86,7 @@ impl Player {
         if let Some(p) = play_pos
             && let Err(e) = res.play(lib, false).and_then(|_| res.seek_to(p))
         {
-            error!("{}", e.log());
+            error!("{e:-}");
         }
         res
     }
@@ -163,8 +163,7 @@ impl Player {
             },
         )
         .map_err(|e| {
-            Error::SerdeJson(e.into())
-                .msg("Failed to save player state to json.")
+            Error::new(e).msg("Failed to save player state to json.")
         })?;
 
         self.mut_playlist().pop_play_pos();

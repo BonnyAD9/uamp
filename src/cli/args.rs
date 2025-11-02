@@ -5,7 +5,7 @@ use pareg::{FromArg, Pareg, has_any_key, parse_arg};
 use crate::{
     cli::{help::help_short, port::Port},
     core::{
-        Error, Result,
+        Result,
         config::{APP_ID, Config, VERSION_STR},
     },
 };
@@ -64,7 +64,7 @@ impl Args {
         let mut res = Config::from_default_json();
 
         let mut no_save = false;
-        
+
         if let Some(v) = self.port {
             res.set_port(v);
             no_save = true;
@@ -139,29 +139,20 @@ impl Args {
                 "--" => {}
                 a => {
                     if let Some(i) = a.strip_prefix("-I") {
-                        if let Err(Error::Pareg(e)) =
-                            self.instance(&mut opt_iter(i))
-                        {
-                            return Err(args.map_err(e).into());
-                        }
+                        self.instance(&mut opt_iter(i))
+                            .map_err(|e| e.map_pareg(args))?;
                         continue;
                     }
 
                     if let Some(i) = a.strip_prefix("-R") {
-                        if let Err(Error::Pareg(e)) =
-                            self.run(&mut opt_iter(i))
-                        {
-                            return Err(args.map_err(e).into());
-                        }
+                        self.run(&mut opt_iter(i))
+                            .map_err(|e| e.map_pareg(args))?;
                         continue;
                     }
 
                     if let Some(i) = a.strip_prefix("-C") {
-                        if let Err(Error::Pareg(e)) =
-                            self.config(&mut opt_iter(i))
-                        {
-                            return Err(args.map_err(e).into());
-                        }
+                        self.config(&mut opt_iter(i))
+                            .map_err(|e| e.map_pareg(args))?;
                         continue;
                     }
 

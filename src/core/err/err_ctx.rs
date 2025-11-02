@@ -10,7 +10,7 @@ pub struct ErrCtx<T>
 where
     T: Display,
 {
-    inner: T,
+    inner: Option<T>,
     flags: ErrCtxFlags,
     msg: Option<Cow<'static, str>>,
     reason: Option<Cow<'static, str>>,
@@ -24,7 +24,7 @@ where
 {
     pub fn new(inner: T) -> Self {
         Self {
-            inner,
+            inner: Some(inner),
             flags: ErrCtxFlags::default(),
             msg: None,
             reason: None,
@@ -33,57 +33,49 @@ where
         }
     }
 
-    pub fn color(mut self, mode: ErrCtxFlags) -> Self {
+    pub fn color(&mut self, mode: ErrCtxFlags) {
         self.flags.set_color(mode);
-        self
     }
 
-    pub fn no_color(self) -> Self {
-        self.color(ErrCtxFlags::COLOR_NEVER)
+    pub fn no_color(&mut self) {
+        self.color(ErrCtxFlags::COLOR_NEVER);
     }
 
-    pub fn severity(mut self, severity: ErrCtxFlags) -> Self {
+    pub fn severity(&mut self, severity: ErrCtxFlags) {
         self.flags.set_severity(severity);
-        self
     }
 
-    pub fn warn(self) -> Self {
-        self.severity(ErrCtxFlags::SEVERITY_WARN)
+    pub fn warn(&mut self) {
+        self.severity(ErrCtxFlags::SEVERITY_WARN);
     }
 
-    pub fn inner_first(mut self, v: bool) -> Self {
+    pub fn inner_first(&mut self, v: bool) {
         self.flags.set(ErrCtxFlags::INNER_FIRST, v);
-        self
     }
 
-    pub fn msg(mut self, msg: impl Into<Cow<'static, str>>) -> Self {
+    pub fn msg(&mut self, msg: impl Into<Cow<'static, str>>) {
         self.msg = Some(msg.into());
-        self
     }
 
-    pub fn reason(mut self, reason: impl Into<Cow<'static, str>>) -> Self {
+    pub fn reason(&mut self, reason: impl Into<Cow<'static, str>>) {
         self.reason = Some(reason.into());
-        self
     }
 
-    pub fn hint(mut self, hint: impl Into<Cow<'static, str>>) -> Self {
+    pub fn hint(&mut self, hint: impl Into<Cow<'static, str>>) {
         self.hint = Some(hint.into());
-        self
     }
 
-    pub fn prepend(mut self, msg: impl Into<Cow<'static, str>>) -> Self {
+    pub fn prepend(&mut self, msg: impl Into<Cow<'static, str>>) {
         self.prepend.push(msg.into());
-        self
     }
 
-    pub fn show_err(mut self, v: bool) -> Self {
+    pub fn show_err(&mut self, v: bool) {
         self.flags.set(ErrCtxFlags::SHOW_ERR, v);
-        self
     }
 
     pub fn clone_universal(&self) -> ErrCtx<String> {
         ErrCtx {
-            inner: self.inner.to_string(),
+            inner: Some(self.inner().to_string()),
             flags: self.flags,
             msg: self.msg.clone(),
             reason: self.reason.clone(),
@@ -93,7 +85,11 @@ where
     }
 
     pub fn inner(&self) -> &T {
-        &self.inner
+        self.inner.as_ref().unwrap()
+    }
+
+    pub fn map_inner(&mut self, f: impl FnOnce(T) -> T) {
+        self.inner = Some(f(std::mem::take(&mut self.inner).unwrap()));
     }
 }
 
@@ -102,9 +98,17 @@ where
     T: Display,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let color = self.flags.use_color();
+        let mut flags = self.flags;
+        if f.sign_minus() {
+            flags.set_color(ErrCtxFlags::COLOR_NEVER);
+        }
+        if f.sign_plus() {
+            flags.set_color(ErrCtxFlags::COLOR_ALWAYS);
+        }
+
+        let color = flags.use_color();
         if self.flags.contains(ErrCtxFlags::SHOW_ERR) {
-            match self.flags & ErrCtxFlags::SEVERITY {
+            match flags & ErrCtxFlags::SEVERITY {
                 ErrCtxFlags::SEVERITY_ERROR => {
                     writemc!(f, color, "{'r}error:{'_} ")?
                 }
@@ -120,17 +124,25 @@ where
             write!(f, "{msg}: ")?;
         }
 
+        let fmt_inner = || {
+            if color {
+                format!("{:+}", self.inner())
+            } else {
+                format!("{:-}", self.inner())
+            }
+        };
+
         if let Some(msg) = &self.msg {
-            if self.flags.contains(ErrCtxFlags::INNER_FIRST) {
-                let inner = self.inner.to_string();
+            if flags.contains(ErrCtxFlags::INNER_FIRST) {
+                let inner = fmt_inner();
                 let inner = inner.trim_end_matches('.');
                 writeln!(f, "{inner}: {msg}")?;
             } else {
                 let msg = msg.trim_end_matches('.');
-                writeln!(f, "{msg}: {}", self.inner)?;
+                writeln!(f, "{msg}: {}", fmt_inner())?;
             }
         } else {
-            writeln!(f, "{}", self.inner)?;
+            writeln!(f, "{}", self.inner())?;
         }
 
         if let Some(reason) = &self.reason {

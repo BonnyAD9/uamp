@@ -149,7 +149,7 @@ impl UampApp {
             &mut self.player,
             &mut self.jobs,
         ) {
-            Err(Error::InvalidOperation(_)) => Ok(()),
+            Err(e) if e.is_invalid_operation() => Ok(()),
             Err(e) => e
                 .prepend("Failed to start library save after library load.")
                 .err(),

@@ -71,9 +71,9 @@ impl DecoderPlugin {
             let cfg: *const DecoderPluginConfig =
                 *lib.get(b"uamp_plugin_decoder_config\0")?;
             if (*cfg).version != CURRENT_VERSION {
-                return Err(Error::invalid_value(
-                    "Unknown decoder plugin version.",
-                ));
+                return Error::invalid_value()
+                    .msg("Unknown decoder plugin version.")
+                    .err();
             }
 
             let flags = &(*cfg).flags;

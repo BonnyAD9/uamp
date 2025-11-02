@@ -14,7 +14,7 @@ use tokio::task::JoinHandle;
 use unidecode::unidecode;
 
 use crate::core::{
-    Error, Result, RtAndle,
+    ErrKind, Error, Result, RtAndle,
     config::CacheSize,
     library::Song,
     log_err,
@@ -167,7 +167,7 @@ impl ImageLookup<'_> {
             }
         }
 
-        Err(Error::NotFound("Couldn't find image.".into()))
+        Error::not_found().msg("Couldn't find image.").err()
     }
 
     fn lookup_from_song_path(
@@ -176,7 +176,7 @@ impl ImageLookup<'_> {
         cache_to: &Path,
     ) -> Result<(PathBuf, Option<DynamicImage>)> {
         self.try_lookup_from_song_path(path, cache_to)?
-            .ok_or_else(|| Error::NotFound("Couldn't find image.".into()))
+            .ok_or_else(|| Error::not_found().msg("Couldn't find image."))
     }
 
     fn try_lookup_from_song_path(
@@ -192,11 +192,12 @@ impl ImageLookup<'_> {
                 )));
             }
             Ok(None) => {}
-            Err(Error::AudioTag(e))
+            Err(e)
+                if matches!(e.kind(), ErrKind::AudioTag(e)
                 if matches!(
-                    e.inner(),
+                    e,
                     audiotags::Error::UnsupportedFormat(_)
-                ) => {}
+                )) => {}
             Err(e) => return Err(e),
         }
 
@@ -363,5 +364,5 @@ fn looped_save(img: &DynamicImage, dst: &Path) -> Result<()> {
         log_err("Failed to remove file.", fs::remove_file(dst));
     }
 
-    Err(Error::Unexpected("Failed to save image.".into()))
+    Error::unexpected().msg("Failed to save image.").err()
 }

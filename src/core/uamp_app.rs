@@ -93,7 +93,7 @@ impl UampApp {
         .flatten();
 
         if let Err(e) = delete_old_logs(conf.delete_logs_after().0) {
-            error!("Failed to delete old logs: {}", e.log());
+            error!("Failed to delete old logs: {e:-}");
         }
 
         let mut app = UampApp {
@@ -140,7 +140,7 @@ impl UampApp {
     /// Handles the message sent to uamp.
     pub fn update(&mut self, ctrl: &mut AppCtrl, message: Msg) {
         if let Err(e) = self.update_err(ctrl, message) {
-            error!("{}", e.log());
+            error!("{e:-}");
         }
     }
 
@@ -185,7 +185,7 @@ impl UampApp {
     /// Runs when uamp is about to exit.
     pub fn on_exit(&mut self) {
         if let Err(e) = delete_old_logs(self.config.delete_logs_after().0) {
-            error!("Failed to delete old logs: {}", e.log());
+            error!("Failed to delete old logs: {e:-}");
         }
     }
 
@@ -234,7 +234,7 @@ impl UampApp {
             &mut self.player,
             &mut self.jobs,
         ) {
-            Err(Error::InvalidOperation(_)) => {}
+            Err(e) if e.is_invalid_operation() => {}
             Err(e) => res.push(e.prepend("Failed to start library save.")),
             _ => {}
         }
@@ -256,7 +256,7 @@ impl UampApp {
             .library
             .save_to_default_json(&self.config, &mut self.player)
         {
-            Err(Error::InvalidOperation(_)) => {}
+            Err(e) if e.is_invalid_operation() => {}
             Err(e) => res.push(e.prepend("Failed to start library save.")),
             _ => {}
         }
@@ -494,7 +494,7 @@ fn delete_old_logs(timeout: Duration) -> Result<()> {
     for d in dir {
         let d = d?;
         if let Err(e) = delete_old_log(&d, timeout) {
-            error!("Failed to delete log file {:?}: {}", d.path(), e.log());
+            error!("Failed to delete log file {:?}: {e:-}", d.path());
         }
     }
 

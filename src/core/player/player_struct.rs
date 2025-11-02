@@ -284,7 +284,7 @@ impl Player {
     /// Does hard pause without the fading (if configured).
     pub fn hard_pause(&mut self) {
         if let Err(e) = self.inner.hard_pause() {
-            warn!("Failed to hard pause: {}", e.log());
+            warn!("Failed to hard pause: {e:-}");
         }
         // TODO: unload song if stopped
     }
@@ -480,11 +480,7 @@ impl Player {
         };
 
         if let Err(e) = self.inner.prefetch(lib, id) {
-            error!(
-                "Failed to prefetch song {:?}: {}",
-                lib[id].path(),
-                e.log()
-            );
+            error!("Failed to prefetch song {:?}: {e:-}", lib[id].path(),);
         }
     }
 }
@@ -552,11 +548,7 @@ impl Player {
                 true
             }
             Err(e) => {
-                error!(
-                    "Failed to load song {:?}: {}",
-                    lib[id].path(),
-                    e.log()
-                );
+                error!("Failed to load song {:?}: {e:-}", lib[id].path(),);
                 info!("Moving to the next song.");
                 let next = self.playlist.nth_next(1);
                 if next.is_none() {
