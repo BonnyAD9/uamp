@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## futures
+### Changes
+- Refactor code for handling errors.
+
 ## v0.6.5
 ### GUI
 - Albums and artists sorting
