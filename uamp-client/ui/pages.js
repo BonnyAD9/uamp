@@ -200,6 +200,23 @@ function playlistScreen() {
     document.querySelector("#playlist .playlist-wrapper").appendChild(table);
 }
 
+function gradHoverListeners() {
+    const tables = document.querySelectorAll("table.songs tbody");
+    tables.forEach((table) => {
+        table.addEventListener("mousemove", (e) => {
+            const target = e.target.closest(":not(.spacer)");
+            if (!target) return;
+
+            const rect = target.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            table.style.setProperty("--mouse-x", `${x}px`);
+            table.style.setProperty("--mouse-y", `${y}px`);
+        });
+    });
+}
+
 export function spawnScreens() {
     libraryScreen();
     albumsScreen();
@@ -207,6 +224,7 @@ export function spawnScreens() {
     playlistScreen();
 
     spawnTables();
+    gradHoverListeners();
 }
 
 document.querySelectorAll(".search-wrapper").forEach((wrapper) => {
