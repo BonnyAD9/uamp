@@ -77,17 +77,15 @@ export default class App {
             "#playlist",
             ".playlist-stack.active tbody",
             () => this.player.getPlaylist(this.playlistTab).getPlayingId(),
-            true,
-            true,
         );
+        this.playlistTable.autoScrolling();
         this.barPlaylistTable = new VirtualTable(
             () => this.player.playlist.songs,
             ".bar .playlist",
             ".songs",
             () => this.player.getPlayingId(),
-            false,
-            true,
         );
+        this.barPlaylistTable.list().centering().autoScrolling();
     }
 
     static async init(data) {

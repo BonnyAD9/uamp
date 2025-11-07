@@ -316,9 +316,9 @@ table.songs tbody tr.spacer {
     height: 0;
 }
 
-table.songs tbody tr:hover {
+/*table.songs tbody tr:hover {
     background-color: var(--bg-light-trans);
-}
+}*/
 
 table.songs td {
     padding: 5px 0;
@@ -754,6 +754,7 @@ section.bar .playlist {
     display: none;
     overflow: hidden;
     overflow-y: auto;
+    align-items: center;
     max-height: 80%;
     height: 100%;
     margin: auto 0;
