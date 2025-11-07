@@ -310,15 +310,33 @@ table.songs tbody tr {
     cursor: pointer;
     transition: 0.1s ease background-color;
     height: 42px;
+    position: relative;
 }
 
 table.songs tbody tr.spacer {
     height: 0;
 }
 
-/*table.songs tbody tr:hover {
-    background-color: var(--bg-light-trans);
-}*/
+table.songs tbody tr::before {
+    content: "";
+    background: radial-gradient(
+        100% 800px at var(--mouse-x) var(--mouse-y),
+        rgba(255, 255, 255, 0.06),
+        transparent 40%
+    );
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 100ms;
+}
+
+table.songs tbody tr:hover::before {
+    opacity: 1;
+}
 
 table.songs td {
     padding: 5px 0;

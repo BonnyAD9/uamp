@@ -135,16 +135,16 @@ export default class VirtualTable {
      * @param {HTMLElement} bottomSpacer - bottom spacer row
      * @returns {{ start: number, end: number }} buffer boundaries
      */
-    #getBufferPos(songCnt, topSpacer, bottomSpacer) {
+    #getBufferPos(songCnt, topSpacer, botSpacer) {
         const viewHeight = this.container.clientHeight;
 
         const visible = Math.ceil(viewHeight / this.rowHeight) + 1;
         const scrollTop = this.container.scrollTop;
         const start = Math.max(0, Math.floor(scrollTop / this.rowHeight) - 2);
-        return this.#getEndPos(start, visible, songCnt);
+        return this.#getEndPos(start, visible, songCnt, topSpacer, botSpacer);
     }
 
-    #getCurrentPos(songs, current, topSpacer, bottomSpacer) {
+    #getCurrentPos(songs, current, topSpacer, botSpacer) {
         const viewHeight = this.container.clientHeight;
         const songCnt = songs.length;
 
@@ -153,10 +153,10 @@ export default class VirtualTable {
 
         const top = Math.ceil(currentPos - visible * 0.5);
         const start = Math.max(0, Math.min(top, songCnt - visible));
-        return this.#getEndPos(start, visible, songCnt);
+        return this.#getEndPos(start, visible, songCnt, topSpacer, botSpacer);
     }
 
-    #getEndPos(start, visible, songCnt) {
+    #getEndPos(start, visible, songCnt, topSpacer, bottomSpacer) {
         const end = Math.min(songCnt, start + visible);
 
         topSpacer.style.height = `${start * this.rowHeight}px`;
