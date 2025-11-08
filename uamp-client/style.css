@@ -391,6 +391,7 @@ table.songs td .albums-preview img {
     flex-wrap: wrap;
     gap: 5px;
     justify-content: flex-start;
+    perspective: 5000px;
 }
 
 .list .card {
@@ -401,11 +402,17 @@ table.songs td .albums-preview img {
     border-radius: 10px;
     overflow: hidden;
     cursor: pointer;
-    transition: 0.3s ease;
+    transition: 0.2s ease;
+    transform: rotate3D(0);
 }
 
 .list .card:hover {
-    background-color: var(--bg-lighter);
+    background-color: (--bg-lighter);
+    transform: scale3d(1.07, 1.07, 1.07)
+        rotate3d(var(--rot-x), var(--rot-y), 0, var(--rot-angle));
+    z-index: 20;
+    box-shadow: 0 5px 20px 5px #00000044;
+    transition: 100ms ease-out;
 }
 
 .list .card img {

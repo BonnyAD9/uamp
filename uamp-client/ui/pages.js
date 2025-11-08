@@ -217,6 +217,24 @@ function gradHoverListeners() {
     });
 }
 
+function card3DHover() {
+    const lists = document.querySelectorAll(".list");
+    lists.forEach((list) => {
+        list.addEventListener("mousemove", (e) => {
+            const target = e.target.closest(".card");
+            if (!target) return;
+
+            const rect = target.getBoundingClientRect();
+            const x = e.clientX - rect.x - rect.width / 2;
+            const y = e.clientY - rect.y - rect.height / 2;
+            const dist = -Math.log(Math.sqrt(x ** 2 + y ** 2)) * 3;
+            list.style.setProperty("--rot-x", y / 100);
+            list.style.setProperty("--rot-y", -x / 100);
+            list.style.setProperty("--rot-angle", `${dist}deg`);
+        });
+    });
+}
+
 export function spawnScreens() {
     libraryScreen();
     albumsScreen();
@@ -225,6 +243,7 @@ export function spawnScreens() {
 
     spawnTables();
     gradHoverListeners();
+    card3DHover();
 }
 
 document.querySelectorAll(".search-wrapper").forEach((wrapper) => {
