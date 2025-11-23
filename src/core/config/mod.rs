@@ -73,7 +73,7 @@ pub fn default_http_client_path() -> PathBuf {
 }
 
 pub fn default_plugin_folder() -> PathBuf {
-    "/usr/share/uamp/plugins".into()
+    "/usr/lib/uamp/plugins".into()
 }
 
 /// Gets the default path to json configuration, it is different when debugging
