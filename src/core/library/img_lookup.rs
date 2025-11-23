@@ -5,11 +5,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use audiotags::Tag;
 use futures::executor::block_on;
 use image::{DynamicImage, ImageReader};
 use itertools::{Either, Itertools};
 use log::warn;
+use ratag::tag;
 use tokio::task::JoinHandle;
 use unidecode::unidecode;
 
@@ -193,11 +193,8 @@ impl ImageLookup<'_> {
             }
             Ok(None) => {}
             Err(e)
-                if matches!(e.kind(), ErrKind::AudioTag(e)
-                if matches!(
-                    e,
-                    audiotags::Error::UnsupportedFormat(_)
-                )) => {}
+                if matches!(e.kind(), ErrKind::Ratag(ratag::Error::NoTag)) => {
+            }
             Err(e) => return Err(e),
         }
 
@@ -251,12 +248,12 @@ impl ImageLookup<'_> {
         path: &Path,
         cache_to: &Path,
     ) -> Result<Option<DynamicImage>> {
-        let tag = Tag::new().read_from_path(path)?;
-        let Some(img) = tag.album_cover() else {
+        let tag = tag::Picture::read_cover(path)?;
+        let Some(img) = tag.picture() else {
             return Ok(None);
         };
 
-        let img = ImageReader::new(Cursor::new(img.data))
+        let img = ImageReader::new(Cursor::new(&img.data))
             .with_guessed_format()?
             .decode()?;
         Ok(Some(self.write_image_to(img, cache_to)?))

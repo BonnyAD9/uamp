@@ -50,7 +50,7 @@ pub enum ErrKind {
     Pareg(#[from] pareg::ArgError),
     /// the audiotags library error.
     #[error(transparent)]
-    AudioTag(#[from] audiotags::Error),
+    Ratag(#[from] ratag::Error),
     /// The raplay library returned error.
     #[error(transparent)]
     Raplay(#[from] raplay::Error),

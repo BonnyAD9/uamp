@@ -5,9 +5,9 @@ use std::{
     time::Duration,
 };
 
-use audiotags::Tag;
 use log::warn;
 use raplay::source::{Source, Symph};
+use ratag::tag;
 use serde::{Deserialize, Serialize};
 
 use crate::core::{
@@ -49,31 +49,15 @@ pub struct Song {
 impl Song {
     /// Creates song from the given path
     pub fn from_path(path: impl AsRef<Path>) -> Result<Self> {
-        let tag = match Tag::new().read_from_path(&path) {
+        let tag = match tag::Basic::from_file(&path) {
             Ok(tag) => tag,
-            Err(audiotags::Error::UnsupportedFormat(_)) => {
-                Box::new(audiotags::FlacTag::new())
-            }
-            Err(audiotags::Error::IOError(e)) => {
-                return Error::io(e)
-                    .msg(format!(
-                        "Failed to read metadata from file `{}`.",
-                        path.as_ref().to_string_lossy()
-                    ))
-                    .err();
-            }
-            Err(e) => {
-                if e.to_string().starts_with("NoTag") {
-                    Box::new(audiotags::FlacTag::new())
-                } else {
-                    Err(e)?
-                }
-            }
+            Err(ratag::Error::NoTag) => Box::new(tag::Basic::default()),
+            Err(e) => return Err(e.into()),
         };
 
         let mut s = Song {
             path: path.as_ref().to_path_buf(),
-            title: tag.title().map_or_else(
+            title: tag.title.map_or_else(
                 || {
                     path.as_ref().file_name().map_or_else(
                         || "--".to_owned(),
@@ -82,18 +66,23 @@ impl Song {
                 },
                 |t| t.to_owned(),
             ),
-            artist: tag.artist().unwrap_or("-").to_owned(),
-            album: tag.album_title().unwrap_or("-").to_owned(),
-            track: tag.track().0.unwrap_or_default() as u32,
-            disc: tag.disc().0.unwrap_or_default() as u32,
-            year: tag.year().unwrap_or(i32::MAX),
-            length: tag
-                .duration()
-                .map(Duration::from_secs_f64)
-                .unwrap_or(Duration::ZERO),
-            genre: tag.genre().unwrap_or("-").to_owned(),
+            artist: tag.artists.join(", "),
+            album: tag.album.unwrap_or_else(|| "-".to_owned()),
+            track: tag.track.unwrap_or_default(),
+            disc: tag.disc.unwrap_or_default(),
+            year: tag.year.unwrap_or(i32::MAX),
+            length: tag.length.unwrap_or(Duration::ZERO),
+            genre: tag.genres.join(", "),
             deleted: false,
         };
+
+        if s.artist.is_empty() {
+            s.artist = "-".to_owned();
+        }
+
+        if s.genre.is_empty() {
+            s.genre = "-".to_owned();
+        }
 
         let res = || -> Result<Duration> {
             let f = File::open(&path)?;
@@ -136,8 +125,8 @@ impl Song {
             title: "<ghost>".to_owned(),
             artist: "<ghost>".to_owned(),
             album: "<ghost>".to_owned(),
-            track: u32::MAX,
-            disc: u32::MAX,
+            track: 0,
+            disc: 0,
             year: i32::MAX,
             length: Duration::ZERO,
             genre: "<ghost>".to_owned(),

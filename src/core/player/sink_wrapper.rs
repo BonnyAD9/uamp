@@ -6,10 +6,12 @@ use raplay::{
     reexp::BuildStreamError,
     source::{Source, Symph, symph},
 };
+use ratag::{TagType, tag};
 
 use crate::core::{
     Error, Result,
     library::{Library, LibraryUpdate, SongId},
+    log_err,
     plugin::DecoderPlugin,
 };
 
@@ -227,19 +229,42 @@ impl SinkWrapper {
     }
 
     fn choose_decoder(&self, p: impl AsRef<Path>) -> Result<Box<dyn Source>> {
-        let file = File::open(p.as_ref())?;
-        let err = match Symph::try_new(file.try_clone()?, &self.symph) {
-            Ok(s) => return Ok(Box::new(s)),
-            Err(e) => e,
-        };
+        let mut probe = tag::Probe::top_level();
+        log_err(
+            "Failed to probe audio file.",
+            ratag::read_tag_from_file(&p, &mut probe, &ratag::trap::Skip),
+        );
+        let skip_symph = probe.tags.iter().all(symphonia_unsupported);
 
-        let mut errs = vec![err.into()];
+        let mut errs = vec![];
+
+        // We are almost sure that symphonia doesn't support this and will just
+        // endlessly probe for mp3 sync.
+        if !skip_symph {
+            let file = File::open(p.as_ref())?;
+            let err = match Symph::try_new(file.try_clone()?, &self.symph) {
+                Ok(s) => return Ok(Box::new(s)),
+                Err(e) => e,
+            };
+            errs.push(err.into());
+        }
 
         for d in &self.decoder_plugins {
             match d.open(p.as_ref()) {
                 Ok(d) => return Ok(d),
                 Err(e) => errs.push(e),
             }
+        }
+
+        // Seems like no other decoder supports this. Actually try symphonia
+        // even if it seems unlikely to work.
+        if skip_symph {
+            let file = File::open(p.as_ref())?;
+            let err = match Symph::try_new(file.try_clone()?, &self.symph) {
+                Ok(s) => return Ok(Box::new(s)),
+                Err(e) => e,
+            };
+            errs.push(err.into());
         }
 
         Error::multiple(errs)?;
@@ -272,4 +297,8 @@ impl Debug for SinkWrapper {
             .field("symph", &())
             .finish()
     }
+}
+
+fn symphonia_unsupported(typ: &TagType) -> bool {
+    *typ == TagType::Asf
 }

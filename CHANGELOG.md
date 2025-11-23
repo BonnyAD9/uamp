@@ -3,6 +3,9 @@
 ## futures
 ### Changes
 - Refactor code for handling errors.
+- Start using ratag as tag reader.
+- The default encoder will now be tried as last if the file format is
+  recognized to not be supported.
 
 ## v0.6.5
 ### GUI

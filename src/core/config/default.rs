@@ -39,11 +39,15 @@ pub fn cache_path() -> PathBuf {
 }
 
 pub fn audio_extensions() -> Vec<String> {
+    // Ordered by propability for faster library loads.
     vec![
-        "flac".to_owned(),
         "mp3".to_owned(),
+        "flac".to_owned(),
         "m4a".to_owned(),
-        "mp4".to_owned(),
+        "wav".to_owned(),
+        "wma".to_owned(),
+        "mpga".to_owned(),
+        "bit".to_owned(),
     ]
 }
 

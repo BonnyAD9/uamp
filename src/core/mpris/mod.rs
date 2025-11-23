@@ -117,6 +117,9 @@ impl RootInterface for Mpris {
             "audio/wav".to_string(),
             "audio/vnd.wav".to_string(),
             "audio/x-wav".to_string(),
+            // wma
+            "audio/x-ms-asf".to_string(),
+            "application/vnd.ms-asf".to_string(),
         ])
     }
 }
