@@ -193,9 +193,9 @@ impl<'a> Lexer<'a> {
         loop {
             // Find the end of string
             let Some(i) = self.find_char('/') else {
-                return ArgError::parse_msg(
+                return ArgError::failed_to_parse(
                     "Expected ending `/`.",
-                    self.original.to_string(),
+                    self.original,
                 )
                 .spanned(self.remaining_span())
                 .err();
@@ -233,22 +233,24 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        let span_adj = |p: usize| {
+        /*let span_adj = |p: usize| {
             self.last_span.start
                 + err_idxs
                     .iter()
                     .position(|n| *n >= p)
                     .unwrap_or(err_idxs.len())
-        };
+        };*/
 
         Ok(Some(Token::Filter(self.buf.parse().map_err(
             |e: ArgError| {
-                e.map_ctx(|mut c| {
+                /* e.map_ctx(|mut c| {
                     c.error_span.start += span_adj(c.error_span.start);
                     c.error_span.end += span_adj(c.error_span.end);
                     c.args[c.error_idx] = self.original.to_string();
                     c
-                })
+                })*/
+                // TODO: update with new version of pareg
+                e
             },
         )?)))
     }

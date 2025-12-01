@@ -267,18 +267,18 @@ impl<'a> Parser<'a> {
     }
 
     fn err_unexpected_token(&self) -> ArgError {
-        ArgError::parse_msg(
+        ArgError::failed_to_parse(
             format!(
                 "Unexpected token `{}`",
                 &self.lex.original()[self.lex.last_span()]
             ),
-            self.lex.original().to_string(),
+            self.lex.original(),
         )
         .spanned(self.lex.last_span())
     }
 
     fn err_unused_input(&self) -> ArgError {
-        ArgError::parse_msg("Unused input.", self.lex.original().to_string())
+        ArgError::failed_to_parse("Unused input.", self.lex.original())
             .hint("This input is unused and can be removed.")
             .spanned(self.lex.last_rem_span())
     }

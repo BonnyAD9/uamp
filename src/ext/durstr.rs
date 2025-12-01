@@ -58,12 +58,9 @@ pub fn str_to_duration(s: &str) -> Result<Duration> {
     const DAY: u64 = 24 * HOUR;
 
     if s.is_empty() {
-        return ArgError::parse_msg(
-            "Empty duration is invalid.",
-            s.to_string(),
-        )
-        .hint("Use `0` for zero length duration.")
-        .err();
+        return ArgError::failed_to_parse("Empty duration is invalid.", s)
+            .hint("Use `0` for zero length duration.")
+            .err();
     }
 
     let r = s.split('d').collect_vec();
@@ -72,9 +69,9 @@ pub fn str_to_duration(s: &str) -> Result<Duration> {
         2 => (r[0], r[1]),
         _ => {
             let pos = r[0].len() + r[1].len() + 1;
-            return ArgError::parse_msg(
+            return ArgError::failed_to_parse(
                 "Too many day specifiers in duration.",
-                s.to_string(),
+                s,
             )
             .inline_msg("Second day specifier here.")
             .spanned(pos..pos + 1)
@@ -89,19 +86,16 @@ pub fn str_to_duration(s: &str) -> Result<Duration> {
         3 => (r[0], r[1], r[2]),
         _ => {
             let pos = r[0].len() + r[1].len() + r[2].len() + 2;
-            return ArgError::parse_msg(
-                "Too many `:` in duration.",
-                s.to_string(),
-            )
-            .inline_msg("Third `:` here.")
-            .spanned(pos..pos + 1)
-            .err();
+            return ArgError::failed_to_parse("Too many `:` in duration.", s)
+                .inline_msg("Third `:` here.")
+                .spanned(pos..pos + 1)
+                .err();
         }
     };
 
     let parse = |v: &str, t: &str| {
         u64::from_arg(v).map_err(|e| {
-            e.part_of(s.to_string()).main_msg(format!(
+            e.part_of(s.to_string()).long_msg(format!(
                 "Failed to parse {t} in duration from value `{v}`."
             ))
         })
@@ -115,7 +109,7 @@ pub fn str_to_duration(s: &str) -> Result<Duration> {
         (0, _) => ("", ""),
         _ => {
             let pos = r[0].len() + r[1].len() + 1;
-            return ArgError::parse_msg(
+            return ArgError::failed_to_parse(
                 "Too many `.` in duration.",
                 s.to_string(),
             )

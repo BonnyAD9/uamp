@@ -12,12 +12,12 @@ impl FromStr for PlaylistRange {
         if let Some((s, e)) = s.split_once("..") {
             let a = s
                 .arg_into::<Option<isize>>()
-                .map_err(|e| e.shift_span(0, s.into()))?
+                .map_err(|e| e.shift_span(0, s))?
                 .unwrap_or_default()
                 .unsigned_abs();
             let b = e
                 .arg_into::<Option<usize>>()
-                .map_err(|e| e.shift_span(s.len() + 2, s.into()))?
+                .map_err(|e| e.shift_span(s.len() + 2, s))?
                 .unwrap_or_default();
             Ok(Self(a, b))
         } else {

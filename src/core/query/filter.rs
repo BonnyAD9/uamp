@@ -199,18 +199,18 @@ impl FromStr for Filter {
                 | "p" | "art" | "artist" | "performer" | "auth" | "author"
                 | "a" | "alb" | "album" | "t" | "trk" | "track"
                 | "track-number" | "d" | "disc" | "y" | "year" | "g"
-                | "genre" => ArgError::parse_msg(
+                | "genre" => ArgError::failed_to_parse(
                     "Missing argument for filter.",
-                    s.to_string(),
+                    s,
                 )
                 .spanned(s.len()..s.len())
                 .hint(
                     "Use `=`, `+`, `:` or `~` and add argument to the filter.",
                 )
                 .err(),
-                v => ArgError::parse_msg(
+                v => ArgError::failed_to_parse(
                     format!("Unknown filter type `{v}`."),
-                    s.to_string(),
+                    s,
                 )
                 .err(),
             };
@@ -256,9 +256,9 @@ impl FromStr for Filter {
             "g" | "genre" => {
                 Ok(Self::new(FilterType::Genre(val.to_owned()), cmp))
             }
-            v => ArgError::parse_msg(
+            v => ArgError::failed_to_parse(
                 format!("Unknown filter type `{v}`."),
-                s.to_string(),
+                s,
             )
             .spanned(0..p)
             .err(),

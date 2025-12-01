@@ -136,7 +136,7 @@ impl FromStr for SongOrder {
             match c {
                 '<' | '>' | '/' | '\\' | '~' => {
                     if reverse.is_some() {
-                        return ArgError::parse_msg("Reverse is already set.", s.to_string())
+                        return ArgError::failed_to_parse("Reverse is already set.", s)
                                 .hint("Only one of `<`, `>`, `/`, `\\` or `~` may be specified.")
                                 .spanned(i..i + 1)
                                 .err();
@@ -145,9 +145,9 @@ impl FromStr for SongOrder {
                 }
                 '+' | '-' => {
                     if simple.is_some() {
-                        return ArgError::parse_msg(
+                        return ArgError::failed_to_parse(
                             "Sort type is already set.",
-                            s.to_string(),
+                            s,
                         )
                         .hint("Only one of `+` and `-` are mutualy exclusive.")
                         .spanned(i..i + 1)

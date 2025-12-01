@@ -62,9 +62,9 @@ fn read_arg(s: &mut &str) -> Result<String> {
                     if chrs.as_str().is_empty() {
                         break;
                     }
-                    return ArgError::parse_msg(
+                    return ArgError::failed_to_parse(
                         format!("Additional data after `{c}`"),
-                        s.to_string(),
+                        *s,
                     )
                     .spanned(i + 1..s.len())
                     .err();

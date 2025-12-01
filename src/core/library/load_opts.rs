@@ -52,9 +52,9 @@ impl FromStr for LoadOpts {
 
         let set_rm = |res: &mut LoadOpts, v: bool, i: usize| {
             if res.remove_missing.is_some() {
-                ArgError::parse_msg(
+                ArgError::failed_to_parse(
                     "Remove missing is set more than once.",
-                    s.to_string(),
+                    s,
                 )
                 .hint("`r` and `l` are mutualy exclusive.")
                 .spanned(i..i + 1)
@@ -67,9 +67,9 @@ impl FromStr for LoadOpts {
 
         let set_atp = |res: &mut LoadOpts, v: AddPolicy, i: usize| {
             if res.add_to_playlist.is_some() {
-                ArgError::parse_msg(
+                ArgError::failed_to_parse(
                     "Add policy is set more than once.",
-                    s.to_string(),
+                    s,
                 )
                 .hint("`-`, `e`, `n` and `m` are mutualy exclusive.")
                 .spanned(i..i + 1)
@@ -89,9 +89,9 @@ impl FromStr for LoadOpts {
                 'n' => set_atp(&mut res, AddPolicy::Next, i)?,
                 'm' => set_atp(&mut res, AddPolicy::MixIn, i)?,
                 c => {
-                    return ArgError::parse_msg(
+                    return ArgError::failed_to_parse(
                         format!("Invalid option for loading songs: `{c}`"),
-                        s.to_string(),
+                        s,
                     )
                     .hint("Valid options are `r`, `l`, `-`, `e`, `n` and `m`")
                     .spanned(i..c.len_utf8())

@@ -7,7 +7,7 @@ use std::{
 
 use log::info;
 use pareg::{
-    ArgErrCtx, ArgError, FromArg, FromArgStr, has_any_key, mval_arg, val_arg,
+    ArgErrKind, ArgError, FromArg, FromArgStr, has_any_key, mval_arg, val_arg,
 };
 use serde::{Deserialize, Serialize};
 
@@ -328,13 +328,10 @@ impl FromStr for ControlMsg {
             v if has_any_key!(v, '=', "volume", "vol", "v") => {
                 let vol = val_arg(v, '=')?;
                 if !(0.0..=1.).contains(&vol) {
-                    return ArgError::parse_msg(
-                        "Invalid volume.",
-                        v.to_string(),
-                    )
-                    .inline_msg("Value must be in range from 0 to 1.")
-                    .spanned(v.find('=').unwrap_or_default()..v.len())
-                    .err();
+                    return ArgError::failed_to_parse("Invalid volume.", v)
+                        .inline_msg("Value must be in range from 0 to 1.")
+                        .spanned(v.find('=').unwrap_or_default()..v.len())
+                        .err();
                 }
                 Ok(ControlMsg::SetVolume(vol))
             }
@@ -383,10 +380,11 @@ impl FromStr for ControlMsg {
                 ))
             }
             "save" => Ok(ControlMsg::Save),
-            v => ArgError::UnknownArgument(Box::new(ArgErrCtx::from_msg(
+            v => ArgError::from_msg(
+                ArgErrKind::UnknownArgument,
                 "Unknown control message.",
-                v.to_string(),
-            )))
+                v,
+            )
             .err(),
         }
     }

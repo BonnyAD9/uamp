@@ -1,7 +1,7 @@
 use std::{borrow::Cow, fmt::Display, str::FromStr};
 
 use itertools::Itertools;
-use pareg::{ArgErrCtx, ArgError};
+use pareg::ArgError;
 use serde::{Deserialize, Serialize};
 
 use crate::core::{AnyControlMsg, Error, Msg, Result};
@@ -123,7 +123,7 @@ impl FromStr for ControlFunction {
         let Some((i, _)) =
             s.char_indices().find(|(_, c)| matches!(c, ']' | '}'))
         else {
-            return ArgError::parse_msg("Missing closing `}`", s0.to_string())
+            return ArgError::failed_to_parse("Missing closing `}`", s0)
                 .spanned(s0.len() - s.len()..s0.len())
                 .err()?;
         };
@@ -133,7 +133,7 @@ impl FromStr for ControlFunction {
 
         s = &s[i + 1..];
         let Some(s) = s.strip_prefix(':') else {
-            return ArgError::parse_msg("Expected `:`", s0.to_string())
+            return ArgError::failed_to_parse("Expected `:`", s0)
                 .spanned(s0.len() - s.len()..s0.len() - s.len())
                 .err()?;
         };
@@ -165,9 +165,9 @@ impl FromStr for ControlFunction {
                     let Some((i, _)) =
                         s.char_indices().find(|(_, c)| *c == '}')
                     else {
-                        return ArgError::parse_msg(
+                        return ArgError::failed_to_parse(
                             "Missing closing `}`",
-                            s0.to_string(),
+                            s0,
                         )
                         .spanned(s0.len() - s.len()..s0.len())
                         .err()?;
@@ -176,16 +176,14 @@ impl FromStr for ControlFunction {
                     let v = &s[..i];
                     s = &s[i + 1..];
                     let Some(p) = args.iter().position(|a| a == v) else {
-                        return Err(ArgError::FailedToParse(Box::new(
-                            ArgErrCtx::from_msg(
-                                "Unknown variable name",
-                                s.to_string(),
-                            )
-                            .spanned(
-                                s0.len() - v.len() - s.len()
-                                    ..s0.len() - s.len(),
-                            ),
-                        )))?;
+                        return Err(ArgError::failed_to_parse(
+                            "Unknown variable name",
+                            s,
+                        )
+                        .spanned(
+                            s0.len() - v.len() - s.len()..s0.len() - s.len(),
+                        )
+                        .into());
                     };
 
                     comps.push(FunctionComponenet::Variable(p));

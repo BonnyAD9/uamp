@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use pareg::{ArgErrCtx, ArgError, ArgInto, FromArg};
+use pareg::{ArgError, ArgInto, FromArg};
 use serde::{Deserialize, Serialize};
 
 use crate::core::{
@@ -56,13 +56,9 @@ impl<'a> FromArg<'a> for Base {
             "all" | "_" => Ok(Self::All),
             "none" => Ok(Self::None),
             _ => arg.arg_into().map(Self::Playlist).map_err(|_| {
-                ArgError::InvalidValue(
-                    ArgErrCtx::from_msg("Invalid query base.", arg.into())
-                        .hint(
-                            "Expected `lib`, `tmp`, `all`, `none` or playlist \
+                ArgError::invalid_value("Invalid query base.", arg).hint(
+                    "Expected `lib`, `tmp`, `all`, `none` or playlist \
                         index.",
-                        )
-                        .into(),
                 )
             }),
         }

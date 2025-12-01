@@ -7,7 +7,7 @@ use std::{
 
 use itertools::Itertools;
 use pareg::{
-    ArgErrCtx, ArgError, FromArgStr, has_any_key, mval_arg, split_arg,
+    ArgErrKind, ArgError, FromArgStr, has_any_key, mval_arg, split_arg,
     starts_any, val_arg,
 };
 use serde::{Deserialize, Serialize};
@@ -214,10 +214,11 @@ impl FromStr for DataControlMsg {
                         .try_collect()?,
                 ))
             }
-            v => ArgError::UnknownArgument(Box::new(ArgErrCtx::from_msg(
+            v => ArgError::from_msg(
+                ArgErrKind::UnknownArgument,
                 "Unknown control msg.",
                 v.to_string(),
-            )))
+            )
             .err(),
         }
     }

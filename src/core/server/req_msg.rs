@@ -22,8 +22,7 @@ impl ReqMsg {
             "query" | "list" | "l" => Ok(ReqMsg::Query(
                 parse_arg::<Option<_>>(v)?.unwrap_or_default(),
             )),
-            _ => ArgError::parse_msg("Invalid request type.", k.to_string())
-                .err(),
+            _ => ArgError::failed_to_parse("Invalid request type.", k).err(),
         }
     }
 }

@@ -43,9 +43,9 @@ impl FromStr for AddPolicy {
             "e" | "end" => Ok(Self::End),
             "n" | "next" => Ok(Self::Next),
             "m" | "mix" | "mix-in" => Ok(Self::MixIn),
-            c => ArgError::parse_msg(
+            c => ArgError::failed_to_parse(
                 format!("Unknown add policy `{c}`"),
-                s.to_string(),
+                s,
             )
             .hint("Valid options are: `-`, `e`, `n` or `m`.")
             .err(),

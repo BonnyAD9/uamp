@@ -1,4 +1,4 @@
-use pareg::{ArgErrCtx, ArgError, FromArg, starts_any, val_arg};
+use pareg::{ArgError, FromArg, starts_any, val_arg};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -19,12 +19,9 @@ impl<'a> FromArg<'a> for UpdateMode {
             v if starts_any!(v, "branch=", "Branch=") => {
                 Ok(Self::Branch(val_arg(arg, '=')?))
             }
-            _ => ArgError::InvalidValue(
-                ArgErrCtx::from_msg("Invalid update mode.", arg.to_string())
-                    .into(),
-            )
-            .hint("Valid options are: `tag`, `commit`, `branch=<branch>`.")
-            .err(),
+            _ => ArgError::invalid_value("Invalid update mode.", arg)
+                .hint("Valid options are: `tag`, `commit`, `branch=<branch>`.")
+                .err(),
         }
     }
 }

@@ -1,6 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
-use pareg::{ArgError, FromArgStr};
+use pareg::{ArgErrKind, ArgError, FromArgStr};
 use serde::{Deserialize, Serialize};
 
 use super::{ControlMsg, DataControlMsg};
@@ -24,8 +24,10 @@ impl FromStr for AnyControlMsg {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match ControlMsg::from_str(s) {
             Ok(r) => Ok(AnyControlMsg::Control(r)),
-            Err(ArgError::UnknownArgument(_)) => DataControlMsg::from_str(s)
-                .map(|a| AnyControlMsg::Data(Box::new(a))),
+            Err(e) if matches!(e.kind(), ArgErrKind::UnknownArgument) => {
+                DataControlMsg::from_str(s)
+                    .map(|a| AnyControlMsg::Data(Box::new(a)))
+            }
             Err(e) => Err(e),
         }
     }
