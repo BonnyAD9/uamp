@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## futures
+## v0.6.6
 ### Changes
 - Refactor code for handling errors.
 - Start using ratag as tag reader.
