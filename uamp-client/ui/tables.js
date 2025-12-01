@@ -219,8 +219,10 @@ export function spawnTables() {
         (e) => AppSingleton.get().albumSongClick(e),
         (key) => AppSingleton.get().sortAlbumSongs(key),
     );
-    table.querySelector(".col-img").remove();
-    table.querySelector("thead tr th").remove();
+    const col = table.querySelector(".col-img");
+    col.classList.remove("col-img");
+    col.classList.add("col-empty");
+    table.querySelector("thead tr th").textContent = "";
     document
         .querySelector("#album-detail .album-detail-wrapper")
         .appendChild(table);
