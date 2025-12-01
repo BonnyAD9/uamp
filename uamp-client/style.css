@@ -203,6 +203,10 @@ table col.col-img {
     width: 40px;
 }
 
+table col.col-empty {
+    width: 0;
+}
+
 table col.col-ta {
     width: calc(40% - 20px);
 }
