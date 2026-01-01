@@ -233,24 +233,22 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        /*let span_adj = |p: usize| {
+        let span_adj = |p: usize| {
             self.last_span.start
                 + err_idxs
                     .iter()
                     .position(|n| *n >= p)
                     .unwrap_or(err_idxs.len())
-        };*/
+        };
 
         Ok(Some(Token::Filter(self.buf.parse().map_err(
             |e: ArgError| {
-                /* e.map_ctx(|mut c| {
+                e.map_ctx(|c| {
                     c.error_span.start += span_adj(c.error_span.start);
                     c.error_span.end += span_adj(c.error_span.end);
                     c.args[c.error_idx] = self.original.to_string();
-                    c
-                })*/
+                })
                 // TODO: update with new version of pareg
-                e
             },
         )?)))
     }

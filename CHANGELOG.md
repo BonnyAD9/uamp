@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## future
+### Fixes
+- Fix error message location in query.
+
 ## v0.6.6
 ### Changes
 - Refactor code for handling errors.
