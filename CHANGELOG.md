@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.6.7
 ### Fixes
 - Fix error message location in query.
 
