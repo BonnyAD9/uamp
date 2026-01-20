@@ -1,4 +1,5 @@
 # TODO
+- Option to remove songs from library.
 - Song tags (categories)
 - Custom format for listing songs.
 - TUI
