@@ -37,6 +37,8 @@ pub struct Args {
 
     /// Shared properties.
     pub props: Props,
+
+    pub config: Option<String>,
 }
 
 impl Args {
@@ -60,8 +62,12 @@ impl Args {
     /// # Returns
     /// New configuration readed from the default file and modified by the
     /// values in the arguments.
-    pub fn make_config(&self) -> Config {
-        let mut res = Config::from_default_json();
+    pub fn make_config(&self) -> Result<Config> {
+        let mut res = if let Some(p) = &self.config {
+            Config::from_json(p)?
+        } else {
+            Config::from_default_json()
+        };
 
         let mut no_save = false;
 
@@ -78,7 +84,7 @@ impl Args {
             res.config_path = None;
         }
 
-        res
+        Ok(res)
     }
 }
 
@@ -136,6 +142,7 @@ impl Args {
                     self.props.print_style = args.next_arg()?;
                 }
                 "-v" | "--verbose" => self.props.verbosity = 1,
+                "--config" => self.config = Some(args.next_arg()?),
                 "--" => {}
                 a => {
                     if let Some(i) = a.strip_prefix("-I") {

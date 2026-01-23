@@ -20,7 +20,7 @@ impl Config {
     /// Loads config from the default json file. If the loading fails, creates
     /// default config.
     pub fn from_default_json() -> Self {
-        match Config::from_json(default_config_dir().join("config.json")) {
+        match Config::new_from_json(default_config_dir().join("config.json")) {
             Ok(c) => c,
             Err(e) => {
                 error!("Failed to load config: {e:-}");
@@ -34,7 +34,7 @@ impl Config {
     ///
     /// # Errors
     /// - The config fails to parse.
-    pub fn from_json(path: impl AsRef<Path>) -> Result<Self> {
+    pub fn new_from_json(path: impl AsRef<Path>) -> Result<Self> {
         let file = match File::open(path.as_ref()) {
             Ok(f) => f,
             Err(_) => {
@@ -47,6 +47,15 @@ impl Config {
             }
         };
 
+        let mut conf: Self = serde_json::from_reader(file).map_err(|e| {
+            Error::new(e).msg("Failed to load config from json.")
+        })?;
+        conf.config_path = Some(path.as_ref().to_owned());
+        Ok(conf)
+    }
+
+    pub fn from_json(path: impl AsRef<Path>) -> Result<Self> {
+        let file = File::open(path.as_ref())?;
         let mut conf: Self = serde_json::from_reader(file).map_err(|e| {
             Error::new(e).msg("Failed to load config from json.")
         })?;

@@ -97,7 +97,7 @@ impl UampApp {
                             .warn()
                     })?;
 
-                let conf = Config::from_json(path)
+                let conf = Config::new_from_json(path)
                     .map_err(|e| e.prepend("Failed to reload config."))?;
 
                 let change = self.config.set_new(conf);

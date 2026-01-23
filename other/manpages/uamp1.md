@@ -214,6 +214,11 @@ These are the core options:
   specific verbosity, it will be set to `1`. The verbosity may also be set to
   any positive or negative integer (in the range of 32 bit signed integer).
 
+`--config` *config-path*
+  Set custom path to config file. Note that this configuration will not apply
+  when starting detached uamp. Detached uamp will always load the default
+  config file.
+
 ### Action `help`
 
 `help` [*help-section*] ... [`--`]

@@ -50,7 +50,7 @@ fn start() -> Result<()> {
 
     let args = Args::parse(Pareg::args())?;
 
-    let conf = args.make_config();
+    let conf = args.make_config()?;
 
     for a in args.actions {
         match a {

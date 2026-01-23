@@ -258,6 +258,9 @@ fn print_basic_help(color: bool) {
     Set the verbosity. The default verbosity is 0. If this argument is present
     without specific verbosity the verbosity is set to 1. You may also specify
     any other (positive or negative) verbosity.
+    
+  {'y}--config {'w}<path>{'_}
+    Specify custom path to config file.
 
 {'g}Actions:{'_}
   {'b}i  instance {'gr}[instance arguments] [--]{'_}
