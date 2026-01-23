@@ -215,9 +215,7 @@ These are the core options:
   any positive or negative integer (in the range of 32 bit signed integer).
 
 `--config` *config-path*
-  Set custom path to config file. Note that this configuration will not apply
-  when starting detached uamp. Detached uamp will always load the default
-  config file.
+  Set custom path to config file.
 
 ### Action `help`
 
@@ -406,6 +404,9 @@ Run action accepts the following options:
   Set run mode to `WebClient`: start detached uamp server if not already
   running and than open the web client. Shouldn't block - this is behaviour is
   dependant on the environment, but in most environments it won't.
+
+`--config` *config-path*
+  Set custom path to config file.
 
 ### Action `config`
 

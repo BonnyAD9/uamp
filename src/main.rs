@@ -61,6 +61,7 @@ fn start() -> Result<()> {
                     .server_address
                     .take()
                     .or_else(|| args.server_address.to_owned());
+                i.config = i.config.or_else(|| args.config.clone());
                 i.run_detached(&conf)?;
             }
             Action::Config(c) => c.act(&conf, &args.props)?,

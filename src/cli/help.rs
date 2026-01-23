@@ -435,6 +435,9 @@ fn print_run_help(color: bool) {
   {'y}-w  --web{'_}
     Set run mode to WebClient: start detached uamp server if not already
     running and than open the web client. In most environments won't block.
+    
+  {'y}--config{'_}
+    Set custom config path.
 
 {'g}Run messages:{'_}
   Any {'g}control message{'_}. See `{'c}uamp {'b}h {'g}cmsg{'_}` for more info.

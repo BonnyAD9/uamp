@@ -368,6 +368,7 @@ const BASIC_ARG: &[&[&str]] = &[
     &["-C"],
     &["-H"],
     &["-v", "--verbose"],
+    &["--config"],
 ];
 
 const INSTANCE_ARG: &[&[&str]] = &[
@@ -411,6 +412,7 @@ const RUN_ARG: &[&[&str]] = &[
     &["-a", "--address"],
     &["-b", "--background"],
     &["-w", "--web"],
+    &["--config"],
     // ANY_CONTROL_MSG
 ];
 

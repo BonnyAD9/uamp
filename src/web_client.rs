@@ -1,4 +1,5 @@
 use std::{
+    path::Path,
     process::{Command, Stdio},
     thread,
     time::Duration,
@@ -11,7 +12,11 @@ use crate::{
     },
 };
 
-pub fn run_web_client(conf: &Config, init: Vec<AnyControlMsg>) -> Result<()> {
+pub fn run_web_client(
+    conf: &Config,
+    conf_path: Option<impl AsRef<Path>>,
+    init: Vec<AnyControlMsg>,
+) -> Result<()> {
     let address = format!("{}:{}", conf.server_address(), conf.port());
     let is_running = {
         let rt = tokio::runtime::Builder::new_current_thread()
@@ -34,7 +39,7 @@ pub fn run_web_client(conf: &Config, init: Vec<AnyControlMsg>) -> Result<()> {
         } else {
             (None, None)
         };
-        run_detached(&init, adr, port)?;
+        run_detached(&init, conf_path, adr, port)?;
 
         eprintln!("Waiting 1s for the server to startup.");
         thread::sleep(Duration::from_secs(1));

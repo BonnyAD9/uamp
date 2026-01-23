@@ -1,5 +1,6 @@
 use std::{
     env,
+    path::Path,
     process::{Child, Command, Stdio},
 };
 
@@ -39,6 +40,8 @@ pub struct Run {
     pub init: Vec<AnyControlMsg>,
 
     pub run: Option<bool>,
+
+    pub config: Option<String>,
 }
 
 impl Run {
@@ -75,6 +78,9 @@ impl Run {
                 "-w" | "--web" => {
                     self.run_type = RunType::WebClient;
                 }
+                "--config" => {
+                    self.config = Some(args.next_arg()?);
+                }
                 _ => {
                     self.init.push(args.cur_arg()?);
                     self.run = Some(true);
@@ -95,7 +101,7 @@ impl Run {
                 run_background_app(conf, self.init)?;
             }
             RunType::WebClient => {
-                run_web_client(&conf, self.init)?;
+                run_web_client(&conf, self.config, self.init)?;
             }
         }
 
@@ -112,6 +118,7 @@ impl Run {
             RunType::Background => {
                 run_detached(
                     &self.init,
+                    self.config,
                     self.server_address.as_deref(),
                     self.port,
                 )?;
@@ -120,7 +127,7 @@ impl Run {
                 // TODO: avoid cloning
                 let mut conf = conf.clone();
                 self.update_config(&mut conf);
-                run_web_client(&conf, self.init)?;
+                run_web_client(&conf, self.config, self.init)?;
             }
         }
 
@@ -130,6 +137,7 @@ impl Run {
 
 pub fn run_detached(
     init: &[AnyControlMsg],
+    config: Option<impl AsRef<Path>>,
     adr: Option<&str>,
     port: Option<u16>,
 ) -> Result<Child> {
@@ -142,6 +150,10 @@ pub fn run_detached(
 
     cmd.arg("run");
 
+    if let Some(config) = config {
+        cmd.arg("--config");
+        cmd.arg(config.as_ref());
+    }
     if let Some(adr) = adr {
         cmd.args(["-a", adr]);
     }
