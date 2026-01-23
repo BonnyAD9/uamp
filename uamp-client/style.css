@@ -203,6 +203,10 @@ table col.col-img {
     width: 40px;
 }
 
+table col.col-empty {
+    width: 0;
+}
+
 table col.col-ta {
     width: calc(40% - 20px);
 }
@@ -310,14 +314,32 @@ table.songs tbody tr {
     cursor: pointer;
     transition: 0.1s ease background-color;
     height: 42px;
+    position: relative;
 }
 
 table.songs tbody tr.spacer {
     height: 0;
 }
 
-table.songs tbody tr:hover {
-    background-color: var(--bg-light-trans);
+table.songs tbody tr::before {
+    content: "";
+    background: radial-gradient(
+        100% 800px at var(--mouse-x) var(--mouse-y),
+        rgba(255, 255, 255, 0.06),
+        transparent 40%
+    );
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 100ms;
+}
+
+table.songs tbody tr:hover::before {
+    opacity: 1;
 }
 
 table.songs td {
@@ -373,6 +395,7 @@ table.songs td .albums-preview img {
     flex-wrap: wrap;
     gap: 5px;
     justify-content: flex-start;
+    perspective: 5000px;
 }
 
 .list .card {
@@ -383,11 +406,17 @@ table.songs td .albums-preview img {
     border-radius: 10px;
     overflow: hidden;
     cursor: pointer;
-    transition: 0.3s ease;
+    transition: 0.2s ease;
+    transform: rotate3D(0);
 }
 
 .list .card:hover {
-    background-color: var(--bg-lighter);
+    background-color: (--bg-lighter);
+    transform: scale3d(1.07, 1.07, 1.07)
+        rotate3d(var(--rot-x), var(--rot-y), 0, var(--rot-angle));
+    z-index: 20;
+    box-shadow: 0 5px 20px 5px #00000044;
+    transition: 100ms ease-out;
 }
 
 .list .card img {
@@ -754,6 +783,7 @@ section.bar .playlist {
     display: none;
     overflow: hidden;
     overflow-y: auto;
+    align-items: center;
     max-height: 80%;
     height: 100%;
     margin: auto 0;

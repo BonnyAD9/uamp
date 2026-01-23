@@ -70,6 +70,11 @@
             ></screen-header>
             <div class="screen-wrapper">
                 <table class="songs">
+                    <colgroup>
+                        <col style="width: 0%">
+                        <col style="width: 50%">
+                        <col style="width: 50%">
+                    </colgroup>
                     <tbody onclick="AppSingleton.get().artistClick(event)">
                     </tbody>
                 </table>
@@ -171,6 +176,7 @@
             <div class="slider-timestamp">
                 <span id="timestamp-cur">--:--</span>
                 <span id="timestamp-total">--:--</span>
+
             </div>
             <div class="slider">
                 <hr />

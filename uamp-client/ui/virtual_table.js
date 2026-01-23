@@ -10,14 +10,7 @@ export default class VirtualTable {
      * @param {boolean} isTable - normal table when true, list when false
      * @param {boolean} autoScroll - automatically scrolls to current song
      */
-    constructor(
-        getSongs,
-        container,
-        table,
-        getCurrentId,
-        isTable = true,
-        autoScroll = false,
-    ) {
+    constructor(getSongs, container, table, getCurrentId) {
         /** @type {Song[]} */
         this.getSongs = getSongs;
         /** @type {HTMLElement} */
@@ -26,11 +19,9 @@ export default class VirtualTable {
         this.tableSelector = table;
 
         /** @type {number} */
-        this.rowHeight = isTable ? 42 : 32;
+        this.rowHeight = 42;
         /** @type {(Song, number) => HTMLElement} */
-        this.getSongElement = isTable
-            ? (song, _) => song.getTableRow()
-            : (song, id) => song.getBarRow(id);
+        this.getSongElement = (song, _) => song.getTableRow();
         /** @type {() => number} */
         this.getCurrentId = getCurrentId;
 
@@ -39,10 +30,33 @@ export default class VirtualTable {
         /** @type {number} */
         this.end = 0;
 
+        this.center = false;
         this.autoScroll = false;
-        this.autoScrollEnabled = autoScroll;
+        this.autoScrollEnabled = false;
         this.ignoreScroll = false;
         this.container.addEventListener("scroll", () => this.update());
+    }
+
+    /** Sets whether VT is list or not - adjusts the row height and more */
+    list(isList = true) {
+        this.rowHeight = isList ? 32 : 42;
+        this.getSongElement = isList
+            ? (song, id) => song.getBarRow(id)
+            : (song, _) => song.getTableRow();
+        return this;
+    }
+
+    /** Sets whether to center the rows in the table when not enough to fill */
+    centering(center = true) {
+        this.center = center;
+        return this;
+    }
+
+    /** Sets whether to auto scroll to active song */
+    autoScrolling(autoScroll = true) {
+        this.autoScroll = false;
+        this.autoScrollEnabled = autoScroll;
+        return this;
     }
 
     /** Displays songs in the given containers table using virtual scrolling. */
@@ -121,20 +135,16 @@ export default class VirtualTable {
      * @param {HTMLElement} bottomSpacer - bottom spacer row
      * @returns {{ start: number, end: number }} buffer boundaries
      */
-    #getBufferPos(songCnt, topSpacer, bottomSpacer) {
+    #getBufferPos(songCnt, topSpacer, botSpacer) {
         const viewHeight = this.container.clientHeight;
 
-        const visibleCnt = Math.ceil(viewHeight / this.rowHeight) + 1;
+        const visible = Math.ceil(viewHeight / this.rowHeight) + 1;
         const scrollTop = this.container.scrollTop;
         const start = Math.max(0, Math.floor(scrollTop / this.rowHeight) - 2);
-        const end = Math.min(songCnt, start + visibleCnt);
-
-        topSpacer.style.height = `${start * this.rowHeight}px`;
-        bottomSpacer.style.height = `${(songCnt - end) * this.rowHeight}px`;
-        return { start, end };
+        return this.#getEndPos(start, visible, songCnt, topSpacer, botSpacer);
     }
 
-    #getCurrentPos(songs, current, topSpacer, bottomSpacer) {
+    #getCurrentPos(songs, current, topSpacer, botSpacer) {
         const viewHeight = this.container.clientHeight;
         const songCnt = songs.length;
 
@@ -143,6 +153,10 @@ export default class VirtualTable {
 
         const top = Math.ceil(currentPos - visible * 0.5);
         const start = Math.max(0, Math.min(top, songCnt - visible));
+        return this.#getEndPos(start, visible, songCnt, topSpacer, botSpacer);
+    }
+
+    #getEndPos(start, visible, songCnt, topSpacer, bottomSpacer) {
         const end = Math.min(songCnt, start + visible);
 
         topSpacer.style.height = `${start * this.rowHeight}px`;

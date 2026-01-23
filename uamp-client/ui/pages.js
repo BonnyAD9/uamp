@@ -200,6 +200,41 @@ function playlistScreen() {
     document.querySelector("#playlist .playlist-wrapper").appendChild(table);
 }
 
+function gradHoverListeners() {
+    const tables = document.querySelectorAll("table.songs tbody");
+    tables.forEach((table) => {
+        table.addEventListener("mousemove", (e) => {
+            const target = e.target.closest(":not(.spacer)");
+            if (!target) return;
+
+            const rect = target.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            table.style.setProperty("--mouse-x", `${x}px`);
+            table.style.setProperty("--mouse-y", `${y}px`);
+        });
+    });
+}
+
+function card3DHover() {
+    const lists = document.querySelectorAll(".list");
+    lists.forEach((list) => {
+        list.addEventListener("mousemove", (e) => {
+            const target = e.target.closest(".card");
+            if (!target) return;
+
+            const rect = target.getBoundingClientRect();
+            const x = e.clientX - rect.x - rect.width / 2;
+            const y = e.clientY - rect.y - rect.height / 2;
+            const dist = -Math.log(Math.sqrt(x ** 2 + y ** 2)) * 3;
+            list.style.setProperty("--rot-x", y / 100);
+            list.style.setProperty("--rot-y", -x / 100);
+            list.style.setProperty("--rot-angle", `${dist}deg`);
+        });
+    });
+}
+
 export function spawnScreens() {
     libraryScreen();
     albumsScreen();
@@ -207,6 +242,8 @@ export function spawnScreens() {
     playlistScreen();
 
     spawnTables();
+    gradHoverListeners();
+    card3DHover();
 }
 
 document.querySelectorAll(".search-wrapper").forEach((wrapper) => {
