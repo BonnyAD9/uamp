@@ -189,6 +189,11 @@ impl UampApp {
         }
     }
 
+    pub fn remove_songs(&mut self, s: impl IntoIterator<Item = SongId>) {
+        self.library.remove_songs(s);
+        self.client_update_set_all();
+    }
+
     pub(super) fn enable_system_player(&mut self) {
         #[cfg(unix)]
         self.start_mpris();

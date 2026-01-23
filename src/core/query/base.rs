@@ -31,13 +31,11 @@ impl Base {
             Self::All => Box::new(lib.iter().chain(lib.iter_tmp())),
             Self::None => Box::new(None.into_iter()),
             Self::Playlist(n) => {
+                let ps = player.playlist_stack();
                 if *n == 0 {
                     Box::new(player.playlist().iter().copied())
-                } else if let Some(pl) = player
-                    .playlist_stack()
-                    .get(player.playlist_stack().len() - n)
-                {
-                    Box::new(pl.iter().copied())
+                } else if ps.len() >= *n {
+                    Box::new(ps[ps.len() - n].iter().copied())
                 } else {
                     return Err(Error::invalid_operation()
                         .msg(format!("Invalid playlist index {n}.")));

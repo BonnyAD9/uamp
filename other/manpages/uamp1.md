@@ -652,6 +652,10 @@ Integrations:
   - `n` - add the new songs as next (after the current song) in the playlist.
   - `m` - mix the new songs randomly into the unplayed part of the playlist.
 
+`remove-from-library=`*query*
+  Remove songs given by query from library. The files are not deleted. The
+  songs may be readded with next library load.
+
 `shuffle`, `shuffle-playlist`
   Shuffles the current playlist.
 

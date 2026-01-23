@@ -640,6 +640,10 @@ fn print_control_messages_help(color: bool) {
       - `{'i}n{'_}` add new songs after the current song.
       - `{'i}m{'_}` randomly mix the songs in after the current song.
 
+  {'r}remove-from-library{'w}=<query>{'_}
+    Remove songs given by query from library. This doesn't delete the files.
+    The songs may be readded with next library load.
+
   {'r}shuffle-playlist  shuffle{'_}
     Shuffle the current playlist. The difference from {'r}sort{'w}=rng{'_} is
     that {'r}shuffle{'_} will respect the setting shuffle current.

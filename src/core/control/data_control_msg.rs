@@ -50,6 +50,8 @@ pub enum DataControlMsg {
     ReorderPlaylistStack(Vec<usize>),
     /// Play songs at the given paths as temporary.
     PlayTmp(Vec<PathBuf>),
+    /// Remove songs given by query from the library.
+    RemoveFromLibrary(Query),
 }
 
 impl UampApp {
@@ -150,6 +152,14 @@ impl UampApp {
                     .push_playlist(&mut self.library, ids.into(), true);
                 self.client_update_tmp_songs();
             }
+            DataControlMsg::RemoveFromLibrary(q) => {
+                let songs = q.get_ids(
+                    &self.library,
+                    self.config.simple_sorting(),
+                    &self.player,
+                )?;
+                self.remove_songs(songs);
+            }
         }
 
         Ok(vec![])
@@ -214,6 +224,9 @@ impl FromStr for DataControlMsg {
                         .try_collect()?,
                 ))
             }
+            v if starts_any!(v, "remove-from-library=") => {
+                Ok(DataControlMsg::RemoveFromLibrary(val_arg(v, '=')?))
+            }
             v => ArgError::from_msg(
                 ArgErrKind::UnknownArgument,
                 "Unknown control msg.",
@@ -250,6 +263,9 @@ impl Display for DataControlMsg {
             }
             DataControlMsg::PlayTmp(p) => {
                 write!(f, "p={}", p.iter().map(|a| a.display()).join(","))
+            }
+            DataControlMsg::RemoveFromLibrary(q) => {
+                write!(f, "remove-from-library={q}")
             }
         }
     }

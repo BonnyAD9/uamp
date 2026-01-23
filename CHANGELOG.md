@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## future
+### New features
+- Add message to remove songs from library with `remove-from-library`.
+
+### GUI
+- Add hovers.
+
+### Fixes
+- Fix panic when using query with invalid playlist index.
+
 ## v0.6.7
 ### Fixes
 - Fix error message location in query.

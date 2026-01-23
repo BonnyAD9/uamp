@@ -159,6 +159,20 @@ impl Library {
             && s.as_tmp() < self.tmp_songs().len()
     }
 
+    pub fn remove_songs(&mut self, s: impl IntoIterator<Item = SongId>) {
+        for s in s {
+            self.remove_song_inner(s);
+        }
+        self.update(LibraryUpdate::RemoveData);
+    }
+
+    fn remove_song_inner(&mut self, s: SongId) {
+        let s = &mut self[s];
+        if !s.is_deleted() {
+            s.delete();
+        }
+    }
+
     /// Gets the change value indicating whether the library was changed since
     /// the last save.
     pub(super) fn get_change(&self) -> bool {

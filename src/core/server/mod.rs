@@ -97,6 +97,9 @@ impl UampApp {
     }
 
     pub fn client_update_set_all(&mut self) {
+        if self.jobs.server.is_none() {
+            return;
+        }
         let msg = SetAll::new(self).into();
         if let Some(ref d) = self.jobs.server {
             _ = d.strong_send(SubMsg::SetAll(msg));

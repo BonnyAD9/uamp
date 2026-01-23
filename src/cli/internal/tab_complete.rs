@@ -461,6 +461,7 @@ const ANY_CONTROL_MSG: &[&[&str]] = &[
     &["vol=", "volume=", "v="],
     &["mute"],
     &["load-songs"],
+    &["remove-from-library="],
     &["shuffle-playlist", "shuffle"],
     &["exit", "close", "x"],
     &["seek=", "seek-to="],
