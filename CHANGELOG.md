@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.6.8
 ### New features
 - Add message to remove songs from library with `remove-from-library`.
 - Add option to set custom config path.
