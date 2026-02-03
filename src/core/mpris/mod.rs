@@ -437,17 +437,17 @@ fn metadata_for(
     let song = &app.library[id];
 
     data.set_url(Some(get_file_uri("", song.path())));
-    data.set_album(song.album_opt());
-    data.set_artist(song.artist_opt().map(|a| [a]));
-    data.set_content_created(song.year_str_opt());
-    data.set_genre(song.genre_opt().map(|g| [g]));
-    data.set_length(len.or(song.length_opt()).map(time_from_dur));
-    data.set_title(song.title_opt());
-    data.set_disc_number(song.disc_opt().map(|d| d as i32));
-    data.set_track_number(song.track_opt().map(|t| t as i32));
+    data.set_album(song.album());
+    data.set_artist((!song.artists().is_empty()).then(|| song.artists()));
+    data.set_content_created(song.year().map(|a| a.to_string()));
+    data.set_genre((!song.genres().is_empty()).then(|| song.genres()));
+    data.set_length(len.or(song.length()).map(time_from_dur));
+    data.set_title(song.title());
+    data.set_disc_number(song.disc().map(|d| d as i32));
+    data.set_track_number(song.track().map(|t| t as i32));
     data.set_art_url(
         song.get_cached_path(&app.config, CacheSize::Full)
-            .map(|s| get_file_uri("", s)),
+            .map(|s| get_file_uri("", s.canonicalize().unwrap_or(s))),
     );
     data.set_trackid(
         app.player
@@ -460,8 +460,8 @@ fn metadata_for(
         lookup_image_path_rt_thread(
             app.rt.andle(),
             app.config.cache_path().clone(),
-            song.artist().to_string(),
-            song.album().to_string(),
+            song.album_artist_str().to_string(),
+            song.album_str().to_string(),
             CacheSize::Full,
         )
     });

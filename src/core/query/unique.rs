@@ -36,44 +36,50 @@ impl Unique {
     pub fn filter_song(&self, data: &mut Vec<Song>) {
         match self {
             Self::Songs => unique_filter_song(data, |a| a.path().into()),
-            Self::Title => unique_filter_song(data, |a| a.title().into()),
-            Self::Artist => unique_filter_song(data, |a| a.artist().into()),
-            Self::Album => unique_filter_song(data, |a| a.album().into()),
-            Self::Track => {
-                unique_filter_song(data, |a| Cow::<u32>::Owned(a.track()))
-            }
-            Self::Disc => {
-                unique_filter_song(data, |a| Cow::<u32>::Owned(a.disc()))
-            }
-            Self::Year => {
-                unique_filter_song(data, |a| Cow::<i32>::Owned(a.year()))
-            }
-            Self::Length => unique_filter_song(data, |a| {
-                Cow::<Duration>::Owned(a.length())
+            Self::Title => unique_filter_song(data, |a| a.title_str().into()),
+            Self::Artist => unique_filter_song(data, |a| a.artists().into()),
+            Self::Album => unique_filter_song(data, |a| a.album_str().into()),
+            Self::Track => unique_filter_song(data, |a| {
+                Cow::<u32>::Owned(a.track().unwrap_or_default())
             }),
-            Self::Genre => unique_filter_song(data, |a| a.genre().into()),
+            Self::Disc => unique_filter_song(data, |a| {
+                Cow::<u32>::Owned(a.disc().unwrap_or_default())
+            }),
+            Self::Year => unique_filter_song(data, |a| {
+                Cow::<i32>::Owned(a.year().unwrap_or_default())
+            }),
+            Self::Length => unique_filter_song(data, |a| {
+                Cow::<Duration>::Owned(a.length().unwrap_or_default())
+            }),
+            Self::Genre => unique_filter_song(data, |a| a.genres().into()),
         }
     }
 
     pub fn filter_id(&self, data: &mut Vec<SongId>, lib: &Library) {
         match self {
             Self::Songs => unique_filter_id(data, Cow::<SongId>::Owned),
-            Self::Title => unique_filter_id(data, |a| lib[a].title().into()),
-            Self::Artist => unique_filter_id(data, |a| lib[a].artist().into()),
-            Self::Album => unique_filter_id(data, |a| lib[a].album().into()),
-            Self::Track => {
-                unique_filter_id(data, |a| Cow::<u32>::Owned(lib[a].track()))
+            Self::Title => {
+                unique_filter_id(data, |a| lib[a].title_str().into())
             }
-            Self::Disc => {
-                unique_filter_id(data, |a| Cow::<u32>::Owned(lib[a].disc()))
+            Self::Artist => {
+                unique_filter_id(data, |a| lib[a].artists().into())
             }
-            Self::Year => {
-                unique_filter_id(data, |a| Cow::<i32>::Owned(lib[a].year()))
+            Self::Album => {
+                unique_filter_id(data, |a| lib[a].album_str().into())
             }
-            Self::Length => unique_filter_id(data, |a| {
-                Cow::<Duration>::Owned(lib[a].length())
+            Self::Track => unique_filter_id(data, |a| {
+                Cow::<u32>::Owned(lib[a].track().unwrap_or_default())
             }),
-            Self::Genre => unique_filter_id(data, |a| lib[a].genre().into()),
+            Self::Disc => unique_filter_id(data, |a| {
+                Cow::<u32>::Owned(lib[a].disc().unwrap_or_default())
+            }),
+            Self::Year => unique_filter_id(data, |a| {
+                Cow::<i32>::Owned(lib[a].year().unwrap_or_default())
+            }),
+            Self::Length => unique_filter_id(data, |a| {
+                Cow::<Duration>::Owned(lib[a].length().unwrap_or_default())
+            }),
+            Self::Genre => unique_filter_id(data, |a| lib[a].genres().into()),
         }
     }
 }

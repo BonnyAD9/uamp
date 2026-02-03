@@ -215,14 +215,17 @@ impl SinkWrapper {
     ) -> Result<Box<dyn Source>> {
         let src = self.choose_decoder(lib[id].path())?;
 
-        const SMALL_TIME: f64 = 0.1;
-
-        if let Some(Timestamp { total, .. }) = src.get_time()
-            && (lib[id].length().as_secs_f64() - total.as_secs_f64()).abs()
-                > SMALL_TIME
-        {
-            lib[id].set_length(total);
-            lib.update(LibraryUpdate::Metadata);
+        const SMALL_TIME: Duration = Duration::from_millis(100);
+        if let Some(Timestamp { total, .. }) = src.get_time() {
+            if let Some(len) = lib[id].length() {
+                if len.abs_diff(total) > SMALL_TIME {
+                    lib[id].set_length(total);
+                    lib.update(LibraryUpdate::Metadata);
+                }
+            } else {
+                lib[id].set_length(total);
+                lib.update(LibraryUpdate::Metadata);
+            }
         }
 
         Ok(src)
