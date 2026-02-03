@@ -239,11 +239,11 @@ impl SongOrder {
 
     fn artist(&self, lib: &Library, simple: bool, songs: &mut [SongId]) {
         if self.simple.unwrap_or(simple) {
-            self.sort_key(songs, |s| lib[s].artists());
+            self.sort_key(songs, |s| lib[s].artist());
         } else {
             self.sort_key(songs, |s| {
                 (
-                    lib[s].artists(),
+                    lib[s].artist(),
                     lib[s].year(),
                     lib[s].album(),
                     lib[s].disc(),
@@ -290,6 +290,6 @@ impl SongOrder {
     }
 
     fn genre(&self, lib: &Library, songs: &mut [SongId]) {
-        self.sort_key(songs, |s| lib[s].genres());
+        self.sort_key(songs, |s| lib[s].genre());
     }
 }

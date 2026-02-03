@@ -1,6 +1,6 @@
 use std::{ops::Index, slice::SliceIndex, time::Duration};
 
-use log::info;
+use log::error;
 use rand::{rng, seq::SliceRandom};
 use serde::{Deserialize, Serialize};
 
@@ -288,8 +288,7 @@ impl Playlist {
         if let Some(cur) = self.songs.iter().position(|i| *i == cur) {
             self.current = cur;
         } else {
-            self.current = 0;
-            info!("Failed to locate current song. Playlist is empty.");
+            error!("Failed to locate current song?, this is a bug!");
         }
     }
 
@@ -301,7 +300,7 @@ impl Playlist {
         if let Some(cur) = songs.iter().position(|i| *i == cur) {
             self.current = cur + start;
         } else {
-            info!("Failed to locate current song. Playlist is empty. (h)");
+            error!("Failed to locate current song?, this is a bug! (h).");
             self.locate_current(cur);
         }
     }

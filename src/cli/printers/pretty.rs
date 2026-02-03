@@ -34,7 +34,7 @@ pub fn info(info: &Info, conf: &Config, color: bool, lmc: bool) {
 pub fn now_playing(info: &Info, conf: &Config, color: bool, lmc: bool) {
     let title = info.title();
 
-    let artist = info.artists();
+    let artist = info.artist();
     let album = info.album();
 
     let cur = info.cur_time();
@@ -123,7 +123,7 @@ pub fn playlist(info: &Info, color: bool) {
     printmcln!(
         color,
         "  {idx} {'c}{} {'_}- {'y}{}{'_}",
-        info.artists(),
+        info.artist(),
         info.title(),
     );
 
@@ -182,12 +182,12 @@ pub fn compact_song_list(songs: &[Song], color: bool, send_time: Instant) {
     );
     let mut total_dur = Duration::ZERO;
     for s in &songs[..songs.len().saturating_sub(1)] {
-        total_dur += s.length().unwrap_or_default();
+        total_dur += s.length();
         print_song(s, color);
     }
 
     if let Some(s) = songs.last() {
-        total_dur += s.length().unwrap_or_default();
+        total_dur += s.length();
         printmc!(color, "{'u uc8}");
         print_song(s, color);
     }
@@ -215,7 +215,7 @@ pub fn verbose_song_list(songs: &[Song], color: bool, send_time: Instant) {
 
     let mut total_dur = Duration::ZERO;
     for s in songs {
-        total_dur += s.length().unwrap_or_default();
+        total_dur += s.length();
         verbose_print_song(s, color);
     }
 
@@ -232,33 +232,33 @@ pub fn verbose_song_list(songs: &[Song], color: bool, send_time: Instant) {
 
 fn print_song(s: &Song, color: bool) {
     printmc!(color, "{'y}");
-    print_elipsised(s.title_str(), 30);
+    print_elipsised(s.title(), 30);
     printmc!(color, " {'c}");
-    print_elipsised(&s.artists_str(), 20);
+    print_elipsised(s.artist(), 20);
     printmc!(color, " {'m}");
-    print_elipsised(s.album_str(), 28);
+    print_elipsised(s.album(), 28);
     printmcln!(color, "{'_}");
 }
 
 fn verbose_print_song(s: &Song, color: bool) {
     printmc!(color, "{'y}");
-    print_elipsised(s.title_str(), 45);
+    print_elipsised(s.title(), 45);
     printmc!(color, " {'c}");
-    print_elipsised(s.album_str(), 35);
+    print_elipsised(s.album(), 35);
     printmc!(color, " {'m}");
     print_elipsised(&s.track_str(), 7);
     printmc!(color, " {'g}");
-    print_elipsised(&s.length_str(true), 10);
+    print_elipsised(&duration_to_string(s.length(), true), 10);
     printmcln!(color, "{'_}");
 
     printmc!(color, "{'u uc8 dy} ");
-    print_elipsised(&s.artists_str(), 44);
+    print_elipsised(s.artist(), 44);
     printmc!(color, " {'dc} ");
     print_elipsised(&s.year_str(), 34);
     printmc!(color, " {'dm} ");
     print_elipsised(&s.disc_str(), 6);
     printmc!(color, " {'dg} ");
-    print_elipsised(&s.genres_str(), 9);
+    print_elipsised(s.genre(), 9);
     printmcln!(color, "{'_}");
 }
 
@@ -291,9 +291,9 @@ fn print_playlist_song(song: &Song, idx: Option<usize>, color: bool) {
     printmcln!(
         color,
         "  {'gr}{idx} {'dc}{} {'gr}- {'dy}{} {'bl}[{}]{'_}",
-        song.artists_str(),
-        song.title_str(),
-        song.length_str(true),
+        song.artist(),
+        song.title(),
+        duration_to_string(song.length(), true),
     );
 }
 
@@ -303,15 +303,15 @@ fn vblock(n: usize) -> char {
 
 impl Info {
     fn title(&self) -> &str {
-        self.now_playing_str(Song::title_str)
+        self.now_playing_str(Song::title)
     }
 
-    fn artists(&self) -> Cow<'_, str> {
-        self.now_playing_cow(Song::artists_str)
+    fn artist(&self) -> &str {
+        self.now_playing_str(Song::artist)
     }
 
     fn album(&self) -> &str {
-        self.now_playing_str(Song::album_str)
+        self.now_playing_str(Song::album)
     }
 
     fn state_btn(&self) -> &'static str {
@@ -364,14 +364,17 @@ impl Info {
             return "<>".into();
         };
 
-        let Some(t) = s.track() else {
-            return "<>".into();
-        };
+        let track: Cow<'static, str> =
+            if s.track() == u32::MAX || s.track() == 0 {
+                return "<>".into();
+            } else {
+                s.track().to_string().into()
+            };
 
-        if let Some(d) = s.disc() {
-            format!("<{d}-{t}>").into()
+        if s.disc() == u32::MAX || s.disc() == 0 {
+            format!("<{track}>").into()
         } else {
-            format!("<{t}>").into()
+            format!("<{}-{track}>", s.disc()).into()
         }
     }
 
@@ -404,13 +407,6 @@ impl Info {
 
     fn now_playing_str(&self, f: impl Fn(&Song) -> &str) -> &str {
         self.now_playing.as_ref().map_or("--", f)
-    }
-
-    fn now_playing_cow(
-        &self,
-        f: impl Fn(&Song) -> Cow<'_, str>,
-    ) -> Cow<'_, str> {
-        self.now_playing.as_ref().map_or("--".into(), f)
     }
 
     fn playlist_top_continues(&self) -> bool {

@@ -75,8 +75,8 @@ pub fn lookup_image_data_song(
     let (path, img) = lookup_image(
         Either::Right(song.path()),
         cache,
-        song.album_artist_str(),
-        song.album_str(),
+        song.artist(),
+        song.album(),
         size,
     )?;
     if let Some(img) = img {
