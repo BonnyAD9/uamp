@@ -89,23 +89,27 @@ impl FilterType {
         cmp: CmpType,
         buf: &mut String,
     ) -> bool {
-        let mut eq = |c, s| cmp.matches(c, s, buf);
+        macro_rules! eq {
+            ($c:expr, $s:expr) => {
+                $s.iter().any(|s| cmp.matches($c, s, buf))
+            };
+        }
 
         match self {
             Self::Any => true,
             Self::None => false,
             Self::AnyName(s) => {
-                eq(s, song.title())
-                    || eq(s, song.artist())
-                    || eq(s, song.album())
+                eq!(s, song.title())
+                    || eq!(s, song.artists())
+                    || eq!(s, song.album())
             }
-            Self::Title(s) => eq(s, song.title()),
-            Self::Artist(s) => eq(s, song.artist()),
-            Self::Album(s) => eq(s, song.album()),
-            Self::Track(t) => *t == song.track(),
-            Self::Disc(d) => *d == song.disc(),
-            Self::Year(y) => *y == song.year(),
-            Self::Genre(s) => eq(s, song.genre()),
+            Self::Title(s) => eq!(s, song.title()),
+            Self::Artist(s) => eq!(s, song.artists()),
+            Self::Album(s) => eq!(s, song.album()),
+            Self::Track(t) => Some(*t) == song.track(),
+            Self::Disc(d) => Some(*d) == song.disc(),
+            Self::Year(y) => Some(*y) == song.year(),
+            Self::Genre(s) => eq!(s, song.genres()),
         }
     }
 
