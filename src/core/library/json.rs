@@ -8,7 +8,7 @@ use log::{error, info};
 
 use crate::core::{
     AppCtrl, Error, Job, JobMsg, Jobs, Msg, Result, config::Config,
-    player::Player,
+    library::add_new_songs::construct_album_artists, player::Player,
 };
 
 use super::{Library, Song, SongId};
@@ -31,8 +31,14 @@ impl Library {
     /// error.
     pub fn from_json(path: impl AsRef<Path>) -> Self {
         if let Ok(file) = File::open(path.as_ref()) {
-            match serde_json::from_reader(file) {
-                Ok(l) => l,
+            match serde_json::from_reader::<_, Library>(file) {
+                Ok(mut l) => {
+                    let (albums, artists) =
+                        construct_album_artists(&mut l.songs);
+                    l.albums = albums.into();
+                    l.artists = artists.into();
+                    l
+                }
                 Err(e) => {
                     error!("Failed to parse library: {e}");
                     Library::default()

@@ -438,7 +438,10 @@ fn metadata_for(
 
     data.set_url(Some(get_file_uri("", song.path())));
     data.set_album(song.album());
-    data.set_artist((!song.artists().is_empty()).then(|| song.artists().iter().map(|a| a.to_string())));
+    data.set_artist(
+        (!song.artists().is_empty())
+            .then(|| song.artists().iter().map(|a| a.to_string())),
+    );
     data.set_content_created(song.year().map(|a| a.to_string()));
     data.set_genre((!song.genres().is_empty()).then(|| song.genres()));
     data.set_length(len.or(song.length()).map(time_from_dur));

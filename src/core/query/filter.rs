@@ -188,6 +188,7 @@ impl Display for Filter {
         }
     }
 }
+
 impl FromStr for Filter {
     type Err = ArgError;
 

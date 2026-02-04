@@ -1,6 +1,6 @@
+mod alc;
 mod durstr;
 mod wrap;
-mod alc;
 
 //===========================================================================//
 //                                   Public                                  //
@@ -8,4 +8,4 @@ mod alc;
 
 pub mod uri;
 
-pub use self::{durstr::*, wrap::*, alc::*};
+pub use self::{alc::*, durstr::*, wrap::*};

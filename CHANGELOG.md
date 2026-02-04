@@ -12,6 +12,9 @@ there are no unused cached files.
     - Properly represent missing metadata of songs.
     - Add support for album artists
 
+### Fixes
+- Fix panic in mix after into empty playlist.
+
 ## v0.6.8
 ### New features
 - Add message to remove songs from library with `remove-from-library`.

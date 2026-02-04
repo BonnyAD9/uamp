@@ -4,17 +4,28 @@ use uamp_proc::TrackChange;
 
 use std::{
     cell::Cell,
+    collections::HashMap,
     ops::{Index, IndexMut},
     path::Path,
+    sync::Arc,
 };
 
-use crate::{core::Result, ext::Alc};
+use crate::{
+    core::{
+        Result,
+        library::{Album, Artist},
+    },
+    ext::Alc,
+};
 
 use super::{LibraryUpdate, Song, SongId};
 
 //===========================================================================//
 //                                   Public                                  //
 //===========================================================================//
+
+pub type Albums = HashMap<(Arc<str>, Arc<str>), Album>;
+pub type Artists = HashMap<Arc<str>, Artist>;
 
 #[derive(Serialize, Deserialize, Debug, TrackChange)]
 pub struct Library {
@@ -29,8 +40,13 @@ pub struct Library {
     #[serde(default)]
     #[track_ref(pub, pub)]
     pub(super) tmp_songs: Alc<Vec<Song>>,
-    
-    
+
+    /// Key is (artist, album)
+    #[serde(skip, default)]
+    pub(super) albums: Alc<Albums>,
+
+    #[serde(skip, default)]
+    pub(super) artists: Alc<Artists>,
 
     // Other fields
     /// invalid song
@@ -55,6 +71,8 @@ impl Library {
         Library {
             songs: Alc::default(),
             tmp_songs: Alc::default(),
+            albums: Alc::default(),
+            artists: Alc::default(),
             lib_update: LibraryUpdate::None,
             change: Cell::new(true),
             ghost: Song::invalid(),
@@ -72,6 +90,14 @@ impl Library {
 
     pub fn clone_tmp_songs(&mut self) -> Alc<Vec<Song>> {
         Alc::clone(&mut self.tmp_songs)
+    }
+
+    pub fn clone_albums(&mut self) -> Alc<Albums> {
+        Alc::clone(&mut self.albums)
+    }
+
+    pub fn clone_artists(&mut self) -> Alc<Artists> {
+        Alc::clone(&mut self.artists)
     }
 
     /// Change the library update state. Call this when you change some data in
@@ -110,6 +136,8 @@ impl Library {
         Self {
             songs: self.clone_songs(),
             tmp_songs: Alc::clone(&mut self.tmp_songs),
+            albums: Alc::clone(&mut self.albums),
+            artists: Alc::clone(&mut self.artists),
             lib_update: LibraryUpdate::None,
             ghost: self.ghost.clone(),
             change: self.change.clone(),
