@@ -4,7 +4,7 @@
 ### Breaking changes
 On first startup after this update, uamp will fail to load cached metadata from
 library and so it will also make all playlists empty. You will have to reload
-your library. Some cached images will also be no longer used, sou you can
+your library. Some cached images will also be no longer used, so you can
 delete the image cache at `~/.cache/uamp/` if you would like to make sure that
 there are no unused cached files.
 
