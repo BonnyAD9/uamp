@@ -2,6 +2,7 @@ use std::{
     borrow::Cow,
     fmt::Debug,
     path::{Path, PathBuf},
+    sync::Arc,
     time::Duration,
 };
 
@@ -25,29 +26,29 @@ use crate::{
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Song {
     /// Path to the song file.
-    path: PathBuf,
+    pub(super) path: PathBuf,
     /// Title/Name of the song.
-    title: Option<String>,
+    pub(super) title: Option<String>,
     /// The main artist in the song.
-    artists: Vec<String>,
+    pub(super) artists: Vec<Arc<str>>,
     /// The album of the song.
-    album: Option<String>,
+    pub(super) album: Option<Arc<str>>,
     /// Artist responsible for the album.
-    album_artist: Option<String>,
+    pub(super) album_artist: Option<Arc<str>>,
     /// The track number in the album.
-    track: Option<u32>,
+    pub(super) track: Option<u32>,
     /// The disc number in the album.
-    disc: Option<u32>,
+    pub(super) disc: Option<u32>,
     /// The year of release.
-    year: Option<i32>,
+    pub(super) year: Option<i32>,
     /// The duration/length of the track.
-    length: Option<Duration>,
+    pub(super) length: Option<Duration>,
     /// The genre of the song.
-    genres: Vec<String>,
+    pub(super) genres: Vec<String>,
     /// True if the song is deleted, deleted songs should be skipped in all
     /// all cases, and should be removed from all collections.
     #[serde(default = "default_deleted")]
-    deleted: bool,
+    pub(super) deleted: bool,
 }
 
 struct SongTagReader<'a> {
@@ -59,6 +60,8 @@ impl Song {
     pub fn from_path(path: impl AsRef<Path>) -> Result<Self> {
         let mut res = Self::empty(path.as_ref());
         SongTagReader::read_to(&mut res, path)?;
+        res.artists = res.artists.into_iter().unique().collect();
+        res.genres = res.genres.into_iter().unique().collect();
         Ok(res)
     }
 
@@ -109,14 +112,14 @@ impl Song {
     }
 
     /// Gets the main artist in the song.
-    pub fn artists(&self) -> &[String] {
+    pub fn artists(&self) -> &[Arc<str>] {
         &self.artists
     }
 
     pub fn artists_str(&self) -> Cow<'_, str> {
         match self.artists.as_slice() {
             [] => "--".into(),
-            [a] => a.as_str().into(),
+            [a] => (**a).into(),
             _ => self.artists.iter().join(", ").into(),
         }
     }
@@ -131,9 +134,13 @@ impl Song {
     }
 
     pub fn album_artist(&self) -> Option<&str> {
+        self.album_artist_arc().map(|a| &**a)
+    }
+
+    pub fn album_artist_arc(&self) -> Option<&Arc<str>> {
         self.album_artist
-            .as_deref()
-            .or_else(|| self.artists().first().map(|a| a.as_str()))
+            .as_ref()
+            .or_else(|| self.artists().first())
     }
 
     pub fn album_artist_str(&self) -> &str {
@@ -262,19 +269,20 @@ impl<'a> TagStore for SongTagReader<'a> {
 
     fn set_artists(&mut self, artists: Vec<String>) {
         if !artists.is_empty() {
-            self.song.artists = artists;
+            self.song.artists =
+                artists.iter().map(|a| a.as_str().into()).collect();
         }
     }
 
     fn set_album(&mut self, album: String) {
         if !album.is_empty() {
-            self.song.album = Some(album);
+            self.song.album = Some(album.as_str().into());
         }
     }
 
     fn set_album_artist(&mut self, artist: String) {
         if !artist.is_empty() {
-            self.song.album_artist = Some(artist);
+            self.song.album_artist = Some(artist.as_str().into());
         }
     }
 

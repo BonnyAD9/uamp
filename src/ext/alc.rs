@@ -1,4 +1,8 @@
-use std::{borrow::BorrowMut, mem, ops::{Bound, Deref, DerefMut, Index, IndexMut, RangeBounds}, slice::{Iter, IterMut}, sync::Arc};
+use std::{
+    mem,
+    ops::{Deref, DerefMut},
+    sync::Arc,
+};
 
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -14,8 +18,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// In dynamic mode, this is same as the type itself.
 #[derive(Debug)]
-pub enum Alc<T>
-{
+pub enum Alc<T> {
     Static(Arc<T>),
     Dynamic(T),
 }
@@ -26,17 +29,32 @@ impl<T> Alc<T> {
     }
 }
 
-impl<T> Alc<T> where T: Clone + Default {
+impl<T> Alc<T>
+where
+    T: Clone + Default,
+{
     pub fn make_arc(this: &mut Self) -> Arc<T> {
         Self::make_static(this).clone()
     }
-    
+
     pub fn clone(this: &mut Self) -> Self {
         Self::Static(Self::make_arc(this))
     }
+
+    /// Extract value from the alc, potentionally cloning if shared.
+    pub fn take(mut this: Self) -> T {
+        Self::make_dynamic(&mut this);
+        let Alc::Dynamic(d) = this else {
+            unreachable!();
+        };
+        d
+    }
 }
 
-impl<T> Alc<Vec<T>> where T: Clone {
+impl<T> Alc<Vec<T>>
+where
+    T: Clone,
+{
     /// Mix new values after the given index.
     ///
     /// - If the iterator is not empty, this may clone the vector.
@@ -54,6 +72,10 @@ impl<T> Alc<Vec<T>> where T: Clone {
         let v = Self::make_dynamic(self);
         let mut rng = rand::rng();
         for s in i.into_iter().chain(it) {
+            if after >= v.len() {
+                v.push(s);
+                continue;
+            }
             let idx = rng.random_range(after + 1..=v.len());
             if idx == v.len() {
                 v.push(s);
@@ -148,24 +170,11 @@ where
     }
 }
 
-impl<T> From<Alc<Vec<T>>> for Vec<T>
+impl<T> From<Alc<T>> for Arc<T>
 where
-    T: Clone,
+    T: Clone + Default,
 {
-    fn from(mut value: Alc<Vec<T>>) -> Self {
-        Alc::make_dynamic(&mut value);
-        let Alc::Dynamic(d) = value else {
-            panic!();
-        };
-        d
-    }
-}
-
-impl<T> From<Alc<Vec<T>>> for Arc<Vec<T>>
-where
-    T: Clone,
-{
-    fn from(mut value: Alc<Vec<T>>) -> Self {
+    fn from(mut value: Alc<T>) -> Self {
         Alc::make_arc(&mut value)
     }
 }
@@ -182,13 +191,16 @@ where
 impl<T> AsRef<T> for Alc<T> {
     fn as_ref(&self) -> &T {
         match self {
-            Self::Dynamic(d) => &d,
+            Self::Dynamic(d) => d,
             Self::Static(s) => s,
         }
     }
 }
 
-impl<T> AsMut<T> for Alc<T> where T: Clone + Default {
+impl<T> AsMut<T> for Alc<T>
+where
+    T: Clone + Default,
+{
     fn as_mut(&mut self) -> &mut T {
         Self::make_dynamic(self)
     }
@@ -211,7 +223,7 @@ where
 impl<'a, T> IntoIterator for &'a Alc<T>
 where
     T: Clone,
-    &'a T: IntoIterator
+    &'a T: IntoIterator,
 {
     type Item = <&'a T as IntoIterator>::Item;
 
@@ -222,7 +234,10 @@ where
     }
 }
 
-impl<T> DerefMut for Alc<T> where T: Clone + Default {
+impl<T> DerefMut for Alc<T>
+where
+    T: Clone + Default,
+{
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.as_mut()
     }
@@ -240,7 +255,9 @@ impl<T> Deref for Alc<T> {
 //                                  Private                                  //
 //===========================================================================//
 
-impl<T> Alc<T> where T: Clone + Default
+impl<T> Alc<T>
+where
+    T: Clone + Default,
 {
     /// Clones the playlist and creates owned vector
     #[inline]
@@ -283,19 +300,5 @@ impl<T> Alc<T> where T: Clone + Default
             }
             Self::Static(s) => s,
         }
-    }
-}
-
-fn is_range_empty<R, T>(range: &R) -> bool
-where
-    R: RangeBounds<T>,
-    T: PartialOrd,
-{
-    match (range.start_bound(), range.end_bound()) {
-        (Bound::Unbounded, _) => false,
-        (_, Bound::Unbounded) => false,
-        (Bound::Included(a), _) => range.contains(a),
-        (_, Bound::Included(a)) => range.contains(a),
-        (Bound::Excluded(a), Bound::Excluded(b)) => a >= b,
     }
 }

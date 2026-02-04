@@ -40,7 +40,10 @@ impl Playlist {
     /// Creates new playlist from the given songs and current song index.
     ///
     /// If the index is invalid, it is set to the last song.
-    pub fn new(songs: impl Into<Alc<Vec<SongId>>>, mut current: usize) -> Self {
+    pub fn new(
+        songs: impl Into<Alc<Vec<SongId>>>,
+        mut current: usize,
+    ) -> Self {
         let songs = songs.into();
         if current > songs.len() {
             current = songs.len().saturating_sub(1);
