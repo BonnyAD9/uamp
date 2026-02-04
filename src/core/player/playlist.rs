@@ -10,7 +10,7 @@ use crate::{
         library::{Library, SongId},
         query::SongOrder,
     },
-    ext::AlcVec,
+    ext::Alc,
 };
 
 use super::AddPolicy;
@@ -23,7 +23,7 @@ use super::AddPolicy;
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Playlist {
     #[serde(default)]
-    songs: AlcVec<SongId>,
+    songs: Alc<Vec<SongId>>,
     #[serde(default)]
     current: usize,
     #[serde(default)]
@@ -40,7 +40,7 @@ impl Playlist {
     /// Creates new playlist from the given songs and current song index.
     ///
     /// If the index is invalid, it is set to the last song.
-    pub fn new(songs: impl Into<AlcVec<SongId>>, mut current: usize) -> Self {
+    pub fn new(songs: impl Into<Alc<Vec<SongId>>>, mut current: usize) -> Self {
         let songs = songs.into();
         if current > songs.len() {
             current = songs.len().saturating_sub(1);
@@ -88,7 +88,7 @@ impl Playlist {
     pub fn retain(&mut self, f: impl FnMut(&SongId) -> bool) {
         let cur = self.current();
         let old_len = self.len();
-        self.songs.vec_mut().retain(f);
+        self.songs.retain(f);
         if let Some(cur) = cur {
             let len_diff = old_len - self.len();
             self.locate_current_h(cur, len_diff);
@@ -109,7 +109,7 @@ impl Playlist {
         match policy {
             AddPolicy::None => {}
             AddPolicy::End => self.songs.extend(songs),
-            AddPolicy::Next => self.songs.splice(i..i, songs),
+            AddPolicy::Next => _ = self.songs.splice(i..i, songs),
             AddPolicy::MixIn => self.songs.mix_after(i, songs),
         }
     }
@@ -126,8 +126,8 @@ impl Playlist {
     }
 
     /// Creates lazy copy of the songs in the playlist.
-    pub fn clone_songs(&mut self) -> AlcVec<SongId> {
-        self.songs.clone()
+    pub fn clone_songs(&mut self) -> Alc<Vec<SongId>> {
+        Alc::clone(&mut self.songs)
     }
 
     /// Gets the current song index in the playlist.
@@ -148,7 +148,7 @@ impl Playlist {
     /// Adds the songs to the playlist after the currently playing song.
     pub fn play_next(&mut self, iter: impl IntoIterator<Item = SongId>) {
         let c = self.current + 1;
-        self.songs.splice(c..c, iter)
+        self.songs.splice(c..c, iter);
     }
 
     /// Get the next song.
@@ -219,7 +219,7 @@ impl Playlist {
     pub(super) fn pop_current(&mut self) -> Option<SongId> {
         self.current_idx().map(|c| {
             let s = self.songs[c];
-            self.songs.vec_mut().remove(c);
+            self.songs.remove(c);
             s
         })
     }
@@ -238,7 +238,7 @@ impl Playlist {
 
 impl<V> From<V> for Playlist
 where
-    V: Into<AlcVec<SongId>>,
+    V: Into<Alc<Vec<SongId>>>,
 {
     fn from(value: V) -> Self {
         Self::new(value, 0)

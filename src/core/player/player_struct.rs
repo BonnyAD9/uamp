@@ -14,7 +14,7 @@ use crate::{
         plugin::DecoderPlugin,
         server::sub,
     },
-    ext::AlcVec,
+    ext::Alc,
 };
 
 use super::{
@@ -180,7 +180,7 @@ impl Player {
 
     /// Pushes new playlist to the stack without changing the play staty by
     /// moving the now playing song to the start of the new playlist.
-    pub fn push_with_cur(&mut self, mut songs: AlcVec<SongId>) {
+    pub fn push_with_cur(&mut self, mut songs: Alc<Vec<SongId>>) {
         songs.splice(0..0, self.mut_playlist().pop_current());
         let old = mem::replace(self.mut_playlist(), songs.into());
         self.mut_playlist_stack().push(old);
@@ -290,7 +290,7 @@ impl Player {
     }
 
     /// Gets the IDS of the songs in the playlists.
-    pub fn get_ids(&mut self) -> Vec<AlcVec<SongId>> {
+    pub fn get_ids(&mut self) -> Vec<Alc<Vec<SongId>>> {
         Some(self.playlist.clone_songs())
             .into_iter()
             .chain(self.playlist_stack.iter_mut().map(|a| a.clone_songs()))

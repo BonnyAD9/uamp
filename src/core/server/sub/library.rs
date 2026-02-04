@@ -13,8 +13,8 @@ pub struct Library {
 impl Library {
     pub fn new(lib: &mut library::Library) -> Self {
         Self {
-            songs: lib.clone_songs().make_arc(),
-            tmp_songs: lib.clone_tmp_songs().make_arc(),
+            songs: lib.clone_songs().into(),
+            tmp_songs: lib.clone_tmp_songs().into(),
         }
     }
 }

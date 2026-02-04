@@ -8,7 +8,7 @@ use std::{
     path::Path,
 };
 
-use crate::{core::Result, ext::AlcVec};
+use crate::{core::Result, ext::Alc};
 
 use super::{LibraryUpdate, Song, SongId};
 
@@ -22,13 +22,15 @@ pub struct Library {
     /// The songs in library. ACCESS VIA GETTER/SETTER whenever
     /// possible.
     #[track_ref(pub, pub)]
-    pub(super) songs: AlcVec<Song>,
+    pub(super) songs: Alc<Vec<Song>>,
     /// Temporary songs in the library. They are automatically
     /// removed from library when they are removed from playlist.
     /// ACCESS VIA GETTER/SETTER whenever possible.
     #[serde(default)]
     #[track_ref(pub, pub)]
-    pub(super) tmp_songs: AlcVec<Song>,
+    pub(super) tmp_songs: Alc<Vec<Song>>,
+    
+    
 
     // Other fields
     /// invalid song
@@ -51,8 +53,8 @@ impl Library {
     /// Creates empty library
     pub fn new() -> Self {
         Library {
-            songs: AlcVec::new(),
-            tmp_songs: AlcVec::new(),
+            songs: Alc::default(),
+            tmp_songs: Alc::default(),
             lib_update: LibraryUpdate::None,
             change: Cell::new(true),
             ghost: Song::invalid(),
@@ -64,12 +66,12 @@ impl Library {
     }
 
     /// Get clone of the songs in the library.
-    pub fn clone_songs(&mut self) -> AlcVec<Song> {
-        self.songs.clone()
+    pub fn clone_songs(&mut self) -> Alc<Vec<Song>> {
+        Alc::clone(&mut self.songs)
     }
 
-    pub fn clone_tmp_songs(&mut self) -> AlcVec<Song> {
-        self.tmp_songs.clone()
+    pub fn clone_tmp_songs(&mut self) -> Alc<Vec<Song>> {
+        Alc::clone(&mut self.tmp_songs)
     }
 
     /// Change the library update state. Call this when you change some data in
@@ -107,7 +109,7 @@ impl Library {
     pub fn clone(&mut self) -> Self {
         Self {
             songs: self.clone_songs(),
-            tmp_songs: self.tmp_songs.clone(),
+            tmp_songs: Alc::clone(&mut self.tmp_songs),
             lib_update: LibraryUpdate::None,
             ghost: self.ghost.clone(),
             change: self.change.clone(),
@@ -124,7 +126,7 @@ impl Library {
             }
         }
 
-        self.mut_tmp_songs().vec_mut().push(song);
+        self.mut_tmp_songs().push(song);
         SongId::tmp(self.tmp_songs.len() - 1)
     }
 
