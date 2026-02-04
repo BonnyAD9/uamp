@@ -142,7 +142,7 @@ impl Library {
     }
 
     pub(super) fn remove_free_tmp_songs(&mut self, free: &[SongId]) {
-        let songs = self.tmp_songs.vec_mut();
+        let songs = &mut self.tmp_songs;
         for s in free {
             songs[s.as_tmp()].delete();
         }

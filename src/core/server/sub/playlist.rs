@@ -20,7 +20,7 @@ pub struct Playlist {
 impl Playlist {
     pub fn new(pl: &mut player::Playlist) -> Self {
         Self {
-            songs: pl.clone_songs().make_arc(),
+            songs: pl.clone_songs().into(),
             current: pl.current_idx(),
             play_pos: pl.get_play_pos(),
             on_end: pl.on_end.clone(),
