@@ -11,6 +11,7 @@ there are no unused cached files.
 - Rework library format:
     - Properly represent missing metadata of songs.
     - Add support for album artists
+    - Uamp can now work with albums and artists.
 
 ### Fixes
 - Fix panic in mix after into empty playlist.
