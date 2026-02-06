@@ -8,6 +8,10 @@ your library. Some cached images will also be no longer used, so you can
 delete the image cache at `~/.cache/uamp/` if you would like to make sure that
 there are no unused cached files.
 
+The http api has also changed to reflect these changes. The `set-all` sse now
+contains albums and artists and song now has nullable fields and `artists` and
+`genres` is array.
+
 - Rework library format:
     - Properly represent missing metadata of songs.
     - Add support for album artists
