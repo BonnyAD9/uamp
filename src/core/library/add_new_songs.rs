@@ -228,7 +228,10 @@ impl<'a> State<'a> {
                 continue;
             };
 
-            rem_alb.entry((album_artist, album)).or_default().push(id);
+            rem_alb
+                .entry(AlbumId::new(album_artist, album))
+                .or_default()
+                .push(id);
             for a in s.artists {
                 rem_singles.entry(a).or_default().push(id);
             }
@@ -453,10 +456,10 @@ fn add_song_album_artists(
     // Create/asociate with album
     if let Some(album) = &song.album {
         let album = albums
-            .entry((album_artist.name.clone(), album.clone()))
-            .or_insert_with_key(|(art, nam)| {
-                album_artist.albums.push(nam.clone());
-                Album::new(art.clone(), nam.clone())
+            .entry(AlbumId::new(album_artist.name.clone(), album.clone()))
+            .or_insert_with_key(|k| {
+                album_artist.albums.push(k.name.clone());
+                Album::new(k.artist.clone(), k.name.clone())
             });
         // Reduce number of copies in memory.
         song.album = Some(album.name.clone());

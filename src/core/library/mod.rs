@@ -1,5 +1,6 @@
 mod add_new_songs;
 mod album;
+mod album_id;
 mod artist;
 pub mod img_lookup;
 mod json;
@@ -16,6 +17,6 @@ mod song_id;
 //===========================================================================//
 
 pub use self::{
-    album::*, artist::*, library_load_result::*, library_struct::*,
-    library_update::*, load_opts::*, song::*, song_id::*,
+    album::*, album_id::*, artist::*, library_load_result::*,
+    library_struct::*, library_update::*, load_opts::*, song::*, song_id::*,
 };
