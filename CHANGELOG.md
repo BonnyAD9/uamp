@@ -13,6 +13,12 @@ there are no unused cached files.
     - Add support for album artists
     - Uamp can now work with albums and artists.
 
+### New features
+- Uamp can now work with album artists.
+- Each song can now have multiple artists.
+- Each song can now have multiple genres.
+- Query for empty string is interpreted as that property should not be set.
+
 ### Fixes
 - Fix panic in mix after into empty playlist.
 
