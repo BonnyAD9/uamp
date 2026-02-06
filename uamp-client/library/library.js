@@ -126,20 +126,30 @@ export default class Library {
             if (song.deleted) continue;
 
             this.songs.push(song);
-            const artistKey = song.artist.trim().toLowerCase();
-            if (!artists.has(artistKey)) {
-                artists.set(artistKey, new Artist(song.artist));
+            for (const artistName of song.artists) {
+                const artistKey = artistName.trim().toLowerCase();
+                if (!artists.has(artistKey)) {
+                    artists.set(artistKey, new Artist(artistName));
+                }
+    
+                const artist = artists.get(artistKey);
+                artist.songs.push(song);
             }
+            
+            const albumArtistKey = song.album_artist.trim().toLowerCase();
 
-            const artist = artists.get(artistKey);
-            artist.songs.push(song);
-
-            const albumKey = `${song.album.trim().toLowerCase()}::${artistKey}`;
+            const albumKey = `${song.album.trim().toLowerCase()}::${albumArtistKey}`;
             if (!albums.has(albumKey)) {
                 albums.set(
                     albumKey,
-                    new Album(song.album, song.artist, song.year),
+                    new Album(song.album, song.album_artist, song.year),
                 );
+                if (!artists.has(albumArtistKey)) {
+                    const artist = new Artist(song.album_artist);
+                    artist.songs.push(song);
+                    artists.set(albumArtistKey, artist);
+                }
+                const artist = artists.get(albumArtistKey);
                 artist.albums.push(albums.get(albumKey));
             }
             albums.get(albumKey).songs.push(song);

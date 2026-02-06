@@ -11,49 +11,52 @@ export default class Song {
      * Creates new song
      * @param {number} id
      * @param {string} path
-     * @param {string} title
-     * @param {string} artist
-     * @param {string} album
-     * @param {number} track
-     * @param {number} disc
-     * @param {number} year
-     * @param {Duration} length
-     * @param {string} genre
+     * @param {string|null} title
+     * @param {[string]} artists
+     * @param {string|null} album
+     * @param {string|null} album_artist
+     * @param {number|null} track
+     * @param {number|null} disc
+     * @param {number|null} year
+     * @param {Duration|null} length
+     * @param {[string]} genre
      * @param {boolean} deleted
      */
     constructor(
-        id, path, title, artist, album, track, disc, year, length, genre,
+        id, path, title, artists, album, album_artist, track, disc, year, length, genres,
         deleted = false
     ) {
         /** @type {number} */
         this.id = id;
         /** @type {string} */
         this.path = path;
-        /** @type {string} */
+        /** @type {string|null} */
         this.title = title;
-        /** @type {string} */
-        this.artist = artist;
-        /** @type {string} */
+        /** @type {[string]} */
+        this.artists = artists;
+        /** @type {string|null} */
         this.album = album;
-        /** @type {number} */
+        /** @type {string|null} */
+        this.album_artist = album_artist ?? (artists.length == 0 ? null : artists[0]);
+        /** @type {number|null} */
         this.track = track;
-        /** @type {number} */
+        /** @type {number|null} */
         this.disc = disc;
-        /** @type {number} */
+        /** @type {number|null} */
         this.year = year;
-        /** @type {Duration} */
+        /** @type {Duration|null} */
         this.length = length;
-        /** @type {string} */
-        this.genre = genre;
+        /** @type {[string]} */
+        this.genres = genres;
         /** @type {boolean} */
         this.deleted = deleted;
     }
 
     static from(id, obj) {
-        const year = obj.year === UNDEF_YEAR ? 0 : obj.year;
         return new Song(
-            id, obj.path, obj.title, obj.artist, obj.album, obj.track, obj.disc,
-            year, Duration.from(obj.length), obj.genre, obj.deleted
+            id, obj.path, obj.title, obj.artists, obj.album, obj.album_artist,
+            obj.track, obj.disc, obj.year, Duration.from(obj.length),
+            obj.genres, obj.deleted
         );
     }
 
@@ -68,7 +71,7 @@ export default class Song {
      * @returns {string} songs release year
      */
     getYear() {
-        return this.year == 0 ? '-' : `${this.year}`;
+        return this.year === null ? '-' : `${this.year}`;
     }
 
     /**
@@ -80,15 +83,15 @@ export default class Song {
         const row = cloned.querySelector('tr');
 
         row.querySelector('img').src =
-            Album.getCover(this.artist, this.album, 64);
-        row.querySelector('.title').textContent = this.title;
-        row.querySelector('.author').textContent = this.artist;
-        row.querySelector('.album').textContent = this.album;
+            Album.getCover(this.album_artist ?? "--", this.album ?? this.title ?? "--", 64);
+        row.querySelector('.title').textContent = this.title ?? "-";
+        row.querySelector('.author').textContent = this.artists.length == 0 ? "-" : this.artists.join(", ");
+        row.querySelector('.album').textContent = this.album ?? "-";
         row.querySelector('.year').textContent = this.getYear();
-        row.querySelector('.length').textContent = this.length.format();
-        row.querySelector('.genre').textContent = this.genre;
-        row.querySelector('.track').textContent = this.track;
-        row.querySelector('.disc').textContent = this.disc;
+        row.querySelector('.length').textContent = this.length?.format() ?? "-";
+        row.querySelector('.genre').textContent = this.genres.length == 0 ? "-" : this.genres.join(", ");
+        row.querySelector('.track').textContent = this.track ?? "-";
+        row.querySelector('.disc').textContent = this.disc ?? "-";
 
         return row;
     }
@@ -104,7 +107,7 @@ export default class Song {
 
         item.querySelector('.id').textContent = id + 1;
         item.querySelector('.title').textContent = this.title;
-        item.querySelector('.artist').textContent = this.artist;
+        item.querySelector('.artist').textContent = this.artists.join(", ");
 
         return item;
     }
@@ -115,9 +118,8 @@ export default class Song {
      */
     getQuery() {
         const s = (text) => text.replaceAll('/', '//');
-        const year = this.year === 0 ? UNDEF_YEAR : this.year;
-        return `n=/${s(this.title)}/.p=/${s(this.artist)}/.a=/` +
-            `${s(this.album)}/.t=${this.track}.d=${this.disc}.y=${year}` +
-            `.g=/${s(this.genre)}/`;
+        return `n=/${s(this.title ?? "")}/.p=/${s(this.album_artist ?? "")}/.a=/` +
+            `${s(this.album ?? "")}/.t=${this.track ?? ""}.d=${this.disc ?? ""}.y=${this.year ?? ""}` +
+            `.g=/${s(this.genres.length == 0 ? "" : this.genres[0])}/`;
     }
 }
