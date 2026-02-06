@@ -6,16 +6,16 @@ use crate::core::library::SongId;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Album {
-    pub(super) name: Arc<str>,
     pub(super) artist: Arc<str>,
+    pub(super) name: Arc<str>,
     pub(super) songs: Vec<SongId>,
 }
 
 impl Album {
-    pub fn new(name: Arc<str>, artist: Arc<str>) -> Self {
+    pub fn new(artist: Arc<str>, name: Arc<str>) -> Self {
         Self {
-            name,
             artist,
+            name,
             songs: vec![],
         }
     }

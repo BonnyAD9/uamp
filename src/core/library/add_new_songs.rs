@@ -455,6 +455,7 @@ fn add_song_album_artists(
 
     // Create/asociate with album
     if let Some(album) = &song.album {
+        dbg!(album);
         let album = albums
             .entry(AlbumId::new(album_artist.name.clone(), album.clone()))
             .or_insert_with_key(|k| {
