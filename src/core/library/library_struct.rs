@@ -7,13 +7,12 @@ use std::{
     collections::HashMap,
     ops::{Index, IndexMut},
     path::Path,
-    sync::Arc,
 };
 
 use crate::{
     core::{
         Result,
-        library::{Album, Artist},
+        library::{Album, AlbumId, Artist, ArtistId},
     },
     ext::Alc,
 };
@@ -24,8 +23,8 @@ use super::{LibraryUpdate, Song, SongId};
 //                                   Public                                  //
 //===========================================================================//
 
-pub type Albums = HashMap<(Arc<str>, Arc<str>), Album>;
-pub type Artists = HashMap<Arc<str>, Artist>;
+pub type Albums = HashMap<AlbumId, Album>;
+pub type Artists = HashMap<ArtistId, Artist>;
 
 #[derive(Serialize, Deserialize, Debug, TrackChange)]
 pub struct Library {
