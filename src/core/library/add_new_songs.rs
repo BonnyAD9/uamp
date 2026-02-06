@@ -11,7 +11,7 @@ use log::error;
 use crate::core::{
     Result,
     config::Config,
-    library::{Album, Albums, Artist, Artists},
+    library::{Album, AlbumId, Albums, Artist, ArtistId, Artists},
 };
 
 use super::{LibraryLoadResult, Song, SongId};
@@ -86,9 +86,9 @@ struct State<'a> {
     // Maps song path to its id.
     id_map: HashMap<PathBuf, usize>,
     // Names of modified albums that should be normalized.
-    modified_albums: BTreeSet<(Arc<str>, Arc<str>)>,
+    modified_albums: BTreeSet<AlbumId>,
     // Names of modifed artists that should be normalized.
-    modified_artists: BTreeSet<Arc<str>>,
+    modified_artists: BTreeSet<ArtistId>,
 }
 
 macro_rules! err_cont {
@@ -206,9 +206,8 @@ impl<'a> State<'a> {
     }
 
     fn propagate_remove(&mut self, removed: Vec<(SongId, Song)>) {
-        let mut rem_alb: BTreeMap<(Arc<str>, Arc<str>), Vec<SongId>> =
-            BTreeMap::new();
-        let mut rem_singles: BTreeMap<Arc<str>, Vec<SongId>> = BTreeMap::new();
+        let mut rem_alb: BTreeMap<AlbumId, Vec<SongId>> = BTreeMap::new();
+        let mut rem_singles: BTreeMap<ArtistId, Vec<SongId>> = BTreeMap::new();
         for (id, mut s) in removed {
             let Some(album) = s.album else {
                 for a in s.artists {
@@ -242,9 +241,9 @@ impl<'a> State<'a> {
 
     fn remove_from_albums(
         &mut self,
-        rem_alb: impl IntoIterator<Item = ((Arc<str>, Arc<str>), Vec<SongId>)>,
-    ) -> BTreeMap<Arc<str>, Vec<Arc<str>>> {
-        let mut rem_art: BTreeMap<Arc<str>, Vec<Arc<str>>> = BTreeMap::new();
+        rem_alb: impl IntoIterator<Item = (AlbumId, Vec<SongId>)>,
+    ) -> BTreeMap<ArtistId, Vec<Arc<str>>> {
+        let mut rem_art: BTreeMap<ArtistId, Vec<Arc<str>>> = BTreeMap::new();
         for (key, mut songs) in rem_alb {
             let Some(alb) = self.albums.get_mut(&key) else {
                 continue;
@@ -270,7 +269,7 @@ impl<'a> State<'a> {
 
     fn remove_from_singles(
         &mut self,
-        rem_singles: impl IntoIterator<Item = (Arc<str>, Vec<SongId>)>,
+        rem_singles: impl IntoIterator<Item = (ArtistId, Vec<SongId>)>,
     ) {
         for (key, mut songs) in rem_singles {
             let Some(art) = self.artists.get_mut(&key) else {
@@ -294,7 +293,7 @@ impl<'a> State<'a> {
 
     fn remove_from_artists(
         &mut self,
-        rem_art: impl IntoIterator<Item = (Arc<str>, Vec<Arc<str>>)>,
+        rem_art: impl IntoIterator<Item = (ArtistId, Vec<Arc<str>>)>,
     ) {
         for (key, mut albums) in rem_art {
             let Some(art) = self.artists.get_mut(&key) else {

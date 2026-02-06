@@ -26,21 +26,23 @@ pub enum FilterType {
     /// Nothing passes this filter.
     None,
     /// Song title, artist or album name contains the given string.
-    AnyName(String),
+    AnyName(Option<String>),
     /// Song title contains the given string.
-    Title(String),
+    Title(Option<String>),
     /// Song artist contains the given string.
-    Artist(String),
+    Artist(Option<String>),
     /// Song album contains the given string.
-    Album(String),
+    Album(Option<String>),
+    /// Song album artist matches given string.
+    AlbumArtist(Option<String>),
     /// Track number has the given value.
-    Track(u32),
+    Track(Option<u32>),
     /// Disc number has the given value.
-    Disc(u32),
+    Disc(Option<u32>),
     /// Song was released within the given year.
-    Year(i32),
+    Year(Option<i32>),
     /// Song genre contains the given string.
-    Genre(String),
+    Genre(Option<String>),
 }
 
 #[derive(
@@ -89,9 +91,23 @@ impl FilterType {
         cmp: CmpType,
         buf: &mut String,
     ) -> bool {
-        macro_rules! eq {
+        macro_rules! eqo {
             ($c:expr, $s:expr) => {
-                $s.iter().any(|s| cmp.matches($c, s, buf))
+                match ($c, $s) {
+                    (None, None) => true,
+                    (Some(c), Some(s)) => cmp.matches(c, s, buf),
+                    _ => false,
+                }
+            };
+        }
+
+        macro_rules! eqs {
+            ($c:expr, $s:expr) => {
+                match ($c, $s) {
+                    (None, []) => true,
+                    (Some(c), s) => s.iter().any(|s| cmp.matches(c, s, buf)),
+                    _ => false,
+                }
             };
         }
 
@@ -99,17 +115,18 @@ impl FilterType {
             Self::Any => true,
             Self::None => false,
             Self::AnyName(s) => {
-                eq!(s, song.title())
-                    || eq!(s, song.artists())
-                    || eq!(s, song.album())
+                eqo!(s, song.title())
+                    || eqs!(s, song.artists())
+                    || eqo!(s, song.album())
             }
-            Self::Title(s) => eq!(s, song.title()),
-            Self::Artist(s) => eq!(s, song.artists()),
-            Self::Album(s) => eq!(s, song.album()),
-            Self::Track(t) => Some(*t) == song.track(),
-            Self::Disc(d) => Some(*d) == song.disc(),
-            Self::Year(y) => Some(*y) == song.year(),
-            Self::Genre(s) => eq!(s, song.genres()),
+            Self::Title(s) => eqo!(s, song.title()),
+            Self::Artist(s) => eqs!(s, song.artists()),
+            Self::Album(s) => eqo!(s, song.album()),
+            Self::AlbumArtist(s) => eqo!(s, song.album_artist()),
+            Self::Track(t) => *t == song.track(),
+            Self::Disc(d) => *d == song.disc(),
+            Self::Year(y) => *y == song.year(),
+            Self::Genre(s) => eqs!(s, song.genres()),
         }
     }
 
@@ -120,11 +137,11 @@ impl FilterType {
         }
 
         match self {
-            Self::AnyName(s) => *s = cache_new_str(s),
-            Self::Title(s) => *s = cache_new_str(s),
-            Self::Artist(s) => *s = cache_new_str(s),
-            Self::Album(s) => *s = cache_new_str(s),
-            Self::Genre(s) => *s = cache_new_str(s),
+            Self::AnyName(s) => *s = s.as_deref().map(cache_new_str),
+            Self::Title(s) => *s = s.as_deref().map(cache_new_str),
+            Self::Artist(s) => *s = s.as_deref().map(cache_new_str),
+            Self::Album(s) => *s = s.as_deref().map(cache_new_str),
+            Self::Genre(s) => *s = s.as_deref().map(cache_new_str),
             _ => {}
         }
     }
@@ -177,14 +194,24 @@ impl Display for Filter {
         match &self.typ {
             FilterType::Any => f.write_str("any"),
             FilterType::None => f.write_str("none"),
-            FilterType::AnyName(n) => write!(f, "s{c}{n}"),
-            FilterType::Title(t) => write!(f, "n{c}{t}"),
-            FilterType::Artist(a) => write!(f, "p{c}{a}"),
-            FilterType::Album(a) => write!(f, "a{c}{a}"),
-            FilterType::Track(t) => write!(f, "t{c}{t}"),
-            FilterType::Disc(d) => write!(f, "d{c}{d}"),
-            FilterType::Year(y) => write!(f, "y{c}{y}"),
-            FilterType::Genre(g) => write!(f, "g{c}{g}"),
+            FilterType::AnyName(None) => write!(f, "s{c}"),
+            FilterType::AnyName(Some(n)) => write!(f, "s{c}{n}"),
+            FilterType::Title(None) => write!(f, "n{c}"),
+            FilterType::Title(Some(t)) => write!(f, "n{c}{t}"),
+            FilterType::Artist(None) => write!(f, "p{c}"),
+            FilterType::Artist(Some(a)) => write!(f, "p{c}{a}"),
+            FilterType::Album(None) => write!(f, "a{c}"),
+            FilterType::Album(Some(a)) => write!(f, "a{c}{a}"),
+            FilterType::AlbumArtist(None) => write!(f, "aa{c}"),
+            FilterType::AlbumArtist(Some(a)) => write!(f, "aa{c}{a}"),
+            FilterType::Track(None) => write!(f, "t{c}"),
+            FilterType::Track(Some(t)) => write!(f, "t{c}{t}"),
+            FilterType::Disc(None) => write!(f, "d{c}"),
+            FilterType::Disc(Some(d)) => write!(f, "d{c}{d}"),
+            FilterType::Year(None) => write!(f, "y{c}"),
+            FilterType::Year(Some(y)) => write!(f, "y{c}{y}"),
+            FilterType::Genre(None) => write!(f, "g{c}"),
+            FilterType::Genre(Some(g)) => write!(f, "g{c}{g}"),
         }
     }
 }
@@ -234,18 +261,28 @@ impl FromStr for Filter {
             |e: ArgError| e.shift_span(s.len() - val.len(), s.to_string());
 
         match typ {
-            "s" | "an" | "any-name" => {
-                Ok(Self::new(FilterType::AnyName(val.to_owned()), cmp))
-            }
-            "n" | "tit" | "title" | "name" => {
-                Ok(Self::new(FilterType::Title(val.to_owned()), cmp))
-            }
+            "s" | "an" | "any-name" => Ok(Self::new(
+                FilterType::AnyName(val.arg_into().map_err(em)?),
+                cmp,
+            )),
+            "n" | "tit" | "title" | "name" => Ok(Self::new(
+                FilterType::Title(val.arg_into().map_err(em)?),
+                cmp,
+            )),
             "p" | "art" | "artist" | "performer" | "auth" | "author" => {
-                Ok(Self::new(FilterType::Artist(val.to_owned()), cmp))
+                Ok(Self::new(
+                    FilterType::Artist(val.arg_into().map_err(em)?),
+                    cmp,
+                ))
             }
-            "a" | "alb" | "album" => {
-                Ok(Self::new(FilterType::Album(val.to_owned()), cmp))
-            }
+            "a" | "alb" | "album" => Ok(Self::new(
+                FilterType::Album(val.arg_into().map_err(em)?),
+                cmp,
+            )),
+            "aa" | "ap" | "album-artist" => Ok(Self::new(
+                FilterType::AlbumArtist(val.arg_into().map_err(em)?),
+                cmp,
+            )),
             "t" | "trk" | "track" | "track-number" => Ok(Self::new(
                 FilterType::Track(val.arg_into().map_err(em)?),
                 cmp,
@@ -258,9 +295,10 @@ impl FromStr for Filter {
                 FilterType::Year(val.arg_into().map_err(em)?),
                 cmp,
             )),
-            "g" | "genre" => {
-                Ok(Self::new(FilterType::Genre(val.to_owned()), cmp))
-            }
+            "g" | "genre" => Ok(Self::new(
+                FilterType::Genre(val.arg_into().map_err(em)?),
+                cmp,
+            )),
             v => ArgError::failed_to_parse(
                 format!("Unknown filter type `{v}`."),
                 s,

@@ -1,8 +1,12 @@
 use std::sync::Arc;
 
+use serde::Serialize;
+
 use crate::core::library::SongId;
 
-#[derive(Debug, Clone)]
+pub type ArtistId = Arc<str>;
+
+#[derive(Debug, Clone, Serialize)]
 pub struct Artist {
     pub(super) name: Arc<str>,
     pub(super) albums: Vec<Arc<str>>,

@@ -27,11 +27,11 @@ pub fn lookup_image(
     rt_path: Either<RtAndle, &Path>,
     cache: &Path,
     artist: &str,
-    album: &str,
+    title: &str,
     size: CacheSize,
 ) -> Result<(PathBuf, Option<DynamicImage>)> {
     let name = filesan::escape_str(
-        &simple_str(&format!("{artist} - {album}.jpg")),
+        &simple_str(&format!("{artist} - {title}.jpg")),
         '_',
         filesan::Mode::ALL,
     );
@@ -39,7 +39,7 @@ pub fn lookup_image(
         rt_path,
         cache,
         artist,
-        album,
+        title,
         name: &name,
     }
     .lookup(size)
@@ -49,21 +49,21 @@ pub fn lookup_image_path_rt(
     rt: RtAndle,
     cache: &Path,
     artist: &str,
-    album: &str,
+    title: &str,
     size: CacheSize,
 ) -> Result<PathBuf> {
-    Ok(lookup_image(Either::Left(rt), cache, artist, album, size)?.0)
+    Ok(lookup_image(Either::Left(rt), cache, artist, title, size)?.0)
 }
 
 pub fn lookup_image_path_rt_thread(
     rt: RtAndle,
     cache: PathBuf,
     artist: String,
-    album: String,
+    title: String,
     size: CacheSize,
 ) -> JoinHandle<Result<PathBuf>> {
     tokio::task::spawn_blocking(move || {
-        lookup_image_path_rt(rt, &cache, &artist, &album, size)
+        lookup_image_path_rt(rt, &cache, &artist, &title, size)
     })
 }
 
@@ -76,7 +76,7 @@ pub fn lookup_image_data_song(
         Either::Right(song.path()),
         cache,
         song.album_artist_str(),
-        song.album_str(),
+        song.album().unwrap_or(song.title_str()),
         size,
     )?;
     if let Some(img) = img {
@@ -90,7 +90,7 @@ struct ImageLookup<'a> {
     rt_path: Either<RtAndle, &'a Path>,
     cache: &'a Path,
     artist: &'a str,
-    album: &'a str,
+    title: &'a str,
     name: &'a str,
 }
 
@@ -135,19 +135,36 @@ impl ImageLookup<'_> {
             }
         };
 
-        let album = self.album.to_string();
+        let title = self.title.to_string();
         let artist = self.artist.to_string();
+        // (a:/title/.aa:/artist/)+(a://.t:/title/.p:/artist/)
         let query = Query::new(
             vec![Base::Library],
-            ComposedFilter::And(vec![
-                ComposedFilter::Filter(Filter::new(
-                    FilterType::Album(album),
-                    CmpType::Lenient,
-                )),
-                ComposedFilter::Filter(Filter::new(
-                    FilterType::Artist(artist),
-                    CmpType::Lenient,
-                )),
+            ComposedFilter::Or(vec![
+                ComposedFilter::And(vec![
+                    ComposedFilter::Filter(Filter::new(
+                        FilterType::Album(Some(title.clone())),
+                        CmpType::Lenient,
+                    )),
+                    ComposedFilter::Filter(Filter::new(
+                        FilterType::AlbumArtist(Some(artist.clone())),
+                        CmpType::Lenient,
+                    )),
+                ]),
+                ComposedFilter::And(vec![
+                    ComposedFilter::Filter(Filter::new(
+                        FilterType::Album(None),
+                        CmpType::Lenient,
+                    )),
+                    ComposedFilter::Filter(Filter::new(
+                        FilterType::Title(Some(title)),
+                        CmpType::Lenient,
+                    )),
+                    ComposedFilter::Filter(Filter::new(
+                        FilterType::AlbumArtist(Some(artist)),
+                        CmpType::Lenient,
+                    )),
+                ]),
             ]),
             None,
             None,
@@ -214,14 +231,14 @@ impl ImageLookup<'_> {
                 &format!(
                     "{} - {}",
                     simple_str(self.artist),
-                    simple_str(self.album)
+                    simple_str(self.title)
                 ),
                 '_',
                 filesan::Mode::ALL,
             )
             .into(),
             // Winamp way
-            filesan::replace_escape(self.album, '_', filesan::Mode::ALL)
+            filesan::replace_escape(self.title, '_', filesan::Mode::ALL)
                 .into(),
             // Standard way if in separate folders.
             "cover".into(),
