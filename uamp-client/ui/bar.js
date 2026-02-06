@@ -52,7 +52,7 @@ export function updateCurrent(song) {
     songAlbum.textContent = song.album;
     songAlbum.onclick = (e) => openAlbum(e, song.artist, song.album);
 
-    timestampTotal.textContent = song.length.format();
+    timestampTotal.textContent = song.length?.format() ?? 0;
 }
 
 const volumeSlider = document.getElementById("volumeSlider");

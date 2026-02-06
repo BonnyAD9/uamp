@@ -348,7 +348,7 @@ export default class App {
         const playing = this.player.getPlaying();
         if (playing === null) return;
 
-        const total = playing.length.toSecs();
+        const total = playing.length?.toSecs() ?? 0;
         if (current > total) current = total;
 
         const percent = (current / total) * 100;

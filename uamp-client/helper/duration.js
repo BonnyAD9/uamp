@@ -18,6 +18,9 @@ export default class Duration {
      * @returns {Duration} created duration
      */
     static from(obj) {
+        if (obj == null) {
+            return null;
+        }
         return new Duration(obj.secs, obj.nanos);
     }
 
