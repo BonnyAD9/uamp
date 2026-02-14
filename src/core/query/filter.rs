@@ -141,6 +141,7 @@ impl FilterType {
             Self::Title(s) => *s = s.as_deref().map(cache_new_str),
             Self::Artist(s) => *s = s.as_deref().map(cache_new_str),
             Self::Album(s) => *s = s.as_deref().map(cache_new_str),
+            Self::AlbumArtist(s) => *s = s.as_deref().map(cache_new_str),
             Self::Genre(s) => *s = s.as_deref().map(cache_new_str),
             _ => {}
         }
