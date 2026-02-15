@@ -13,6 +13,7 @@ use hyper::{
     Method, Request, Response, Uri,
     body::{Bytes, Frame, Incoming},
 };
+use image::EncodableLayout;
 use pareg::{ArgInto, FromArg};
 use serde::Serialize;
 use tokio::{
@@ -23,13 +24,16 @@ use tokio_tar::Archive;
 use tokio_util::codec::{BytesCodec, FramedRead};
 use url::Url;
 
-use crate::core::{
-    AnyControlMsg, ErrKind, Error, IdControlMsg, Msg, Result, RtAndle,
-    UampApp,
-    config::{self, CacheSize},
-    library::{Song, img_lookup::lookup_image_path_rt_thread},
-    query::Query,
-    server::{Info, RepMsg, ReqMsg, ServerData, sse_service::SseService},
+use crate::{
+    core::{
+        AnyControlMsg, ErrKind, Error, IdControlMsg, Msg, Result, RtAndle,
+        UampApp,
+        config::{self, CacheSize},
+        library::{Song, img_lookup::lookup_image_path_rt_thread},
+        query::Query,
+        server::{Info, RepMsg, ReqMsg, ServerData, sse_service::SseService},
+    },
+    ext::simpl,
 };
 
 type MyBody = StreamBody<BoxStream<'static, Result<Frame<Bytes>>>>;
@@ -94,6 +98,7 @@ impl UampService {
     async fn serve_post(&self, req: Request<Incoming>) -> Result<MyResponse> {
         match req.uri().path() {
             "/api/ctrl" => self.handle_ctrl_post_api(req).await,
+            "/api/unidecode" => self.handle_unidecode_api(req).await,
             _ => Err(Error::http(404, "Unknown POST endpoint.".to_string())),
         }
     }
@@ -267,6 +272,40 @@ impl UampService {
         self.rt.msg_result(Msg::IdControl(msg)).await?;
 
         Ok(string_response("Success!"))
+    }
+
+    async fn handle_unidecode_api(
+        &self,
+        mut req: Request<Incoming>,
+    ) -> Result<MyResponse> {
+        let len: Option<usize> = req
+            .headers()
+            .get("Content-Length")
+            .and_then(|l| l.to_str().ok())
+            .and_then(|a| a.parse().ok());
+        let mut str = req.body_mut().into_data_stream();
+
+        if let Some(len) = len
+            && len > MAX_ACCEPT_LENGTH
+        {
+            return Err(Error::http(413, "Too much data.".to_string()));
+        }
+
+        let mut res = String::new();
+
+        while res.len() <= MAX_ACCEPT_LENGTH
+            && let Some(frame) = str.next().await
+        {
+            let frame = frame?;
+            let s = String::from_utf8_lossy(frame.as_bytes());
+            simpl::to_str(s, &mut res);
+        }
+
+        if res.len() > MAX_ACCEPT_LENGTH {
+            return Err(Error::http(413, "Too much data.".to_string()));
+        }
+
+        Ok(string_response(res))
     }
 
     async fn make_req(&self, k: &str, v: &str) -> Result<RepMsg> {
