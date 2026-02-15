@@ -1,30 +1,16 @@
-use std::sync::Arc;
-
 use serde::Serialize;
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
-pub struct AlbumId {
-    pub artist: Arc<str>,
-    pub name: Arc<str>,
-}
+use crate::ext::simpl;
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash, PartialOrd, Ord, Serialize)]
+#[serde(transparent)]
+pub struct AlbumId(String);
 
 impl AlbumId {
-    pub fn new(
-        artist: impl Into<Arc<str>>,
-        name: impl Into<Arc<str>>,
-    ) -> Self {
-        Self {
-            artist: artist.into(),
-            name: name.into(),
-        }
-    }
-}
-
-impl Serialize for AlbumId {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        format!("{}\t{}", self.artist, self.name).serialize(serializer)
+    pub fn new(artist: impl AsRef<str>, name: impl AsRef<str>) -> Self {
+        let mut id = simpl::new_str(artist);
+        id.push('\t');
+        simpl::to_str(name, &mut id);
+        Self(id)
     }
 }

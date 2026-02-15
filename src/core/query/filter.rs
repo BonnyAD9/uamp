@@ -2,9 +2,8 @@ use std::{fmt::Display, str::FromStr};
 
 use pareg::{ArgError, ArgInto, FromArgStr};
 use serde::{Deserialize, Serialize};
-use unidecode::unidecode_char;
 
-use crate::core::library::Song;
+use crate::{core::library::Song, ext::simpl};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -137,12 +136,12 @@ impl FilterType {
         }
 
         match self {
-            Self::AnyName(s) => *s = s.as_deref().map(cache_new_str),
-            Self::Title(s) => *s = s.as_deref().map(cache_new_str),
-            Self::Artist(s) => *s = s.as_deref().map(cache_new_str),
-            Self::Album(s) => *s = s.as_deref().map(cache_new_str),
-            Self::AlbumArtist(s) => *s = s.as_deref().map(cache_new_str),
-            Self::Genre(s) => *s = s.as_deref().map(cache_new_str),
+            Self::AnyName(s) => *s = s.as_deref().map(simpl::new_str),
+            Self::Title(s) => *s = s.as_deref().map(simpl::new_str),
+            Self::Artist(s) => *s = s.as_deref().map(simpl::new_str),
+            Self::Album(s) => *s = s.as_deref().map(simpl::new_str),
+            Self::AlbumArtist(s) => *s = s.as_deref().map(simpl::new_str),
+            Self::Genre(s) => *s = s.as_deref().map(simpl::new_str),
             _ => {}
         }
     }
@@ -169,7 +168,7 @@ impl CmpType {
     ) -> bool {
         let s = if self.is_lenient() {
             buf.clear();
-            cache_str(s.as_ref(), buf);
+            simpl::to_str(s.as_ref(), buf);
             buf.as_str()
         } else {
             s.as_ref()
@@ -311,19 +310,3 @@ impl FromStr for Filter {
 }
 
 impl FromArgStr for Filter {}
-
-//===========================================================================//
-//                                  Private                                  //
-//===========================================================================//
-
-fn cache_new_str(s: &str) -> String {
-    let mut res = String::new();
-    cache_str(s, &mut res);
-    res
-}
-
-fn cache_str(s: &str, out: &mut String) {
-    for s in s.chars().map(|c| unidecode_char(c).to_ascii_lowercase()) {
-        out.extend(s.chars().filter(|a| !a.is_ascii_whitespace()))
-    }
-}

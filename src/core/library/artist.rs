@@ -4,8 +4,6 @@ use serde::Serialize;
 
 use crate::core::library::SongId;
 
-pub type ArtistId = Arc<str>;
-
 #[derive(Debug, Clone, Serialize)]
 pub struct Artist {
     pub(super) name: Arc<str>,

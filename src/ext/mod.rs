@@ -6,6 +6,7 @@ mod wrap;
 //                                   Public                                  //
 //===========================================================================//
 
+pub mod simpl;
 pub mod uri;
 
 pub use self::{alc::*, durstr::*, wrap::*};

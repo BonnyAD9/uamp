@@ -211,7 +211,7 @@ impl<'a> State<'a> {
         for (id, mut s) in removed {
             let Some(album) = s.album else {
                 for a in s.artists {
-                    rem_singles.entry(a).or_default().push(id);
+                    rem_singles.entry(ArtistId::new(a)).or_default().push(id);
                 }
                 continue;
             };
@@ -233,7 +233,7 @@ impl<'a> State<'a> {
                 .or_default()
                 .push(id);
             for a in s.artists {
-                rem_singles.entry(a).or_default().push(id);
+                rem_singles.entry(ArtistId::new(a)).or_default().push(id);
             }
         }
 
@@ -263,7 +263,10 @@ impl<'a> State<'a> {
 
             if alb.songs.is_empty() {
                 let alb = self.albums.remove(&key).unwrap();
-                rem_art.entry(alb.artist).or_default().push(alb.name);
+                rem_art
+                    .entry(ArtistId::new(alb.artist))
+                    .or_default()
+                    .push(alb.name);
             }
         }
 
@@ -446,7 +449,7 @@ fn add_song_album_artists(
     };
 
     let album_artist = artists
-        .entry(album_artist.clone())
+        .entry(ArtistId::new(album_artist))
         .or_insert_with(|| Artist::new(album_artist.clone()));
     if song.album_artist.is_some() {
         // Reduce number of copies in memory.
@@ -455,13 +458,11 @@ fn add_song_album_artists(
 
     // Create/asociate with album
     if let Some(album) = &song.album {
-        dbg!(album);
-        let album = albums
-            .entry(AlbumId::new(album_artist.name.clone(), album.clone()))
-            .or_insert_with_key(|k| {
-                album_artist.albums.push(k.name.clone());
-                Album::new(k.artist.clone(), k.name.clone())
-            });
+        let album_id = AlbumId::new(&album_artist.name, album);
+        let album = albums.entry(album_id.clone()).or_insert_with(|| {
+            album_artist.albums.push(album.clone());
+            Album::new(album_artist.name.clone(), album.clone())
+        });
         // Reduce number of copies in memory.
         song.album = Some(album.name.clone());
         album.songs.push(id);
@@ -472,8 +473,8 @@ fn add_song_album_artists(
     let aa = album_artist.name.clone();
     for sart in &mut song.artists {
         let artist = artists
-            .entry(sart.clone())
-            .or_insert_with_key(|k| Artist::new(k.clone()));
+            .entry(ArtistId::new(&sart))
+            .or_insert_with(|| Artist::new(sart.clone()));
         *sart = artist.name.clone();
 
         if artist.name != aa {
