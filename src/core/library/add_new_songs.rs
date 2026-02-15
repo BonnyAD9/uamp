@@ -3,7 +3,6 @@ use std::{
     fs::{self, DirEntry, FileType},
     mem,
     path::PathBuf,
-    sync::Arc,
 };
 
 use log::error;
@@ -245,8 +244,8 @@ impl<'a> State<'a> {
     fn remove_from_albums(
         &mut self,
         rem_alb: impl IntoIterator<Item = (AlbumId, Vec<SongId>)>,
-    ) -> BTreeMap<ArtistId, Vec<Arc<str>>> {
-        let mut rem_art: BTreeMap<ArtistId, Vec<Arc<str>>> = BTreeMap::new();
+    ) -> BTreeMap<ArtistId, Vec<AlbumId>> {
+        let mut rem_art: BTreeMap<ArtistId, Vec<AlbumId>> = BTreeMap::new();
         for (key, mut songs) in rem_alb {
             let Some(alb) = self.albums.get_mut(&key) else {
                 continue;
@@ -264,9 +263,9 @@ impl<'a> State<'a> {
             if alb.songs.is_empty() {
                 let alb = self.albums.remove(&key).unwrap();
                 rem_art
-                    .entry(ArtistId::new(alb.artist))
+                    .entry(ArtistId::new(&alb.artist))
                     .or_default()
-                    .push(alb.name);
+                    .push(AlbumId::new(alb.artist, alb.name));
             }
         }
 
@@ -299,7 +298,7 @@ impl<'a> State<'a> {
 
     fn remove_from_artists(
         &mut self,
-        rem_art: impl IntoIterator<Item = (ArtistId, Vec<Arc<str>>)>,
+        rem_art: impl IntoIterator<Item = (ArtistId, Vec<AlbumId>)>,
     ) {
         for (key, mut albums) in rem_art {
             let Some(art) = self.artists.get_mut(&key) else {
@@ -460,7 +459,7 @@ fn add_song_album_artists(
     if let Some(album) = &song.album {
         let album_id = AlbumId::new(&album_artist.name, album);
         let album = albums.entry(album_id.clone()).or_insert_with(|| {
-            album_artist.albums.push(album.clone());
+            album_artist.albums.push(album_id.clone());
             Album::new(album_artist.name.clone(), album.clone())
         });
         // Reduce number of copies in memory.

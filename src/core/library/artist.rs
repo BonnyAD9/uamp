@@ -2,12 +2,12 @@ use std::sync::Arc;
 
 use serde::Serialize;
 
-use crate::core::library::SongId;
+use crate::core::library::{AlbumId, SongId};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Artist {
     pub(super) name: Arc<str>,
-    pub(super) albums: Vec<Arc<str>>,
+    pub(super) albums: Vec<AlbumId>,
     pub(super) singles: Vec<SongId>,
 }
 
@@ -24,7 +24,7 @@ impl Artist {
         &self.name
     }
 
-    pub fn albums(&self) -> &[Arc<str>] {
+    pub fn albums(&self) -> &[AlbumId] {
         &self.albums
     }
 
