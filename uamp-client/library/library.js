@@ -3,8 +3,6 @@ import Artist from "./artist.js";
 import Song from "./song.js";
 import Sorter from "./sorter.js";
 
-import transliterate from "../vendor/transliterate/index.js";
-
 /**
  * @typedef {Object} LibraryData
  * @property {object[]} songs
@@ -12,15 +10,6 @@ import transliterate from "../vendor/transliterate/index.js";
  * @property {object[]} artists
  * @property {object[]} albums
  */
-
-/**
- * Normalizes the given identifier, converts to lower case and removes spaces
- * @param {string} text - identifier to be converted
- * @returns {string} normalized identifier
- */
-export function normalizeIdent(input) {
-    return transliterate(input).toLowerCase().replace(/\s+/g, "");
-}
 
 export default class Library {
     /**

@@ -1,5 +1,4 @@
 import Album from "./album.js";
-import { normalizeIdent } from "./library.js";
 import Song from "./song.js";
 import Sorter from "./sorter.js";
 
@@ -22,10 +21,7 @@ export default class Artist {
     }
 
     static from(obj, allAlbums, allSongs) {
-        const artistIdent = normalizeIdent(obj.name);
-        const albums = obj.albums.map(
-            (a, _) => allAlbums[`${artistIdent}\t${normalizeIdent(a)}`],
-        );
+        const albums = obj.albums.map((a, _) => allAlbums[a]);
         const singles = obj.singles.map((s, _) => allSongs[s]);
         const songs = [...albums.flatMap((a) => a.songs.get()), ...singles];
         return new Artist(obj.name, songs, albums);
