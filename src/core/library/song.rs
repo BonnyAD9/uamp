@@ -1,12 +1,14 @@
 use std::{
     borrow::Cow,
     fmt::Debug,
+    fs::File,
     path::{Path, PathBuf},
     sync::Arc,
     time::Duration,
 };
 
 use itertools::Itertools;
+use raplay::{Source, source::Symph};
 use ratag::{DataType, TagStore, read_tag_from_file, trap};
 use serde::{Deserialize, Serialize};
 
@@ -14,6 +16,7 @@ use crate::{
     core::{
         Result,
         config::{CacheSize, Config},
+        log_err,
     },
     ext::duration_to_string,
 };
@@ -59,9 +62,14 @@ impl Song {
     /// Creates song from the given path
     pub fn from_path(path: impl AsRef<Path>) -> Result<Self> {
         let mut res = Self::empty(path.as_ref());
-        SongTagReader::read_to(&mut res, path)?;
+        SongTagReader::read_to(&mut res, path.as_ref())?;
         res.artists = res.artists.into_iter().unique().collect();
         res.genres = res.genres.into_iter().unique().collect();
+        if res.length().is_none() {
+            res.length =
+                log_err("Failed to get song time: ", symph_get_len(path))
+                    .flatten();
+        }
         Ok(res)
     }
 
@@ -315,4 +323,9 @@ impl<'a> TagStore for SongTagReader<'a> {
 
 fn default_deleted() -> bool {
     false
+}
+
+fn symph_get_len(p: impl AsRef<Path>) -> Result<Option<Duration>> {
+    let s = Symph::try_new(File::open(p)?, &Default::default())?;
+    Ok(s.get_time().map(|t| t.total))
 }
