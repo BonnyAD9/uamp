@@ -3,26 +3,40 @@ import Artist from "./artist.js";
 import Song from "./song.js";
 import Sorter from "./sorter.js";
 
+/**
+ * @typedef {Object} LibraryData
+ * @property {object[]} songs
+ * @property {object[]} tmp_songs
+ * @property {object[]} artists
+ * @property {object[]} albums
+ */
+
 export default class Library {
     /**
      * Creates new library from the given library data
-     * @param {{ songs: object[], tmp_songs: object[] }} library
+     * @param {LibraryData} library
      */
-    constructor(library) {
+    constructor({ songs, tmp_songs, artists, albums }) {
         /** @type {Song[]} */
-        this.allSongs = library.songs.map((s, i) => Song.from(i, s));
-        /** @type {Album[]} */
-        this.allAlbums = [];
-        /** @type {Artist[]} */
-        this.allArtists = [];
+        this.allSongs = songs.map((s, i) => Song.from(i, s));
+        /** @type {Object<string, Album>} */
+        this.allAlbums = Object.entries(albums).reduce((acc, [id, album]) => {
+            acc[id] = Album.from(album, this.allSongs);
+            return acc;
+        }, {});
+        /** @type {Object<string, Artist>} */
+        this.allArtists = Object.entries(artists).reduce((acc, [id, a]) => {
+            acc[id] = Artist.from(a, this.allAlbums, this.allSongs);
+            return acc;
+        }, {});
 
         /** @type {Song[]} */
-        this.tmpSongs = library.tmp_songs.map((s, i) => Song.from(-i - 1, s));
+        this.tmpSongs = tmp_songs.map((s, i) => Song.from(-i - 1, s));
 
         /** @type {Sorter} */
         this.songs = new Sorter("id");
         /** @type {Sorter} */
-        this.albums = new Sorter("year", [], false);
+        this.albums = new Sorter("year", [], false, ["name", "artist"]);
         /** @type {Sorter} */
         this.artists = new Sorter("name");
 
@@ -40,12 +54,26 @@ export default class Library {
     }
 
     /**
+     * @returns {Album[]} all library albums
+     */
+    getAlbums() {
+        return Object.values(this.allAlbums);
+    }
+
+    /**
+     * @returns {Artist[]} all library artists
+     */
+    getArtists() {
+        return Object.values(this.allArtists);
+    }
+
+    /**
      * Gets artist by its name
      * @param {string} name - artist name
      * @returns {Artist|null} found artist or null
      */
     getArtistByName(name) {
-        return this.allArtists.find(
+        return this.getArtists().find(
             (a) => a.name.toLowerCase() === name.toLowerCase(),
         );
     }
@@ -57,7 +85,7 @@ export default class Library {
      * @returns {Album|null} found album or null
      */
     getAlbumByKey(artist, name) {
-        return this.allAlbums.find(
+        return this.getAlbums().find(
             (a) =>
                 a.name.toLowerCase() === name.toLowerCase() &&
                 a.artist.toLowerCase() === artist.toLowerCase(),
@@ -80,9 +108,10 @@ export default class Library {
             if (s.deleted) return false;
 
             return (
-                s.title.toLowerCase().includes(q) ||
-                s.artist.toLowerCase().includes(q) ||
-                s.album.toLowerCase().includes(q)
+                s.title?.toLowerCase()?.includes(q) ||
+                s.album_artist?.toLowerCase()?.includes(q) ||
+                s.artists.some((a) => a.toLowerCase().includes(q)) ||
+                s.album?.toLowerCase()?.includes(q)
             );
         });
         this.songs.set(queried);
@@ -91,11 +120,11 @@ export default class Library {
     searchAlbums(query) {
         const q = query.trim().toLowerCase();
         if (!q) {
-            this.albums.set(this.allAlbums);
+            this.albums.set(this.getAlbums());
             return;
         }
 
-        const filtered = this.allAlbums.filter((a) => {
+        const filtered = this.getAlbums().filter((a) => {
             return (
                 a.artist.toLowerCase().includes(q) ||
                 a.name.toLowerCase().includes(q)
@@ -107,69 +136,27 @@ export default class Library {
     searchArtists(query) {
         const q = query.trim().toLowerCase();
         if (!q) {
-            this.artists.set(this.allArtists);
+            this.artists.set(this.getArtists());
             return;
         }
 
-        const filtered = this.allArtists.filter((a) =>
+        const filtered = this.getArtists().filter((a) =>
             a.name.toLowerCase().includes(q),
         );
         this.artists.set(filtered);
     }
 
-    /** Generates albums and artists (TODO: try refactor + album push()) */
+    /** Generates albums and artists */
     #generate() {
-        const albums = new Map();
-        const artists = new Map();
-
         for (const song of this.allSongs) {
             if (song.deleted) continue;
-
             this.songs.push(song);
-            for (const artistName of song.artists) {
-                const artistKey = artistName.trim().toLowerCase();
-                if (!artists.has(artistKey)) {
-                    artists.set(artistKey, new Artist(artistName));
-                }
-    
-                const artist = artists.get(artistKey);
-                artist.songs.push(song);
-            }
-            
-            const albumArtistKey = song.album_artist.trim().toLowerCase();
-
-            const albumKey = `${song.album.trim().toLowerCase()}::${albumArtistKey}`;
-            if (!albums.has(albumKey)) {
-                albums.set(
-                    albumKey,
-                    new Album(song.album, song.album_artist, song.year),
-                );
-                if (!artists.has(albumArtistKey)) {
-                    const artist = new Artist(song.album_artist);
-                    artist.songs.push(song);
-                    artists.set(albumArtistKey, artist);
-                }
-                const artist = artists.get(albumArtistKey);
-                artist.albums.push(albums.get(albumKey));
-            }
-            albums.get(albumKey).songs.push(song);
         }
 
-        this.allAlbums = Array.from(albums.values());
-        this.allAlbums.forEach((album) => album.sortByTrack());
-        this.allAlbums.sort((a, b) => {
-            const diff = b.year - a.year;
-            if (diff !== 0) return diff;
+        this.getAlbums().forEach((album) => album.sortByTrack());
+        this.albums.set(this.getAlbums());
 
-            return a.name.localeCompare(b.name, undefined, {
-                sensitivity: "accent",
-            });
-        });
-        this.albums.set(this.allAlbums);
-
-        this.allArtists = Array.from(artists.values());
-        this.allArtists.sort((a, b) => a.name.localeCompare(b.name));
-        this.allArtists.forEach((artist) => artist.sortAlbums());
-        this.artists.set(this.allArtists);
+        this.getArtists().forEach((artist) => artist.sortAlbums());
+        this.artists.set(this.getArtists());
     }
 }

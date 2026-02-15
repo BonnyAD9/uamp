@@ -1,8 +1,6 @@
 import Duration from "../helper/duration.js";
 import Album from "./album.js";
 
-const UNDEF_YEAR = 2147483647;
-
 const songTemplate = document.getElementById('song-template');
 const barSongTemplate = document.getElementById('bar-song-template');
 
@@ -23,8 +21,8 @@ export default class Song {
      * @param {boolean} deleted
      */
     constructor(
-        id, path, title, artists, album, album_artist, track, disc, year, length, genres,
-        deleted = false
+        id, path, title, artists, album, album_artist, track, disc, year,
+        length, genres, deleted = false
     ) {
         /** @type {number} */
         this.id = id;
@@ -37,7 +35,7 @@ export default class Song {
         /** @type {string|null} */
         this.album = album;
         /** @type {string|null} */
-        this.album_artist = album_artist ?? (artists.length == 0 ? null : artists[0]);
+        this.album_artist = album_artist ?? artists[0] ?? null;
         /** @type {number|null} */
         this.track = track;
         /** @type {number|null} */
@@ -62,7 +60,7 @@ export default class Song {
 
     static empty(id) {
         return new Song(
-            id, '', '', '', '', 0, 0, 0, new Duration(0, 0), '', true
+            id, '', null, [], null, null, null, null, null, null, [], true
         );
     }
 
@@ -82,14 +80,18 @@ export default class Song {
         const cloned = songTemplate.content.cloneNode(true);
         const row = cloned.querySelector('tr');
 
-        row.querySelector('img').src =
-            Album.getCover(this.album_artist ?? "--", this.album ?? this.title ?? "--", 64);
+        row.querySelector('img').src = Album.getCover(
+            this.album_artist ?? "--", this.album ?? this.title ?? "--", 64
+        );
         row.querySelector('.title').textContent = this.title ?? "-";
-        row.querySelector('.author').textContent = this.artists.length == 0 ? "-" : this.artists.join(", ");
+        row.querySelector('.author').textContent =
+            this.artists.length == 0 ? "-" : this.artists.join(", ");
         row.querySelector('.album').textContent = this.album ?? "-";
         row.querySelector('.year').textContent = this.getYear();
-        row.querySelector('.length').textContent = this.length?.format() ?? "-";
-        row.querySelector('.genre').textContent = this.genres.length == 0 ? "-" : this.genres.join(", ");
+        row.querySelector('.length').textContent =
+            this.length?.format() ?? "-";
+        row.querySelector('.genre').textContent =
+            this.genres.length == 0 ? "-" : this.genres.join(", ");
         row.querySelector('.track').textContent = this.track ?? "-";
         row.querySelector('.disc').textContent = this.disc ?? "-";
 
@@ -106,7 +108,7 @@ export default class Song {
         const item = cloned.querySelector('.item');
 
         item.querySelector('.id').textContent = id + 1;
-        item.querySelector('.title').textContent = this.title;
+        item.querySelector('.title').textContent = this.title ?? "-";
         item.querySelector('.artist').textContent = this.artists.join(", ");
 
         return item;
@@ -118,8 +120,9 @@ export default class Song {
      */
     getQuery() {
         const s = (text) => text.replaceAll('/', '//');
-        return `n=/${s(this.title ?? "")}/.p=/${s(this.album_artist ?? "")}/.a=/` +
-            `${s(this.album ?? "")}/.t=${this.track ?? ""}.d=${this.disc ?? ""}.y=${this.year ?? ""}` +
-            `.g=/${s(this.genres.length == 0 ? "" : this.genres[0])}/`;
+        return `n=/${s(this.title ?? "")}/.p=/${s(this.album_artist ?? "")}` +
+            `/.a=/${s(this.album ?? "")}/.t=${this.track ?? ""}.d=` +
+            `${this.disc ?? ""}.y = ${this.year ?? ""}.g=/` +
+            `${ s(this.genres.length == 0 ? "" : this.genres[0]) }/`;
     }
 }

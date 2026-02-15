@@ -15,9 +15,16 @@ export default class Artist {
         /** @type {string} */
         this.name = name;
         /** @type {Sorter} */
-        this.songs = new Sorter(songs);
+        this.songs = new Sorter("album", songs, true, ["track"]);
         /** @type {Album[]} */
         this.albums = albums;
+    }
+
+    static from(obj, allAlbums, allSongs) {
+        const albums = obj.albums.map((a, _) => allAlbums[`${obj.name}\t${a}`]);
+        const singles = obj.singles.map((s, _) => allSongs[s]);
+        const songs = [...albums.flatMap((a) => a.songs.get()), ...singles];
+        return new Artist(obj.name, songs, albums);
     }
 
     /**
