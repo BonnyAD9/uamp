@@ -1,3 +1,6 @@
 [submodule "packages/arch"]
 	path = packages/arch
 	url = ssh://aur@aur.archlinux.org/uamp.git
+[submodule "uamp-client/vendor/transliterate"]
+	path = uamp-client/vendor/transliterate
+	url = https://github.com/sindresorhus/transliterate.git
