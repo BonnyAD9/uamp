@@ -37,7 +37,7 @@ import {
 } from "./ui/tables.js";
 import VirtualTable from "./ui/virtual_table.js";
 
-const slider = document.querySelector(".bar .slider hr");
+const slider = document.querySelector(".bar #progressBar");
 
 export default class App {
     /**
@@ -351,8 +351,7 @@ export default class App {
         const total = playing.length?.toSecs() ?? 0;
         if (current > total) current = total;
 
-        const percent = (current / total) * 100;
-        slider.style.width = `${percent}%`;
+        slider.value = (current / total) * 100;
 
         if (this.position !== null) {
             this.position.current.secs = Math.floor(current);
@@ -484,17 +483,16 @@ window.addEventListener("popstate", (e) => {
     );
 });
 
-const sliderTrack = document.querySelector(".bar .slider");
-sliderTrack.addEventListener("click", (e) => {
-    const rect = sliderTrack.getBoundingClientRect();
-    const percent = (e.clientX - rect.left) / rect.width;
+slider.addEventListener("input", () => AppSingleton.get().stopProgress());
+slider.addEventListener("change", () => {
+    const percent = slider.value / 100;
 
     const app = AppSingleton.get();
     const song = app.player.getPlaying();
 
     const pos = song.length.fromPercent(percent);
     apiCtrl(`seek=${pos.format()}`);
-    slider.style.width = `${percent * 100}%`;
+    app.updateProgressBar();
 });
 
 /**

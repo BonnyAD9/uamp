@@ -87,4 +87,10 @@ export default class Duration {
         }
         return `${minutes}:${seconds.toString().padStart(2, "0")}`;
     }
+
+    forceFormat() {
+        const minutes = Math.floor(this.secs / 60);
+        const seconds = this.secs % 60;
+        return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    }
 }

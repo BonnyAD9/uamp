@@ -33,6 +33,7 @@ const songTitle = document.querySelector(".bar .info .title h3");
 const songArtist = document.getElementById("bar-artist");
 const songAlbum = document.getElementById("bar-album");
 const barBackdrop = document.querySelector(".bar .backdrop");
+const slider = document.querySelector(".bar #progressBar");
 /**
  * Updates the currently playing song info
  * @param {?Song} song - currently playing song
@@ -44,15 +45,15 @@ export function updateCurrent(song) {
         return;
     }
 
-    songIcon.src = Album.getCover(song.artist, song.album);
-    barBackdrop.src = Album.getCover(song.artist, song.album, 64);
+    songIcon.src = Album.getCover(song.album_artist, song.album);
+    barBackdrop.src = Album.getCover(song.album_artist, song.album, 64);
 
-    songTitle.textContent = song.title;
-    songArtist.textContent = song.artist;
-    songAlbum.textContent = song.album;
-    songAlbum.onclick = (e) => openAlbum(e, song.artist, song.album);
+    songTitle.textContent = song.getTitle();
+    songArtist.textContent = song.getArtists();
+    songAlbum.textContent = song.getAlbum();
+    songAlbum.onclick = (e) => openAlbum(e, song.album_artist, song.album);
 
-    timestampTotal.textContent = song.length?.format() ?? 0;
+    timestampTotal.textContent = song.length?.format() ?? "-:--";
 }
 
 const volumeSlider = document.getElementById("volumeSlider");

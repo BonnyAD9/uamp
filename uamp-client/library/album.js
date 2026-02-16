@@ -68,14 +68,14 @@ export default class Album {
 
     /**
      * Gets the API URL to get the album cover
-     * @param {string} artist
-     * @param {string} album
+     * @param {string|null} artist
+     * @param {string|null} album
      * @return {string} API URL
      */
     static getCover(artist, album, size = null) {
         let req =
-            `/api/img?artist=${encodeURIComponent(artist)}&album=` +
-            `${encodeURIComponent(album)}&or=` +
+            `/api/img?artist=${encodeURIComponent(artist ?? "--")}&album=` +
+            `${encodeURIComponent(album ?? "--")}&or=` +
             encodeURIComponent("/app/assets/svg/img_placeholder.svg");
         if (size !== null) req += `&size=${size}`;
         return req;

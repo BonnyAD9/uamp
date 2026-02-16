@@ -63,13 +63,29 @@ export default class Song {
             id, '', null, [], null, null, null, null, null, null, [], true
         );
     }
+    
+    /** @returns {string} song title, otherwise the default string. */
+    getTitle(val = "-") {
+        return this.title ?? val;
+    }
+   
+    /** @returns {string} artists string, otherwise the default string. */
+    getArtists(val = "-") {
+        return this.artists.length == 0 ?
+            this.album_artist ?? val : this.artists.join(", ");
+    }
+   
+    /** @return {string} album string, otherwise the default string. */ 
+    getAlbum(val = "-") {
+        return this.album ?? val;
+    }
 
     /**
      * Gets songs release year, checks for not set year
      * @returns {string} songs release year
      */
-    getYear() {
-        return this.year === null ? '-' : `${this.year}`;
+    getYear(val = "-") {
+        return this.year === null ? val : `${this.year}`;
     }
 
     /**
@@ -81,12 +97,11 @@ export default class Song {
         const row = cloned.querySelector('tr');
 
         row.querySelector('img').src = Album.getCover(
-            this.album_artist ?? "--", this.album ?? this.title ?? "--", 64
+            this.album_artist, this.album ?? this.title, 64
         );
-        row.querySelector('.title').textContent = this.title ?? "-";
-        row.querySelector('.author').textContent =
-            this.artists.length == 0 ? "-" : this.artists.join(", ");
-        row.querySelector('.album').textContent = this.album ?? "-";
+        row.querySelector('.title').textContent = this.getTitle();
+        row.querySelector('.author').textContent = this.getArtists();
+        row.querySelector('.album').textContent = this.getAlbum();
         row.querySelector('.year').textContent = this.getYear();
         row.querySelector('.length').textContent =
             this.length?.format() ?? "-";
