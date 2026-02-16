@@ -1,7 +1,6 @@
 import Song from "./song.js";
 import Sorter from "./sorter.js";
 
-const UNDEF_YEAR = 0;
 const albumTemplate = document.getElementById("album-template");
 
 export default class Album {
@@ -9,7 +8,7 @@ export default class Album {
      * Creates new album
      * @param {string} name
      * @param {string} artist
-     * @param {number} year
+     * @param {number|null} year
      * @param {Song[]} songs
      */
     constructor(name, artist, year, songs = []) {
@@ -17,10 +16,16 @@ export default class Album {
         this.name = name;
         /** @type {string} */
         this.artist = artist;
-        /** @type {number} */
+        /** @type {number|null} */
         this.year = year;
         /** @type {Sorter} */
         this.songs = new Sorter("track", songs);
+    }
+
+    static from(obj, allSongs) {
+        const songs = obj.songs.map((s, _) => allSongs[s]);
+        const year = songs[0]?.year ?? null;
+        return new Album(obj.name, obj.artist, year, songs);
     }
 
     /**
@@ -28,7 +33,7 @@ export default class Album {
      * @returns {string} songs release year
      */
     getYear() {
-        return this.year == UNDEF_YEAR ? "-" : `${this.year}`;
+        return this.year === null ? "-" : `${this.year}`;
     }
 
     /**

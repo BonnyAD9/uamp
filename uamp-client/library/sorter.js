@@ -9,10 +9,12 @@ export default class Sorter {
      * @param {string} defaultKey - default sorting key
      * @param {any[]} arr - array to implement sorting for
      * @param {bool} defaultAscending - true for ascending, false descending
+     * @param {string[]} otherKeys - secondary keys to sort by
      */
-    constructor(defaultKey, arr = [], defaultAscending = true) {
+    constructor(defaultKey, arr = [], defaultAscending = true, otherKeys = []) {
         this.arr = arr;
         this.key = defaultKey;
+        this.otherKeys = otherKeys;
         this.defaultKey = defaultKey;
         this.ascending = defaultAscending;
         this.defaultAscending = defaultAscending;
@@ -52,7 +54,12 @@ export default class Sorter {
     sort() {
         this.arr = this.arr.sort((a, b) => {
             const res = Sorter.#cmp(a[this.key], b[this.key]);
-            return this.ascending ? res : -res;
+            if (res != 0) return this.ascending ? res : -res;
+
+            for (const key of this.otherKeys) {
+                const res = Sorter.#cmp(a[key], b[key]);
+                if (res !== 0) return res;
+            }
         });
     }
 
