@@ -218,6 +218,8 @@ function gradHoverListeners() {
 }
 
 function card3DHover() {
+    const MAX_ROTATION = 20;
+
     const lists = document.querySelectorAll(".list");
     lists.forEach((list) => {
         list.addEventListener("mousemove", (e) => {
@@ -225,12 +227,15 @@ function card3DHover() {
             if (!target) return;
 
             const rect = target.getBoundingClientRect();
+
             const x = e.clientX - rect.x - rect.width / 2;
             const y = e.clientY - rect.y - rect.height / 2;
-            const dist = -Math.log(Math.sqrt(x ** 2 + y ** 2)) * 3;
-            list.style.setProperty("--rot-x", y / 100);
-            list.style.setProperty("--rot-y", -x / 100);
-            list.style.setProperty("--rot-angle", `${dist}deg`);
+
+            const xNorm = (x / (rect.width / 2)) * MAX_ROTATION;
+            const yNorm = (y / (rect.height / 2)) * MAX_ROTATION;
+
+            target.style.setProperty("--rot-x", `${-yNorm}deg`);
+            target.style.setProperty("--rot-y", `${xNorm}deg`);
         });
     });
 }

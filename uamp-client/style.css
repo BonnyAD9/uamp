@@ -363,14 +363,14 @@ table.songs td > img {
 }
 
 table.songs td > p,
-.list .card > .details > p,
+.list .card .details > p,
 .setting > div > p {
     color: var(--fg);
     font-size: 15px;
 }
 
 table.songs td > span,
-.list .card > .details > span,
+.list .card .details > span,
 .setting > div > span {
     color: var(--fg-sec);
     font-size: 11px;
@@ -395,26 +395,36 @@ table.songs td .albums-preview img {
     flex-wrap: wrap;
     gap: 5px;
     justify-content: flex-start;
-    perspective: 5000px;
 }
 
 .list .card {
     flex: 1 1 calc(14.28% - 5px);
     max-width: calc(14.28% - 5px);
+    perspective: 1000px;
+    cursor: pointer;
+}
+
+.list .card-inner {
+    width: 100%;
+    height: 100%;
     box-sizing: border-box;
     background-color: var(--bg-light);
     border-radius: 10px;
     overflow: hidden;
     cursor: pointer;
     transition: 0.2s ease;
-    transform: rotate3D(0);
+    transform-style: preserve-3d;
+    will-change: transform;
 }
 
 .list .card:hover {
-    background-color: (--bg-lighter);
-    transform: scale3d(1.07, 1.07, 1.07)
-        rotate3d(var(--rot-x), var(--rot-y), 0, var(--rot-angle));
     z-index: 20;
+}
+
+.list .card:hover .card-inner {
+    background-color: (--bg-lighter);
+    transform: scale3d(1.07, 1.07, 1.07) rotateX(var(--rot-x))
+        rotateY(var(--rot-y));
     box-shadow: 0 5px 20px 5px #00000044;
     transition: 100ms ease-out;
 }
