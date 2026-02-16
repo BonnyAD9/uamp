@@ -1,7 +1,7 @@
 use tokio::sync::broadcast;
 
 use crate::core::{
-    RtAndle,
+    RtAndle, log_err,
     server::{SubMsg, sub::SetAll},
 };
 
@@ -27,11 +27,13 @@ impl SseService {
     }
 
     async fn init(rt: RtAndle) -> Option<String> {
-        rt.request(|app, _| SubMsg::SetAll(SetAll::new(app).into()))
-            .await
-            .ok()?
-            .event()
-            .ok()
+        log_err(
+            "Failed to create sse message: ",
+            rt.request(|app, _| SubMsg::SetAll(SetAll::new(app).into()))
+                .await
+                .ok()?
+                .event(),
+        )
     }
 
     async fn next_inner(&mut self) -> Option<String> {

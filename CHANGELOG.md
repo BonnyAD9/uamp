@@ -1,5 +1,31 @@
 # CHANGELOG
 
+## future
+### Breaking changes
+On first startup after this update, uamp will fail to load cached metadata from
+library and so it will also make all playlists empty. You will have to reload
+your library. Some cached images will also be no longer used, so you can
+delete the image cache at `~/.cache/uamp/` if you would like to make sure that
+there are no unused cached files.
+
+The http api has also changed to reflect these changes. The `set-all` sse now
+contains albums and artists and song now has nullable fields and `artists` and
+`genres` is array.
+
+- Rework library format:
+    - Properly represent missing metadata of songs.
+    - Add support for album artists
+    - Uamp can now work with albums and artists.
+
+### New features
+- Uamp can now work with album artists.
+- Each song can now have multiple artists.
+- Each song can now have multiple genres.
+- Query for empty string is interpreted as that property should not be set.
+
+### Fixes
+- Fix panic in mix after into empty playlist.
+
 ## v0.6.8
 ### New features
 - Add message to remove songs from library with `remove-from-library`.

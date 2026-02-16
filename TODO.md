@@ -1,4 +1,5 @@
 # TODO
+- Update image lookup logic with new album-artists grouping.
 - Song tags (categories)
 - Custom format for listing songs.
 - TUI

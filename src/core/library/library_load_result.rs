@@ -1,9 +1,12 @@
-use std::{collections::HashSet, fmt::Debug, mem};
+use std::{collections::HashSet, fmt::Debug};
 
-use crate::core::{
-    AppCtrl, Error, Job, JobMsg, Msg, Result, UampApp,
-    library::{LoadOpts, add_new_songs::add_new_songs},
-    player::AddPolicy,
+use crate::{
+    core::{
+        AppCtrl, Error, Job, JobMsg, Msg, Result, UampApp,
+        library::{Albums, Artists, LoadOpts, add_new_songs::add_new_songs},
+        player::AddPolicy,
+    },
+    ext::Alc,
 };
 
 use super::{LibraryUpdate, Song, SongId};
@@ -18,6 +21,8 @@ pub struct LibraryLoadResult {
     pub(super) removed: bool,
     /// The new library contents (all songs not only the new ones)
     pub(super) songs: Vec<Song>,
+    pub(super) albums: Albums,
+    pub(super) artists: Artists,
     /// Determines what to do with the new songs.
     pub(super) add_policy: Option<AddPolicy>,
     /// Index of first new song.
@@ -41,6 +46,8 @@ impl Debug for LibraryLoadResult {
         f.debug_struct("LibraryLoadResult")
             .field("removed", &self.removed)
             .field("songs.len", &self.songs.len())
+            .field("albums.len", &self.albums.len())
+            .field("artists.len", &self.artists.len())
             .field("add_policy", &self.add_policy)
             .field("first_new", &self.first_new)
             .field("sparse_new.len", &self.sparse_new.len())
@@ -64,6 +71,8 @@ impl UampApp {
 
         let conf = self.config.clone();
         let songs = self.library.clone_songs();
+        let albums = self.library.clone_albums();
+        let artists = self.library.clone_artists();
         let remove_missing =
             opts.remove_missing.unwrap_or(conf.remove_missing_on_load());
 
@@ -73,7 +82,10 @@ impl UampApp {
                 first_new: songs.len(),
                 add_policy: opts.add_to_playlist,
                 sparse_new: vec![],
-                songs: songs.into(),
+                // Do the cloning on the separate thread.
+                songs: Alc::take(songs),
+                albums: Alc::take(albums),
+                artists: Alc::take(artists),
             };
 
             add_new_songs(&mut res, &conf, remove_missing);
@@ -108,13 +120,15 @@ impl UampApp {
     ) -> Result<()> {
         self.jobs.finish(Job::LIBRARY_LOAD);
 
-        let Some(mut res) = res else {
+        let Some(res) = res else {
             return Ok(());
         };
 
         let old_cnt = self.library.songs().len();
 
-        *self.library.mut_songs() = mem::take(&mut res.songs).into();
+        *self.library.mut_songs() = res.songs.into();
+        self.library.albums = res.albums.into();
+        self.library.artists = res.artists.into();
         if res.removed {
             if res.first_new < old_cnt || !res.sparse_new.is_empty() {
                 // New songs ids replaced old song ids.

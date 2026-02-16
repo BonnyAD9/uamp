@@ -1,4 +1,4 @@
-mod alc_vec;
+mod alc;
 mod durstr;
 mod wrap;
 
@@ -6,6 +6,7 @@ mod wrap;
 //                                   Public                                  //
 //===========================================================================//
 
+pub mod simpl;
 pub mod uri;
 
-pub use self::{alc_vec::*, durstr::*, wrap::*};
+pub use self::{alc::*, durstr::*, wrap::*};
