@@ -418,7 +418,7 @@ table.songs td .albums-preview img {
 }
 
 .list .card:hover {
-    z-index: 20;
+    z-index: 9;
 }
 
 .list .card:hover .card-inner {
