@@ -23,6 +23,10 @@ contains albums and artists and song now has nullable fields and `artists` and
 - Each song can now have multiple genres.
 - Query for empty string is interpreted as that property should not be set.
 
+### Changes
+- Add new id control message `InsertIntoPlaylist`.
+- Unify sse `queue` and `play-next` into `insert-into-playlist`.
+
 ### Fixes
 - Fix panic in mix after into empty playlist.
 

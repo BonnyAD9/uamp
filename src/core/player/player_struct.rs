@@ -410,6 +410,19 @@ impl Player {
         sub::Playlist::new(&mut self.playlist)
     }
 
+    pub fn get_playlist_mut(&mut self, idx: usize) -> Option<&mut Playlist> {
+        if idx == 0 {
+            return Some(&mut self.playlist);
+        }
+
+        let len = self.playlist_stack().len();
+        if idx > len {
+            return None;
+        }
+
+        Some(&mut self.mut_playlist_stack()[len - idx])
+    }
+
     /// Creates new player from the sender
     pub(super) fn new_default(rt: RtAndle) -> Self {
         let mut res = Self {

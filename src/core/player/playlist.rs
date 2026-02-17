@@ -164,6 +164,13 @@ impl Playlist {
         }
     }
 
+    pub fn insert(&mut self, index: usize, songs: &[SongId]) {
+        self.songs.splice(index..index, songs.iter().copied());
+        if index <= self.current {
+            self.current += songs.len();
+        }
+    }
+
     /// Moves current to the nth next song and returns its id.
     ///
     /// If the nth next song is outside of the playlist, jump to the first song

@@ -5,11 +5,11 @@ use serde::Serialize;
 
 use crate::core::{
     Alias, Result,
-    library::SongId,
     player::{AddPolicy, Playback},
     server::sub::{
-        Config, NewServer, PlayTmp, PlaylistJump, PopPlaylist, PopSetPlaylist,
-        ReorderPlaylistStack, SetAll, SetPlaylist,
+        Config, InsertIntoPlaylist, NewServer, PlayTmp, PlaylistJump,
+        PopPlaylist, PopSetPlaylist, ReorderPlaylistStack, SetAll,
+        SetPlaylist,
     },
 };
 
@@ -44,10 +44,8 @@ pub enum SubMsg {
     // Moves the current song to the start of the new playlist. The new
     // playlist in this message aleady contains the moved song.
     PushPlaylistWithCur(Arc<SetPlaylist>),
-    // Append the songs to the end of the current playlist
-    Queue(Arc<Vec<SongId>>),
-    // Insert the songs into the playlist after the current song
-    PlayNext(Arc<Vec<SongId>>),
+    // Insert songs into a playlist.
+    InsertIntoPlaylist(InsertIntoPlaylist),
     // Uamp is about to restart
     Restarting,
     // Reorders playlist stack. First item in the vector is the top of the
@@ -89,8 +87,9 @@ impl SubMsg {
             Self::PushPlaylistWithCur(d) => {
                 make_event("push-playlist-with-cur", d)
             }
-            Self::Queue(d) => make_event("queue", d),
-            Self::PlayNext(d) => make_event("play-next", d),
+            Self::InsertIntoPlaylist(d) => {
+                make_event("insert-into-playlist", d)
+            }
             Self::Restarting => Ok("event: restarting\n\n".to_string()),
             Self::ReorderPlaylistStack(d) => {
                 make_event("reorder-playlist-stack", d)

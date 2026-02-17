@@ -1,5 +1,5 @@
 # TODO
-- Update image lookup logic with new album-artists grouping.
+- Shrink msg size.
 - Song tags (categories)
 - Custom format for listing songs.
 - TUI

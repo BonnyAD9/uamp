@@ -17,7 +17,7 @@ use crate::core::{
     query::Query,
     server::{
         SubMsg,
-        sub::{PlaylistJump, ReorderPlaylistStack},
+        sub::{InsertIntoPlaylist, PlaylistJump, ReorderPlaylistStack},
     },
 };
 
@@ -114,8 +114,12 @@ impl UampApp {
                     self.config.simple_sorting(),
                     &self.player,
                 )?;
-                self.player.mut_playlist().extend(songs.iter().copied());
-                self.client_update(SubMsg::Queue(songs.into()));
+                let pl = self.player.mut_playlist();
+                let len = pl.len();
+                pl.extend(songs.iter().copied());
+                self.client_update(SubMsg::InsertIntoPlaylist(
+                    InsertIntoPlaylist::new(songs, len, 0),
+                ));
             }
             DataControlMsg::PlayNext(q) => {
                 let songs = q.get_ids(
@@ -123,8 +127,12 @@ impl UampApp {
                     self.config.simple_sorting(),
                     &self.player,
                 )?;
-                self.player.mut_playlist().play_next(songs.iter().copied());
-                self.client_update(SubMsg::PlayNext(songs.into()));
+                let pl = self.player.mut_playlist();
+                let cur = pl.current_idx().unwrap_or(pl.len() - 1);
+                pl.play_next(songs.iter().copied());
+                self.client_update(SubMsg::InsertIntoPlaylist(
+                    InsertIntoPlaylist::new(songs, cur + 1, 0),
+                ));
             }
             DataControlMsg::Restart(exe) => {
                 self.restart_path = None;
