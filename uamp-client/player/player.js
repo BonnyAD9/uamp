@@ -1,6 +1,9 @@
 import { updateCurrent, updatePlayBtn, updateVolume } from "../ui/bar.js";
 import {
-    highlightAlbumSong, highlightArtistSong, highlightLibrary, highlightPlaylist
+    highlightAlbumSong,
+    highlightArtistSong,
+    highlightLibrary,
+    highlightPlaylist,
 } from "../ui/tables.js";
 import Playlist from "./playlist.js";
 
@@ -14,8 +17,9 @@ export default class Player {
         /** @type {Playlist} */
         this.playlist = new Playlist(data.playlist, library);
         /** @type {Playlist[]} */
-        this.playlist_stack =
-            data.playlist_stack.map(p => new Playlist(p, library));
+        this.playlist_stack = data.playlist_stack.map(
+            (p) => new Playlist(p, library),
+        );
         /** @type {number} */
         this.volume = data.volume;
         /** @type {boolean} */
@@ -29,7 +33,7 @@ export default class Player {
      * @returns {boolean} true when playing, else false
      */
     isPlaying() {
-        return this.state === 'Playing';
+        return this.state === "Playing";
     }
 
     /**
@@ -87,16 +91,17 @@ export default class Player {
      * @returns {Playlist|null} playlist if found, else null
      */
     getPlaylist(id) {
-        if (id === 0)
-            return this.playlist;
+        if (id === 0) return this.playlist;
         return this.playlist_stack[this.playlist_stack.length - id] || null;
     }
 
     /** Highlights currently playing song */
     highlightPlaying() {
         const id = this.getPlayingId();
+        if (id === null) return;
+
         highlightLibrary(id);
-        highlightPlaylist(id);
+        highlightPlaylist(this.playlist.current);
         highlightAlbumSong(id);
         highlightArtistSong(id);
     }

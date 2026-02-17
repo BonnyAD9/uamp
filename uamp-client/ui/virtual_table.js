@@ -24,6 +24,8 @@ export default class VirtualTable {
         this.getSongElement = (song, _) => song.getTableRow();
         /** @type {() => number} */
         this.getCurrentId = getCurrentId;
+        /** @type {boolean} */
+        this.isPlaylist = false;
 
         /** @type {number} */
         this.start = 0;
@@ -43,6 +45,12 @@ export default class VirtualTable {
         this.getSongElement = isList
             ? (song, id) => song.getBarRow(id)
             : (song, _) => song.getTableRow();
+        return this;
+    }
+
+    /** Sets what ID to use when comparing songs based on if its playlist */
+    playlist(isPlaylist = true) {
+        this.isPlaylist = isPlaylist;
         return this;
     }
 
@@ -149,7 +157,9 @@ export default class VirtualTable {
         const songCnt = songs.length;
 
         const visible = Math.ceil(viewHeight / this.rowHeight);
-        const currentPos = songs.findIndex((s) => s.id == current);
+        const currentPos = this.isPlaylist
+            ? current
+            : songs.findIndex((s) => s.id == current);
 
         const top = Math.ceil(currentPos - visible * 0.5);
         const start = Math.max(0, Math.min(top, songCnt - visible));
@@ -176,7 +186,9 @@ export default class VirtualTable {
         const row = this.getSongElement(song, id);
         row.dataset.index = id;
         row.dataset.songId = song.id;
-        if (song.id === current) row.classList.add("active");
+
+        const cid = this.isPlaylist ? id : song.id;
+        if (cid === current) row.classList.add("active");
         return row;
     }
 }

@@ -3,10 +3,8 @@ export const highlightLibrary = (id) =>
     highlightPlaying(id, document.querySelector("#library .songs tbody"));
 /** Highlights currently playing song in both playlist and bar playlist */
 export const highlightPlaylist = (id) => {
-    highlightPlaying(
-        id,
-        document.querySelector("#playlist .playlist-stack tbody"),
-    );
+    const playlist = document.querySelector("#playlist .playlist-stack tbody");
+    highlightPlaying(id, playlist, "index");
     highlightPlaying(id, document.querySelector(".bar .playlist .songs"));
 };
 /** Highlights currently playing song in the album songs */
@@ -21,9 +19,9 @@ export const highlightArtistSong = (id) =>
  * @param {?number} songId - index of the song to highlight
  * @param {HTMLElement} container - element containing the songs
  */
-function highlightPlaying(songId, container) {
+function highlightPlaying(songId, container, attr = "songId") {
     for (const child of container.children) {
-        const id = child.dataset.songId;
+        const id = child.dataset[attr];
         child.classList.toggle("active", Number(id) === songId);
     }
 }

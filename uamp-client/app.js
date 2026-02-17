@@ -25,9 +25,7 @@ import {
 } from "./ui/pages.js";
 import {
     displayAlbumSongsSort,
-    displayAlbumsSort,
     displayArtistSongsSort,
-    displayArtistsSort,
     displayLibrarySort,
     displayPlaylistStack,
     popPlaylist,
@@ -77,16 +75,16 @@ export default class App {
             () => this.player.getPlaylist(this.playlistTab).songs,
             "#playlist",
             ".playlist-stack.active tbody",
-            () => this.player.getPlaylist(this.playlistTab).getPlayingId(),
+            () => this.player.getPlaylist(this.playlistTab).current,
         );
-        this.playlistTable.autoScrolling();
+        this.playlistTable.playlist().autoScrolling();
         this.barPlaylistTable = new VirtualTable(
             () => this.player.playlist.songs,
             ".bar .playlist",
             ".songs",
-            () => this.player.getPlayingId(),
+            () => this.player.playlist.current,
         );
-        this.barPlaylistTable.list().centering().autoScrolling();
+        this.barPlaylistTable.playlist().list().centering().autoScrolling();
     }
 
     static async init(data) {
