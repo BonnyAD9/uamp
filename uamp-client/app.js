@@ -458,9 +458,10 @@ export default class App {
         if (!song) return;
 
         if (action === "play-next") {
-            apiCtrl(`qn=${encodeURIComponent(song.getQuery())}`);
+            const cur = this.player.playlist.current;
+            apiInsertIntoPlaylist([song], cur === null ? 0 : cur + 1);
         } else if (action === "queue") {
-            apiCtrl(`q=${encodeURIComponent(song.getQuery())}`);
+            apiInsertIntoPlaylist([song], this.player.playlist.songs.length);
         }
     }
 }
@@ -519,10 +520,23 @@ async function apiPushPlaylist(songs, pos) {
         position: Number(pos),
         play: true,
     };
+    return apiCtrlData({ SetPlaylist: data });
+}
+
+async function apiInsertIntoPlaylist(songs, pos, playlist = 0) {
+    const data = {
+        songs: songs.map((s) => s.id),
+        position: Number(pos),
+        playlist: Number(playlist),
+    };
+    return apiCtrlData({ InsertIntoPlaylist: data });
+}
+
+async function apiCtrlData(data) {
     return fetch("/api/ctrl", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ SetPlaylist: data }),
+        body: JSON.stringify(data),
     });
 }
 

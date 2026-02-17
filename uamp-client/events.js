@@ -102,25 +102,16 @@ eventSource.addEventListener("push-playlist-with-cur", (e) => {
     pushPlaylistEvent(app, JSON.parse(e.data));
 });
 
-eventSource.addEventListener("queue", (e) => {
+eventSource.addEventListener("insert-into-playlist", (e) => {
     const app = AppSingleton.get();
-    const songs = JSON.parse(e.data).map((id) => app.library.getSong(id));
-    app.player.playlist.songs.push(...songs);
-    if (app.playlistTab === 0) {
-        app.displayPlaylist();
-        app.createBarSongs();
-    }
-});
+    const data = JSON.parse(e.data);
 
-eventSource.addEventListener("play-next", (e) => {
-    const app = AppSingleton.get();
+    const playlist = app.player.getPlaylist(data.playlist);
+    if (playlist === null) return;
 
-    const current = app.player.playlist.current;
-    if (current === null) return;
-
-    const songs = JSON.parse(e.data).map((id) => app.library.getSong(id));
-    app.player.playlist.songs.splice(current + 1, 0, ...songs);
-    if (app.playlistTab === 0) {
+    const songs = data.songs.map((id) => app.library.getSong(id));
+    playlist.songs.splice(data.position, 0, ...songs);
+    if (app.playlistTab === data.playlist) {
         app.displayPlaylist();
         app.createBarSongs();
     }
