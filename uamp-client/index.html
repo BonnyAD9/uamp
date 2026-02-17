@@ -285,6 +285,15 @@
         <img class="backdrop" src="assets/svg/img_placeholder.svg" />
     </section>
 
+    <ul id="songContextMenu" class="context-menu">
+        <li onclick="AppSingleton.get().handleSongAction('play-next')">
+            Play Next
+        </li>
+        <li onclick="AppSingleton.get().handleSongAction('queue')">
+            Add to Queue
+        </li>
+    </ul>
+
     <template id="songs-template">
         <table class="songs">
             <colgroup>

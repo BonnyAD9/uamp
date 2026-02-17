@@ -104,7 +104,8 @@ eventSource.addEventListener("push-playlist-with-cur", (e) => {
 
 eventSource.addEventListener("queue", (e) => {
     const app = AppSingleton.get();
-    app.player.playlist.songs.push(...JSON.parse(e.data));
+    const songs = JSON.parse(e.data).map((id) => app.library.getSong(id));
+    app.player.playlist.songs.push(...songs);
     if (app.playlistTab === 0) {
         app.displayPlaylist();
         app.createBarSongs();
@@ -117,7 +118,8 @@ eventSource.addEventListener("play-next", (e) => {
     const current = app.player.playlist.current;
     if (current === null) return;
 
-    app.player.playlist.songs.splice(current + 1, 0, ...JSON.parse(e.data));
+    const songs = JSON.parse(e.data).map((id) => app.library.getSong(id));
+    app.player.playlist.songs.splice(current + 1, 0, ...songs);
     if (app.playlistTab === 0) {
         app.displayPlaylist();
         app.createBarSongs();

@@ -170,6 +170,7 @@ function libraryScreen() {
     document.querySelector("#library .header").appendChild(header);
 
     const table = getHeaderlessTable((e) => AppSingleton.get().libraryClick(e));
+    table.classList.add("with-song-context")
     document.querySelector("#library .screen-wrapper").appendChild(table);
 }
 

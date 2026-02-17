@@ -211,6 +211,7 @@ export function spawnTables() {
         (e) => AppSingleton.get().artistSongClick(e),
         (key) => AppSingleton.get().sortArtistSongs(key),
     );
+    artTable.classList.add("with-song-context");
     document
         .querySelector("#artist-detail .screen-wrapper")
         .appendChild(artTable);
@@ -223,7 +224,47 @@ export function spawnTables() {
     col.classList.remove("col-img");
     col.classList.add("col-empty");
     table.querySelector("thead tr th").textContent = "";
+    table.classList.add("with-song-context");
     document
         .querySelector("#album-detail .album-detail-wrapper")
         .appendChild(table);
 }
+
+const contextMenu = document.getElementById("songContextMenu");
+function showSongContext(e, row) {
+    e.preventDefault();
+
+    contextMenu.style.display = "block";
+    const menuWidth = contextMenu.offsetWidth;
+    const menuHeight = contextMenu.offsetHeight;
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    let left = e.pageX;
+    const overX = windowWidth - left - menuWidth - 5;
+    if (overX < 0) {
+        left += overX;
+    }
+
+    let top = e.pageY;
+    const overY = windowHeight - top - menuHeight - 5;
+    if (overY < 0) {
+        top += overY;
+    }
+
+    contextMenu.dataset.songId = row.dataset.songId;
+    contextMenu.style.top = `${top}px`;
+    contextMenu.style.left = `${left}px`;
+    contextMenu.style.display = "block";
+}
+
+document.addEventListener("contextmenu", (e) => {
+    const row = e.target.closest("table.with-song-context tr");
+    if (row) {
+        showSongContext(e, row);
+    }
+});
+
+document.addEventListener("click", () => {
+    contextMenu.style.display = "none";
+});

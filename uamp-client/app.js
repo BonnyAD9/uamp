@@ -38,6 +38,7 @@ import {
 import VirtualTable from "./ui/virtual_table.js";
 
 const slider = document.querySelector(".bar #progressBar");
+const contextMenu = document.getElementById("songContextMenu");
 
 export default class App {
     /**
@@ -449,6 +450,18 @@ export default class App {
         displayAlbum(this.album, this.player.getPlayingId());
         toggleBar();
         showScreen("album-detail");
+    }
+
+    handleSongAction(action) {
+        const songId = contextMenu.dataset.songId;
+        const song = this.library.allSongs[songId];
+        if (!song) return;
+
+        if (action === "play-next") {
+            apiCtrl(`qn=${encodeURIComponent(song.getQuery())}`);
+        } else if (action === "queue") {
+            apiCtrl(`q=${encodeURIComponent(song.getQuery())}`);
+        }
     }
 }
 
