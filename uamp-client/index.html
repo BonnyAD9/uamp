@@ -42,7 +42,7 @@
             ></screen-header>
             <div class="screen-wrapper">
                 <div
-                    class="list"
+                    class="list with-album-context"
                     onclick="AppSingleton.get().albumClick(event)"
                 ></div>
             </div>
@@ -290,6 +290,15 @@
             Play Next
         </li>
         <li onclick="AppSingleton.get().handleSongAction('queue')">
+            Add to Queue
+        </li>
+    </ul>
+
+    <ul id="albumContextMenu" class="context-menu">
+        <li onclick="AppSingleton.get().handleAlbumAction('play-next')">
+            Play Next
+        </li>
+        <li onclick="AppSingleton.get().handleAlbumAction('queue')">
             Add to Queue
         </li>
     </ul>

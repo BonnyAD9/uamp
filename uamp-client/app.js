@@ -36,7 +36,8 @@ import {
 import VirtualTable from "./ui/virtual_table.js";
 
 const slider = document.querySelector(".bar #progressBar");
-const contextMenu = document.getElementById("songContextMenu");
+const songContext = document.getElementById("songContextMenu");
+const albumContext = document.getElementById("albumContextMenu");
 
 export default class App {
     /**
@@ -451,7 +452,7 @@ export default class App {
     }
 
     handleSongAction(action) {
-        const songId = contextMenu.dataset.songId;
+        const songId = songContext.dataset.id;
         const song = this.library.allSongs[songId];
         if (!song) return;
 
@@ -460,6 +461,25 @@ export default class App {
             apiInsertIntoPlaylist([song], cur === null ? 0 : cur + 1);
         } else if (action === "queue") {
             apiInsertIntoPlaylist([song], this.player.playlist.songs.length);
+        }
+    }
+
+    handleAlbumAction(action) {
+        const id = albumContext.dataset.id;
+        const album = this.library.albums.get()[id];
+        if (!album) return;
+
+        if (action === "play-next") {
+            const cur = this.player.playlist.current;
+            apiInsertIntoPlaylist(
+                album.songs.get(),
+                cur === null ? 0 : cur + 1,
+            );
+        } else if (action === "queue") {
+            apiInsertIntoPlaylist(
+                album.songs.get(),
+                this.player.playlist.songs.length,
+            );
         }
     }
 }

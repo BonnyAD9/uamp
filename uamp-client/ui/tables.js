@@ -228,41 +228,43 @@ export function spawnTables() {
         .appendChild(table);
 }
 
-const contextMenu = document.getElementById("songContextMenu");
-function showSongContext(e, row) {
+const songContext = document.getElementById("songContextMenu");
+const albumContext = document.getElementById("albumContextMenu");
+function showGenericContext(e, menu, id) {
     e.preventDefault();
-
-    contextMenu.style.display = "block";
-    const menuWidth = contextMenu.offsetWidth;
-    const menuHeight = contextMenu.offsetHeight;
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
+    menu.style.display = "block";
 
     let left = e.pageX;
-    const overX = windowWidth - left - menuWidth - 5;
+    const overX = window.innerWidth - left - menu.offsetWidth - 5;
     if (overX < 0) {
         left += overX;
     }
 
     let top = e.pageY;
-    const overY = windowHeight - top - menuHeight - 5;
+    const overY = window.innerHeight - top - menu.offsetHeight - 5;
     if (overY < 0) {
         top += overY;
     }
 
-    contextMenu.dataset.songId = row.dataset.songId;
-    contextMenu.style.top = `${top}px`;
-    contextMenu.style.left = `${left}px`;
-    contextMenu.style.display = "block";
+    menu.dataset.id = id;
+    menu.style.top = `${top}px`;
+    menu.style.left = `${left}px`;
+    menu.style.display = "block";
 }
 
 document.addEventListener("contextmenu", (e) => {
-    const row = e.target.closest("table.with-song-context tr");
-    if (row) {
-        showSongContext(e, row);
+    const songRow = e.target.closest("table.with-song-context tr");
+    if (songRow) {
+        showGenericContext(e, songContext, songRow.dataset.songId);
+    }
+
+    const albumCard = e.target.closest(".list.with-album-context .card");
+    if (albumCard) {
+        showGenericContext(e, albumContext, albumCard.dataset.index);
     }
 });
 
 document.addEventListener("click", () => {
-    contextMenu.style.display = "none";
+    songContext.style.display = "none";
+    albumContext.style.display = "none";
 });
