@@ -177,7 +177,7 @@ impl UampService {
         req: Request<Incoming>,
     ) -> Result<MyResponse> {
         let url = uri_to_url(req.uri())?;
-        let mut album = None;
+        let mut title = None;
         let mut artist = None;
         let mut size: Option<CacheSize> = None;
         let mut or = None;
@@ -185,19 +185,13 @@ impl UampService {
         for (k, v) in url.query_pairs() {
             match k.as_ref() {
                 "artist" => artist = Some(v.into_owned()),
-                "album" => album = Some(v.into_owned()),
+                "album" => title = Some(v.into_owned()),
+                "title" => title = Some(v.into_owned()),
                 "size" => size = Some(v.arg_into()?),
                 "or" => or = Some(v.into_owned()),
                 _ => {}
             };
         }
-        let Some(album) = album else {
-            return Error::http(400, "Missing album in query.").err();
-        };
-
-        let Some(artist) = artist else {
-            return Error::http(400, "Missing artist in query.").err();
-        };
 
         let cache = self.data.cache.read().unwrap().clone();
 
@@ -205,7 +199,7 @@ impl UampService {
             self.rt.clone(),
             cache,
             artist,
-            album,
+            title,
             size.unwrap_or_default(),
         )
         .await?;

@@ -11,14 +11,16 @@ use itertools::{Either, Itertools};
 use log::warn;
 use ratag::tag;
 use tokio::task::JoinHandle;
-use unidecode::unidecode;
 
-use crate::core::{
-    ErrKind, Error, Result, RtAndle,
-    config::CacheSize,
-    library::Song,
-    log_err,
-    query::{Base, CmpType, ComposedFilter, Filter, FilterType, Query},
+use crate::{
+    core::{
+        ErrKind, Error, Result, RtAndle,
+        config::CacheSize,
+        library::Song,
+        log_err,
+        query::{Base, CmpType, ComposedFilter, Filter, FilterType, Query},
+    },
+    ext::simpl,
 };
 
 const MIN_IMG_SIZE: u64 = 125;
@@ -26,21 +28,29 @@ const MIN_IMG_SIZE: u64 = 125;
 pub fn lookup_image(
     rt_path: Either<RtAndle, &Path>,
     cache: &Path,
-    artist: &str,
-    title: &str,
+    artist: Option<&str>,
+    title: Option<&str>,
     size: CacheSize,
 ) -> Result<(PathBuf, Option<DynamicImage>)> {
-    let name = filesan::escape_str(
-        &simple_str(&format!("{artist} - {title}.jpg")),
-        '_',
-        filesan::Mode::ALL,
-    );
+    let artist_esc =
+        artist.map(|s| simpl::new_str(s) + " ").unwrap_or_default();
+    let title_esc = title
+        .map(|s| {
+            let mut res = " ".to_string();
+            simpl::to_str(s, &mut res);
+            res
+        })
+        .unwrap_or_default();
+    let simple = format!("{artist_esc}-{title_esc}");
+    let name =
+        filesan::escape_str(&format!("{simple}.jpg"), '_', filesan::Mode::ALL);
     ImageLookup {
         rt_path,
         cache,
         artist,
         title,
         name: &name,
+        simple: &simple,
     }
     .lookup(size)
 }
@@ -48,8 +58,8 @@ pub fn lookup_image(
 pub fn lookup_image_path_rt(
     rt: RtAndle,
     cache: &Path,
-    artist: &str,
-    title: &str,
+    artist: Option<&str>,
+    title: Option<&str>,
     size: CacheSize,
 ) -> Result<PathBuf> {
     Ok(lookup_image(Either::Left(rt), cache, artist, title, size)?.0)
@@ -58,12 +68,18 @@ pub fn lookup_image_path_rt(
 pub fn lookup_image_path_rt_thread(
     rt: RtAndle,
     cache: PathBuf,
-    artist: String,
-    title: String,
+    artist: Option<String>,
+    title: Option<String>,
     size: CacheSize,
 ) -> JoinHandle<Result<PathBuf>> {
     tokio::task::spawn_blocking(move || {
-        lookup_image_path_rt(rt, &cache, &artist, &title, size)
+        lookup_image_path_rt(
+            rt,
+            &cache,
+            artist.as_deref(),
+            title.as_deref(),
+            size,
+        )
     })
 }
 
@@ -75,8 +91,8 @@ pub fn lookup_image_data_song(
     let (path, img) = lookup_image(
         Either::Right(song.path()),
         cache,
-        song.album_artist_str(),
-        song.album().unwrap_or(song.title_str()),
+        song.album_artist(),
+        song.album().or(song.title()),
         size,
     )?;
     if let Some(img) = img {
@@ -89,9 +105,10 @@ pub fn lookup_image_data_song(
 struct ImageLookup<'a> {
     rt_path: Either<RtAndle, &'a Path>,
     cache: &'a Path,
-    artist: &'a str,
-    title: &'a str,
+    artist: Option<&'a str>,
+    title: Option<&'a str>,
     name: &'a str,
+    simple: &'a str,
 }
 
 impl ImageLookup<'_> {
@@ -135,19 +152,19 @@ impl ImageLookup<'_> {
             }
         };
 
-        let title = self.title.to_string();
-        let artist = self.artist.to_string();
+        let title = self.title.map(|a| a.to_string());
+        let artist = self.artist.map(|a| a.to_string());
         // (a:/title/.aa:/artist/)+(a://.t:/title/.p:/artist/)
         let query = Query::new(
             vec![Base::Library],
             ComposedFilter::Or(vec![
                 ComposedFilter::And(vec![
                     ComposedFilter::Filter(Filter::new(
-                        FilterType::Album(Some(title.clone())),
+                        FilterType::Album(title.clone()),
                         CmpType::Lenient,
                     )),
                     ComposedFilter::Filter(Filter::new(
-                        FilterType::AlbumArtist(Some(artist.clone())),
+                        FilterType::AlbumArtist(artist.clone()),
                         CmpType::Lenient,
                     )),
                 ]),
@@ -157,11 +174,11 @@ impl ImageLookup<'_> {
                         CmpType::Lenient,
                     )),
                     ComposedFilter::Filter(Filter::new(
-                        FilterType::Title(Some(title)),
+                        FilterType::Title(title),
                         CmpType::Lenient,
                     )),
                     ComposedFilter::Filter(Filter::new(
-                        FilterType::AlbumArtist(Some(artist)),
+                        FilterType::AlbumArtist(artist),
                         CmpType::Lenient,
                     )),
                 ]),
@@ -227,19 +244,14 @@ impl ImageLookup<'_> {
 
         let lookup_names: &[Cow<'static, str>] = &[
             // Uamp way
-            filesan::escape_str(
-                &format!(
-                    "{} - {}",
-                    simple_str(self.artist),
-                    simple_str(self.title)
-                ),
+            filesan::escape_str(self.simple, '_', filesan::Mode::ALL).into(),
+            // Winamp way
+            filesan::replace_escape(
+                self.title.unwrap_or(" "),
                 '_',
                 filesan::Mode::ALL,
             )
             .into(),
-            // Winamp way
-            filesan::replace_escape(self.title, '_', filesan::Mode::ALL)
-                .into(),
             // Standard way if in separate folders.
             "cover".into(),
         ];
@@ -357,10 +369,6 @@ fn make_parent(p: &Path) -> Result<()> {
         create_dir_all(p)?;
     }
     Ok(())
-}
-
-fn simple_str(s: &str) -> String {
-    unidecode(s).to_ascii_lowercase()
 }
 
 /// Save the image and verify it.

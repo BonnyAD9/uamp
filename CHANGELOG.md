@@ -29,6 +29,8 @@ contains albums and artists and song now has nullable fields and `artists` and
 
 ### Fixes
 - Fix panic in mix after into empty playlist.
+- Uamp now properly supports image lookup for songs with missing album, artist,
+  and title.
 
 ## v0.6.8
 ### New features

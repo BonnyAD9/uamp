@@ -463,8 +463,8 @@ fn metadata_for(
         lookup_image_path_rt_thread(
             app.rt.andle(),
             app.config.cache_path().clone(),
-            song.album_artist_str().to_string(),
-            song.album_str().to_string(),
+            song.album_artist().map(|a| a.to_string()),
+            song.album().map(|a| a.to_string()),
             CacheSize::Full,
         )
     });
