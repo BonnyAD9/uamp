@@ -5,7 +5,7 @@ use crate::core::{
 
 #[derive(Debug)]
 pub enum JobMsg {
-    LibraryLoad(Result<Option<LibraryLoadResult>>),
+    LibraryLoad(Result<Option<Box<LibraryLoadResult>>>),
     Server(Result<()>),
     LibrarySave(Result<Vec<SongId>>),
     SystemPlayer,

@@ -77,7 +77,7 @@ impl UampApp {
             opts.remove_missing.unwrap_or(conf.remove_missing_on_load());
 
         let task = move || {
-            let mut res = LibraryLoadResult {
+            let mut res = Box::new(LibraryLoadResult {
                 removed: false,
                 first_new: songs.len(),
                 add_policy: opts.add_to_playlist,
@@ -86,7 +86,7 @@ impl UampApp {
                 songs: Alc::take(songs),
                 albums: Alc::take(albums),
                 artists: Alc::take(artists),
-            };
+            });
 
             add_new_songs(&mut res, &conf, remove_missing);
 
@@ -116,7 +116,7 @@ impl UampApp {
     pub(in crate::core) fn finish_library_load(
         &mut self,
         ctrl: &mut AppCtrl,
-        res: Option<LibraryLoadResult>,
+        res: Option<Box<LibraryLoadResult>>,
     ) -> Result<()> {
         self.jobs.finish(Job::LIBRARY_LOAD);
 
