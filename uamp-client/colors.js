@@ -124,14 +124,14 @@ export function resetColors() {
     root.style.removeProperty("--fg-sec");
     root.style.removeProperty("--fg-sec2");
 
-    const primary = getCookie("themeColor") ?? "#3acbaf";
+    const primary = getCookie("themeColor") ?? "#f6d32d";
     root.style.setProperty("--primary", primary);
 }
 
 if ((getCookie("dynamicColor") ?? "true") === "true") {
     songIcon.onload = setDynamicColors;
 } else {
-    const color = getCookie("themeColor") ?? "#3acbaf";
+    const color = getCookie("themeColor") ?? "#f6d32d";
     document.documentElement.style.setProperty("--primary", color);
     songIcon.onload = null;
 }

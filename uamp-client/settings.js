@@ -408,7 +408,7 @@ function displayAppearanceSettings() {
     );
     appearSettings.appendChild(dynamicColorToggle);
 
-    const themeColor = getCookie("themeColor") ?? "#3acbaf";
+    const themeColor = getCookie("themeColor") ?? "#f6d32d";
     const themeColorPicker = Config.getColorSetting(
         "theme_color",
         themeColor,

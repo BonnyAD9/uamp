@@ -6,7 +6,7 @@
     --bg-light-trans: #25252599;
     --bg-dark: #151515;
     --bg-dark-trans: #15151599;
-    --primary: #3acbaf;
+    --primary: #f6d32d;
     /* --primary: #dddd55; */
     --fg: #eee;
     --fg2: #ccc;
@@ -83,7 +83,6 @@ section.menu nav p {
     font-size: 15px;
     cursor: pointer;
     border-radius: 5px;
-    transition: 0.2s ease background-color;
 }
 
 section.menu nav p:hover {
