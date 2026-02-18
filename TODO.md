@@ -1,5 +1,7 @@
 # TODO
 - Control msg to remove from playlist.
+- Control msg to end playlist (jump to end, stop and trigger playlist end
+  action).
 - Song tags (categories)
 - Custom format for listing songs.
 - TUI

@@ -338,6 +338,7 @@ impl Player {
         }
     }
 
+    /// Reorders playlist stack.
     pub fn reorder_playlist(
         &mut self,
         lib: &mut Library,
@@ -437,17 +438,23 @@ impl Player {
             Error::invalid_operation()
                 .msg(format!("Invalid playlist index `{playlist}`."))
         })?;
+
         let cur = pl.current();
-
         pl.remove_ranges(ranges);
-
         let new_cur = pl.current();
+
+        // TODO: make sure that the next song is prefetched if it should be.
+        self.inner.unprefetch();
+
         if playlist != 0 || cur == new_cur {
             return Ok(false);
         }
 
-        self.inner.unprefetch();
         self.try_load_state(lib, new_cur, false);
+
+        if new_cur.is_none() && cur.is_some() {
+            self.playlist_ended = true;
+        }
 
         Ok(true)
     }
