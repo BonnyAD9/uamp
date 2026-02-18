@@ -21,7 +21,7 @@ export default class Library {
         this.allSongs = songs.map((s, i) => Song.from(i, s));
         /** @type {Object<string, Album>} */
         this.allAlbums = Object.entries(albums).reduce((acc, [id, album]) => {
-            acc[id] = Album.from(album, this.allSongs);
+            acc[id] = Album.from(id, album, this.allSongs);
             return acc;
         }, {});
         /** @type {Object<string, Artist>} */

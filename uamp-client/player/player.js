@@ -49,6 +49,12 @@ export default class Player {
     getPlayingId = () => this.playlist.getPlayingId();
 
     /**
+     * Gets playlist ID of the next playing song
+     * @returns {number} playlist ID, 0 when no current set
+     */
+    getNextPId = () => this.playlist.getNextPId();
+
+    /**
      * Sets the playback state and updates related UI elements.
      * @param {string} playback - playback state to set.
      */

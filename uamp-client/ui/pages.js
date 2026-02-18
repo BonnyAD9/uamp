@@ -18,9 +18,9 @@ export function displayAlbums(albums) {
 
 function genericDisplayAlbums(albumsList, albums) {
     albumsList.innerHTML = "";
-    albums.forEach((album, i) => {
+    albums.forEach((album) => {
         const card = album.getCard();
-        card.dataset.index = i;
+        card.dataset.index = album.id;
         albumsList.appendChild(card);
     });
 }
@@ -170,7 +170,7 @@ function libraryScreen() {
     document.querySelector("#library .header").appendChild(header);
 
     const table = getHeaderlessTable((e) => AppSingleton.get().libraryClick(e));
-    table.classList.add("with-song-context")
+    table.classList.add("with-song-context");
     document.querySelector("#library .screen-wrapper").appendChild(table);
 }
 
@@ -198,6 +198,7 @@ function playlistScreen() {
         (e) => AppSingleton.get().playlistClick(e),
         ["playlist-stack", "active"],
     );
+    table.classList.add("with-playlist-context");
     document.querySelector("#playlist .playlist-wrapper").appendChild(table);
 }
 

@@ -6,12 +6,15 @@ const albumTemplate = document.getElementById("album-template");
 export default class Album {
     /**
      * Creates new album
+     * @param {string} id
      * @param {string} name
      * @param {string} artist
      * @param {number|null} year
      * @param {Song[]} songs
      */
-    constructor(name, artist, year, songs = []) {
+    constructor(id, name, artist, year, songs = []) {
+        /** @type {string} */
+        this.id = id;
         /** @type {string} */
         this.name = name;
         /** @type {string} */
@@ -22,10 +25,10 @@ export default class Album {
         this.songs = new Sorter("track", songs);
     }
 
-    static from(obj, allSongs) {
+    static from(id, obj, allSongs) {
         const songs = obj.songs.map((s, _) => allSongs[s]);
         const year = songs[0]?.year ?? null;
-        return new Album(obj.name, obj.artist, year, songs);
+        return new Album(id, obj.name, obj.artist, year, songs);
     }
 
     /**

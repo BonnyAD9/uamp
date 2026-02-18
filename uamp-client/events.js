@@ -1,5 +1,6 @@
 import App from "./app.js";
 import "./colors.js";
+import "./ui/context_menu.js";
 import "./ui/components/search-bar.js";
 import "./ui/components/screen-header.js";
 import { spawnScreens } from "./ui/pages.js";
@@ -111,6 +112,24 @@ eventSource.addEventListener("insert-into-playlist", (e) => {
 
     const songs = data.songs.map((id) => app.library.getSong(id));
     playlist.songs.splice(data.position, 0, ...songs);
+    if (app.playlistTab === data.playlist) {
+        app.displayPlaylist();
+        app.createBarSongs();
+    }
+});
+
+eventSource.addEventListener("remove-from-playlist", (e) => {
+    const app = AppSingleton.get();
+    const data = JSON.parse(e.data);
+
+    const playlist = app.player.getPlaylist(data.playlist);
+    if (playlist === null) return;
+
+    data.ranges.sort((a, b) => b[0] - a[0]);
+    data.ranges.forEach((range) => {
+        const [start, end] = range;
+        playlist.songs.splice(start, end - start);
+    });
     if (app.playlistTab === data.playlist) {
         app.displayPlaylist();
         app.createBarSongs();

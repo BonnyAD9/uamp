@@ -36,8 +36,6 @@ import {
 import VirtualTable from "./ui/virtual_table.js";
 
 const slider = document.querySelector(".bar #progressBar");
-const songContext = document.getElementById("songContextMenu");
-const albumContext = document.getElementById("albumContextMenu");
 
 export default class App {
     /**
@@ -413,7 +411,7 @@ export default class App {
         const card = e.target.closest(".card");
         if (!card) return;
 
-        this.album = albums[card.dataset.index];
+        this.album = this.library.allAlbums[card.dataset.index];
         displayAlbum(this.album, this.player.getPlayingId());
         showScreen("album-detail");
     }
@@ -432,7 +430,7 @@ export default class App {
             return;
         }
 
-        this.album = artist.albums[album.dataset.index];
+        this.album = this.library.allAlbums[album.dataset.index];
         displayAlbum(this.album, this.player.getPlayingId());
         showScreen("album-detail");
     }
@@ -449,38 +447,6 @@ export default class App {
         displayAlbum(this.album, this.player.getPlayingId());
         toggleBar();
         showScreen("album-detail");
-    }
-
-    handleSongAction(action) {
-        const songId = songContext.dataset.id;
-        const song = this.library.allSongs[songId];
-        if (!song) return;
-
-        if (action === "play-next") {
-            const cur = this.player.playlist.current;
-            apiInsertIntoPlaylist([song], cur === null ? 0 : cur + 1);
-        } else if (action === "queue") {
-            apiInsertIntoPlaylist([song], this.player.playlist.songs.length);
-        }
-    }
-
-    handleAlbumAction(action) {
-        const id = albumContext.dataset.id;
-        const album = this.library.albums.get()[id];
-        if (!album) return;
-
-        if (action === "play-next") {
-            const cur = this.player.playlist.current;
-            apiInsertIntoPlaylist(
-                album.songs.get(),
-                cur === null ? 0 : cur + 1,
-            );
-        } else if (action === "queue") {
-            apiInsertIntoPlaylist(
-                album.songs.get(),
-                this.player.playlist.songs.length,
-            );
-        }
     }
 }
 

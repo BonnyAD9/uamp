@@ -61,6 +61,7 @@ export function pushPlaylist() {
         (e) => AppSingleton.get().playlistClick(e),
         ["playlist-stack"],
     );
+    table.classList.add("with-playlist-context");
 
     const playing = playlists.querySelector(".playlist-stack");
     playlists.insertBefore(table, playing);
@@ -227,44 +228,3 @@ export function spawnTables() {
         .querySelector("#album-detail .album-detail-wrapper")
         .appendChild(table);
 }
-
-const songContext = document.getElementById("songContextMenu");
-const albumContext = document.getElementById("albumContextMenu");
-function showGenericContext(e, menu, id) {
-    e.preventDefault();
-    menu.style.display = "block";
-
-    let left = e.pageX;
-    const overX = window.innerWidth - left - menu.offsetWidth - 5;
-    if (overX < 0) {
-        left += overX;
-    }
-
-    let top = e.pageY;
-    const overY = window.innerHeight - top - menu.offsetHeight - 5;
-    if (overY < 0) {
-        top += overY;
-    }
-
-    menu.dataset.id = id;
-    menu.style.top = `${top}px`;
-    menu.style.left = `${left}px`;
-    menu.style.display = "block";
-}
-
-document.addEventListener("contextmenu", (e) => {
-    const songRow = e.target.closest("table.with-song-context tr");
-    if (songRow) {
-        showGenericContext(e, songContext, songRow.dataset.songId);
-    }
-
-    const albumCard = e.target.closest(".list.with-album-context .card");
-    if (albumCard) {
-        showGenericContext(e, albumContext, albumCard.dataset.index);
-    }
-});
-
-document.addEventListener("click", () => {
-    songContext.style.display = "none";
-    albumContext.style.display = "none";
-});
