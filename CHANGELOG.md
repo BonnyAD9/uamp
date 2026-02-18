@@ -24,8 +24,9 @@ contains albums and artists and song now has nullable fields and `artists` and
 - Query for empty string is interpreted as that property should not be set.
 
 ### Changes
-- Add new id control message `InsertIntoPlaylist`.
+- Add new id control messages `InsertIntoPlaylist` and `RemoveFromPlaylist`.
 - Unify sse `queue` and `play-next` into `insert-into-playlist`.
+- Add new sse `remove-from-playlist`.
 
 ### Fixes
 - Fix panic in mix after into empty playlist.

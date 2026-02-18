@@ -8,8 +8,8 @@ use crate::core::{
     player::{AddPolicy, Playback},
     server::sub::{
         Config, InsertIntoPlaylist, NewServer, PlayTmp, PlaylistJump,
-        PopPlaylist, PopSetPlaylist, ReorderPlaylistStack, SetAll,
-        SetPlaylist,
+        PopPlaylist, PopSetPlaylist, RemoveFromPlaylist, ReorderPlaylistStack,
+        SetAll, SetPlaylist,
     },
 };
 
@@ -46,6 +46,8 @@ pub enum SubMsg {
     PushPlaylistWithCur(Arc<SetPlaylist>),
     // Insert songs into a playlist.
     InsertIntoPlaylist(InsertIntoPlaylist),
+    // Removes songs from playlist.
+    RemoveFromPlaylist(RemoveFromPlaylist),
     // Uamp is about to restart
     Restarting,
     // Reorders playlist stack. First item in the vector is the top of the
@@ -89,6 +91,9 @@ impl SubMsg {
             }
             Self::InsertIntoPlaylist(d) => {
                 make_event("insert-into-playlist", d)
+            }
+            Self::RemoveFromPlaylist(d) => {
+                make_event("remove-from-playlist", d)
             }
             Self::Restarting => Ok("event: restarting\n\n".to_string()),
             Self::ReorderPlaylistStack(d) => {

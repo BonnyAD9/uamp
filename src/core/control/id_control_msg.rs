@@ -5,7 +5,10 @@ use crate::core::{
     config::ConfigMsg,
     library::SongId,
     player::Playlist,
-    server::{SubMsg, sub::InsertIntoPlaylist},
+    server::{
+        SubMsg,
+        sub::{InsertIntoPlaylist, PlaylistJump, RemoveFromPlaylist},
+    },
 };
 
 #[derive(Debug, Deserialize)]
@@ -25,6 +28,10 @@ pub enum IdControlMsg {
         /// Position at which to insert.
         position: usize,
         /// Playlist index in playlist stack.
+        playlist: usize,
+    },
+    RemoveFromPlaylist {
+        ranges: Vec<[usize; 2]>,
         playlist: usize,
     },
     SetConfig(serde_json::Value),
@@ -87,6 +94,25 @@ impl UampApp {
                 self.client_update(SubMsg::InsertIntoPlaylist(
                     InsertIntoPlaylist::new(songs, position, playlist),
                 ));
+            }
+            IdControlMsg::RemoveFromPlaylist {
+                mut ranges,
+                playlist,
+            } => {
+                ranges.sort_by_key(|[s, _]| *s);
+                let new_playing = self.player.remove_ranges(
+                    &mut self.library,
+                    playlist,
+                    ranges.iter().map(|[s, e]| *s..*e),
+                )?;
+                self.client_update(SubMsg::RemoveFromPlaylist(
+                    RemoveFromPlaylist::new(ranges, playlist),
+                ));
+                if new_playing {
+                    self.client_update(SubMsg::PlaylistJump(
+                        PlaylistJump::new(&self.player),
+                    ));
+                }
             }
             IdControlMsg::SetConfig(cfg) => {
                 return Ok(vec![ConfigMsg::Set(cfg).into()]);

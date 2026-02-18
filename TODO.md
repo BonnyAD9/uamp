@@ -1,5 +1,5 @@
 # TODO
-- Shrink msg size.
+- Control msg to remove from playlist.
 - Song tags (categories)
 - Custom format for listing songs.
 - TUI

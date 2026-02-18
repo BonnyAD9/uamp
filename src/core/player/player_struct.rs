@@ -1,4 +1,4 @@
-use std::{cell::Cell, mem, time::Duration};
+use std::{cell::Cell, mem, ops::Range, time::Duration};
 
 use itertools::Itertools;
 use log::{error, info, warn};
@@ -423,6 +423,35 @@ impl Player {
         Some(&mut self.mut_playlist_stack()[len - idx])
     }
 
+    /// Removes songs with indexes in the given ranges. If the currently
+    /// playing song changes, returns true.
+    ///
+    /// Ranges must be sorted by start.
+    pub fn remove_ranges(
+        &mut self,
+        lib: &mut Library,
+        playlist: usize,
+        ranges: impl IntoIterator<Item = Range<usize>>,
+    ) -> Result<bool> {
+        let pl = self.get_playlist_mut(playlist).ok_or_else(|| {
+            Error::invalid_operation()
+                .msg(format!("Invalid playlist index `{playlist}`."))
+        })?;
+        let cur = pl.current();
+
+        pl.remove_ranges(ranges);
+
+        let new_cur = pl.current();
+        if playlist != 0 || cur == new_cur {
+            return Ok(false);
+        }
+
+        self.inner.unprefetch();
+        self.try_load_state(lib, new_cur, false);
+
+        Ok(true)
+    }
+
     /// Creates new player from the sender
     pub(super) fn new_default(rt: RtAndle) -> Self {
         let mut res = Self {
@@ -503,6 +532,8 @@ impl Player {
 //===========================================================================//
 
 impl Player {
+    /// Load with the current playback state. If pf is true, it means that the
+    /// prefeched song can be used.
     fn try_load_state(
         &mut self,
         lib: &mut Library,
@@ -527,6 +558,8 @@ impl Player {
         }
     }
 
+    /// Load with the given playback state. If pf is true, it means that the
+    /// prefeched song can be used.
     fn try_load(
         &mut self,
         lib: &mut Library,
@@ -542,6 +575,7 @@ impl Player {
         }
     }
 
+    /// If pf is true, it means that the prefeched song can be used.
     fn load(
         &mut self,
         lib: &mut Library,

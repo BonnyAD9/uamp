@@ -1,4 +1,8 @@
-use std::{ops::Index, slice::SliceIndex, time::Duration};
+use std::{
+    ops::{Index, Range},
+    slice::SliceIndex,
+    time::Duration,
+};
 
 use log::info;
 use rand::{rng, seq::SliceRandom};
@@ -168,6 +172,59 @@ impl Playlist {
         self.songs.splice(index..index, songs.iter().copied());
         if index <= self.current {
             self.current += songs.len();
+        }
+    }
+
+    /// Ranges must be sorted as increasing sequence of start.
+    ///
+    /// Note that this may change the current song id.
+    pub(super) fn remove_ranges(
+        &mut self,
+        ranges: impl IntoIterator<Item = Range<usize>>,
+    ) {
+        let mut ranges = ranges.into_iter();
+        let mut range = ranges.next();
+
+        let mut before = 0;
+        let cur = self.current;
+        let cur_id = self.current();
+
+        self.songs = self
+            .songs
+            .into_iter()
+            .enumerate()
+            .filter_map(|(i, id)| {
+                let Some(mut r) = range.clone() else {
+                    return Some(*id);
+                };
+
+                while i > r.end {
+                    range = ranges.next();
+                    let Some(rn) = range.clone() else {
+                        return Some(*id);
+                    };
+                    r = rn;
+                }
+
+                if i < r.start {
+                    return Some(*id);
+                }
+
+                if r.contains(&i) {
+                    if i < cur {
+                        before += 1;
+                    }
+                    None
+                } else {
+                    Some(*id)
+                }
+            })
+            .collect();
+
+        self.current -= before;
+
+        if cur_id != self.current() {
+            self.play_pos = None;
         }
     }
 
