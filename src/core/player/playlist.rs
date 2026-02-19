@@ -189,37 +189,37 @@ impl Playlist {
         let cur = self.current;
         let cur_id = self.current();
 
-        self.songs = self
-            .songs
-            .into_iter()
-            .enumerate()
-            .filter_map(|(i, id)| {
-                let Some(mut r) = range.clone() else {
-                    return Some(*id);
+        let mut index = 0;
+
+        self.songs.retain(|_| {
+            let i = index;
+            index += 1;
+            
+            let Some(mut r) = range.clone() else {
+                return true;
+            };
+
+            while i >= r.end {
+                range = ranges.next();
+                let Some(rn) = range.clone() else {
+                    return true;
                 };
+                r = rn;
+            }
 
-                while i >= r.end {
-                    range = ranges.next();
-                    let Some(rn) = range.clone() else {
-                        return Some(*id);
-                    };
-                    r = rn;
-                }
+            if i < r.start {
+                return true;
+            }
 
-                if i < r.start {
-                    return Some(*id);
+            if r.contains(&i) {
+                if i < cur {
+                    before += 1;
                 }
-
-                if r.contains(&i) {
-                    if i < cur {
-                        before += 1;
-                    }
-                    None
-                } else {
-                    Some(*id)
-                }
-            })
-            .collect();
+                false
+            } else {
+                true
+            }
+        });
 
         self.current -= before;
 
