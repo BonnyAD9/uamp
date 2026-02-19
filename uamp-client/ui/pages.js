@@ -239,15 +239,9 @@ function card3DHover() {
             target.style.setProperty("--rot-x", `${-yNorm}deg`);
             target.style.setProperty("--rot-y", `${xNorm}deg`);
 
-            target.querySelector(".glow").style.backgroundImage = `
-                radial-gradient(
-                  circle at
-                  ${x * 2 + rect.width / 2}px
-                  ${y * 2 + rect.height / 2}px,
-                  #ffffff44,
-                  #0000000f
-                )
-              `;
+            const glow = target.querySelector(".glow");
+            glow.style.setProperty("--x", `${-x * 2 + rect.width / 2}px`);
+            glow.style.setProperty("--y", `${-y * 2 + rect.height / 2}px`);
         });
     });
 }
