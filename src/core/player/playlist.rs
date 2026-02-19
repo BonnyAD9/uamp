@@ -198,7 +198,7 @@ impl Playlist {
                     return Some(*id);
                 };
 
-                while i > r.end {
+                while i >= r.end {
                     range = ranges.next();
                     let Some(rn) = range.clone() else {
                         return Some(*id);
