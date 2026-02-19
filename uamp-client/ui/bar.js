@@ -39,21 +39,16 @@ const slider = document.querySelector(".bar #progressBar");
  * @param {?Song} song - currently playing song
  */
 export function updateCurrent(song) {
-    if (song === null) {
-        songTitle.textContent = "Not Playing...";
-        songArtist.textContent = "";
-        return;
-    }
+    songIcon.src = Album.getCover(song?.album_artist, song?.album);
+    barBackdrop.src = Album.getCover(song?.album_artist, song?.album, 64);
 
-    songIcon.src = Album.getCover(song.album_artist, song.album);
-    barBackdrop.src = Album.getCover(song.album_artist, song.album, 64);
+    songTitle.textContent = song?.getTitle() ?? "Not Playing...";
+    songArtist.textContent = song?.getArtists() ?? "";
+    songAlbum.textContent = song?.getAlbum() ?? "";
+    if (song?.album !== null)
+        songAlbum.onclick = (e) => openAlbum(e, song.album_artist, song.album);
 
-    songTitle.textContent = song.getTitle();
-    songArtist.textContent = song.getArtists();
-    songAlbum.textContent = song.getAlbum();
-    songAlbum.onclick = (e) => openAlbum(e, song.album_artist, song.album);
-
-    timestampTotal.textContent = song.length?.format() ?? "-:--";
+    timestampTotal.textContent = song?.length?.format() ?? "-:--";
 }
 
 const volumeSlider = document.getElementById("volumeSlider");

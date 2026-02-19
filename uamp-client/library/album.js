@@ -76,10 +76,11 @@ export default class Album {
      * @return {string} API URL
      */
     static getCover(artist, album, size = null) {
-        let req =
-            `/api/img?artist=${encodeURIComponent(artist ?? "--")}&album=` +
-            `${encodeURIComponent(album ?? "--")}&or=` +
-            encodeURIComponent("/app/assets/svg/img_placeholder.svg");
+        const placeholder = "/app/assets/svg/img_placeholder.svg";
+        let req = `/api/img?or=${encodeURIComponent(placeholder)}`;
+        if (artist !== null) req += `&artist=${encodeURIComponent(artist)}`;
+        if (album !== null) req += `&album=${encodeURIComponent(album)}`;
+
         if (size !== null) req += `&size=${size}`;
         return req;
     }
