@@ -1,8 +1,4 @@
-use std::{
-    ops::{Index, Range},
-    slice::SliceIndex,
-    time::Duration,
-};
+use std::{ops::Index, slice::SliceIndex, time::Duration};
 
 use log::info;
 use rand::{rng, seq::SliceRandom};
@@ -92,13 +88,26 @@ impl Playlist {
     }
 
     /// Retain only songs that match the predicate.
-    pub fn retain(&mut self, f: impl FnMut(&SongId) -> bool) {
-        let cur = self.current();
-        let old_len = self.len();
-        self.songs.retain(f);
-        if let Some(cur) = cur {
-            let len_diff = old_len - self.len();
-            self.locate_current_h(cur, len_diff);
+    pub fn retain(&mut self, mut f: impl FnMut(SongId, usize) -> bool) {
+        let cur = self.current;
+        let cur_id = self.current();
+        let mut index = 0;
+        let mut before = 0;
+
+        self.songs.retain(|s| {
+            let i = index;
+            index += 1;
+            let ret = f(*s, i);
+            if !ret && i <= cur {
+                before += 1;
+            }
+            ret
+        });
+
+        self.current -= before;
+
+        if cur_id != self.current() {
+            self.play_pos = None;
         }
     }
 
@@ -172,59 +181,6 @@ impl Playlist {
         self.songs.splice(index..index, songs.iter().copied());
         if index <= self.current {
             self.current += songs.len();
-        }
-    }
-
-    /// Ranges must be sorted as increasing sequence of start.
-    ///
-    /// Note that this may change the current song id.
-    pub(super) fn remove_ranges(
-        &mut self,
-        ranges: impl IntoIterator<Item = Range<usize>>,
-    ) {
-        let mut ranges = ranges.into_iter();
-        let mut range = ranges.next();
-
-        let mut before = 0;
-        let cur = self.current;
-        let cur_id = self.current();
-
-        let mut index = 0;
-
-        self.songs.retain(|_| {
-            let i = index;
-            index += 1;
-
-            let Some(mut r) = range.clone() else {
-                return true;
-            };
-
-            while i >= r.end {
-                range = ranges.next();
-                let Some(rn) = range.clone() else {
-                    return true;
-                };
-                r = rn;
-            }
-
-            if i < r.start {
-                return true;
-            }
-
-            if r.contains(&i) {
-                if i < cur {
-                    before += 1;
-                }
-                false
-            } else {
-                true
-            }
-        });
-
-        self.current -= before;
-
-        if cur_id != self.current() {
-            self.play_pos = None;
         }
     }
 
@@ -357,19 +313,6 @@ impl Playlist {
         } else {
             self.current = 0;
             info!("Failed to locate current song. Playlist is empty.");
-        }
-    }
-
-    fn locate_current_h(&mut self, cur: SongId, change: usize) {
-        let start = self.current.saturating_sub(change);
-        let end = self.songs.len().min(self.current + 1);
-
-        let songs = &self.songs[start..end];
-        if let Some(cur) = songs.iter().position(|i| *i == cur) {
-            self.current = cur + start;
-        } else {
-            info!("Failed to locate current song. Playlist is empty. (h)");
-            self.locate_current(cur);
         }
     }
 }

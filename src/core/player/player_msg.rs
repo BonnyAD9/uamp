@@ -62,7 +62,8 @@ impl UampApp {
         // ReplaceData is handled separately in `player_id_replace`
         if up >= LibraryUpdate::RemoveData && up != LibraryUpdate::ReplaceData
         {
-            self.player.retain(|s| !self.library[s].is_deleted());
+            self.player
+                .retain_all(&mut self.library, |l, s, _| !l[s].is_deleted());
         }
 
         if let Some(t) = self.hard_pause_at
@@ -80,8 +81,8 @@ impl UampApp {
         &mut self,
         n: impl Fn(SongId, &Library) -> bool,
     ) {
-        self.player.retain(|s| {
-            !self.library[s].is_deleted() && !n(*s, &self.library)
+        self.player.retain_all(&mut self.library, |l, s, _| {
+            !l[s].is_deleted() && !n(s, l)
         });
     }
 }

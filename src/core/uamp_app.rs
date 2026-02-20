@@ -76,7 +76,7 @@ impl UampApp {
 
         let mut player = Player::from_config(&mut lib, rt.andle(), &conf);
         player.load_config(&conf);
-        player.retain(|s| !lib[s].is_deleted());
+        player.retain_all(&mut lib, |l, s, _| !l[s].is_deleted());
 
         // Signal stream is broken with receiver stream.
         //Self::signal_task(ctrl)?;

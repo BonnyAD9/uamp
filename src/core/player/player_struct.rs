@@ -1,5 +1,6 @@
 use std::{cell::Cell, mem, ops::Range, time::Duration};
 
+use bitflags::bitflags;
 use itertools::Itertools;
 use log::{error, info, warn};
 use raplay::{CallbackInfo, Timestamp};
@@ -41,7 +42,7 @@ pub struct Player {
 
     state: Playback,
     inner: SinkWrapper,
-    playlist_ended: bool,
+    flags: PlayerFlags,
 
     #[tracker(Cell::set)]
     change: Cell<bool>,
@@ -132,7 +133,7 @@ impl Player {
     pub fn play_next(&mut self, lib: &mut Library, n: usize) {
         let id = self.mut_playlist().nth_next(n);
         if id.is_none() {
-            self.playlist_ended = true;
+            self.flags |= PlayerFlags::PLAYLIST_END;
         }
         self.try_load_state(lib, id, n == 1);
     }
@@ -298,13 +299,72 @@ impl Player {
     }
 
     /// Retain only songs that match the predicate.
-    pub fn retain(&mut self, mut f: impl FnMut(&SongId) -> bool) {
-        self.mut_playlist().retain(&mut f);
+    ///
+    /// Returns true if the current song has changed.
+    pub fn retain_all(
+        &mut self,
+        lib: &mut Library,
+        mut f: impl FnMut(&Library, SongId, usize) -> bool,
+    ) -> bool {
         for p in self.mut_playlist_stack() {
-            p.retain(&mut f)
+            p.retain(|s, i| f(lib, s, i));
         }
-        self.inner.unprefetch();
-        self.inner.do_prefetch_notify(true);
+        self.retain_current(lib, &mut f)
+    }
+
+    /// Returns true if the current song has changed.
+    pub fn retain(
+        &mut self,
+        lib: &mut Library,
+        playlist: usize,
+        mut f: impl FnMut(&Library, SongId, usize) -> bool,
+    ) -> Result<bool> {
+        if playlist == 0 {
+            return Ok(self.retain_current(lib, f));
+        }
+        let pl = self.get_playlist_mut(playlist).ok_or_else(|| {
+            Error::invalid_operation()
+                .msg(format!("Invalid playlist index `{playlist}`."))
+        })?;
+
+        pl.retain(|s, i| f(lib, s, i));
+
+        Ok(false)
+    }
+
+    /// Returns true if the current song has changed.
+    pub fn retain_current(
+        &mut self,
+        lib: &mut Library,
+        mut f: impl FnMut(&Library, SongId, usize) -> bool,
+    ) -> bool {
+        let pl = self.mut_playlist();
+
+        let cur = pl.current();
+        let next = pl.nth_next(1);
+        pl.retain(|s, i| f(lib, s, i));
+        let new_cur = pl.current();
+        let new_next = pl.nth_next(1);
+
+        if new_cur == cur {
+            if new_next != next {
+                self.inner.unprefetch();
+                self.inner.do_prefetch_notify(true);
+            }
+            return false;
+        }
+
+        if new_cur != next {
+            self.inner.unprefetch();
+        }
+
+        self.try_load_state(lib, new_cur, true);
+
+        if new_cur.is_none() && cur.is_some() {
+            self.flags |= PlayerFlags::PLAYLIST_END;
+        }
+
+        true
     }
 
     /// If any playlist action is triggered, return its messages and clear the
@@ -313,8 +373,8 @@ impl Player {
         &mut self,
         default: Option<&Alias>,
     ) -> Option<Msg> {
-        if self.playlist_ended {
-            self.playlist_ended = false;
+        if self.flags.contains(PlayerFlags::PLAYLIST_END) {
+            self.flags.remove(PlayerFlags::PLAYLIST_END);
             self.playlist()
                 .on_end
                 .clone()
@@ -434,29 +494,28 @@ impl Player {
         playlist: usize,
         ranges: impl IntoIterator<Item = Range<usize>>,
     ) -> Result<bool> {
-        let pl = self.get_playlist_mut(playlist).ok_or_else(|| {
-            Error::invalid_operation()
-                .msg(format!("Invalid playlist index `{playlist}`."))
-        })?;
+        let mut ranges = ranges.into_iter();
+        let mut range = ranges.next();
 
-        let cur = pl.current();
-        pl.remove_ranges(ranges);
-        let new_cur = pl.current();
+        self.retain(lib, playlist, |_, _, i| {
+            let Some(mut r) = range.clone() else {
+                return true;
+            };
 
-        // TODO: make sure that the next song is prefetched if it should be.
-        self.inner.unprefetch();
+            while i >= r.end {
+                range = ranges.next();
+                let Some(rn) = range.clone() else {
+                    return true;
+                };
+                r = rn;
+            }
 
-        if playlist != 0 || cur == new_cur {
-            return Ok(false);
-        }
+            if i < r.start {
+                return true;
+            }
 
-        self.try_load_state(lib, new_cur, false);
-
-        if new_cur.is_none() && cur.is_some() {
-            self.playlist_ended = true;
-        }
-
-        Ok(true)
+            !r.contains(&i)
+        })
     }
 
     /// Creates new player from the sender
@@ -469,7 +528,7 @@ impl Player {
             state: Playback::Stopped,
             inner: SinkWrapper::new(),
             change: Cell::new(true),
-            playlist_ended: false,
+            flags: PlayerFlags::NONE,
         };
 
         res.init_inner(rt);
@@ -494,7 +553,7 @@ impl Player {
             volume,
             mute,
             change: change.into(),
-            playlist_ended: false,
+            flags: PlayerFlags::NONE,
         }
     }
 
@@ -537,6 +596,14 @@ impl Player {
 //===========================================================================//
 //                                  Private                                  //
 //===========================================================================//
+
+bitflags! {
+    #[derive(Debug, Clone, Copy)]
+    struct PlayerFlags: u32 {
+        const NONE = 0x0;
+        const PLAYLIST_END = 0x1;
+    }
+}
 
 impl Player {
     /// Load with the current playback state. If pf is true, it means that the
@@ -606,7 +673,7 @@ impl Player {
                 info!("Moving to the next song.");
                 let next = self.playlist.nth_next(1);
                 if next.is_none() {
-                    self.playlist_ended = true;
+                    self.flags |= PlayerFlags::PLAYLIST_END;
                 }
                 self.try_load(lib, next, play, pf)
             }

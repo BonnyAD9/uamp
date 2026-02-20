@@ -33,6 +33,8 @@ contains albums and artists and song now has nullable fields and `artists` and
 - Fix panic in mix after into empty playlist.
 - Uamp now properly supports image lookup for songs with missing album, artist,
   and title.
+- Fix potential issues when current or prefetched song was removed from
+  library.
 
 ## v0.6.8
 ### New features

@@ -99,10 +99,12 @@ impl SinkWrapper {
         Ok(())
     }
 
-    pub fn unprefetch(&self) {
+    /// Returns true if there was prefetched song.
+    pub fn unprefetch(&self) -> bool {
         self.sink
             .prefetch(None)
-            .expect("Failed to remove prefetched song");
+            .expect("Failed to remove prefetched song")
+            .is_some()
     }
 
     /// Sets the play state.
