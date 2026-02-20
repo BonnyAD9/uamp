@@ -9,7 +9,9 @@ import { removePlaylistRow } from "./ui/tables.js";
 spawnScreens();
 
 window.app = new App();
+window.addEventListener("load", connectSSE);
 
+/** Object containing implemented SSE event handlings. */
 const SSE_HANDLERS = {
     "set-all": async (data) => {
         await app.init(data);
@@ -48,29 +50,19 @@ const SSE_HANDLERS = {
         pushPlaylistEvent(data);
     },
     "insert-into-playlist": (data) => {
-        const playlist = app.player.getPlaylist(data.playlist);
-        if (playlist === null) return;
-
-        const songs = data.songs.map((id) => app.library.getSong(id));
-        playlist.songs.splice(data.position, 0, ...songs);
-        if (app.playlistTab === data.playlist) {
-            app.displayPlaylist();
-            app.createBarSongs();
-        }
+        playlistAction(data, (data, playlist) => {
+            const songs = data.songs.map((id) => app.library.getSong(id));
+            playlist.songs.splice(data.position, 0, ...songs);
+        });
     },
     "remove-from-playlist": (data) => {
-        const playlist = app.player.getPlaylist(data.playlist);
-        if (playlist === null) return;
-
-        data.ranges.sort((a, b) => b[0] - a[0]);
-        data.ranges.forEach((range) => {
-            const [start, end] = range;
-            playlist.songs.splice(start, end - start);
+        playlistAction(data, (data, playlist) => {
+            data.ranges.sort((a, b) => b[0] - a[0]);
+            data.ranges.forEach((range) => {
+                const [start, end] = range;
+                playlist.songs.splice(start, end - start);
+            });
         });
-        if (app.playlistTab === data.playlist) {
-            app.displayPlaylist();
-            app.createBarSongs();
-        }
     },
     restarting: () => console.log("Restarting..."),
     "reorder-playlist-stack": ({ order, position }) => {
@@ -104,13 +96,29 @@ const SSE_HANDLERS = {
     "config-changed": async (data) => (app.config = Config.init(data)),
 };
 
-const eventSource = new EventSource("/api/sub");
-Object.entries(SSE_HANDLERS).forEach(([event, handler]) => {
-    eventSource.addEventListener(event, async (e) => {
-        const data = e.data ? JSON.parse(e.data) : null;
-        await handler(data);
+/** @type {EventSource|null} */
+let eventSource;
+/** Connects SSE to the server with auto-reconnecting. */
+function connectSSE() {
+    if (eventSource) eventSource.close();
+
+    eventSource = new EventSource("/api/sub");
+    Object.entries(SSE_HANDLERS).forEach(([event, handler]) => {
+        eventSource.addEventListener(event, async (e) => {
+            const data = e.data ? JSON.parse(e.data) : null;
+            await handler(data);
+        });
     });
-});
+
+    eventSource.onopen = () => console.log("SSE connected.");
+    eventSource.onerror = () => {
+        console.error(
+            "Error happened in SSE connection. Reconnecting in 3s...",
+        );
+        eventSource.close();
+        setTimeout(connectSSE, 3000);
+    };
+}
 
 function playlistJumpEvent(data) {
     app.setCurrent(data.position);
@@ -128,6 +136,22 @@ function pushPlaylistEvent(data) {
     app.pushPlaylist(data.playlist);
     app.setTimestamp(data.timestamp);
     app.setPlayback(data.playback);
+}
+
+/**
+ * Appplies given action on a playlist
+ * @param {object} data - event data
+ * @param {(object, Playlist) => void} action - action performed on playlist
+ */
+function playlistAction(data, action) {
+    const playlist = app.player.getPlaylist(data.playlist);
+    if (playlist === null) return;
+
+    action(data, playlist);
+    if (app.playlistTab === data.playlist) {
+        app.displayPlaylist();
+        app.createBarSongs();
+    }
 }
 
 function extendArray(arr, max) {
