@@ -47,11 +47,11 @@ export default class Artist {
         row.querySelector(".other").textContent = this.getOtherDetails();
 
         const albums = row.querySelector(".albums-preview");
-        this.albums.forEach((album, i) => {
+        this.albums.forEach((album) => {
             const img = document.createElement("img");
             img.src = Album.getCover(album.artist, album.name, 64);
             img.title = album.name;
-            img.dataset.index = i;
+            img.dataset.index = album.id;
             albums.appendChild(img);
         });
 

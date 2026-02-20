@@ -18,12 +18,14 @@
             </div>
 
             <nav>
-                <p class="active nosel" data-screen="library">Library</p>
-                <p class="nosel" data-screen="albums">Albums</p>
-                <p class="nosel" data-screen="artists">Artists</p>
-                <p class="nosel" data-screen="playlist">Playlist</p>
+                <p class="active nosel grad-hover" data-screen="library">
+                    Library
+                </p>
+                <p class="nosel grad-hover" data-screen="albums">Albums</p>
+                <p class="nosel grad-hover" data-screen="artists">Artists</p>
+                <p class="nosel grad-hover" data-screen="playlist">Playlist</p>
                 <div class="spacer"></div>
-                <p class="nosel" data-screen="settings">Settings</p>
+                <p class="nosel grad-hover" data-screen="settings">Settings</p>
             </nav>
         </section>
 
@@ -334,7 +336,7 @@
     </template>
 
     <template id="song-template">
-        <tr>
+        <tr class="grad-hover">
             <td class="cover">
                 <img
                     src="assets/svg/img_placeholder.svg"
@@ -377,7 +379,7 @@
     </template>
 
     <template id="artist-template">
-        <tr>
+        <tr class="grad-hover">
             <td>
                 <p class="artist ellipsis"></p>
                 <span class="other ellipsis"><span>
@@ -464,14 +466,14 @@
     </template>
 
     <template id="search-input">
-        <div class="search-wrapper">
+        <label class="search-wrapper grad-hover">
             <input
                 class="form-input"
                 type="search"
                 placeholder="Search..."
             />
             <button type="button">X</button>
-        </div>
+        </label>
     </template>
 </body>
 

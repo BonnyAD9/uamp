@@ -176,17 +176,13 @@ function libraryScreen() {
 
 function albumsScreen() {
     const labels = ["Year", "Name", "Artist", "Songs"];
-    const header = getCustomHeader(labels, (key) =>
-        app.sortAlbums(key),
-    );
+    const header = getCustomHeader(labels, (key) => app.sortAlbums(key));
     document.querySelector("#albums .header").appendChild(header);
 }
 
 function artistsScreen() {
     const labels = ["Name", "Albums", "Songs"];
-    const header = getCustomHeader(labels, (key) =>
-        app.sortArtists(key),
-    );
+    const header = getCustomHeader(labels, (key) => app.sortArtists(key));
     document.querySelector("#artists .header").appendChild(header);
 }
 
@@ -203,19 +199,16 @@ function playlistScreen() {
 }
 
 function gradHoverListeners() {
-    const tables = document.querySelectorAll("table.songs tbody");
-    tables.forEach((table) => {
-        table.addEventListener("mousemove", (e) => {
-            const target = e.target.closest(":not(.spacer)");
-            if (!target) return;
+    document.addEventListener("mousemove", (e) => {
+        const target = e.target.closest(".grad-hover");
+        if (!target) return;
 
-            const rect = target.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+        const rect = target.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
 
-            table.style.setProperty("--mouse-x", `${x}px`);
-            table.style.setProperty("--mouse-y", `${y}px`);
-        });
+        document.documentElement.style.setProperty("--mouse-x", `${x}px`);
+        document.documentElement.style.setProperty("--mouse-y", `${y}px`);
     });
 }
 

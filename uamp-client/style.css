@@ -83,10 +83,7 @@ section.menu nav p {
     font-size: 15px;
     cursor: pointer;
     border-radius: 5px;
-}
-
-section.menu nav p:hover {
-    background-color: var(--bg);
+    overflow: hidden;
 }
 
 section.menu nav p.active::after {
@@ -319,24 +316,21 @@ table.songs tbody tr.spacer {
     height: 0;
 }
 
-table.songs tbody tr::before {
+.grad-hover::before {
     content: "";
+    background: none;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.grad-hover:hover::before {
     background: radial-gradient(
         100% 800px at var(--mouse-x) var(--mouse-y),
         rgba(255, 255, 255, 0.06),
         transparent 40%
     );
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 2;
-    opacity: 0;
-}
-
-table.songs tbody tr:hover::before {
-    opacity: 1;
 }
 
 table.songs td {
@@ -1177,6 +1171,10 @@ input:checked + .slider:before {
 
 .search-wrapper {
     position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    display: block;
+    cursor: text;
 }
 
 .search-wrapper input[type="search"] {
