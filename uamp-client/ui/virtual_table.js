@@ -101,7 +101,7 @@ export default class VirtualTable {
 
         if (this.autoScroll) {
             this.ignoreScroll = true;
-            this.container.scrollTop = (start + 2) * this.rowHeight;
+            this.container.scrollTop = start * this.rowHeight;
             requestAnimationFrame(() => (this.ignoreScroll = false));
         }
     }
@@ -161,7 +161,7 @@ export default class VirtualTable {
             ? current
             : songs.findIndex((s) => s.id == current);
 
-        const top = Math.ceil(currentPos - visible * 0.5);
+        const top = Math.ceil(currentPos - visible * 0.5) + 2;
         const start = Math.max(0, Math.min(top, songCnt - visible));
         return this.#getEndPos(start, visible, songCnt, topSpacer, botSpacer);
     }
