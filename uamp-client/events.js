@@ -9,11 +9,11 @@ import { removePlaylistRow } from "./ui/tables.js";
 spawnScreens();
 
 const AppSingleton = (() => {
-    let instance = null;
+    let instance = new App();
 
     return {
         async init(data) {
-            instance = await App.init(data);
+            await instance.init(data);
             return instance;
         },
         get() {

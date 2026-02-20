@@ -29,6 +29,26 @@ export default class Player {
     }
 
     /**
+     * Creates new empty player.
+     * @returns {Player} created player
+     */
+    static empty() {
+        return new Player({
+            volume: 0.69,
+            mute: false,
+            playlist: {
+                songs: [],
+                current: null,
+                play_pos: null,
+                on_end: null,
+                add_policy: "None",
+            },
+            playlist_stack: [],
+            state: "Paused",
+        });
+    }
+
+    /**
      * Checks whether player is playing or not
      * @returns {boolean} true when playing, else false
      */

@@ -38,19 +38,16 @@ import VirtualTable from "./ui/virtual_table.js";
 const slider = document.querySelector(".bar #progressBar");
 
 export default class App {
-    /**
-     * @param {object} data
-     * @param {Config} config
-     */
-    constructor(data, config) {
-        this.library = new Library(data.library);
+    constructor() {
+        /** @type {Library} */
+        this.library = Library.empty();
         /** @type {Player} */
-        this.player = new Player(data.player, this.library);
-        /** @type {Timestamp} */
-        this.position = data.position && Timestamp.from(data.position);
+        this.player = Player.empty();
+        /** @type {Timestamp|null} */
+        this.position = null;
         /** @type {Config} */
-        this.config = config;
-        this.config.render();
+        this.config = Config.empty();
+        // this.config.render();
 
         this.lastUpdate = performance.now();
         this.rafId = null;
@@ -86,9 +83,28 @@ export default class App {
         this.barPlaylistTable.playlist().list().centering().autoScrolling();
     }
 
-    static async init(data) {
+    async init(data) {
         const config = await Config.init(data.config);
-        return new App(data, config);
+
+        this.library = new Library(data.library);
+        /** @type {Player} */
+        this.player = new Player(data.player, this.library);
+        /** @type {Timestamp} */
+        this.position = data.position && Timestamp.from(data.position);
+        /** @type {Config} */
+        this.config = config;
+        this.config.render();
+
+        this.playlistTab = 0;
+
+        /** @type {?Album} */
+        this.album = null;
+        /** @type {?Artist} */
+        this.artist = null;
+
+        this.libraryTable.render();
+        this.playlistTable.render();
+        this.barPlaylistTable.render();
     }
 
     /**
@@ -505,15 +521,6 @@ async function apiPushPlaylist(songs, pos) {
         play: true,
     };
     return apiCtrlData({ SetPlaylist: data });
-}
-
-async function apiInsertIntoPlaylist(songs, pos, playlist = 0) {
-    const data = {
-        songs: songs.map((s) => s.id),
-        position: Number(pos),
-        playlist: Number(playlist),
-    };
-    return apiCtrlData({ InsertIntoPlaylist: data });
 }
 
 async function apiCtrlData(data) {

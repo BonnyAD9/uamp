@@ -17,6 +17,14 @@ export default class Config {
         Object.assign(this, data);
     }
 
+    /**
+     * Creates new empty Config
+     * @returns {Config} created config
+     */
+    static empty() {
+        return new Config({}, {});
+    }
+
     static async init(data) {
         const schema = await fetch("assets/config_schema.json")
             .then((res) => {

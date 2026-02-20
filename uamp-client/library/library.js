@@ -44,6 +44,19 @@ export default class Library {
     }
 
     /**
+     * Creates empty library.
+     * @returns {Library} created library
+     */
+    static empty() {
+        return new Library({
+            songs: [],
+            tmp_songs: [],
+            artists: [],
+            albums: [],
+        });
+    }
+
+    /**
      * Gets song from the library based on the given id
      * @param {number} id - id of the song
      * @returns {?Song} song when found, else null

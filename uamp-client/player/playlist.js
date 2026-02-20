@@ -9,11 +9,10 @@ export default class Playlist {
     constructor(data, library) {
         /** @type {Song[]} */
         this.songs = Playlist.#parseSongs(data.songs, library);
-        /** @type {?number} */
+        /** @type {number|null} */
         this.current = data.current;
-        /** @type {Duration} */
-        this.play_pos =
-            data.play_pos !== null ? Duration.from(data.play_pos) : null;
+        /** @type {Duration|null} */
+        this.play_pos = Duration.from(data.play_pos);
         /** @type {{ name: string, args: string[] }|null} */
         this.on_end = data.on_end;
         /** @type {string} */
