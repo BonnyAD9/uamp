@@ -50,9 +50,12 @@ const SSE_HANDLERS = {
         pushPlaylistEvent(data);
     },
     "insert-into-playlist": (data) => {
-        playlistAction(data, (data, playlist) => {
-            const songs = data.songs.map((id) => app.library.getSong(id));
-            playlist.songs.splice(data.position, 0, ...songs);
+        playlistAction(data, ({ songs, position }, playlist) => {
+            const newSongs = songs.map((id) => app.library.getSong(id));
+            playlist.songs.splice(position, 0, ...newSongs);
+            if (playlist.current !== null && position <= playlist.current) {
+                playlist.current += songs.length;
+            }
         });
     },
     "remove-from-playlist": (data) => {
@@ -60,7 +63,12 @@ const SSE_HANDLERS = {
             data.ranges.sort((a, b) => b[0] - a[0]);
             data.ranges.forEach((range) => {
                 const [start, end] = range;
-                playlist.songs.splice(start, end - start);
+                const deleted = end - start;
+                playlist.songs.splice(start, deleted);
+
+                if (playlist.current !== null && playlist.current >= end) {
+                    playlist.current -= deleted;
+                }
             });
         });
     },

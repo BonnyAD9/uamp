@@ -134,6 +134,6 @@ export const PLAYLIST_CONTEXT_ITEMS = [
     {
         label: "Remove from Playlist",
         action: ({ id, playlist }) =>
-            Api.removeFromPlaylist([[id, id + 1]], playlist),
+            Api.removeFromPlaylist([[id, id + 4]], playlist),
     },
 ];

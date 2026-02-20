@@ -137,7 +137,8 @@ export default class App {
         }
 
         this.position = Timestamp.from(timestamp);
-        this.player.getPlaying().length = Duration.from(timestamp.total);
+        const song = this.player.getPlaying();
+        if (song) song.length = Duration.from(timestamp.total);
         this.displayProgress(0);
     }
 
