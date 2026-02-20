@@ -87,6 +87,10 @@ export default class Sorter {
 
     /** Compares two values, returns pos value when A larger, neg B, 0 equal */
     static #cmp(valA, valB) {
+        if (valA == null && valB == null) return 0;
+        if (valA == null) return -1;
+        if (valB == null) return 1;
+
         if (valA instanceof Duration) {
             return valA.cmp(valB);
         }
@@ -97,16 +101,32 @@ export default class Sorter {
         }
 
         if (Array.isArray(valA)) {
-            valA = valA.length;
-            valB = valB.length;
+            return Sorter.#arrCmp(valA, valB);
         }
 
         if (typeof valA === "string") {
-            return valA.localeCompare(valB, undefined, {
-                sensitivity: "accent",
-            });
+            return Sorter.#strCmp(valA, valB);
         }
 
         return valA - valB;
+    }
+
+    static #strCmp(valA, valB) {
+        return valA.localeCompare(valB, undefined, {
+            sensitivity: "accent",
+        });
+    }
+
+    static #arrCmp(valA, valB) {
+        const isStr =
+            typeof valA[0] === "string" || typeof valB[0] === "string";
+
+        if (!isStr) {
+            return valA.length - valB.length;
+        }
+
+        const strA = valA.join(", ");
+        const strB = valB.join(", ");
+        return Sorter.#strCmp(strA, strB);
     }
 }

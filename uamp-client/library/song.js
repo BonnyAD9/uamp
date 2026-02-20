@@ -40,7 +40,7 @@ export default class Song {
         this.path = path;
         /** @type {string|null} */
         this.title = title;
-        /** @type {[string]} */
+        /** @type {string[]} */
         this.artists = artists;
         /** @type {string|null} */
         this.album = album;
@@ -54,7 +54,7 @@ export default class Song {
         this.year = year;
         /** @type {Duration|null} */
         this.length = length;
-        /** @type {[string]} */
+        /** @type {string[]} */
         this.genres = genres;
         /** @type {boolean} */
         this.deleted = deleted;
