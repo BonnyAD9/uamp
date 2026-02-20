@@ -8,25 +8,12 @@ import { removePlaylistRow } from "./ui/tables.js";
 
 spawnScreens();
 
-const AppSingleton = (() => {
-    let instance = new App();
-
-    return {
-        async init(data) {
-            await instance.init(data);
-            return instance;
-        },
-        get() {
-            return instance;
-        },
-    };
-})();
-window.AppSingleton = AppSingleton;
+window.app = new App();
 
 const eventSource = new EventSource("/api/sub");
 
 eventSource.addEventListener("set-all", async (e) => {
-    const app = await AppSingleton.init(JSON.parse(e.data));
+    await app.init(JSON.parse(e.data));
     app.displaySongs();
 
     setTimeout(() => {
@@ -37,33 +24,32 @@ eventSource.addEventListener("set-all", async (e) => {
 });
 
 eventSource.addEventListener("set-playlist", (e) => {
-    setPlaylistEvent(AppSingleton.get(), JSON.parse(e.data));
+    setPlaylistEvent(app, JSON.parse(e.data));
 });
 
 eventSource.addEventListener("playback", (e) => {
-    AppSingleton.get().setPlayback(JSON.parse(e.data));
+    app.setPlayback(JSON.parse(e.data));
 });
 
 eventSource.addEventListener("playlist-jump", (e) => {
-    playlistJumpEvent(AppSingleton.get(), JSON.parse(e.data));
+    playlistJumpEvent(app, JSON.parse(e.data));
 });
 
 eventSource.addEventListener("seek", (e) => {
-    AppSingleton.get().setTimestamp(JSON.parse(e.data));
+    app.setTimestamp(JSON.parse(e.data));
 });
 
 eventSource.addEventListener("quitting", (_) => console.log("Quitting..."));
 
 eventSource.addEventListener("set-volume", (e) => {
-    AppSingleton.get().player.setVolume(JSON.parse(e.data));
+    app.player.setVolume(JSON.parse(e.data));
 });
 
 eventSource.addEventListener("set-mute", (e) => {
-    AppSingleton.get().player.setMute(JSON.parse(e.data));
+    app.player.setMute(JSON.parse(e.data));
 });
 
 eventSource.addEventListener("pop-playlist", (e) => {
-    const app = AppSingleton.get();
     const data = JSON.parse(e.data);
 
     app.popPlaylist(data.pop_cnt);
@@ -71,7 +57,6 @@ eventSource.addEventListener("pop-playlist", (e) => {
 });
 
 eventSource.addEventListener("pop-set-playlist", (e) => {
-    const app = AppSingleton.get();
     const data = JSON.parse(e.data);
 
     app.popPlaylist(data.pop_cnt);
@@ -79,21 +64,18 @@ eventSource.addEventListener("pop-set-playlist", (e) => {
 });
 
 eventSource.addEventListener("set-playlist-add-policy", (e) => {
-    const app = AppSingleton.get();
     app.player.playlist.add_policy = JSON.parse(e.data);
 });
 
 eventSource.addEventListener("set-playlist-end-action", (e) => {
-    const app = AppSingleton.get();
     app.player.playlist.on_end = JSON.parse(e.data);
 });
 
 eventSource.addEventListener("push-playlist", (e) => {
-    pushPlaylistEvent(AppSingleton.get(), JSON.parse(e.data));
+    pushPlaylistEvent(app, JSON.parse(e.data));
 });
 
 eventSource.addEventListener("push-playlist-with-cur", (e) => {
-    const app = AppSingleton.get();
     const current = app.player.playlist.current;
     if (current !== null) {
         app.player.playlist.songs.splice(current, 1);
@@ -104,7 +86,6 @@ eventSource.addEventListener("push-playlist-with-cur", (e) => {
 });
 
 eventSource.addEventListener("insert-into-playlist", (e) => {
-    const app = AppSingleton.get();
     const data = JSON.parse(e.data);
 
     const playlist = app.player.getPlaylist(data.playlist);
@@ -119,7 +100,6 @@ eventSource.addEventListener("insert-into-playlist", (e) => {
 });
 
 eventSource.addEventListener("remove-from-playlist", (e) => {
-    const app = AppSingleton.get();
     const data = JSON.parse(e.data);
 
     const playlist = app.player.getPlaylist(data.playlist);
@@ -139,7 +119,6 @@ eventSource.addEventListener("remove-from-playlist", (e) => {
 eventSource.addEventListener("restarting", (_) => console.log("Restarting..."));
 
 eventSource.addEventListener("reorder-playlist-stack", (e) => {
-    const app = AppSingleton.get();
     const data = JSON.parse(e.data);
 
     const order = extendArray(data.order, app.player.playlist_stack.length);
@@ -148,7 +127,6 @@ eventSource.addEventListener("reorder-playlist-stack", (e) => {
 });
 
 eventSource.addEventListener("play-tmp", (e) => {
-    const app = AppSingleton.get();
     const data = JSON.parse(e.data);
 
     app.pushTmpSongs(data.songs);
@@ -178,7 +156,6 @@ eventSource.addEventListener("new-server", (e) => {
 eventSource.addEventListener("client-changed", (_) => window.location.reload());
 
 eventSource.addEventListener("config-changed", (e) => {
-    const app = AppSingleton.get();
     if (app === null) return;
     app.config = JSON.parse(e.data);
 });

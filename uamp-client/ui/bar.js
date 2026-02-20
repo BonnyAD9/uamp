@@ -77,20 +77,20 @@ const bar = document.querySelector("section.bar");
 export function toggleBar() {
     bar.classList.toggle("expanded");
     if (bar.classList.contains("expanded"))
-        setTimeout(() => AppSingleton.get().createBarSongs(), 200);
+        setTimeout(() => app.createBarSongs(), 200);
 }
 window.toggleBar = toggleBar;
 
 function openAlbum(e, artist, album) {
     if (!bar.classList.contains("expanded")) return;
     e.stopPropagation();
-    AppSingleton.get().albumBarClick(artist, album);
+    app.albumBarClick(artist, album);
 }
 
 songArtist.addEventListener("click", (e) => {
     if (!bar.classList.contains("expanded")) return;
     e.stopPropagation();
-    AppSingleton.get().artistBarClick(e);
+    app.artistBarClick(e);
 });
 
 const playlist = bar.querySelector(".playlist");

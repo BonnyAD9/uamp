@@ -76,7 +76,7 @@ document.addEventListener("contextmenu", (e) => {
     if (plRow) {
         const data = {
             id: Number(plRow.dataset.index),
-            playlist: AppSingleton.get().playlistTab,
+            playlist: app.playlistTab,
         };
         contextMenu.show(e, PLAYLIST_CONTEXT_ITEMS, data);
     }
@@ -85,7 +85,6 @@ document.addEventListener("contextmenu", (e) => {
 function insertSongs(songs, next, playlist = 0) {
     if (!songs || songs.length === 0) return;
 
-    const app = AppSingleton.get();
     const id = next
         ? app.player.getPlaylist(playlist).getNextPId()
         : app.player.getPlaylist(playlist).songs.length;
@@ -96,12 +95,12 @@ export const SONG_CONTEXT_ITEMS = [
     {
         label: "Play Next",
         action: (i) =>
-            insertSongs([AppSingleton.get().library.getSong(i)], true),
+            insertSongs([app.library.getSong(i)], true),
     },
     {
         label: "Add to Queue",
         action: (i) =>
-            insertSongs([AppSingleton.get().library.getSong(i)], false),
+            insertSongs([app.library.getSong(i)], false),
     },
 ];
 
@@ -109,14 +108,14 @@ export const ALBUM_CONTEXT_ITEMS = [
     {
         label: "Play Next",
         action: (id) => {
-            const album = AppSingleton.get().library.allAlbums[id];
+            const album = app.library.allAlbums[id];
             if (album) insertSongs(album.songs.get(), true);
         },
     },
     {
         label: "Add to Queue",
         action: (id) => {
-            const album = AppSingleton.get().library.allAlbums[id];
+            const album = app.library.allAlbums[id];
             if (album) insertSongs(album.songs.get(), false);
         },
     },
@@ -126,7 +125,7 @@ export const PLAYLIST_CONTEXT_ITEMS = [
     {
         label: "Play Next",
         action: ({ id, playlist }) => {
-            const pl = AppSingleton.get().player.getPlaylist(playlist);
+            const pl = app.player.getPlaylist(playlist);
             if (pl === null) return;
             Api.removeFromPlaylist([[id, id + 1]], playlist);
             insertSongs([pl.songs[id]], true, playlist);

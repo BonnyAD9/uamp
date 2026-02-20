@@ -30,7 +30,7 @@
         <section id="library" class="screen active">
             <screen-header
                 title="Library"
-                oninput="AppSingleton.get().searchLibrary(event)"
+                oninput="app.searchLibrary(event)"
             ></screen-header>
             <div class="screen-wrapper"></div>
         </section>
@@ -38,12 +38,12 @@
         <section id="albums" class="screen">
             <screen-header
                 title="Albums"
-                oninput="AppSingleton.get().searchAlbums(event)"
+                oninput="app.searchAlbums(event)"
             ></screen-header>
             <div class="screen-wrapper">
                 <div
                     class="list with-album-context"
-                    onclick="AppSingleton.get().albumClick(event)"
+                    onclick="app.albumClick(event)"
                 ></div>
             </div>
         </section>
@@ -66,7 +66,7 @@
         <section id="artists" class="screen">
             <screen-header
                 title="Artists"
-                oninput="AppSingleton.get().searchArtists(event)"
+                oninput="app.searchArtists(event)"
             ></screen-header>
             <div class="screen-wrapper">
                 <table class="songs">
@@ -75,7 +75,7 @@
                         <col style="width: 50%">
                         <col style="width: 50%">
                     </colgroup>
-                    <tbody onclick="AppSingleton.get().artistClick(event)">
+                    <tbody onclick="app.artistClick(event)">
                     </tbody>
                 </table>
             </div>
@@ -93,7 +93,7 @@
                 <h3>Albums</h3>
                 <div
                     class="list with-album-context"
-                    onclick="AppSingleton.get().albumArtistClick(event)"
+                    onclick="app.albumArtistClick(event)"
                 ></div>
 
                 <h3>Songs</h3>
@@ -107,7 +107,7 @@
                         <button
                             id="playingPlaylist"
                             class="tab active"
-                            onclick="AppSingleton.get().setPlaylistTab(0)"
+                            onclick="app.setPlaylistTab(0)"
                         >Playing</button>
                     </div>
                     <div class="playlist-controls">
@@ -275,7 +275,7 @@
         <div class="playlist">
             <div
                 class="songs"
-                onclick="AppSingleton.get().barPlaylistClick(event)"
+                onclick="app.barPlaylistClick(event)"
             >
                 <div class="spacer spacer-top"></div>
                 <div class="spacer spacer-bottom"></div>

@@ -58,7 +58,7 @@ const playlistTabs = document.querySelector("#playlist .tabs .tabs-wrapper");
 /** Pushes empty playing table to the playlist stack and adds new tab */
 export function pushPlaylist() {
     const table = getHeaderlessTable(
-        (e) => AppSingleton.get().playlistClick(e),
+        (e) => app.playlistClick(e),
         ["playlist-stack"],
     );
     table.classList.add("with-playlist-context");
@@ -76,7 +76,7 @@ function pushPlaylistTab() {
 
     const id = playlistTabs.querySelectorAll(".tab").length;
     tab.textContent = `-${id}`;
-    tab.onclick = () => AppSingleton.get().setPlaylistTab(id);
+    tab.onclick = () => app.setPlaylistTab(id);
     playlistTabs.appendChild(tab);
 }
 
@@ -196,7 +196,7 @@ export function displayPlaylistStack(n) {
 
     for (let i = 1; i <= n; i++) {
         const cloned = getHeaderlessTable(
-            (e) => AppSingleton.get().playlistClick(e),
+            (e) => app.playlistClick(e),
             ["playlist-stack"],
         );
         playlists.appendChild(cloned);
@@ -207,8 +207,8 @@ export function displayPlaylistStack(n) {
 /** Spawns all the songs tables */
 export function spawnTables() {
     const artTable = getTable(
-        (e) => AppSingleton.get().artistSongClick(e),
-        (key) => AppSingleton.get().sortArtistSongs(key),
+        (e) => app.artistSongClick(e),
+        (key) => app.sortArtistSongs(key),
     );
     artTable.classList.add("with-song-context");
     document
@@ -216,8 +216,8 @@ export function spawnTables() {
         .appendChild(artTable);
 
     const table = getTable(
-        (e) => AppSingleton.get().albumSongClick(e),
-        (key) => AppSingleton.get().sortAlbumSongs(key),
+        (e) => app.albumSongClick(e),
+        (key) => app.sortAlbumSongs(key),
     );
     const col = table.querySelector(".col-img");
     col.classList.remove("col-img");

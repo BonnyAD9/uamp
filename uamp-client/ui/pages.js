@@ -166,10 +166,10 @@ function getCustomHeader(labels, sortHandler) {
 }
 
 function libraryScreen() {
-    const header = getSongsHeader((key) => AppSingleton.get().sortSongs(key));
+    const header = getSongsHeader((key) => app.sortSongs(key));
     document.querySelector("#library .header").appendChild(header);
 
-    const table = getHeaderlessTable((e) => AppSingleton.get().libraryClick(e));
+    const table = getHeaderlessTable((e) => app.libraryClick(e));
     table.classList.add("with-song-context");
     document.querySelector("#library .screen-wrapper").appendChild(table);
 }
@@ -177,7 +177,7 @@ function libraryScreen() {
 function albumsScreen() {
     const labels = ["Year", "Name", "Artist", "Songs"];
     const header = getCustomHeader(labels, (key) =>
-        AppSingleton.get().sortAlbums(key),
+        app.sortAlbums(key),
     );
     document.querySelector("#albums .header").appendChild(header);
 }
@@ -185,7 +185,7 @@ function albumsScreen() {
 function artistsScreen() {
     const labels = ["Name", "Albums", "Songs"];
     const header = getCustomHeader(labels, (key) =>
-        AppSingleton.get().sortArtists(key),
+        app.sortArtists(key),
     );
     document.querySelector("#artists .header").appendChild(header);
 }
@@ -195,7 +195,7 @@ function playlistScreen() {
     document.querySelector("#playlist .header").appendChild(header);
 
     const table = getHeaderlessTable(
-        (e) => AppSingleton.get().playlistClick(e),
+        (e) => app.playlistClick(e),
         ["playlist-stack", "active"],
     );
     table.classList.add("with-playlist-context");

@@ -477,7 +477,6 @@ navs.forEach((item) => {
         const targetId = item.dataset.screen;
         showScreen(targetId);
         if (targetId === "playlist") {
-            const app = AppSingleton.get();
             app.displayPlaylist();
         }
     });
@@ -497,11 +496,10 @@ window.addEventListener("popstate", (e) => {
     );
 });
 
-slider.addEventListener("input", () => AppSingleton.get().stopProgress());
+slider.addEventListener("input", () => app.stopProgress());
 slider.addEventListener("change", () => {
     const percent = slider.value / 100;
 
-    const app = AppSingleton.get();
     const song = app.player.getPlaying();
 
     const pos = song.length.fromPercent(percent);
