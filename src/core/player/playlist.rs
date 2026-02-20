@@ -194,7 +194,7 @@ impl Playlist {
         self.songs.retain(|_| {
             let i = index;
             index += 1;
-            
+
             let Some(mut r) = range.clone() else {
                 return true;
             };

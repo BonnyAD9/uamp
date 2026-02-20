@@ -27,6 +27,7 @@ contains albums and artists and song now has nullable fields and `artists` and
 - Add new id control messages `InsertIntoPlaylist` and `RemoveFromPlaylist`.
 - Unify sse `queue` and `play-next` into `insert-into-playlist`.
 - Add new sse `remove-from-playlist`.
+- The post endpoint for `/api/ctrl` now also supports array of messages.
 
 ### Fixes
 - Fix panic in mix after into empty playlist.

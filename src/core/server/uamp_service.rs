@@ -33,7 +33,7 @@ use crate::{
         query::Query,
         server::{Info, RepMsg, ReqMsg, ServerData, sse_service::SseService},
     },
-    ext::simpl,
+    ext::{one_or_vec::OneOrVec, simpl},
 };
 
 type MyBody = StreamBody<BoxStream<'static, Result<Frame<Bytes>>>>;
@@ -251,19 +251,22 @@ impl UampService {
             return Err(Error::http(413, "Too much data.".to_string()));
         }
 
-        let msg = serde_json::from_slice(&data)?;
+        let is_loopback = self.peer.ip().is_loopback();
 
-        if matches!(msg, IdControlMsg::SetConfig(_))
-            && !self.peer.ip().is_loopback()
-        {
-            return Error::http(
-                403,
-                "Only loopback is allowed to modify settings.",
-            )
-            .err();
+        let id_msgs = serde_json::from_slice::<OneOrVec<IdControlMsg>>(&data)?;
+        let mut msgs = Vec::with_capacity(id_msgs.len());
+        for msg in id_msgs {
+            if is_loopback && matches!(msg, IdControlMsg::SetConfig(_)) {
+                return Error::http(
+                    403,
+                    "Only loopback is allowed to modify settings.",
+                )
+                .err();
+            }
+            msgs.push(Msg::IdControl(msg));
         }
 
-        self.rt.msg_result(Msg::IdControl(msg)).await?;
+        self.rt.msgs_result(msgs).await?;
 
         Ok(string_response("Success!"))
     }

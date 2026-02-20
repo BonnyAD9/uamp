@@ -6,6 +6,7 @@ mod wrap;
 //                                   Public                                  //
 //===========================================================================//
 
+pub mod one_or_vec;
 pub mod simpl;
 pub mod uri;
 
