@@ -480,6 +480,7 @@ const ANY_CONTROL_MSG: &[&[&str]] = &[
     &["push-cur", "push-with-cur", "pc"],
     &["queue", "q"],
     &["play-next", "queue-next", "qn"],
+    &["playlist-retain="],
     &["restart"],
     &["rps=", "reorder-playlist-stack="],
 ];

@@ -14,10 +14,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::{
     Alias, AppCtrl, Msg, Result, UampApp,
-    query::Query,
+    query::{Filter, Query},
     server::{
         SubMsg,
-        sub::{InsertIntoPlaylist, PlaylistJump, ReorderPlaylistStack},
+        sub::{
+            InsertIntoPlaylist, PlaylistJump, RemoveFromPlaylist,
+            ReorderPlaylistStack,
+        },
     },
 };
 
@@ -52,6 +55,8 @@ pub enum DataControlMsg {
     PlayTmp(Vec<PathBuf>),
     /// Remove songs given by query from the library.
     RemoveFromLibrary(Query),
+    /// Retain songs in playlist that match the given filter.
+    PlaylistRetain(Filter),
 }
 
 impl UampApp {
@@ -168,6 +173,48 @@ impl UampApp {
                 )?;
                 self.remove_songs(songs);
             }
+            DataControlMsg::PlaylistRetain(f) => {
+                let mut buf = String::new();
+                let mut rem_ranges: Vec<[usize; 2]> = vec![];
+                let cur_changed = self.player.retain_current(
+                    &mut self.library,
+                    |l, s, i| {
+                        let res = f.matches(&l[s], &mut buf);
+                        if !res {
+                            if let Some(r) = rem_ranges.last_mut() {
+                                if r[1] == i {
+                                    r[1] += 1;
+                                }
+                            } else {
+                                rem_ranges.push([i, i + 1]);
+                            }
+                        }
+                        res
+                    },
+                );
+
+                // Estimation of message size for heurestic of better message
+                // to send to clients.
+                let mut to_send_ranges = rem_ranges.len() * 2;
+                if cur_changed {
+                    to_send_ranges += 10;
+                }
+
+                if to_send_ranges > self.player.playlist().len() {
+                    self.client_update_set_playlist(|p| {
+                        SubMsg::SetPlaylist(p.into())
+                    });
+                } else {
+                    self.client_update(SubMsg::RemoveFromPlaylist(
+                        RemoveFromPlaylist::new(rem_ranges, 0),
+                    ));
+                    if cur_changed {
+                        self.client_update(SubMsg::PlaylistJump(
+                            PlaylistJump::new(&self.player),
+                        ));
+                    }
+                }
+            }
         }
 
         Ok(vec![])
@@ -235,6 +282,9 @@ impl FromStr for DataControlMsg {
             v if starts_any!(v, "remove-from-library=") => {
                 Ok(DataControlMsg::RemoveFromLibrary(val_arg(v, '=')?))
             }
+            v if starts_any!(v, "playlist-retain=") => {
+                Ok(DataControlMsg::PlaylistRetain(val_arg(v, '=')?))
+            }
             v => ArgError::from_msg(
                 ArgErrKind::UnknownArgument,
                 "Unknown control msg.",
@@ -274,6 +324,9 @@ impl Display for DataControlMsg {
             }
             DataControlMsg::RemoveFromLibrary(q) => {
                 write!(f, "remove-from-library={q}")
+            }
+            DataControlMsg::PlaylistRetain(q) => {
+                write!(f, "playlist-retain={q}")
             }
         }
     }

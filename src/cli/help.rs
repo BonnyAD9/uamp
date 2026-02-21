@@ -704,6 +704,9 @@ fn print_control_messages_help(color: bool) {
     value, queues all songs. See `{'c}uamp {'b}h {'w bold}port{'_}` for more \
     info.
 
+  {'r}playlist-retain{'w}=<filter>{'_}
+    Retain only songs in playlist that match the given filter.
+
   {'r}save{'_}
     Triggers save (but saves only if there is change).
 

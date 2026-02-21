@@ -22,6 +22,8 @@ contains albums and artists and song now has nullable fields and `artists` and
 - Each song can now have multiple artists.
 - Each song can now have multiple genres.
 - Query for empty string is interpreted as that property should not be set.
+- Add new control message to retain only some songs in playlist with
+  `playlist-retain`.
 
 ### Changes
 - Add new id control messages `InsertIntoPlaylist` and `RemoveFromPlaylist`.
@@ -38,6 +40,7 @@ contains albums and artists and song now has nullable fields and `artists` and
 - Fix potential issues when current or prefetched song was removed from
   library.
 - Properly wait for graceful shutdown of connections when closing uamp.
+- Fix filter parsing.
 
 ## v0.6.8
 ### New features

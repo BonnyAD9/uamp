@@ -742,6 +742,14 @@ Integrations:
 
   See *Format query* for more information on *query*.
 
+`playlist-retain=`*filter*
+  Retain only songs in playlist that match the given filter.
+  
+  All other songs are removed from the playlist. If the current song is
+  removed, the next available song is made current.
+  
+  See *Format filter* for more information on *filter*.
+
 `save`
   Trigger save. Saves are lazy and this will do nothing if there is no change
   from the previous save. If the instance has disabled config saves, this will

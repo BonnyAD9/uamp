@@ -187,7 +187,7 @@ impl<'a> Parser<'a> {
 
     fn parse_bracket(&mut self) -> Result<ComposedFilter, ArgError> {
         self.next()?;
-        let r = self.parse_and()?;
+        let r = self.parse_or()?;
         if !matches!(self.cur()?, Some(Token::Close)) {
             return self
                 .err_unexpected_token()

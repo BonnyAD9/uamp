@@ -787,6 +787,14 @@ current song.
 .IP
 See \fIFormat query\fP for more information on \fIquery\fP\&.
 .TP
+\fB\fCplaylist\-retain=\fR\fIfilter\fP
+Retain only songs in playlist that match the given filter.
+.IP
+All other songs are removed from the playlist. If the current song is
+removed, the next available song is made current.
+.IP
+See \fIFormat filter\fP for more information on \fIfilter\fP\&.
+.TP
 \fB\fCsave\fR
 Trigger save. Saves are lazy and this will do nothing if there is no change
 from the previous save. If the instance has disabled config saves, this will
