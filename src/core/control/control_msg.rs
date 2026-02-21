@@ -236,7 +236,10 @@ impl UampApp {
             }
             ControlMsg::Save => self.save_all(false, ctrl)?,
             ControlMsg::EndPlaylist => {
-                self.player.end_playlist(&mut self.library)
+                self.player.end_playlist(&mut self.library);
+                self.client_update(SubMsg::PlaylistJump(PlaylistJump::new(
+                    &self.player,
+                )));
             }
         };
 
