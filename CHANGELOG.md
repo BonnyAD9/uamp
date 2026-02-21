@@ -29,6 +29,7 @@ contains albums and artists and song now has nullable fields and `artists` and
 - Add option to end the current playlist with `end-playlist`.
 - Add control message `remove-playlist` that can remove playlist at the given
   index.
+- Add option to negate matching modes with `^`.
 
 ### Changes
 - Add new id control messages `InsertIntoPlaylist` and `RemoveFromPlaylist`.

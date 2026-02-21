@@ -12,8 +12,9 @@ use crate::{core::library::Song, ext::simpl};
 /// Filter for searching in songs.
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct Filter {
-    cmp: CmpType,
     typ: FilterType,
+    cmp: CmpType,
+    negate: bool,
 }
 
 /// Filter type.
@@ -61,22 +62,22 @@ pub enum CmpType {
 
 impl Filter {
     /// Creates new filter.
-    pub fn new(mut typ: FilterType, cmp: CmpType) -> Self {
+    pub fn new(mut typ: FilterType, cmp: CmpType, negate: bool) -> Self {
         typ.prepare(cmp);
-        Self { cmp, typ }
+        Self { cmp, typ, negate }
     }
 
     /// Check if the given song passes the filter.
     pub fn matches(&self, song: &Song, buf: &mut String) -> bool {
-        self.typ.matches(song, self.cmp, buf)
+        self.typ.matches(song, self.cmp, buf) ^ self.negate
     }
 
     pub fn none() -> Self {
-        Self::new(FilterType::None, CmpType::Lenient)
+        Self::new(FilterType::None, CmpType::Lenient, false)
     }
 
     pub fn any() -> Self {
-        Self::new(FilterType::Any, CmpType::Lenient)
+        Self::new(FilterType::Any, CmpType::Lenient, false)
     }
 }
 
@@ -184,6 +185,7 @@ impl CmpType {
 
 impl Display for Filter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let n = if self.negate { "^" } else { "" };
         let c = match self.cmp {
             CmpType::Strict => '=',
             CmpType::StrictContains => '-',
@@ -195,23 +197,23 @@ impl Display for Filter {
             FilterType::Any => f.write_str("any"),
             FilterType::None => f.write_str("none"),
             FilterType::AnyName(None) => write!(f, "s{c}"),
-            FilterType::AnyName(Some(n)) => write!(f, "s{c}{n}"),
+            FilterType::AnyName(Some(a)) => write!(f, "s{n}{c}{a}"),
             FilterType::Title(None) => write!(f, "n{c}"),
-            FilterType::Title(Some(t)) => write!(f, "n{c}{t}"),
-            FilterType::Artist(None) => write!(f, "p{c}"),
-            FilterType::Artist(Some(a)) => write!(f, "p{c}{a}"),
-            FilterType::Album(None) => write!(f, "a{c}"),
-            FilterType::Album(Some(a)) => write!(f, "a{c}{a}"),
-            FilterType::AlbumArtist(None) => write!(f, "aa{c}"),
-            FilterType::AlbumArtist(Some(a)) => write!(f, "aa{c}{a}"),
-            FilterType::Track(None) => write!(f, "t{c}"),
-            FilterType::Track(Some(t)) => write!(f, "t{c}{t}"),
-            FilterType::Disc(None) => write!(f, "d{c}"),
-            FilterType::Disc(Some(d)) => write!(f, "d{c}{d}"),
-            FilterType::Year(None) => write!(f, "y{c}"),
-            FilterType::Year(Some(y)) => write!(f, "y{c}{y}"),
-            FilterType::Genre(None) => write!(f, "g{c}"),
-            FilterType::Genre(Some(g)) => write!(f, "g{c}{g}"),
+            FilterType::Title(Some(t)) => write!(f, "n{n}{c}{t}"),
+            FilterType::Artist(None) => write!(f, "p{n}{c}"),
+            FilterType::Artist(Some(a)) => write!(f, "p{n}{c}{a}"),
+            FilterType::Album(None) => write!(f, "a{n}{c}"),
+            FilterType::Album(Some(a)) => write!(f, "a{n}{c}{a}"),
+            FilterType::AlbumArtist(None) => write!(f, "aa{n}{c}"),
+            FilterType::AlbumArtist(Some(a)) => write!(f, "aa{n}{c}{a}"),
+            FilterType::Track(None) => write!(f, "t{n}{c}"),
+            FilterType::Track(Some(t)) => write!(f, "t{n}{c}{t}"),
+            FilterType::Disc(None) => write!(f, "d{n}{c}"),
+            FilterType::Disc(Some(d)) => write!(f, "d{n}{c}{d}"),
+            FilterType::Year(None) => write!(f, "y{n}{c}"),
+            FilterType::Year(Some(y)) => write!(f, "y{n}{c}{y}"),
+            FilterType::Genre(None) => write!(f, "g{n}{c}"),
+            FilterType::Genre(Some(g)) => write!(f, "g{n}{c}{g}"),
         }
     }
 }
@@ -220,16 +222,16 @@ impl FromStr for Filter {
     type Err = ArgError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let Some((p, c)) = s
+        let Some((p, mut c)) = s
             .char_indices()
-            .find(|(_, c)| matches!(c, '=' | '+' | ':' | '~'))
+            .find(|(_, c)| matches!(c, '=' | '+' | ':' | '~' | '^'))
         else {
             return match s {
-                "any" => Ok(Self::new(FilterType::Any, CmpType::default())),
-                "none" => Ok(Self::new(FilterType::None, CmpType::default())),
+                "any" => Ok(Self::new(FilterType::Any, CmpType::default(), false)),
+                "none" => Ok(Self::new(FilterType::None, CmpType::default(), false)),
                 "s" | "an" | "any-name" | "n" | "tit" | "title" | "name"
                 | "p" | "art" | "artist" | "performer" | "auth" | "author"
-                | "a" | "alb" | "album" | "t" | "trk" | "track"
+                | "a" | "alb" | "album" | "t" | "trk" | "track" | "album_artist" | "aa" | "ap"
                 | "track-number" | "d" | "disc" | "y" | "year" | "g"
                 | "genre" => ArgError::failed_to_parse(
                     "Missing argument for filter.",
@@ -247,14 +249,36 @@ impl FromStr for Filter {
                 .err(),
             };
         };
+
+        let negate = c == '^';
+        let mut skip = c.len_utf8();
+        if negate {
+            let Some(chr) = &s[p + skip..].chars().next() else {
+                return ArgError::failed_to_parse(
+                    "Missing comparison operator after negation.",
+                    s,
+                )
+                .err();
+            };
+            c = *chr;
+            skip += c.len_utf8();
+        }
+
         let typ = &s[..p];
-        let val = &s[p + c.len_utf8()..];
+        let val = &s[p + skip..];
+
         let cmp = match c {
             '=' => CmpType::Strict,
             '-' => CmpType::StrictContains,
             ':' => CmpType::Lenient,
             '~' => CmpType::LenientContains,
-            _ => unreachable!(),
+            _ => {
+                return ArgError::failed_to_parse(
+                    "Invalid comparison operator `{c}`.",
+                    s,
+                )
+                .err();
+            }
         };
 
         let em =
@@ -264,40 +288,49 @@ impl FromStr for Filter {
             "s" | "an" | "any-name" => Ok(Self::new(
                 FilterType::AnyName(val.arg_into().map_err(em)?),
                 cmp,
+                negate,
             )),
             "n" | "tit" | "title" | "name" => Ok(Self::new(
                 FilterType::Title(val.arg_into().map_err(em)?),
                 cmp,
+                negate,
             )),
             "p" | "art" | "artist" | "performer" | "auth" | "author" => {
                 Ok(Self::new(
                     FilterType::Artist(val.arg_into().map_err(em)?),
                     cmp,
+                    negate,
                 ))
             }
             "a" | "alb" | "album" => Ok(Self::new(
                 FilterType::Album(val.arg_into().map_err(em)?),
                 cmp,
+                negate,
             )),
             "aa" | "ap" | "album-artist" => Ok(Self::new(
                 FilterType::AlbumArtist(val.arg_into().map_err(em)?),
                 cmp,
+                negate,
             )),
             "t" | "trk" | "track" | "track-number" => Ok(Self::new(
                 FilterType::Track(val.arg_into().map_err(em)?),
                 cmp,
+                negate,
             )),
             "d" | "disc" => Ok(Self::new(
                 FilterType::Disc(val.arg_into().map_err(em)?),
                 cmp,
+                negate,
             )),
             "y" | "year" => Ok(Self::new(
                 FilterType::Year(val.arg_into().map_err(em)?),
                 cmp,
+                negate,
             )),
             "g" | "genre" => Ok(Self::new(
                 FilterType::Genre(val.arg_into().map_err(em)?),
                 cmp,
+                negate,
             )),
             v => ArgError::failed_to_parse(
                 format!("Unknown filter type `{v}`."),

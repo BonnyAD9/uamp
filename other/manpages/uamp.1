@@ -958,6 +958,9 @@ equal the pattern.
 The lowercase ascii representation of the string without whitespace must
 contain the pattern.
 .PP
+You can negate the functon of the matching mode by placing \fB\fC^\fR before it. (e.g.
+\fB\fCa^=Clancy\fR will match all songs where the album name is not \fB\fCClancy\fR)
+.PP
 \fB\fC@\fR is not allowed in filters, so it must be escaped using \fB\fC/\fR\&.
 .PP
 Example filter to match all songs where the album title is  \fB\fCsmoke+mirrors\fR or

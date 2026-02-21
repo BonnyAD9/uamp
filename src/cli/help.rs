@@ -880,6 +880,9 @@ fn print_filter_help(color: bool, header: bool) {
           must match.
       `{'i}~{'_}` The string converted to lowercase asci without whitespace
           must contain the pattern (also converted in the same way).
+    
+    You can add `{'i}^{'_}` before the operator in place of `{'i}:{'_}` to
+    negate the matching.
 
     You can combine filters using:
       `{'i}+{'_}`    Or - one of the filters must pass.

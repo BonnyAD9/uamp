@@ -161,24 +161,29 @@ impl ImageLookup<'_> {
                     ComposedFilter::Filter(Filter::new(
                         FilterType::Album(title.clone()),
                         CmpType::Lenient,
+                        false,
                     )),
                     ComposedFilter::Filter(Filter::new(
                         FilterType::AlbumArtist(artist.clone()),
                         CmpType::Lenient,
+                        false,
                     )),
                 ]),
                 ComposedFilter::And(vec![
                     ComposedFilter::Filter(Filter::new(
                         FilterType::Album(None),
                         CmpType::Lenient,
+                        false,
                     )),
                     ComposedFilter::Filter(Filter::new(
                         FilterType::Title(title),
                         CmpType::Lenient,
+                        false,
                     )),
                     ComposedFilter::Filter(Filter::new(
                         FilterType::AlbumArtist(artist),
                         CmpType::Lenient,
+                        false,
                     )),
                 ]),
             ]),

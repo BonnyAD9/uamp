@@ -907,6 +907,9 @@ These are the available pattern matching modes *:*:
   The lowercase ascii representation of the string without whitespace must
   contain the pattern.
 
+You can negate the functon of the matching mode by placing `^` before it. (e.g.
+`a^=Clancy` will match all songs where the album name is not `Clancy`)
+
 `@` is not allowed in filters, so it must be escaped using `/`.
 
 Example filter to match all songs where the album title is  `smoke+mirrors` or
