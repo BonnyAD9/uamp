@@ -771,6 +771,12 @@ See \fIFormat query\fP for more information on \fIquery\fP\&.
 Pop \fIN\fP playlists from the playlist stack, but leave at least one. If \fIN\fP is
 0, leave only the last playlist. This will not change the playback status.
 .TP
+\fB\fCremove\-playlist\fR[\fB\fC=\fR\fII\fP]
+Remove playlist at the index I. I = 0 for the top of the stack.
+.IP
+\fB\fCremove\-playlist=0\fR is equivalent to \fB\fCpop=1\fR except that if the current
+playlist is the last one, it will be set to empty playlist.
+.TP
 \fB\fCflat\fR[\fB\fC=\fR\fIN\fP], \fB\fCflatten\fR[\fB\fC=\fR\fIN\fP]
 Insert the current playlist into the next playlist on the stack at the
 position of current song. Pop the top playlist (the inserted). Do this \fIN\fP

@@ -27,6 +27,8 @@ contains albums and artists and song now has nullable fields and `artists` and
 - Add new control message to retain only some songs in playlist with
   `playlist-retain`.
 - Add option to end the current playlist with `end-playlist`.
+- Add control message `remove-playlist` that can remove playlist at the given
+  index.
 
 ### Changes
 - Add new id control messages `InsertIntoPlaylist` and `RemoveFromPlaylist`.
@@ -36,6 +38,7 @@ contains albums and artists and song now has nullable fields and `artists` and
 - Improve logging. Some of what was previously error is now warning. Most
   log messages that come from uamp will now also show source location.
 - Add POST api to check control message at `/api/check_ctrl`.
+- Add new sse `remove-playlist`.
 
 ### Fixes
 - Fix panic in mix after into empty playlist.

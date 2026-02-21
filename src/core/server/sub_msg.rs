@@ -64,6 +64,8 @@ pub enum SubMsg {
     ClientChanged,
     // The uamp configuration has changed
     ConfigChanged(Arc<Config>),
+    // Remove playlist at the given index (0 is top of the stack).
+    RemovePlaylist(usize),
 }
 
 impl SubMsg {
@@ -103,6 +105,7 @@ impl SubMsg {
             Self::NewServer(d) => make_event("new-server", d),
             Self::ClientChanged => Ok("event: client-changed\n\n".to_string()),
             Self::ConfigChanged(d) => make_event("config-changed", d),
+            Self::RemovePlaylist(d) => make_event("remove-playlist", d),
         }
     }
 }

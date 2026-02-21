@@ -726,6 +726,12 @@ Integrations:
   Pop *N* playlists from the playlist stack, but leave at least one. If *N* is
   0, leave only the last playlist. This will not change the playback status.
 
+`remove-playlist`[`=`*I*]
+  Remove playlist at the index I. I = 0 for the top of the stack.
+  
+  `remove-playlist=0` is equivalent to `pop=1` except that if the current
+  playlist is the last one, it will be set to empty playlist.
+
 `flat`[`=`*N*], `flatten`[`=`*N*]
   Insert the current playlist into the next playlist on the stack at the
   position of current song. Pop the top playlist (the inserted). Do this *N*

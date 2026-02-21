@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::{
-        AppCtrl, ErrKind, Msg, Result, UampApp,
+        AppCtrl, ErrKind, Error, Msg, Result, UampApp,
         library::LoadOpts,
         player::AddPolicy,
         query::SongOrder,
@@ -75,6 +75,8 @@ pub enum ControlMsg {
     Save,
     /// Ends the current playlist triggering the playlist end action.
     EndPlaylist,
+    /// Remove playlist at the given index. Top playlist is 0.
+    RemovePlaylist(usize),
 }
 
 impl UampApp {
@@ -241,6 +243,41 @@ impl UampApp {
                     &self.player,
                 )));
             }
+            ControlMsg::RemovePlaylist(idx) => {
+                if idx == 0 {
+                    if self.player.playlist_stack().is_empty() {
+                        self.player.play_playlist(
+                            &mut self.library,
+                            vec![].into(),
+                            false,
+                        );
+                        self.client_update_set_playlist(|pl| {
+                            SubMsg::PopSetPlaylist(
+                                PopSetPlaylist::new(1, pl).into(),
+                            )
+                        });
+                    } else {
+                        self.player.pop_playlist(&mut self.library, 1);
+                        self.client_update(SubMsg::PopPlaylist(
+                            PopPlaylist::new(
+                                1,
+                                PlaylistJump::new(&self.player),
+                            )
+                            .into(),
+                        ));
+                    }
+                } else {
+                    let stack = self.player.mut_playlist_stack();
+                    if idx > stack.len() {
+                        return Error::invalid_operation()
+                            .msg(format!("Invalid playlist index `{}`.", idx))
+                            .err();
+                    }
+                    let pos = stack.len() - idx;
+                    stack.remove(pos);
+                    self.client_update(SubMsg::RemovePlaylist(idx));
+                }
+            }
         };
 
         Ok(vec![])
@@ -302,6 +339,7 @@ impl Display for ControlMsg {
             ControlMsg::SetPlaylistAddPolicy(p) => write!(f, "pap={p}"),
             ControlMsg::Save => f.write_str("save"),
             ControlMsg::EndPlaylist => f.write_str("end-playlist"),
+            ControlMsg::RemovePlaylist(p) => write!(f, "remove-playlist={p}"),
         }
     }
 }
@@ -390,6 +428,11 @@ impl FromStr for ControlMsg {
             }
             "save" => Ok(ControlMsg::Save),
             "end-playlist" => Ok(ControlMsg::EndPlaylist),
+            v if has_any_key!(v, '=', "remove-playlist") => {
+                Ok(ControlMsg::RemovePlaylist(
+                    mval_arg(v, '=')?.unwrap_or_default(),
+                ))
+            }
             v => ArgError::from_msg(
                 ArgErrKind::UnknownArgument,
                 "Unknown control message.",

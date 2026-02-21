@@ -690,6 +690,9 @@ fn print_control_messages_help(color: bool) {
     Remove {'i}cnt{'_} playlists from top of the stack, but leave at least one.
     If {'i}cnt{'_} is 0 leave only the last one. Default value is 1.
 
+  {'r}remove-playlist{'gr}[=<idx>]{'_}
+    Remove playlist at the given index. Default value is 0 (top of the stack).
+
   {'r}flatten  flat{'gr}[=<cnt>]{'_}
     Seamlessly insert the top playlist to the next playlist on the stack. The
     currently playing song doesn't change. Do this {'i}cnt{'_} times. The
