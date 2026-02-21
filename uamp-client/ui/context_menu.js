@@ -125,10 +125,12 @@ export const PLAYLIST_CONTEXT_ITEMS = [
         action: ({ id, playlist }) => {
             const pl = app.player.getPlaylist(playlist);
             if (pl === null) return;
-            Api.removeFromPlaylist([[id, id + 1]], playlist);
-            insertSongs([pl.songs[id]], true, playlist);
-            // const pos = app.player.getPlaylist(playlist).getNextPId();
-            // Api.movePlaylistSongs([pl.songs[id]], [id, id + 1], pos, playlist);
+
+            let pos = app.player.getPlaylist(playlist).getNextPId();
+            if (id < pos) pos--;
+            if (pos == id) return;
+
+            Api.movePlaylistSongs([pl.songs[id]], [id, id + 1], pos, playlist);
         },
     },
     {
