@@ -98,7 +98,7 @@ impl Playlist {
             let i = index;
             index += 1;
             let ret = f(*s, i);
-            if !ret && i <= cur {
+            if !ret && i < cur {
                 before += 1;
             }
             ret
