@@ -8,7 +8,6 @@ use std::{
 use futures::executor::block_on;
 use image::{DynamicImage, ImageReader};
 use itertools::{Either, Itertools};
-use log::warn;
 use ratag::tag;
 use tokio::task::JoinHandle;
 
@@ -18,6 +17,7 @@ use crate::{
         config::CacheSize,
         library::Song,
         query::{Base, CmpType, ComposedFilter, Filter, FilterType, Query},
+        warn,
     },
     ext::simpl,
 };
@@ -381,7 +381,10 @@ fn looped_save(img: &DynamicImage, dst: &Path) -> Result<()> {
         if dst.exists() && dst.metadata()?.len() >= MIN_IMG_SIZE {
             return Ok(());
         }
-        warn!("Failed to save image to {} {i} times.", dst.display());
+        warn(
+            "",
+            format!("Failed to save image to {} {i} times.", dst.display()),
+        );
         fs::remove_file(dst).or_log_err("Failed to remove file.");
     }
 

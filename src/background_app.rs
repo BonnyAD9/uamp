@@ -1,8 +1,8 @@
-use log::{error, trace};
+use log::trace;
 use tokio::runtime;
 
 use crate::{
-    core::{Error, Msg, Result, UampApp, config::Config},
+    core::{Error, LogResult, Msg, Result, UampApp, config::Config},
     env::{AppCtrl, Command, rt},
 };
 
@@ -57,9 +57,7 @@ async fn run_bg_async(
             rt::Msg::Msg(msgs, rsend) => {
                 let res =
                     app.update_many(&mut AppCtrl::new(&mut cmd_queue), msgs);
-                if let Err(ref e) = res {
-                    error!("{e:-}");
-                }
+                (&res).or_log_err("");
                 if let Some(rsend) = rsend {
                     _ = rsend.send(res);
                 }

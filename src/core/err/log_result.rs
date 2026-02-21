@@ -15,25 +15,42 @@ pub fn log_result<T: Display>(level: log::Level, msg: &str, err: T) {
     }
 }
 
+#[track_caller]
+pub fn log_err<T: Display>(msg: &str, err: T) {
+    log_result(log::Level::Error, msg, err);
+}
+
+#[track_caller]
+pub fn warn<T: Display>(msg: &str, err: T) {
+    log_result(log::Level::Error, msg, err);
+}
+
 pub trait LogResult<T>: Sized {
     type Success;
 
     #[track_caller]
-    fn or_log(self, level: log::Level, msg: T) -> Option<Self::Success>;
+    fn or_log_with(
+        self,
+        level: log::Level,
+        msg: impl FnOnce() -> T,
+    ) -> Option<Self::Success>;
+
+    #[track_caller]
+    fn or_log_err_with(
+        self,
+        msg: impl FnOnce() -> T,
+    ) -> Option<Self::Success> {
+        self.or_log_with(log::Level::Error, msg)
+    }
 
     #[track_caller]
     fn or_log_err(self, msg: T) -> Option<Self::Success> {
-        self.or_log(log::Level::Error, msg)
+        self.or_log_err_with(|| msg)
     }
 
     #[track_caller]
     fn or_warn(self, msg: T) -> Option<Self::Success> {
-        self.or_log(log::Level::Warn, msg)
-    }
-
-    #[track_caller]
-    fn _or_info(self, msg: T) -> Option<Self::Success> {
-        self.or_log(log::Level::Info, msg)
+        self.or_log_with(log::Level::Warn, || msg)
     }
 }
 
@@ -41,11 +58,34 @@ impl<T, E: Display, M: AsRef<str>> LogResult<M> for Result<T, E> {
     type Success = T;
 
     #[track_caller]
-    fn or_log(self, level: log::Level, msg: M) -> Option<Self::Success> {
+    fn or_log_with(
+        self,
+        level: log::Level,
+        msg: impl FnOnce() -> M,
+    ) -> Option<Self::Success> {
         match self {
             Ok(r) => Some(r),
             Err(e) => {
-                log_result(level, msg.as_ref(), e);
+                log_result(level, msg().as_ref(), e);
+                None
+            }
+        }
+    }
+}
+
+impl<'a, T, E: Display, M: AsRef<str>> LogResult<M> for &'a Result<T, E> {
+    type Success = &'a T;
+
+    #[track_caller]
+    fn or_log_with(
+        self,
+        level: log::Level,
+        msg: impl FnOnce() -> M,
+    ) -> Option<Self::Success> {
+        match self {
+            Ok(r) => Some(r),
+            Err(e) => {
+                log_result(level, msg().as_ref(), e);
                 None
             }
         }

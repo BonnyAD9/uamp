@@ -1,8 +1,9 @@
 use ::futures::stream::LocalBoxStream;
-use log::error;
 use tokio::task::JoinSet;
 
 mod stream_future;
+
+use crate::core::LogResult;
 
 pub use self::stream_future::*;
 
@@ -29,7 +30,7 @@ impl<Msg> Streams<Msg> {
                 }
                 Err(e) => {
                     if !e.is_cancelled() {
-                        error!("Streams task failed: {e}");
+                        Err::<(), _>(e).or_log_err("Streams task failed");
                     }
                 }
                 _ => {}

@@ -10,13 +10,13 @@ use std::{
 };
 
 use itertools::Itertools;
-use log::{error, info, trace, warn};
+use log::{info, trace};
 use notify::{INotifyWatcher, Watcher};
 use tokio::signal::unix::SignalKind;
 
 use crate::core::{
     AppCtrl, Error, Jobs, LogResult, Result, RtAndle, RtHandle, State,
-    library::Song, msg::Msg, plugin::Plugin,
+    library::Song, msg::Msg, plugin::Plugin, warn,
 };
 
 use super::{
@@ -90,9 +90,8 @@ impl UampApp {
             .or_log_err("Failed to watch config file")
             .flatten();
 
-        if let Err(e) = delete_old_logs(conf.delete_logs_after().0) {
-            error!("Failed to delete old logs: {e:-}");
-        }
+        delete_old_logs(conf.delete_logs_after().0)
+            .or_log_err("Failed to delete old logs");
 
         let mut app = UampApp {
             config: conf,
@@ -137,9 +136,7 @@ impl UampApp {
 
     /// Handles the message sent to uamp.
     pub fn update(&mut self, ctrl: &mut AppCtrl, message: Msg) {
-        if let Err(e) = self.update_err(ctrl, message) {
-            error!("{e:-}");
-        }
+        self.update_err(ctrl, message).or_log_err("");
     }
 
     /// Handles the message sent to uamp, propagates errors.
@@ -182,9 +179,8 @@ impl UampApp {
 
     /// Runs when uamp is about to exit.
     pub fn on_exit(&mut self) {
-        if let Err(e) = delete_old_logs(self.config.delete_logs_after().0) {
-            error!("Failed to delete old logs: {e:-}");
-        }
+        delete_old_logs(self.config.delete_logs_after().0)
+            .or_log_err("Failed to delete old logs");
     }
 
     pub fn remove_songs(&mut self, s: impl IntoIterator<Item = SongId>) {
@@ -299,7 +295,7 @@ impl UampApp {
             }
             n += 1;
             if n == 4 {
-                warn!("Received 4 close signals. Exiting now.");
+                warn("", "Received 4 close signals. Exiting now.");
                 println!("Received 4 close signals. Exiting now.");
                 process::exit(130);
             }
@@ -337,12 +333,9 @@ impl UampApp {
 
         let executable_path = conf
             .auto_restart()
-            .then(|| match env::current_exe() {
-                Err(e) => {
-                    error!("Failed to retrieve current executable path: {e}");
-                    None
-                }
-                Ok(p) => Some(p),
+            .then(|| {
+                env::current_exe()
+                    .or_log_err("Failed to retrieve current executable path")
             })
             .flatten();
 
@@ -357,45 +350,45 @@ impl UampApp {
             return Ok(None);
         }
 
-        let mut watcher = notify::recommended_watcher(move |res| {
-            let v: notify::Event = match res {
-                Ok(r) => r,
-                Err(e) => {
-                    error!("File watch failed: {e}");
+        let mut watcher = notify::recommended_watcher(
+            move |res: std::result::Result<_, _>| {
+                let Some(v): Option<notify::Event> =
+                    res.or_log_err("File watch failed")
+                else {
                     return;
-                }
-            };
-
-            for path in v.paths {
-                let msg = if path == cfg
-                    && (v.kind.is_create() || v.kind.is_modify())
-                {
-                    Some(Msg::Config(ConfigMsg::Reload))
-                } else if path == exe
-                    && (v.kind.is_remove()
-                        || v.kind.is_create()
-                        || v.kind.is_modify())
-                {
-                    Some(DataControlMsg::Restart(Some(path)).into())
-                } else if v.kind.is_remove() {
-                    Some(Msg::fn_delegate(move |app, _| {
-                        if let Some(ref mut watcher) = app.file_watch {
-                            watcher.watch(
-                                &path,
-                                notify::RecursiveMode::NonRecursive,
-                            )?;
-                        }
-                        Ok(vec![])
-                    }))
-                } else {
-                    None
                 };
 
-                if let Some(msg) = msg {
-                    rt.msg(msg);
+                for path in v.paths {
+                    let msg = if path == cfg
+                        && (v.kind.is_create() || v.kind.is_modify())
+                    {
+                        Some(Msg::Config(ConfigMsg::Reload))
+                    } else if path == exe
+                        && (v.kind.is_remove()
+                            || v.kind.is_create()
+                            || v.kind.is_modify())
+                    {
+                        Some(DataControlMsg::Restart(Some(path)).into())
+                    } else if v.kind.is_remove() {
+                        Some(Msg::fn_delegate(move |app, _| {
+                            if let Some(ref mut watcher) = app.file_watch {
+                                watcher.watch(
+                                    &path,
+                                    notify::RecursiveMode::NonRecursive,
+                                )?;
+                            }
+                            Ok(vec![])
+                        }))
+                    } else {
+                        None
+                    };
+
+                    if let Some(msg) = msg {
+                        rt.msg(msg);
+                    }
                 }
-            }
-        })?;
+            },
+        )?;
 
         for p in to_watch {
             watcher.watch(p, notify::RecursiveMode::NonRecursive)?;
@@ -410,9 +403,10 @@ impl UampApp {
         };
 
         if !exe.exists() {
-            warn!(
+            warn(
+                "",
                 "Cannot restart now. The new uamp binary doesn't exist. \
-                Waiting for the new binary to exist."
+                Waiting for the new binary to exist.",
             );
             return Ok(());
         }
@@ -496,9 +490,9 @@ fn delete_old_logs(timeout: Duration) -> Result<()> {
 
     for d in dir {
         let d = d?;
-        if let Err(e) = delete_old_log(&d, timeout) {
-            error!("Failed to delete log file {:?}: {e:-}", d.path());
-        }
+        delete_old_log(&d, timeout).or_log_err_with(|| {
+            format!("Failed to delete log file `{:}`", d.path().display())
+        });
     }
 
     Ok(())

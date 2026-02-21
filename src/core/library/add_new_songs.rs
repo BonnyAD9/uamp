@@ -5,10 +5,8 @@ use std::{
     path::PathBuf,
 };
 
-use log::error;
-
 use crate::core::{
-    Result,
+    LogResult, Result,
     config::Config,
     library::{Album, AlbumId, Albums, Artist, ArtistId, Artists},
 };
@@ -91,13 +89,10 @@ struct State<'a> {
 }
 
 macro_rules! err_cont {
-    ($e:expr, $err:ident => $msg:literal $(,)?) => {
-        match $e {
-            Ok(v) => v,
-            Err($err) => {
-                error!($msg);
-                continue;
-            }
+    ($e:expr, $err:ident => $msg:expr $(,)?) => {
+        match $e.or_log_with(log::Level::Error, || $msg) {
+            Some(v) => v,
+            None => continue,
         }
     };
 }
@@ -326,7 +321,7 @@ impl<'a> State<'a> {
             // open directory
             let dir = err_cont!(
                 fs::read_dir(&path),
-                err => "Failed to open directory {path:?}: {err}",
+                err => format!("Failed to open directory `{:?}`", path.display()),
             );
 
             self.searched.insert(path);
@@ -335,12 +330,12 @@ impl<'a> State<'a> {
             for f in dir {
                 let file = err_cont!(
                     f,
-                    err => "failed to get directory entry: {err}",
+                    err => "failed to get directory entry",
                 );
 
                 err_cont!(
                     self.add_file(file),
-                    err => "failed to examine entry: {err}",
+                    err => "failed to examine entry",
                 );
             }
         }

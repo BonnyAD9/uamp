@@ -1,6 +1,5 @@
 use std::{fmt::Debug, fs::File, path::Path, time::Duration};
 
-use log::{error, warn};
 use raplay::{
     CallbackInfo, CpalError, Sink, Timestamp,
     reexp::BuildStreamError,
@@ -11,7 +10,9 @@ use ratag::{TagType, tag};
 use crate::core::{
     Error, LogResult, Result,
     library::{Library, LibraryUpdate, SongId},
+    log_err,
     plugin::DecoderPlugin,
+    warn,
 };
 
 /// Wrapps the sink
@@ -27,8 +28,10 @@ impl SinkWrapper {
     /// Create new [`SinkWrapper`]
     pub fn new() -> Self {
         let sink = Sink::default();
-        sink.on_err_callback(Box::new(|e| warn!("Error in playback: {e}")))
-            .expect("Failed to set sink error callback: ");
+        sink.on_err_callback(Box::new(|e| {
+            _ = Err::<(), _>(e).or_warn("Error in playback")
+        }))
+        .expect("Failed to set sink error callback: ");
 
         // XXX: Make this configurable?
         sink.prefetch_notify(Duration::from_secs(1))
@@ -189,12 +192,11 @@ impl SinkWrapper {
             Ok(ts) => Some(ts),
             Err(raplay::Error::NoSourceIsPlaying) => None,
             Err(e @ raplay::Error::Unsupported { .. }) => {
-                warn!("Failed to get current timestamp: {e}");
+                warn("Failed to get current timestamp", e);
                 None
             }
             Err(e) => {
-                dbg!(&e);
-                error!("Failed to get current timestamp: {e}");
+                log_err("Failed to get current timestamp.", e);
                 None
             }
         }

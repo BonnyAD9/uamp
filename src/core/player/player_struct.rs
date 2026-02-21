@@ -2,7 +2,7 @@ use std::{cell::Cell, mem, ops::Range, time::Duration};
 
 use bitflags::bitflags;
 use itertools::Itertools;
-use log::{error, info, warn};
+use log::info;
 use raplay::{CallbackInfo, Timestamp};
 use uamp_proc::TrackChange;
 
@@ -283,9 +283,7 @@ impl Player {
 
     /// Does hard pause without the fading (if configured).
     pub fn hard_pause(&mut self) {
-        if let Err(e) = self.inner.hard_pause() {
-            warn!("Failed to hard pause: {e:-}");
-        }
+        self.inner.hard_pause().or_warn("Failed to hard pause.");
         // TODO: unload song if stopped
     }
 
@@ -586,9 +584,9 @@ impl Player {
             return;
         };
 
-        if let Err(e) = self.inner.prefetch(lib, id) {
-            error!("Failed to prefetch song {:?}: {e:-}", lib[id].path(),);
-        }
+        self.inner.prefetch(lib, id).or_log_err_with(|| {
+            format!("Failed to prefetch song `{}`", lib[id].path().display())
+        });
     }
 }
 
@@ -655,19 +653,22 @@ impl Player {
         play: bool,
         pf: bool,
     ) -> bool {
-        let err = if pf {
+        let res = if pf {
             self.inner.load_or_prefetched(lib, id, play)
         } else {
             self.inner.load(lib, id, play)
         };
 
-        match err {
-            Ok(_) => {
+        let res = res.or_log_err_with(|| {
+            format!("Failed to load song `{}`", lib[id].path().display())
+        });
+
+        match res {
+            Some(_) => {
                 self.state = Playback::play(play);
                 true
             }
-            Err(e) => {
-                error!("Failed to load song {:?}: {e:-}", lib[id].path(),);
+            None => {
                 info!("Moving to the next song.");
                 let next = self.playlist.nth_next(1);
                 if next.is_none() {

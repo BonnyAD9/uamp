@@ -8,7 +8,6 @@ use std::{
 use anyhow::anyhow;
 use bitflags::bitflags;
 use libloading::Library;
-use log::warn;
 use raplay::{
     Callback, SampleBufferMut, Source, Timestamp,
     source::{DeviceConfig, VolumeIterator},
@@ -23,6 +22,7 @@ use crate::core::{
         CDeviceConfig, CDuration, CError, CErrorType, CSampleFormat,
         CTimestamp, CVolumeIterator, OpaqueType,
     },
+    warn,
 };
 
 #[derive(Debug)]
@@ -169,7 +169,7 @@ impl DecoderPluginSource {
                     if let Some(ref cb) = self.err_callback {
                         _ = cb.invoke(raplay::Error::Other(err));
                     } else {
-                        warn!("{err}");
+                        warn("", err);
                     }
                 }
             }
@@ -373,7 +373,7 @@ unsafe fn get_errors(
                 fatal = Some(anyhow!("plugin {name}: {}", err.msg));
             }
             _ => {
-                warn!("plugin {name}: {}", err.msg);
+                warn("error in plugin {name}", err.msg);
             }
         }
     }

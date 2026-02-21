@@ -3,11 +3,11 @@ use std::{
     path::Path,
 };
 
-use log::{error, info};
+use log::info;
 use serde::{Deserialize, Serialize};
 
 use crate::core::{
-    Error, Result, RtAndle, config::Config, library::Library,
+    Error, LogResult, Result, RtAndle, config::Config, library::Library,
     player::default_volume,
 };
 
@@ -58,13 +58,9 @@ impl Player {
         path: impl AsRef<Path>,
     ) -> Self {
         let mut data = if let Ok(file) = File::open(path.as_ref()) {
-            match serde_json::from_reader(file) {
-                Ok(p) => p,
-                Err(e) => {
-                    error!("Failed to load playback info: {e}");
-                    PlayerDataLoad::default()
-                }
-            }
+            serde_json::from_reader(file)
+                .or_log_err("Failed to load playback info")
+                .unwrap_or_default()
         } else {
             info!("player file {:?} doesn't exist", path.as_ref());
             PlayerDataLoad::default()
@@ -83,10 +79,10 @@ impl Player {
         );
 
         res.init_inner(rt);
-        if let Some(p) = play_pos
-            && let Err(e) = res.play(lib, false).and_then(|_| res.seek_to(p))
-        {
-            error!("{e:-}");
+        if let Some(p) = play_pos {
+            res.play(lib, false)
+                .and_then(|_| res.seek_to(p))
+                .or_log_err("Failed to resume playback after load.");
         }
         res
     }

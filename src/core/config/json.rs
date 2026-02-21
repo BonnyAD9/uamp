@@ -4,11 +4,11 @@ use std::{
     path::Path,
 };
 
-use log::{error, info};
+use log::info;
 use notify::{RecursiveMode, Watcher};
 use serde::Serialize;
 
-use crate::core::{Error, Result, UampApp};
+use crate::core::{Error, LogResult, Result, UampApp};
 
 use super::{Config, default_config_dir};
 
@@ -20,13 +20,9 @@ impl Config {
     /// Loads config from the default json file. If the loading fails, creates
     /// default config.
     pub fn from_default_json() -> Self {
-        match Config::new_from_json(default_config_dir().join("config.json")) {
-            Ok(c) => c,
-            Err(e) => {
-                error!("Failed to load config: {e:-}");
-                Config::default()
-            }
-        }
+        Config::new_from_json(default_config_dir().join("config.json"))
+            .or_log_err("Failed to load config.")
+            .unwrap_or_default()
     }
 
     /// Loads config from the given json file. If the loading fails, creates
@@ -39,8 +35,8 @@ impl Config {
             Ok(f) => f,
             Err(_) => {
                 info!(
-                    "the config file {:?} doesn't exist, using default",
-                    path.as_ref()
+                    "Failed to open config file `{}`, using default.",
+                    path.as_ref().display()
                 );
                 let conf = Config::new(Some(path.as_ref()));
                 return Ok(conf);

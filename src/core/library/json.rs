@@ -4,10 +4,10 @@ use std::{
     path::Path,
 };
 
-use log::{error, info};
+use log::info;
 
 use crate::core::{
-    AppCtrl, Error, Job, JobMsg, Jobs, Msg, Result, config::Config,
+    AppCtrl, Error, Job, JobMsg, Jobs, LogResult, Msg, Result, config::Config,
     library::add_new_songs::construct_album_artists, player::Player,
 };
 
@@ -31,19 +31,16 @@ impl Library {
     /// error.
     pub fn from_json(path: impl AsRef<Path>) -> Self {
         if let Ok(file) = File::open(path.as_ref()) {
-            match serde_json::from_reader::<_, Library>(file) {
-                Ok(mut l) => {
+            serde_json::from_reader::<_, Library>(file)
+                .or_log_err("Failed to parse library")
+                .map(|mut l| {
                     let (albums, artists) =
                         construct_album_artists(&mut l.songs);
                     l.albums = albums.into();
                     l.artists = artists.into();
                     l
-                }
-                Err(e) => {
-                    error!("Failed to parse library: {e}");
-                    Library::default()
-                }
-            }
+                })
+                .unwrap_or_default()
         } else {
             info!("library file {:?} doesn't exist", path.as_ref());
             Self::default()
