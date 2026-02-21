@@ -794,6 +794,11 @@ Integrations:
   For example the order `3,2,1,0` will reverse the top 4 playlists in the
   stack.
 
+`end-playlist`
+  Ends the current playlist as if it was finished playing.
+
+  This will trigger the playlist end action.
+
 ## FORMATS
 
 This section describes formats referenced in other parts of this document.

@@ -73,6 +73,8 @@ pub enum ControlMsg {
     SetPlaylistAddPolicy(AddPolicy),
     /// Thriggers save
     Save,
+    /// Ends the current playlist triggering the playlist end action.
+    EndPlaylist,
 }
 
 impl UampApp {
@@ -233,6 +235,9 @@ impl UampApp {
                 self.client_update(SubMsg::SetPlaylistAddPolicy(policy));
             }
             ControlMsg::Save => self.save_all(false, ctrl)?,
+            ControlMsg::EndPlaylist => {
+                self.player.end_playlist(&mut self.library)
+            }
         };
 
         Ok(vec![])
@@ -293,6 +298,7 @@ impl Display for ControlMsg {
             }
             ControlMsg::SetPlaylistAddPolicy(p) => write!(f, "pap={p}"),
             ControlMsg::Save => f.write_str("save"),
+            ControlMsg::EndPlaylist => f.write_str("end-playlist"),
         }
     }
 }
@@ -380,6 +386,7 @@ impl FromStr for ControlMsg {
                 ))
             }
             "save" => Ok(ControlMsg::Save),
+            "end-playlist" => Ok(ControlMsg::EndPlaylist),
             v => ArgError::from_msg(
                 ArgErrKind::UnknownArgument,
                 "Unknown control message.",

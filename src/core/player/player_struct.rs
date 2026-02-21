@@ -515,6 +515,12 @@ impl Player {
         })
     }
 
+    pub fn end_playlist(&mut self, lib: &mut Library) {
+        let pos = self.playlist().len();
+        self.play_next(lib, pos);
+        // TODO: flush the play buffer in raplay
+    }
+
     /// Creates new player from the sender
     pub(super) fn new_default(rt: RtAndle) -> Self {
         let mut res = Self {

@@ -483,6 +483,7 @@ const ANY_CONTROL_MSG: &[&[&str]] = &[
     &["playlist-retain="],
     &["restart"],
     &["rps=", "reorder-playlist-stack="],
+    &["end-playlist"],
 ];
 
 const PORT_ARG: &[&[&str]] =

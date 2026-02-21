@@ -2,6 +2,8 @@
 
 ## future
 ### Breaking changes
+Majority of users are unlikely to be affected.
+
 On first startup after this update, uamp will fail to load cached metadata from
 library and so it will also make all playlists empty. You will have to reload
 your library. Some cached images will also be no longer used, so you can
@@ -24,6 +26,7 @@ contains albums and artists and song now has nullable fields and `artists` and
 - Query for empty string is interpreted as that property should not be set.
 - Add new control message to retain only some songs in playlist with
   `playlist-retain`.
+- Add option to end the current playlist with `end-playlist`.
 
 ### Changes
 - Add new id control messages `InsertIntoPlaylist` and `RemoveFromPlaylist`.

@@ -1,7 +1,4 @@
 # TODO
-- Control msg to remove from playlist.
-- Control msg to end playlist (jump to end, stop and trigger playlist end
-  action).
 - Control msg to remove playlist.
 - Query support for not.
 - Proper support for multidisc albums.
@@ -13,6 +10,8 @@
 - Grououping by albums and artists
 
 # known issues
+- When playlist ends, the play buffer is not flushed may will play part of the
+  last song.
 - When playing some flac files, log will show error with end of stream. This is
   bug has been fixed in symphona, but it is not yet released.
 - When output device doesn't support required sample rate, aliasing may occur.

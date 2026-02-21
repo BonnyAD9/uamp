@@ -739,6 +739,9 @@ fn print_control_messages_help(color: bool) {
     playlist and the nest will follow. The indexes that are not in the order
     will be moved to the bottom of the stack without changing their relative
     order.
+
+  {'r}end-playlist{'_}
+    Ends the current playlist as if it finished playing all songs.
 ",
     )
 }
