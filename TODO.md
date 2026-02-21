@@ -1,5 +1,4 @@
 # TODO
-- Query support for not.
 - Proper support for multidisc albums.
 - Song tags (categories)
 - Custom format for listing songs.

@@ -848,14 +848,18 @@ have the same value: `1d` == `24::` == `1440:` == `86400`.
 
 *filter*`.`*filter*
 
+`^`*field*
+
+`^{`*filter*`}`
+
 Filter is used to filter list of songs. Basic filter consists of *field* that
 will be matched, the matching mode *:* and the pattern given in *value*. Some
 field don't have *value* and some ignore the matching mode *:*. If value should
 contain characters that would be normally interpreted, you can enclose it with
 `/`. If enclosed you can use `//` to represent single `/`. Several such filters
-may be joined together using `+` (or) or `.` (and). `.` (and) is evaluated
-first. The precedence of these operators may be modified with brackets `{` and
-`}`.
+may be joined together using `^` (not), `+` (or) and `.` (and). `^` (not) is
+evaluated first, `.` (and) is second and `+` (or) is last. The precedence of
+these operators may be modified with brackets `{` and `}`.
 
 Here is list of supported fields to match and their meaning:
 

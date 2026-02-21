@@ -150,7 +150,7 @@ impl<'a> Parser<'a> {
 
         while let Some(t) = self.cur()? {
             match t {
-                Token::Filter(_) => exprs.push(self.parse_and()?),
+                Token::Filter(_) | Token::Not => exprs.push(self.parse_and()?),
                 Token::Open => {
                     exprs.push(self.parse_bracket()?);
                 }
@@ -204,6 +204,7 @@ impl<'a> Parser<'a> {
         while let Some(t) = self.cur()? {
             match t {
                 Token::Filter(_) => exprs.push(self.parse_filter()?),
+                Token::Not => exprs.push(self.parse_not()?),
                 Token::Open => {
                     exprs.push(self.parse_bracket()?);
                 }
@@ -251,6 +252,21 @@ impl<'a> Parser<'a> {
         };
 
         Ok(ComposedFilter::Filter(f))
+    }
+
+    fn parse_not(&mut self) -> Result<ComposedFilter, ArgError> {
+        let f = match self.next()? {
+            Some(Token::Filter(_)) => self.parse_filter()?,
+            Some(Token::Open) => self.parse_bracket()?,
+            _ => {
+                return self
+                    .err_unexpected_token()
+                    .inline_msg("Expecter filter or open `{`.")
+                    .err();
+            }
+        };
+
+        Ok(ComposedFilter::Not(f.into()))
     }
 
     fn next(&mut self) -> Result<Option<&Token>, ArgError> {

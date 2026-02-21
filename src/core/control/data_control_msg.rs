@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::{
     Alias, AppCtrl, Msg, Result, UampApp,
-    query::{Filter, Query},
+    query::{ComposedFilter, Query},
     server::{
         SubMsg,
         sub::{
@@ -56,7 +56,7 @@ pub enum DataControlMsg {
     /// Remove songs given by query from the library.
     RemoveFromLibrary(Query),
     /// Retain songs in playlist that match the given filter.
-    PlaylistRetain(Filter),
+    PlaylistRetain(ComposedFilter),
 }
 
 impl UampApp {

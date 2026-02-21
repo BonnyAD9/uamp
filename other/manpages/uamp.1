@@ -899,14 +899,18 @@ have the same value: \fB\fC1d\fR == \fB\fC24::\fR == \fB\fC1440:\fR == \fB\fC864
 .PP
 \fIfilter\fP\fB\fC\&.\fR\fIfilter\fP
 .PP
+\fB\fC^\fR\fIfield\fP
+.PP
+\fB\fC^{\fR\fIfilter\fP\fB\fC}\fR
+.PP
 Filter is used to filter list of songs. Basic filter consists of \fIfield\fP that
 will be matched, the matching mode \fI:\fP and the pattern given in \fIvalue\fP\&. Some
 field don't have \fIvalue\fP and some ignore the matching mode \fI:\fP\&. If value should
 contain characters that would be normally interpreted, you can enclose it with
 \fB\fC/\fR\&. If enclosed you can use \fB\fC//\fR to represent single \fB\fC/\fR\&. Several such filters
-may be joined together using \fB\fC+\fR (or) or \fB\fC\&.\fR (and). \fB\fC\&.\fR (and) is evaluated
-first. The precedence of these operators may be modified with brackets \fB\fC{\fR and
-\fB\fC}\fR\&.
+may be joined together using \fB\fC^\fR (not), \fB\fC+\fR (or) and \fB\fC\&.\fR (and). \fB\fC^\fR (not) is
+evaluated first, \fB\fC\&.\fR (and) is second and \fB\fC+\fR (or) is last. The precedence of
+these operators may be modified with brackets \fB\fC{\fR and \fB\fC}\fR\&.
 .PP
 Here is list of supported fields to match and their meaning:
 .TP

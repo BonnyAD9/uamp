@@ -23,6 +23,7 @@ pub enum Token {
     Open,  // [, {
     Close, // ], }
     At,    // @
+    Not,   // ^
 }
 
 pub enum LexerState {
@@ -145,6 +146,10 @@ impl<'a> Lexer<'a> {
     }
 
     fn next_filter(&mut self) -> Result<Option<Token>> {
+        if self.data.starts_with('^') {
+            self.consume('^'.len_utf8());
+            return Ok(Some(Token::Not));
+        }
         let Some((i, c)) = self.find_special() else {
             let res = Token::Filter(self.map_err(self.data.parse())?);
             self.consume(self.data.len());
@@ -297,6 +302,7 @@ impl Display for Token {
             Token::Close => f.write_str("}"),
             Token::At => f.write_char('@'),
             Token::Comma => f.write_char(','),
+            Token::Not => f.write_char('^'),
         }
     }
 }

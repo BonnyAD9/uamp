@@ -14,6 +14,7 @@ pub enum ComposedFilter {
     Filter(Filter),
     And(Vec<ComposedFilter>),
     Or(Vec<ComposedFilter>),
+    Not(Box<ComposedFilter>),
 }
 
 impl ComposedFilter {
@@ -36,6 +37,7 @@ impl ComposedFilter {
                 }
                 false
             }
+            ComposedFilter::Not(q) => !q.matches(song, buf),
         }
     }
 }
@@ -84,6 +86,7 @@ impl Display for ComposedFilter {
                     )
                 }
             }
+            ComposedFilter::Not(q) => write!(f, "^{{{q}}}"),
         }
     }
 }

@@ -888,9 +888,11 @@ fn print_filter_help(color: bool, header: bool) {
       `{'i}+{'_}`    Or - one of the filters must pass.
       `{'i}.{'_}`    And - Both of the filters must pass.
       `{'i}{{  }}{'_}` Brackets to change the precedence.
+      `{'i}^{'_}`    Not - negation of portion of filter.
 
-    `{'i}.{'_}` (And) is evaluated first so `{'i}an:a+an:b.an:c{'_}` is the
-    same as `{'i}an:a+[an:b.an:c]{'_}`.
+    `{'i}^{'_}` (Not) is evaluated first. Than follows `{'i}.{'_}` (And) and
+    than `{'i}+{'_}`. so `{'i}an:a+^an:b.an:c{'_}` is the same as
+    `{'i}an:a+[[^an:b].an:c]{'_}`.
 
     You can use `{'i}/{'_}` to enclose string literals. Inside the string
     literals you can use `{'i}//{'_}` to escape single /.
