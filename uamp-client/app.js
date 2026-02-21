@@ -33,7 +33,7 @@ import {
     reorderPlaylists,
     showPlaylist,
 } from "./ui/tables.js";
-import VirtualTable from "./ui/virtual_table.js";
+import VirtualTable from "./ui/virtual-table.js";
 
 const slider = document.querySelector(".bar #progressBar");
 

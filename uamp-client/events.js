@@ -1,8 +1,9 @@
 import App from "./app.js";
 import "./colors.js";
-import "./ui/context_menu.js";
+import "./ui/context-menu.js";
 import "./ui/components/search-bar.js";
 import "./ui/components/screen-header.js";
+import "./ui/components/svg-icon.js";
 import { spawnScreens } from "./ui/pages.js";
 import { removePlaylistRow } from "./ui/tables.js";
 
@@ -101,7 +102,7 @@ const SSE_HANDLERS = {
         }, 1000);
     },
     "client-changed": () => window.location.reload(),
-    "config-changed": async (data) => (app.config.init(data)),
+    "config-changed": async (data) => app.config.init(data),
 };
 
 /** @type {EventSource|null} */

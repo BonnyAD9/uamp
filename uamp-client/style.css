@@ -1348,6 +1348,12 @@ ul.context-menu li:hover {
     user-select: none;
 }
 
+svg-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 @media screen and (max-width: 1800px) {
     .list .card {
         flex: 1 1 calc(16.66% - 5px);

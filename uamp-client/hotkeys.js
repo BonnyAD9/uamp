@@ -1,5 +1,5 @@
 import Api from "./api.js";
-import { contextMenu } from "./ui/context_menu.js";
+import { contextMenu } from "./ui/context-menu.js";
 
 /**
  * Default hotkeys map

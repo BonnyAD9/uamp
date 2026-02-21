@@ -1,20 +1,21 @@
 import Album from "../library/album.js";
 
-const pausePlayP1 = document.getElementById("from_pause_to_play_p1");
-const playPauseP1 = document.getElementById("from_play_to_pause_p1");
-const pausePlayP2 = document.getElementById("from_pause_to_play_p2");
-const playPauseP2 = document.getElementById("from_play_to_pause_p2");
+const playBtn = document.getElementById("play");
 /**
  * Updates the play button based on the playing state
  * @param {boolean} playing - whether player is playing or not
  */
-export function updatePlayBtn(playing) {
+export async function updatePlayBtn(playing) {
+    if (playBtn.waitReady) {
+        await playBtn.waitReady();
+    }
+
     if (playing) {
-        playPauseP1.beginElement();
-        playPauseP2.beginElement();
+        playBtn.triggerAnimation("from_play_to_pause_p1");
+        playBtn.triggerAnimation("from_play_to_pause_p2");
     } else {
-        pausePlayP1.beginElement();
-        pausePlayP2.beginElement();
+        playBtn.triggerAnimation("from_pause_to_play_p1");
+        playBtn.triggerAnimation("from_pause_to_play_p2");
     }
 }
 

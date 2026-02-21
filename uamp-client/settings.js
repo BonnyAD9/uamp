@@ -387,6 +387,7 @@ export function getCookie(name) {
 /// Displays appearance settings in its page
 function displayAppearanceSettings() {
     const appearSettings = document.getElementById("appearanceSettings");
+    appearSettings.innerHTML = "";
 
     const floatingBar = (getCookie("floatingBar") ?? "true") === "true";
     bar.classList.toggle("floating", floatingBar);
