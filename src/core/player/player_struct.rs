@@ -341,10 +341,10 @@ impl Player {
         let pl = self.mut_playlist();
 
         let cur = pl.current();
-        let next = pl.nth_next(1);
+        let next = pl.peek();
         pl.retain(|s, i| f(lib, s, i));
         let new_cur = pl.current();
-        let new_next = pl.nth_next(1);
+        let new_next = pl.peek();
 
         if new_cur == cur {
             if new_next != next {
