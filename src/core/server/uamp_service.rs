@@ -14,6 +14,7 @@ use hyper::{
     body::{Bytes, Frame, Incoming},
 };
 use image::EncodableLayout;
+use itertools::Itertools;
 use pareg::{ArgInto, FromArg};
 use serde::Serialize;
 use tokio::{
@@ -99,6 +100,7 @@ impl UampService {
         match req.uri().path() {
             "/api/ctrl" => self.handle_ctrl_post_api(req).await,
             "/api/unidecode" => self.handle_unidecode_api(req).await,
+            "/api/check_ctrl" => self.handle_check_ctrl_post_api(req).await,
             _ => Err(Error::http(404, "Unknown POST endpoint.".to_string())),
         }
     }
@@ -303,6 +305,43 @@ impl UampService {
         }
 
         Ok(string_response(res))
+    }
+
+    async fn handle_check_ctrl_post_api(
+        &self,
+        mut req: Request<Incoming>,
+    ) -> Result<MyResponse> {
+        let len: Option<usize> = req
+            .headers()
+            .get("Content-Length")
+            .and_then(|l| l.to_str().ok())
+            .and_then(|a| a.parse().ok());
+        let mut str = req.body_mut().into_data_stream();
+
+        if let Some(len) = len
+            && len > MAX_ACCEPT_LENGTH
+        {
+            return Err(Error::http(413, "Too much data.".to_string()));
+        }
+
+        let mut res = vec![];
+
+        while res.len() <= MAX_ACCEPT_LENGTH
+            && let Some(frame) = str.next().await
+        {
+            res.extend(frame?.as_bytes());
+        }
+
+        let res = serde_json::from_slice::<Vec<String>>(&res)?
+            .into_iter()
+            .map(|a| {
+                AnyControlMsg::from_arg(&a)
+                    .err()
+                    .map(|a| a.no_color().to_string())
+            })
+            .collect_vec();
+
+        json_response(&res)
     }
 
     async fn make_req(&self, k: &str, v: &str) -> Result<RepMsg> {

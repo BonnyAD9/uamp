@@ -32,6 +32,7 @@ contains albums and artists and song now has nullable fields and `artists` and
 - The post endpoint for `/api/ctrl` now also supports array of messages.
 - Improve logging. Some of what was previously error is now warning. Most
   log messages that come from uamp will now also show source location.
+- Add POST api to check control message at `/api/check_ctrl`.
 
 ### Fixes
 - Fix panic in mix after into empty playlist.
