@@ -1,5 +1,4 @@
 # TODO
-- Control msg to remove playlist.
 - Query support for not.
 - Proper support for multidisc albums.
 - Song tags (categories)
