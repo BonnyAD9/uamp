@@ -504,7 +504,7 @@ slider.addEventListener("change", () => {
     const song = app.player.getPlaying();
 
     const pos = song.length.fromPercent(percent);
-    apiCtrl(`seek=${pos.forceFormat()}`);
+    apiCtrl(`seek=${pos.format()}`);
     app.updateProgressBar();
 });
 

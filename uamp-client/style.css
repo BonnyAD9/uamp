@@ -956,6 +956,7 @@ section.bar.expanded .playlist {
 section.bar .playlist .songs {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     max-width: 80%;
     width: 100%;
     margin: 0 auto;
@@ -982,6 +983,12 @@ section.bar:not(.expanded) .backdrop {
 section.bar .playlist .item {
     cursor: pointer;
     height: 32px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    padding: 0 10px;
 }
 
 section.bar .playlist p {
