@@ -169,7 +169,12 @@ export default class VirtualTable {
     #getEndPos(start, visible, songCnt, topSpacer, bottomSpacer) {
         const end = Math.min(songCnt, start + visible);
 
-        topSpacer.style.height = `${start * this.rowHeight}px`;
+        let offset = 0;
+        if (songCnt < visible && this.center) {
+            offset = (visible - songCnt) / 2;
+        }
+
+        topSpacer.style.height = `${(start + offset) * this.rowHeight}px`;
         bottomSpacer.style.height = `${(songCnt - end) * this.rowHeight}px`;
         return { start, end };
     }

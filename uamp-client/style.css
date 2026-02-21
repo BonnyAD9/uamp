@@ -432,15 +432,17 @@ table.songs td .albums-preview img {
     top: 0;
     width: 100%;
     height: 100%;
-    background-image: none;
-}
-
-.list .card .glow:hover {
     background-image: radial-gradient(
         circle at var(--x) var(--y),
         #ffffff33,
         #0000000f
     );
+    transition: 100ms ease-out;
+    opacity: 0;
+}
+
+.list .card:hover .glow {
+    opacity: 1;
 }
 
 .list .card .details {

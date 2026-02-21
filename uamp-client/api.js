@@ -34,12 +34,7 @@ export default class Api {
      * @returns {Promise} fetch promise
      */
     static async insertIntoPlaylist(songs, pos, playlist = 0) {
-        const data = {
-            songs: songs.map((s) => s.id),
-            position: Number(pos),
-            playlist: Number(playlist),
-        };
-        return Api.postCtrl({ InsertIntoPlaylist: data });
+        return Api.postCtrl(insertIntoPlaylist(songs, pos, playlist));
     }
 
     /**
@@ -49,10 +44,41 @@ export default class Api {
      * @returns {Promise} fetch promise
      */
     static async removeFromPlaylist(ranges, playlist = 0) {
-        const data = {
+        return Api.postCtrl(removeFromPlaylist(ranges, playlist));
+    }
+
+    /**
+     * Moves playlist songs to given position in given playlist.
+     * @param {Song[]} songs - songs to be moved
+     * @param {number[]} range - range of the songs to be moved
+     * @param {number} pos - position to move songs to
+     * @param {number} playlist - ID of the playlist to move songs in
+     * @returns {Promise} fetch promise
+     */
+    static async movePlaylistSongs(songs, range, pos, playlist = 0) {
+        const data = [
+            removeFromPlaylist([range], playlist),
+            insertIntoPlaylist(songs, pos, playlist),
+        ];
+        return Api.postCtrl(data);
+    }
+}
+
+function insertIntoPlaylist(songs, pos, playlist) {
+    return {
+        InsertIntoPlaylist: {
+            songs: songs.map((s) => s.id),
+            position: Number(pos),
+            playlist: Number(playlist),
+        },
+    };
+}
+
+function removeFromPlaylist(ranges, playlist) {
+    return {
+        RemoveFromPlaylist: {
             ranges,
             playlist: Number(playlist),
-        };
-        return Api.postCtrl({ RemoveFromPlaylist: data });
-    }
+        },
+    };
 }

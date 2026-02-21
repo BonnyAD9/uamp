@@ -94,13 +94,11 @@ function insertSongs(songs, next, playlist = 0) {
 export const SONG_CONTEXT_ITEMS = [
     {
         label: "Play Next",
-        action: (i) =>
-            insertSongs([app.library.getSong(i)], true),
+        action: (i) => insertSongs([app.library.getSong(i)], true),
     },
     {
         label: "Add to Queue",
-        action: (i) =>
-            insertSongs([app.library.getSong(i)], false),
+        action: (i) => insertSongs([app.library.getSong(i)], false),
     },
 ];
 
@@ -129,11 +127,21 @@ export const PLAYLIST_CONTEXT_ITEMS = [
             if (pl === null) return;
             Api.removeFromPlaylist([[id, id + 1]], playlist);
             insertSongs([pl.songs[id]], true, playlist);
+            // const pos = app.player.getPlaylist(playlist).getNextPId();
+            // Api.movePlaylistSongs([pl.songs[id]], [id, id + 1], pos, playlist);
         },
     },
     {
         label: "Remove from Playlist",
         action: ({ id, playlist }) =>
-            Api.removeFromPlaylist([[id, id + 4]], playlist),
+            Api.removeFromPlaylist([[id, id + 1]], playlist),
+        // Api.removeFromPlaylist(
+        //     [
+        //         [0, 5],
+        //         [5, 8],
+        //         [9, 10],
+        //     ],
+        //     playlist,
+        // ),
     },
 ];
