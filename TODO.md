@@ -10,8 +10,8 @@
 - Grououping by albums and artists
 
 # known issues
-- When playlist ends, the play buffer is not flushed may will play part of the
-  last song.
+- When playlist obruptly ends (calling `ns` on last song or `end-playlist`),
+  the play buffer is not flushed will play part of the last song.
 - When playing some flac files, log will show error with end of stream. This is
   bug has been fixed in symphona, but it is not yet released.
 - When output device doesn't support required sample rate, aliasing may occur.
