@@ -64,9 +64,9 @@ const artistsList = document.querySelector("#artists .songs tbody");
  */
 export function displayArtists(artists) {
     artistsList.innerHTML = "";
-    artists.get().forEach((artist, i) => {
+    artists.get().forEach((artist) => {
         const row = artist.getTableRow();
-        row.dataset.index = i;
+        row.dataset.index = artist.id;
         artistsList.appendChild(row);
     });
     displayArtistsSort(artists.key, artists.ascending);

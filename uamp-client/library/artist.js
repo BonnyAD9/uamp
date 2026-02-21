@@ -7,11 +7,14 @@ const artistTemplate = document.getElementById("artist-template");
 export default class Artist {
     /**
      * Creates new artist
+     * @param {string} id
      * @param {string} name
      * @param {Song[]} songs
      * @param {Album[]} albums
      */
-    constructor(name, songs = [], albums = []) {
+    constructor(id, name, songs = [], albums = []) {
+        /** @type {string} */
+        this.id = id;
         /** @type {string} */
         this.name = name;
         /** @type {Sorter} */
@@ -20,11 +23,11 @@ export default class Artist {
         this.albums = albums;
     }
 
-    static from(obj, allAlbums, allSongs) {
+    static from(id, obj, allAlbums, allSongs) {
         const albums = obj.albums.map((a, _) => allAlbums[a]);
         const singles = obj.singles.map((s, _) => allSongs[s]);
         const songs = [...albums.flatMap((a) => a.songs.get()), ...singles];
-        return new Artist(obj.name, songs, albums);
+        return new Artist(id, obj.name, songs, albums);
     }
 
     /**
@@ -49,6 +52,7 @@ export default class Artist {
         const albums = row.querySelector(".albums-preview");
         this.albums.forEach((album) => {
             const img = document.createElement("img");
+            img.classList.add("card");
             img.src = Album.getCover(album.artist, album.name, 64);
             img.title = album.name;
             img.dataset.index = album.id;

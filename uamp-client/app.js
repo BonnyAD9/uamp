@@ -437,7 +437,7 @@ export default class App {
         const row = e.target.closest("tr");
         if (!row) return;
 
-        const artist = this.library.artists.get()[row.dataset.index];
+        const artist = this.library.allArtists[row.dataset.index];
 
         const album = e.target.closest(".albums-preview img");
         if (!album) {

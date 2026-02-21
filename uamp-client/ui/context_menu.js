@@ -65,11 +65,19 @@ document.addEventListener("contextmenu", (e) => {
     const songRow = e.target.closest(".with-song-context tr");
     if (songRow) {
         contextMenu.show(e, SONG_CONTEXT_ITEMS, songRow.dataset.songId);
+        return;
     }
 
     const albumCard = e.target.closest(".with-album-context .card");
     if (albumCard) {
         contextMenu.show(e, ALBUM_CONTEXT_ITEMS, albumCard.dataset.index);
+        return;
+    }
+
+    const artistRow = e.target.closest(".with-artist-context tr");
+    if (artistRow) {
+        contextMenu.show(e, ARTIST_CONTEXT_ITEMS, artistRow.dataset.index);
+        return;
     }
 
     const plRow = e.target.closest(".with-playlist-context tr");
@@ -79,6 +87,7 @@ document.addEventListener("contextmenu", (e) => {
             playlist: app.playlistTab,
         };
         contextMenu.show(e, PLAYLIST_CONTEXT_ITEMS, data);
+        return;
     }
 });
 
@@ -115,6 +124,23 @@ export const ALBUM_CONTEXT_ITEMS = [
         action: (id) => {
             const album = app.library.allAlbums[id];
             if (album) insertSongs(album.songs.get(), false);
+        },
+    },
+];
+
+export const ARTIST_CONTEXT_ITEMS = [
+    {
+        label: "Play Next",
+        action: (id) => {
+            const artist = app.library.allArtists[id];
+            if (artist) insertSongs(artist.songs.get(), true);
+        },
+    },
+    {
+        label: "Add to Queue",
+        action: (id) => {
+            const artist = app.library.allArtists[id];
+            if (artist) insertSongs(artist.songs.get(), false);
         },
     },
 ];

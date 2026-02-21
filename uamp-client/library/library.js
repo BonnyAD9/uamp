@@ -26,7 +26,7 @@ export default class Library {
         }, {});
         /** @type {Object<string, Artist>} */
         this.allArtists = Object.entries(artists).reduce((acc, [id, a]) => {
-            acc[id] = Artist.from(a, this.allAlbums, this.allSongs);
+            acc[id] = Artist.from(id, a, this.allAlbums, this.allSongs);
             return acc;
         }, {});
 
