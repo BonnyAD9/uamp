@@ -8,7 +8,7 @@ use tokio::{
 };
 
 use crate::{
-    core::log_err,
+    core::LogResult,
     env::rt::{Amsg, Andle, Msg},
 };
 
@@ -19,7 +19,7 @@ pub struct Handle<M: 'static, E: Send + 'static> {
 
 impl<M, E: Send> Handle<M, E> {
     pub fn send(&self, m: Msg<M, E>) {
-        log_err("Failed to send message.", self.local.send(m));
+        self.local.send(m).or_log_err("Failed to send message.");
     }
 
     pub fn msgs(&self, msgs: Vec<M>) {
@@ -93,7 +93,9 @@ impl<M, E: Send> Handle<M, E> {
     pub async fn msgs_result(&self, m: Vec<M>) -> Result<(), E> {
         let (rsend, rrecv) = oneshot::channel();
         self.send(Msg::Msg(m, Some(rsend)));
-        log_err("Failed to receive message result.", rrecv.await)
+        rrecv
+            .await
+            .or_log_err("Failed to receive message result.")
             .unwrap_or(Ok(()))
     }
 
@@ -107,7 +109,9 @@ impl<M, E: Send> Handle<M, E> {
     ) -> Result<(), E> {
         let (rsend, rrecv) = oneshot::channel();
         self.task_rt(async move { Msg::Msg(f.await, Some(rsend)) });
-        log_err("Failed to receive message result.", rrecv.await)
+        rrecv
+            .await
+            .or_log_err("Failed to receive message result.")
             .unwrap_or(Ok(()))
     }
 

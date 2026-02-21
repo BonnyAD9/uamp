@@ -24,9 +24,8 @@ use tokio::{
 use tokio_util::sync::CancellationToken;
 
 use crate::core::{
-    AppCtrl, Error, Job, JobMsg, Msg, Result, RtHandle, UampApp,
+    AppCtrl, Error, Job, JobMsg, LogResult, Msg, Result, RtHandle, UampApp,
     config::Config,
-    log_err,
     server::sub::{PlayTmp, SetAll, SetPlaylist},
 };
 
@@ -134,7 +133,7 @@ impl Server {
             let (conn, peer) = tokio::select!(
                 _ = data.cancel.cancelled() => break,
                 res = self.listener.accept() => {
-                    let Some(val) = log_err("Failed to accept.", res) else {
+                    let Some(val) = res.or_log_err("Failed to accept.") else {
                         continue;
                     };
                     val
@@ -156,7 +155,7 @@ impl Server {
         shutdown.cancel();
 
         for c in connections {
-            log_err("Failed to wait for connection to end", c.await);
+            c.await.or_warn("Failed to wait for connection to end");
         }
 
         Ok(())
@@ -180,8 +179,8 @@ async fn cancellable_connection(
     match select(cancelled, conn).await {
         Either::Left((_, mut conn)) => {
             Pin::new(&mut conn).graceful_shutdown();
-            log_err("Connection failed on shutdown.", conn.await);
+            conn.await.or_warn("Connection failed on shutdown.");
         }
-        Either::Right((res, _)) => _ = log_err("Connection ended.", res),
+        Either::Right((res, _)) => _ = res.or_warn("Connection ended."),
     }
 }

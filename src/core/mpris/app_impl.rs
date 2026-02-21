@@ -4,7 +4,7 @@ use futures::executor::block_on;
 use mpris_server::{Property, Server, Signal, zbus};
 
 use crate::core::{
-    AppCtrl, Job, JobMsg, Msg, State, UampApp, config, log_err,
+    AppCtrl, Job, JobMsg, LogResult, Msg, State, UampApp, config,
     mpris::{self, Mpris},
 };
 
@@ -17,9 +17,9 @@ impl UampApp {
         self.stop_mpris();
 
         let e = Server::new(config::APP_ID, Mpris::new(self.rt.andle()));
-        let mpris: Option<Rc<_>> =
-            log_err("Failed to start mpris player: ", block_on(e))
-                .map(|a| a.into());
+        let mpris: Option<Rc<_>> = block_on(e)
+            .or_log_err("Failed to start mpris player")
+            .map(|a| a.into());
 
         self.jobs.system_player = if let Some(s) = mpris {
             self.jobs.run(Job::SYSTEM_PLAYER);
@@ -51,12 +51,12 @@ impl UampApp {
             if !changes.is_empty() {
                 let change = mpris.properties_changed(changes).await;
                 restart |= should_restart(&change);
-                log_err("Failed to send mpris update: ", change);
+                change.or_log_err("Failed to send mpris update.");
             }
             if let Some(position) = seek {
                 let seek = mpris.emit(Signal::Seeked { position }).await;
                 restart |= should_restart(&seek);
-                log_err("Failed to send mpris signal: ", seek);
+                seek.or_log_err("Failed to send mpris signal");
             }
 
             if restart {

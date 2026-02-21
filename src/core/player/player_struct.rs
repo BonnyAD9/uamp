@@ -8,10 +8,9 @@ use uamp_proc::TrackChange;
 
 use crate::{
     core::{
-        Alias, DataControlMsg, Error, Msg, Result, RtAndle,
+        Alias, DataControlMsg, Error, LogResult, Msg, Result, RtAndle,
         config::Config,
         library::{Library, SongId},
-        log_err,
         plugin::DecoderPlugin,
         server::sub,
     },
@@ -617,9 +616,8 @@ impl Player {
         let Some(id) = id else {
             if !self.state.is_stopped() {
                 self.inner.play(false);
-                log_err(
+                self.inner.hard_pause().or_warn(
                     "Failed to hard pause the playback when stopped.",
-                    self.inner.hard_pause(),
                 );
                 self.state = Playback::Stopped;
             }

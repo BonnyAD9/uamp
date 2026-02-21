@@ -1,21 +1,21 @@
 use std::{
     any::Any,
-    backtrace::Backtrace,
+    backtrace::{Backtrace, BacktraceStatus},
     borrow::Cow,
     fmt::Display,
+    panic::Location,
     process::{Command, ExitStatus, Output},
 };
 
 mod err_ctx;
 mod err_ctx_flags;
 mod err_kind;
+mod log_result;
 
-use log::error;
+use itertools::Either;
 use pareg::Pareg;
 
-use crate::ext::Wrap;
-
-pub use self::{err_ctx::*, err_ctx_flags::*, err_kind::*};
+pub use self::{err_ctx::*, err_ctx_flags::*, err_kind::*, log_result::*};
 
 //===========================================================================//
 //                                   Public                                  //
@@ -117,8 +117,15 @@ impl Error {
         }
     }
 
+    #[track_caller]
     pub fn unexpected() -> Self {
-        Self::new(ErrKind::Unexpected(Wrap(Backtrace::capture())))
+        let bt = Backtrace::capture();
+        let value = if matches!(bt.status(), BacktraceStatus::Captured) {
+            Either::Left(bt)
+        } else {
+            Either::Right(Location::caller())
+        };
+        Self::new(ErrKind::Unexpected(value))
     }
 
     pub fn is_invalid_operation(&self) -> bool {
@@ -213,19 +220,6 @@ impl From<tokio::task::JoinError> for Error {
             Self::thread_panicked(Some(value.into_panic()))
         } else {
             Self::unexpected().msg("Task was stopped.")
-        }
-    }
-}
-
-pub fn log_err<T, E: Display>(
-    pf: impl Display,
-    e: std::result::Result<T, E>,
-) -> Option<T> {
-    match e {
-        Ok(v) => Some(v),
-        Err(e) => {
-            error!("{pf}: {e:-}");
-            None
         }
     }
 }

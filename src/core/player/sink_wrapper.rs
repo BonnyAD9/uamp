@@ -9,9 +9,8 @@ use raplay::{
 use ratag::{TagType, tag};
 
 use crate::core::{
-    Error, Result,
+    Error, LogResult, Result,
     library::{Library, LibraryUpdate, SongId},
-    log_err,
     plugin::DecoderPlugin,
 };
 
@@ -235,10 +234,8 @@ impl SinkWrapper {
 
     fn choose_decoder(&self, p: impl AsRef<Path>) -> Result<Box<dyn Source>> {
         let mut probe = tag::Probe::top_level();
-        log_err(
-            "Failed to probe audio file.",
-            ratag::read_tag_from_file(&p, &mut probe, &ratag::trap::Skip),
-        );
+        ratag::read_tag_from_file(&p, &mut probe, &ratag::trap::Skip)
+            .or_warn("Failed to probe audio file.");
         let skip_symph = probe.tags.iter().all(symphonia_unsupported);
 
         let mut errs = vec![];

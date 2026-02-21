@@ -14,10 +14,9 @@ use tokio::task::JoinHandle;
 
 use crate::{
     core::{
-        ErrKind, Error, Result, RtAndle,
+        ErrKind, Error, LogResult, Result, RtAndle,
         config::CacheSize,
         library::Song,
-        log_err,
         query::{Base, CmpType, ComposedFilter, Filter, FilterType, Query},
     },
     ext::simpl,
@@ -383,7 +382,7 @@ fn looped_save(img: &DynamicImage, dst: &Path) -> Result<()> {
             return Ok(());
         }
         warn!("Failed to save image to {} {i} times.", dst.display());
-        log_err("Failed to remove file.", fs::remove_file(dst));
+        fs::remove_file(dst).or_log_err("Failed to remove file.");
     }
 
     Error::unexpected().msg("Failed to save image.").err()

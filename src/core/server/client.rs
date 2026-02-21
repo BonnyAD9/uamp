@@ -10,9 +10,8 @@ use tokio::{net::TcpStream, task::JoinHandle};
 use url::Url;
 
 use crate::core::{
-    AnyControlMsg, Error, Result,
+    AnyControlMsg, Error, LogResult, Result,
     library::Song,
-    log_err,
     query::Query,
     server::{Info, RepMsg},
 };
@@ -28,7 +27,7 @@ impl Client {
         let stream = TcpStream::connect(&address).await?;
         let (sender, conn) = http1::handshake(TokioIo::new(stream)).await?;
         let handle = tokio::spawn(async move {
-            log_err("Connection failed.", conn.await);
+            conn.await.or_log_err("Connection failed.");
         });
         Ok(Self {
             sender,

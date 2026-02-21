@@ -14,9 +14,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::{
-        Result,
+        LogResult, Result,
         config::{CacheSize, Config},
-        log_err,
     },
     ext::duration_to_string,
 };
@@ -66,9 +65,9 @@ impl Song {
         res.artists = res.artists.into_iter().unique().collect();
         res.genres = res.genres.into_iter().unique().collect();
         if res.length().is_none() {
-            res.length =
-                log_err("Failed to get song time: ", symph_get_len(path))
-                    .flatten();
+            res.length = symph_get_len(path)
+                .or_log_err("Failed to get song time.")
+                .flatten();
         }
         Ok(res)
     }

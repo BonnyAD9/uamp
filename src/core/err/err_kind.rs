@@ -1,13 +1,11 @@
 use std::{
-    backtrace::Backtrace, borrow::Cow, process::ExitStatus,
+    backtrace::Backtrace, borrow::Cow, panic::Location, process::ExitStatus,
     time::SystemTimeError,
 };
 
 use flexi_logger::FlexiLoggerError;
-use itertools::Itertools;
+use itertools::{Either, Itertools};
 use thiserror::Error;
-
-use crate::ext::Wrap;
 
 /// Unified error type of uamp
 #[derive(Error, Debug)]
@@ -40,8 +38,8 @@ pub enum ErrKind {
     #[error("Not found.")]
     NotFound,
     /// An unexpected error.
-    #[error("An unexpected error at: {}.", .0.0)]
-    Unexpected(Wrap<Backtrace>),
+    #[error("An unexpected error at: {}.", .0)]
+    Unexpected(Either<Backtrace, &'static Location<'static>>),
     /// Invalid value.
     #[error("Invalid value.")]
     InvalidValue,

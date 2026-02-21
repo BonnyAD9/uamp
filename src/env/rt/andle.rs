@@ -7,7 +7,7 @@ use tokio::{
     task::JoinHandle,
 };
 
-use crate::{core::log_err, env::rt::Amsg};
+use crate::{core::LogResult, env::rt::Amsg};
 
 #[derive(Debug)]
 pub struct Andle<M: 'static, E: Send + 'static>(
@@ -16,7 +16,7 @@ pub struct Andle<M: 'static, E: Send + 'static>(
 
 impl<M, E: Send> Andle<M, E> {
     pub fn send(&self, m: Amsg<M, E>) {
-        log_err("Failed to send message.", self.0.send(m));
+        self.0.send(m).or_log_err("Failed to send message");
     }
 
     pub fn msgs(&self, msgs: Vec<M>) {
@@ -102,7 +102,9 @@ impl<M, E: Send> Andle<M, E> {
     pub async fn msgs_result(&self, m: Vec<M>) -> Result<(), E> {
         let (rsend, rrecv) = oneshot::channel();
         self.send(Amsg::Msg(m, Some(rsend)));
-        log_err("Failed to receive message result.", rrecv.await)
+        rrecv
+            .await
+            .or_log_err("Failed to receive message result.")
             .unwrap_or(Ok(()))
     }
 
@@ -116,7 +118,9 @@ impl<M, E: Send> Andle<M, E> {
     ) -> Result<(), E> {
         let (rsend, rrecv) = oneshot::channel();
         self.task_rt(async move { Amsg::Msg(f.await, Some(rsend)) });
-        log_err("Failed to receive message result.", rrecv.await)
+        rrecv
+            .await
+            .or_log_err("Failed to receive message result.")
             .unwrap_or(Ok(()))
     }
 

@@ -15,8 +15,8 @@ use notify::{INotifyWatcher, Watcher};
 use tokio::signal::unix::SignalKind;
 
 use crate::core::{
-    AppCtrl, Error, Jobs, Result, RtAndle, RtHandle, State, library::Song,
-    log_err, msg::Msg, plugin::Plugin,
+    AppCtrl, Error, Jobs, LogResult, Result, RtAndle, RtHandle, State,
+    library::Song, msg::Msg, plugin::Plugin,
 };
 
 use super::{
@@ -86,11 +86,9 @@ impl UampApp {
             rt.msg(ControlMsg::PlayPause(Some(true)).into());
         }
 
-        let config_watch = log_err(
-            "Failed to watch config file: {}",
-            Self::watch_files(rt.andle(), &conf),
-        )
-        .flatten();
+        let config_watch = Self::watch_files(rt.andle(), &conf)
+            .or_log_err("Failed to watch config file")
+            .flatten();
 
         if let Err(e) = delete_old_logs(conf.delete_logs_after().0) {
             error!("Failed to delete old logs: {e:-}");
@@ -132,7 +130,7 @@ impl UampApp {
             app.enable_system_player();
         }
 
-        log_err("Failed to load plugins.", app.load_plugins());
+        app.load_plugins().or_log_err("Failed to load plugins.");
 
         Ok(app)
     }
@@ -476,7 +474,7 @@ impl UampApp {
                     && let Some(ext) = p.extension()
                     && ext == "so"
                 {
-                    log_err("Failed to load plugin.", self.load_plugin(p));
+                    self.load_plugin(p).or_log_err("Failed to load plugin.");
                 }
             }
         }
