@@ -101,7 +101,7 @@ const SSE_HANDLERS = {
         }, 1000);
     },
     "client-changed": () => window.location.reload(),
-    "config-changed": async (data) => (app.config = Config.init(data)),
+    "config-changed": async (data) => (app.config.init(data)),
 };
 
 /** @type {EventSource|null} */

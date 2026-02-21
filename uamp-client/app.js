@@ -84,16 +84,13 @@ export default class App {
     }
 
     async init(data) {
-        const config = await Config.init(data.config);
+        this.config.init(data.config).then(() => this.config.render());
 
         this.library = new Library(data.library);
         /** @type {Player} */
         this.player = new Player(data.player, this.library);
         /** @type {Timestamp} */
         this.position = data.position && Timestamp.from(data.position);
-        /** @type {Config} */
-        this.config = config;
-        this.config.render();
 
         this.playlistTab = 0;
 

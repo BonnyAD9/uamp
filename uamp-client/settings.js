@@ -1,4 +1,5 @@
 import { applyThemeColor, setupDynamicColors } from "./colors.js";
+import HotkeyManager, { defaultHotkeys } from "./hotkeys.js";
 
 const settingsTabs = document.querySelector("#settings .tabs .tabs-wrapper");
 const bar = document.querySelector("section.bar");
@@ -14,6 +15,7 @@ const colorTemplate = document.getElementById("color-setting");
 export default class Config {
     constructor(data, schema) {
         this.schema = schema;
+        this.hotkeys = new HotkeyManager(defaultHotkeys);
         Object.assign(this, data);
     }
 
@@ -25,7 +27,7 @@ export default class Config {
         return new Config({}, {});
     }
 
-    static async init(data) {
+    async init(data) {
         const schema = await fetch("assets/config_schema.json")
             .then((res) => {
                 if (!res.ok) throw new Error("failed to load config");
@@ -33,7 +35,8 @@ export default class Config {
             })
             .then((res) => res.properties)
             .catch((_) => null);
-        return new Config(data, schema);
+        this.schema = schema;
+        Object.assign(this, data);
     }
 
     render() {

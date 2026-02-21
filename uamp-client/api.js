@@ -1,5 +1,23 @@
 export default class Api {
     /**
+     * Sends API ctrl get request with the given query.
+     * @param {string} query - ctrl query, should be encoded for URL
+     * @returns {Promise} fetch promise
+     */
+    static async ctrl(query) {
+        return fetch(`/api/ctrl?${query}`)
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.text();
+            })
+            .catch((error) => {
+                console.error("Fetch error:", error);
+            });
+    }
+
+    /**
      * Sends API ctrl post request with the given data.
      * @param {any} data - data to be sent
      * @returns {Promise} fetch promise
