@@ -258,8 +258,8 @@ impl UampApp {
     }
 
     pub fn shutdown_server(&mut self) {
-        self.stop_server();
         self.config.force_server = Some(false);
+        self.stop_server();
     }
 
     pub fn stop_server(&mut self) {

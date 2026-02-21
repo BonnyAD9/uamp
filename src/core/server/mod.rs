@@ -17,7 +17,10 @@ use futures::{
 };
 use hyper::{server::conn::http1, service::service_fn};
 use hyper_util::rt::TokioIo;
-use tokio::net::{TcpListener, TcpStream};
+use tokio::{
+    net::{TcpListener, TcpStream},
+    task::JoinHandle,
+};
 use tokio_util::sync::CancellationToken;
 
 use crate::core::{
@@ -126,6 +129,7 @@ impl Server {
 
     async fn run(&self, data: ServerData) -> Result<()> {
         let shutdown = CancellationToken::new();
+        let mut connections: Vec<JoinHandle<_>> = vec![];
         loop {
             let (conn, peer) = tokio::select!(
                 _ = data.cancel.cancelled() => break,
@@ -139,14 +143,21 @@ impl Server {
 
             let service =
                 UampService::new(self.rt.andle(), data.clone(), peer);
-            self.rt.spawn(cancellable_connection(
+            let conn = self.rt.spawn(cancellable_connection(
                 service,
                 conn,
                 shutdown.clone(),
             ));
+
+            connections.retain(|c| !c.is_finished());
+            connections.push(conn);
         }
 
         shutdown.cancel();
+
+        for c in connections {
+            log_err("Failed to wait for connection to end", c.await);
+        }
 
         Ok(())
     }

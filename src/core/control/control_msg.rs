@@ -123,8 +123,8 @@ impl UampApp {
                 )));
             }
             ControlMsg::Close => {
-                let r = self.save_all(true, ctrl).map(|_| vec![]);
                 self.client_update(SubMsg::Quitting);
+                let r = self.save_all(true, ctrl).map(|_| vec![]);
                 self.shutdown_server();
                 if self.jobs.any_no_close() {
                     self.pending_close = true;

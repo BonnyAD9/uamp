@@ -35,6 +35,7 @@ contains albums and artists and song now has nullable fields and `artists` and
   and title.
 - Fix potential issues when current or prefetched song was removed from
   library.
+- Properly wait for graceful shutdown of connections when closing uamp.
 
 ## v0.6.8
 ### New features
