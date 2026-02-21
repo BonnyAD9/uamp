@@ -28,6 +28,8 @@ contains albums and artists and song now has nullable fields and `artists` and
 - Unify sse `queue` and `play-next` into `insert-into-playlist`.
 - Add new sse `remove-from-playlist`.
 - The post endpoint for `/api/ctrl` now also supports array of messages.
+- Improve logging. Some of what was previously error is now warning. Most
+  log messages that come from uamp will now also show source location.
 
 ### Fixes
 - Fix panic in mix after into empty playlist.
