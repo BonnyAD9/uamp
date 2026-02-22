@@ -5,7 +5,7 @@
         stroke-linecap="round" stroke-width="2" fill="#FFF"
         d="M 3 2 L 3 2 L 3 8 L 3 8 L 3 2">
         <animate
-            id="from_pause_to_play_p1"
+            id="from_pause_to_play"
             attributeName="d"
             dur="200ms"
             begin="indefinite"
@@ -14,7 +14,7 @@
             to="M 3 2 L 5 3.5 L 5 6.5 L 3 8 L 3 2"
         />
         <animate
-            id="from_play_to_pause_p1"
+            id="from_play_to_pause"
             attributeName="d"
             dur="200ms"
             fill="freeze"
@@ -28,20 +28,18 @@
         stroke-linecap="round" stroke-width="2" fill="#FFF"
         d="M 7 2 L 7 2 L 7 8 L 7 8 L 7 2">
         <animate
-            id="from_pause_to_play_p2"
             attributeName="d"
             dur="200ms"
             fill="freeze"
-            begin="indefinite"
+            begin="from_pause_to_play.begin"
             from="M 7 2 L 7 2 L 7 8 L 7 8 L 7 2"
             to="M 6 4.25 L 7 5 L 7 5 L 6 5.78 L 6 4.25"
         />
         <animate
-            id="from_play_to_pause_p2"
             attributeName="d"
             dur="200ms"
             fill="freeze"
-            begin="indefinite"
+            begin="from_play_to_pause.begin"
             from="M 6 4.25 L 7 5 L 7 5 L 6 5.78 L 6 4.25"
             to="M 7 2 L 7 2 L 7 8 L 7 8 L 7 2"
         />

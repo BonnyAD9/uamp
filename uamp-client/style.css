@@ -736,7 +736,7 @@ section.bar .control {
     cursor: pointer;
 }
 
-section.bar .controls img {
+section.bar .controls svg {
     width: 20px;
     height: 20px;
 }

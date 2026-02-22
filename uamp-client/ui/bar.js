@@ -1,4 +1,34 @@
 import Album from "../library/album.js";
+import Api from "../api.js";
+
+const controlsConfig = [
+    { id: "prev", icon: "previous.svg", action: "ps" },
+    { id: "play", icon: "play_pause.svg", action: "pp" },
+    { id: "next", icon: "next.svg", action: "ns" },
+];
+
+const controls = document.querySelector("section.bar .controls");
+function renderControls(config) {
+    controls.innerHTML = "";
+    config.forEach((ctrl) => {
+        const btn = document.createElement("svg-icon");
+        btn.setAttribute("src", `assets/svg/${ctrl.icon}`);
+        btn.classList.add("control");
+
+        if (ctrl.id) btn.id = ctrl.id;
+        btn.dataset.action = ctrl.action;
+
+        controls.appendChild(btn);
+    });
+}
+
+renderControls(controlsConfig);
+controls.addEventListener("click", (e) => {
+    const btn = e.target.closest(".control");
+    const action = btn?.dataset?.action;
+
+    if (action) Api.ctrl(action);
+});
 
 const playBtn = document.getElementById("play");
 /**
@@ -11,11 +41,9 @@ export async function updatePlayBtn(playing) {
     }
 
     if (playing) {
-        playBtn.triggerAnimation("from_play_to_pause_p1");
-        playBtn.triggerAnimation("from_play_to_pause_p2");
+        playBtn.triggerAnimation("from_play_to_pause");
     } else {
-        playBtn.triggerAnimation("from_pause_to_play_p1");
-        playBtn.triggerAnimation("from_pause_to_play_p2");
+        playBtn.triggerAnimation("from_pause_to_play");
     }
 }
 
