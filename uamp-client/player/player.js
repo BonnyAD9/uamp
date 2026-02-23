@@ -121,6 +121,14 @@ export default class Player {
         return this.playlist_stack[this.playlist_stack.length - id] || null;
     }
 
+    removePlaylist(id) {
+        if (id === 0) {
+            this.playlist = this.player.playlist_stack.pop();
+        } else {
+            this.playlist_stack.splice(this.playlist_stack.length - id, 1);
+        }
+    }
+
     /** Highlights currently playing song */
     highlightPlaying() {
         const id = this.getPlayingId();

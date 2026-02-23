@@ -28,7 +28,7 @@ import {
     displayArtistSongsSort,
     displayLibrarySort,
     displayPlaylistStack,
-    popPlaylist,
+    removePlaylist,
     pushPlaylist,
     reorderPlaylists,
     showPlaylist,
@@ -181,7 +181,7 @@ export default class App {
             prev = this.player.playlist;
             this.player.playlist = this.player.playlist_stack.pop();
 
-            popPlaylist();
+            removePlaylist();
             this.playlistTab -= 1;
         }
 
@@ -190,6 +190,26 @@ export default class App {
         updateCurrent(this.player.getPlaying());
         this.displayPlaylist();
         return prev;
+    }
+
+    /**
+     * Removes given playlist and updates the UI.
+     * @param {number} id - ID of the playlist to be removed
+     */
+    removePlaylist(id) {
+        this.player.removePlaylist(id);
+        removePlaylist(id);
+
+        const prev = this.playlistTab;
+        if (this.playlistTab >= id)
+            this.playlistTab = Math.max(0, this.playlistTab - 1);
+
+        showPlaylist(this.playlistTab);
+
+        if (prev !== this.playlistTab) {
+            updateCurrent(this.player.getPlaying());
+            this.displayPlaylist();
+        }
     }
 
     /**

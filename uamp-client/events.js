@@ -103,6 +103,7 @@ const SSE_HANDLERS = {
     },
     "client-changed": () => window.location.reload(),
     "config-changed": async (data) => app.config.init(data),
+    "remove-playlist": (id) => app.removePlaylist(id),
 };
 
 /** @type {EventSource|null} */

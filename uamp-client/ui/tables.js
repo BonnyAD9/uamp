@@ -81,10 +81,10 @@ function pushPlaylistTab() {
 }
 
 /** Pops playlist from the playlist stack and removes tab */
-export function popPlaylist() {
+export function removePlaylist(id = 0) {
     const tables = playlists.querySelectorAll(".playlist-stack");
-    if (tables.length < 2) return;
-    tables[0].remove();
+    if (tables.length < 2 && tables.length <= id) return;
+    tables[id].remove();
 
     popPlaylistTab();
 }
@@ -199,6 +199,7 @@ export function displayPlaylistStack(n) {
             (e) => app.playlistClick(e),
             ["playlist-stack"],
         );
+        cloned.classList.add("with-playlist-context");
         playlists.appendChild(cloned);
         pushPlaylistTab();
     }
