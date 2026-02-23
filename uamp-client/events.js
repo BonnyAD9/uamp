@@ -13,6 +13,12 @@ window.addEventListener("load", connectSSE);
 /** Object containing implemented SSE event handlings. */
 const SSE_HANDLERS = {
     "set-all": async (data) => {
+        data.sse.forEach((event) => {
+            if (!SSE_HANDLERS[event]) {
+                eventSource.addEventListener(event, (e) => connectSSE());
+            }
+        });
+
         await app.init(data);
         setTimeout(() => {
             app.updateAll();
