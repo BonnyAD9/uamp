@@ -207,15 +207,14 @@ export function displayPlaylistStack(n) {
 
 /** Spawns all the songs tables */
 export function spawnTables() {
-    const artTable = getTable(
-        (e) => app.artistSongClick(e),
-        (key) => app.sortArtistSongs(key),
-    );
-    artTable.classList.add("with-song-context");
-    document
-        .querySelector("#artist-detail .screen-wrapper")
-        .appendChild(artTable);
-
+    // const artTable = getTable(
+    //     (e) => app.artistSongClick(e),
+    //     (key) => app.sortArtistSongs(key),
+    // );
+    // artTable.classList.add("with-song-context");
+    // document
+    //     .querySelector("#artist-detail .screen-wrapper")
+    //     .appendChild(artTable);
     // const table = getTable(
     //     (e) => app.albumSongClick(e),
     //     (key) => app.sortAlbumSongs(key),

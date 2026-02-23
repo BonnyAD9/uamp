@@ -460,14 +460,14 @@ table.songs td .albums-preview img {
 }
 
 album-screen .info,
-section#artist-detail .info {
+artist-screen .info {
     display: flex;
     gap: 10px;
     height: 250px;
     padding-top: 5px;
 }
 
-section#artist-detail .info {
+artist-screen .info {
     height: auto;
 }
 
@@ -505,7 +505,7 @@ album-screen .info img {
 }
 
 album-screen .info .details,
-section#artist-detail .info .details {
+artist-screen .info .details {
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -513,13 +513,13 @@ section#artist-detail .info .details {
 }
 
 album-screen .info .details h2,
-section#artist-detail .info .details h2 {
+artist-screen .info .details h2 {
     font-size: 35px;
     font-weight: normal;
 }
 
 album-screen .info .details p,
-section#artist-detail .info .details p {
+artist-screen .info .details p {
     color: var(--fg-sec);
     font-size: 15px;
     padding-left: 3px;
@@ -536,7 +536,7 @@ album-screen .songs {
     margin-top: 5px;
 }
 
-section#artist-detail h3 {
+artist-screen h3 {
     margin-top: 10px;
     margin-bottom: 5px;
     font-weight: normal;

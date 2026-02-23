@@ -16,7 +16,7 @@ export function displayAlbums(albums) {
     displayAlbumsSort(albums.key, albums.ascending);
 }
 
-function genericDisplayAlbums(albumsList, albums) {
+export function genericDisplayAlbums(albumsList, albums) {
     albumsList.innerHTML = "";
     albums.forEach((album) => {
         const card = album.getCard();

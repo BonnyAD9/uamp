@@ -377,18 +377,16 @@ export default class App {
         const row = e.target.closest("tr");
         if (!row) return;
 
-        const artist = this.library.allArtists[row.dataset.index];
-
         const album = e.target.closest(".albums-preview img");
         if (!album) {
-            this.artist = artist;
-            displayArtist(this.artist, this.player.getPlayingId());
+            const screen = document.querySelector("artist-screen");
+            screen?.onNavigate({ id: row.dataset.index });
             showScreen("artist-detail");
             return;
         }
 
-        this.album = this.library.allAlbums[album.dataset.index];
-        displayAlbum(this.album, this.player.getPlayingId());
+        const albumScreen = document.querySelector("album-screen");
+        albumScreen?.onNavigate({ id: album.dataset.index });
         showScreen("album-detail");
     }
 

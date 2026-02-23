@@ -70,24 +70,7 @@
             </div>
         </section>
 
-        <section id="artist-detail" class="screen">
-            <div class="screen-wrapper">
-                <div class="info">
-                    <div class="details">
-                        <h2 class="name"></h2>
-                        <p class="other"></p>
-                    </div>
-                </div>
-
-                <h3>Albums</h3>
-                <div
-                    class="list with-album-context"
-                    onclick="app.albumArtistClick(event)"
-                ></div>
-
-                <h3>Songs</h3>
-            </div>
-        </section>
+        <artist-screen id="artist-detail"></artist-screen>
 
         <section id="playlist" class="screen">
             <screen-header title="Playlist">
@@ -218,6 +201,25 @@
                     <span class="other"></span>
                 </div>
             </div>
+        </div>
+    </template>
+
+    <template id="artist-screen-template">
+        <div class="screen-wrapper">
+            <div class="info">
+                <div class="details">
+                    <h2 class="name"></h2>
+                    <p class="other"></p>
+                </div>
+            </div>
+
+            <h3>Albums</h3>
+            <div
+                class="list with-album-context"
+                onclick="app.albumArtistClick(event)"
+            ></div>
+
+            <h3>Songs</h3>
         </div>
     </template>
 
