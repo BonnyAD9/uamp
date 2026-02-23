@@ -1,5 +1,6 @@
 import App from "./app.js";
 import "./ui/components/define.js";
+import "./ui/screens/define.js";
 import "./ui/context-menu.js";
 import { spawnScreens } from "./ui/pages.js";
 import { removePlaylistRow } from "./ui/tables.js";

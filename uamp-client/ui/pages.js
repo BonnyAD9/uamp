@@ -102,7 +102,7 @@ export function displayArtistSongs(artist, id) {
  * @param {Song[]} songs - songs to be displayed
  * @param {boolean} icons - whether to display icons
  */
-function displaySongs(table, songs, icons = true, id = null) {
+export function displaySongs(table, songs, icons = true, id = null) {
     const body = table.querySelector("tbody");
     body.innerHTML = "";
 

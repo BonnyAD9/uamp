@@ -50,20 +50,7 @@
             </div>
         </section>
 
-        <section id="album-detail" class="screen">
-            <!-- <img class="backdrop" src="assets/svg/img_placeholder.svg"
-                alt="album cover" /> -->
-            <div class="screen-wrapper album-detail-wrapper">
-                <div class="info">
-                    <img src="assets/svg/img_placeholder.svg" alt="album cover" />
-                    <div class="details">
-                        <h2 class="name"></h2>
-                        <p class="artist"></p>
-                        <span class="other"></span>
-                    </div>
-                </div>
-            </div>
-        </section>
+        <album-screen id="album-detail"></album-screen>
 
         <section id="artists" class="screen">
             <screen-header
@@ -219,6 +206,19 @@
         </div>
 
         <img class="backdrop" src="assets/svg/img_placeholder.svg" />
+    </template>
+
+    <template id="album-screen-template">
+        <div class="screen-wrapper album-detail-wrapper">
+            <div class="info">
+                <img src="assets/svg/img_placeholder.svg" alt="album cover" />
+                <div class="details">
+                    <h2 class="name"></h2>
+                    <p class="artist"></p>
+                    <span class="other"></span>
+                </div>
+            </div>
+        </div>
     </template>
 
     <template id="songs-template">

@@ -103,7 +103,7 @@ section.menu nav .spacer {
     flex-grow: 1;
 }
 
-section.screen {
+.screen {
     display: none;
     width: 100%;
     height: 100vh;
@@ -113,43 +113,43 @@ section.screen {
 }
 
 @-moz-document url-prefix() {
-    section.screen,
+    .screen,
     player-bar.bar .playlist,
-    section#album-detail .album-detail-wrapper {
+    album-screen .album-detail-wrapper {
         scrollbar-width: thin;
         scrollbar-color: var(--fg-sec) transparent;
     }
 }
 
-section#album-detail .album-detail-wrapper::-webkit-scrollbar,
+album-screen .album-detail-wrapper::-webkit-scrollbar,
 player-bar.bar .playlist::-webkit-scrollbar,
-section.screen::-webkit-scrollbar {
+.screen::-webkit-scrollbar {
     width: 4px;
 }
 
-section.screen::-webkit-scrollbar-track {
+.screen::-webkit-scrollbar-track {
     margin-bottom: 70px;
 }
 
-section#album-detail .album-detail-wrapper::-webkit-scrollbar-thumb,
+album-screen .album-detail-wrapper::-webkit-scrollbar-thumb,
 player-bar.bar .playlist::-webkit-scrollbar-thumb,
-section.screen::-webkit-scrollbar-thumb {
+.screen::-webkit-scrollbar-thumb {
     background-color: var(--fg-sec);
     transition: 0.3s ease;
     border-radius: 2px;
 }
 
-section#album-detail .album-detail-wrapper::-webkit-scrollbar-thumb:hover,
+album-screen .album-detail-wrapper::-webkit-scrollbar-thumb:hover,
 player-bar.bar .playlist::-webkit-scrollbar-thumb:hover,
-section.screen::-webkit-scrollbar-thumb:hover {
+.screen::-webkit-scrollbar-thumb:hover {
     background-color: var(--fg-sec2);
 }
 
-section.screen.active {
+.screen.active {
     display: block;
 }
 
-section.screen .header {
+.screen .header {
     padding: 3px 5px;
     background-color: var(--bg-trans);
     backdrop-filter: blur(5px);
@@ -158,7 +158,7 @@ section.screen .header {
     z-index: 10;
 }
 
-section.screen .header .header-row {
+.screen .header .header-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -167,25 +167,25 @@ section.screen .header .header-row {
     gap: 5px;
 }
 
-section.screen .header .header-row .filler {
+.screen .header .header-row .filler {
     flex-grow: 1;
     overflow: hidden;
 }
 
-section.screen .header .form-input {
+.screen .header .form-input {
     font-size: 15px;
 }
 
-section.screen h1 {
+.screen h1 {
     font-size: 30px;
     color: var(--fg2);
 }
 
-section.screen .screen-wrapper {
+.screen .screen-wrapper {
     padding: 0px 5px 70px 5px;
 }
 
-section.screen#albums .screen-wrapper {
+.screen#albums .screen-wrapper {
     padding-top: 5px;
 }
 
@@ -459,7 +459,7 @@ table.songs td .albums-preview img {
     max-width: 100%;
 }
 
-section#album-detail .info,
+album-screen .info,
 section#artist-detail .info {
     display: flex;
     gap: 10px;
@@ -471,11 +471,11 @@ section#artist-detail .info {
     height: auto;
 }
 
-section#album-detail {
+album-screen {
     overflow-y: hidden;
 }
 
-section#album-detail .album-detail-wrapper {
+album-screen .album-detail-wrapper {
     width: 100%;
     height: 100%;
     box-sizing: border-box;
@@ -485,7 +485,7 @@ section#album-detail .album-detail-wrapper {
     flex-direction: column;
 }
 
-section#album-detail .backdrop {
+album-screen .backdrop {
     position: absolute;
     top: 0;
     left: 0;
@@ -498,13 +498,13 @@ section#album-detail .backdrop {
     opacity: 0.4;
 }
 
-section#album-detail .info img {
+album-screen .info img {
     max-height: 100%;
     object-fit: contain;
     border-radius: 5px;
 }
 
-section#album-detail .info .details,
+album-screen .info .details,
 section#artist-detail .info .details {
     display: flex;
     flex-direction: column;
@@ -512,27 +512,27 @@ section#artist-detail .info .details {
     justify-content: center;
 }
 
-section#album-detail .info .details h2,
+album-screen .info .details h2,
 section#artist-detail .info .details h2 {
     font-size: 35px;
     font-weight: normal;
 }
 
-section#album-detail .info .details p,
+album-screen .info .details p,
 section#artist-detail .info .details p {
     color: var(--fg-sec);
     font-size: 15px;
     padding-left: 3px;
 }
 
-section#album-detail .info .details span {
+album-screen .info .details span {
     color: var(--fg-sec);
     font-size: 11px;
     padding-left: 3px;
     display: block;
 }
 
-section#album-detail .songs {
+album-screen .songs {
     margin-top: 5px;
 }
 
@@ -1224,8 +1224,8 @@ input:checked + .slider:before {
     display: block;
 }
 
-section.screen#playlist,
-section.screen#settings {
+.screen#playlist,
+.screen#settings {
     padding-left: 0;
     padding-right: 0;
 }
@@ -1237,7 +1237,7 @@ section.screen#settings {
     display: block;
 }
 
-section.screen#playlist .songs thead {
+.screen#playlist .songs thead {
     top: 30px;
 }
 

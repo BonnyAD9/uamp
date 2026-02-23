@@ -361,15 +361,15 @@ export default class App {
         Api.ctrl(`pj=${item.dataset.index}`);
     }
 
-    albumClick = (e) => this.genericAlbumClick(e, this.library.albums.get());
-    albumArtistClick = (e) => this.genericAlbumClick(e, this.artist.albums);
+    albumClick = (e) => this.genericAlbumClick(e);
+    albumArtistClick = (e) => this.genericAlbumClick(e);
 
-    genericAlbumClick(e, albums) {
+    genericAlbumClick(e) {
         const card = e.target.closest(".card");
         if (!card) return;
 
-        this.album = this.library.allAlbums[card.dataset.index];
-        displayAlbum(this.album, this.player.getPlayingId());
+        const albumScreen = document.querySelector("album-screen");
+        albumScreen?.onNavigate({ id: card.dataset.index });
         showScreen("album-detail");
     }
 
@@ -408,7 +408,6 @@ export default class App {
 }
 
 const navs = document.querySelectorAll("nav p");
-const screens = document.querySelectorAll(".screen");
 
 navs.forEach((item) => {
     item.addEventListener("click", () => {
@@ -424,7 +423,9 @@ navs.forEach((item) => {
 });
 
 function showScreen(target, pushHistory = true) {
-    screens.forEach((s) => s.classList.toggle("active", s.id === target));
+    document
+        .querySelectorAll(".screen")
+        .forEach((s) => s.classList.toggle("active", s.id === target));
     if (pushHistory) history.pushState({ page: target }, "");
 }
 
