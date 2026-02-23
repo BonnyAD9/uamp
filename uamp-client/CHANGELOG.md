@@ -1,6 +1,13 @@
 # CHANGELOG
 
+## Features
+
 - Add progress bar dragging
-- Add song context menu
+- Add context menus (song, playlist, album, artist)
+- Add keyboard shortcuts
+- Tweak design
+
+## Fixes
+
 - Fix volume overwrite on startup
 - Fix album hover effect

@@ -1,4 +1,5 @@
 import Api from "../../api.js";
+import { onSongIconLoad } from "../colors.js";
 import Duration from "../../helper/duration.js";
 import Album from "../../library/album.js";
 
@@ -173,6 +174,8 @@ export default class PlayerBar extends HTMLElement {
 
     /** Adds all required bar element listeners */
     #setupListeners() {
+        this.songIcon.addEventListener("load", onSongIconLoad);
+
         this.controls.addEventListener("click", (e) => {
             const btn = e.target.closest(".control");
             if (btn?.dataset?.action) Api.ctrl(btn.dataset.action);

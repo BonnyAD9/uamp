@@ -1,6 +1,6 @@
-import { getCookie } from "./settings.js";
+import { getCookie } from "../settings.js";
 
-const songIcon = document.querySelector(".bar .info .info-pic img");
+let songIcon = null;
 
 function rgbToHsl(r, g, b) {
     r /= 255;
@@ -69,6 +69,15 @@ function rgbToRgbaCss(rgb, alpha = 1) {
 }
 
 const colorThief = new ColorThief();
+
+export function onSongIconLoad() {
+    songIcon = document.querySelector(".bar .info .info-pic img");
+    if ((getCookie("dynamicColor") ?? "true") === "true") {
+        setDynamicColors();
+    } else {
+        resetColors();
+    }
+}
 
 export function setupDynamicColors(dynamic) {
     const songIcon = document.querySelector(".bar .info .info-pic img");

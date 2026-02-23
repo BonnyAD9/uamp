@@ -1,3 +1,4 @@
+import Api from "./api.js";
 import Duration from "./helper/duration.js";
 import Timestamp from "./helper/timestamp.js";
 import Album from "./library/album.js";
@@ -27,8 +28,6 @@ import {
 } from "./ui/tables.js";
 import VirtualTable from "./ui/virtual-table.js";
 
-const slider = document.querySelector(".bar #progressBar");
-
 export default class App {
     constructor() {
         /** @type {Library} */
@@ -39,10 +38,6 @@ export default class App {
         this.position = null;
         /** @type {Config} */
         this.config = Config.empty();
-        // this.config.render();
-
-        this.lastUpdate = performance.now();
-        this.rafId = null;
 
         this.playerBar = document.querySelector("player-bar");
 
@@ -334,7 +329,7 @@ export default class App {
         const row = e.target.closest("tr");
         if (!row) return;
 
-        apiPushPlaylist(songs, row.dataset.index);
+        Api.pushPlaylist(songs, row.dataset.index);
     }
 
     genericSongClick(e, query, sort = "") {
@@ -343,7 +338,7 @@ export default class App {
 
         const encQuery = encodeURIComponent(query);
         const sortQuery = sort === "" ? "" : `&sort=${sort}`;
-        apiCtrl(`sp=${encQuery}${sortQuery}&pj=${row.dataset.index}&pp=play`);
+        Api.ctrl(`sp=${encQuery}${sortQuery}&pj=${row.dataset.index}&pp=play`);
     }
 
     playlistClick(e) {
@@ -357,13 +352,13 @@ export default class App {
             cmd = `rps=${this.playlistTab}&`;
         }
 
-        apiCtrl(`${cmd}pj=${row.dataset.index}&pp=play`);
+        Api.ctrl(`${cmd}pj=${row.dataset.index}&pp=play`);
     }
 
     barPlaylistClick(e) {
         const item = e.target.closest(".item");
         if (!item) return;
-        apiCtrl(`pj=${item.dataset.index}`);
+        Api.ctrl(`pj=${item.dataset.index}`);
     }
 
     albumClick = (e) => this.genericAlbumClick(e, this.library.albums.get());
@@ -441,39 +436,3 @@ window.addEventListener("popstate", (e) => {
         p.classList.toggle("active", p.dataset.screen === target),
     );
 });
-
-/**
- * Sends an API request to push playlist
- * @param {Song[]} songs - songs to be pushed to the playlist
- * @param {number} pos - playing song in the playlist
- */
-async function apiPushPlaylist(songs, pos) {
-    const data = {
-        songs: songs.map((s) => s.id),
-        position: Number(pos),
-        play: true,
-    };
-    return apiCtrlData({ SetPlaylist: data });
-}
-
-async function apiCtrlData(data) {
-    return fetch("/api/ctrl", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-    });
-}
-
-async function apiCtrl(query) {
-    return fetch(`/api/ctrl?${query}`)
-        .then((res) => {
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-            return res.text();
-        })
-        .catch((error) => {
-            console.error("Fetch error:", error);
-        });
-}
-window.apiCtrl = apiCtrl;

@@ -82,6 +82,8 @@ export default class Api {
     }
 }
 
+window.apiCtrl = Api.ctrl;
+
 function insertIntoPlaylist(songs, pos, playlist) {
     return {
         InsertIntoPlaylist: {

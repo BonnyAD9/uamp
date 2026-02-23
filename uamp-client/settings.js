@@ -1,4 +1,4 @@
-import { applyThemeColor, setupDynamicColors } from "./colors.js";
+import { applyThemeColor, setupDynamicColors } from "./ui/colors.js";
 import HotkeyManager, { defaultHotkeys } from "./hotkeys.js";
 
 const settingsTabs = document.querySelector("#settings .tabs .tabs-wrapper");
