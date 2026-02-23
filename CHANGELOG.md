@@ -41,6 +41,7 @@ contains albums and artists and song now has nullable fields and `artists` and
   log messages that come from uamp will now also show source location.
 - Add POST api to check control message at `/api/check_ctrl`.
 - Add new sse `remove-playlist`.
+- Uamp now sends all sse names in `set-all`.
 
 ### Fixes
 - Fix panic in mix after into empty playlist.

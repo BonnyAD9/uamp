@@ -2,7 +2,7 @@ use std::mem;
 
 use proc_macro2::{Span, TokenStream, TokenTree};
 use syn::{
-    Attribute, Data, Field, Fields, Ident, Meta, Path, Token,
+    Attribute, Data, Field, Fields, Ident, Meta, Path, Token, Variant,
     parse::ParseStream, punctuated::Punctuated, spanned::Spanned,
 };
 
@@ -27,6 +27,21 @@ pub fn for_each_named_field(
         };
 
         f(ident, field)?;
+    }
+
+    Ok(())
+}
+
+pub fn for_each_variant(
+    data: Data,
+    mut f: impl FnMut(Variant) -> Result<()>,
+) -> Result<()> {
+    let Data::Enum(data) = data else {
+        return Error::msg("Expected enum.").err();
+    };
+
+    for v in data.variants {
+        f(v)?;
     }
 
     Ok(())

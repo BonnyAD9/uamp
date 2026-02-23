@@ -3,6 +3,7 @@ mod helpers;
 mod json_value_update;
 mod partial_clone;
 mod track_change;
+mod variant_array;
 
 pub(crate) use self::{err::*, helpers::*};
 use proc_macro::TokenStream;
@@ -25,6 +26,11 @@ pub fn derive_json_value_update(item: TokenStream) -> TokenStream {
 #[proc_macro_derive(PartialClone, attributes(partial_clone, no_clone))]
 pub fn derive_partial_clone(item: TokenStream) -> TokenStream {
     extract_stream(partial_clone::derive_partial_clone_impl(item.into()))
+}
+
+#[proc_macro_derive(VariantArray, attributes(variant_array, list_name))]
+pub fn derive_variant_array(item: TokenStream) -> TokenStream {
+    extract_stream(variant_array::variant_array(item.into()))
 }
 
 fn extract_stream(s: Result<proc_macro2::TokenStream>) -> TokenStream {
