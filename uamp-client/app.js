@@ -8,14 +8,6 @@ import Player from "./player/player.js";
 import Playlist from "./player/playlist.js";
 import Config from "./settings.js";
 import {
-    toggleBar,
-    updateCurrent,
-    updatePlayBtn,
-    updatePlaylistMask,
-    updateTimestamp,
-    updateVolume,
-} from "./ui/bar.js";
-import {
     displayAlbum,
     displayAlbums,
     displayAlbumSongs,
@@ -51,6 +43,8 @@ export default class App {
 
         this.lastUpdate = performance.now();
         this.rafId = null;
+
+        this.playerBar = document.querySelector("player-bar");
 
         this.searchTimeout = null;
 
@@ -91,6 +85,7 @@ export default class App {
         this.player = new Player(data.player, this.library);
         /** @type {Timestamp} */
         this.position = data.position && Timestamp.from(data.position);
+        this.playerBar.updateTimestamp(this.position);
 
         this.playlistTab = 0;
 
@@ -110,7 +105,6 @@ export default class App {
      */
     setPlayback(playback) {
         this.player.setPlayback(playback);
-        this.handleSongProgress();
     }
 
     /**
@@ -129,6 +123,7 @@ export default class App {
      */
     setTimestamp(timestamp) {
         if (timestamp === null) {
+            this.playerBar.updateTimestamp(null);
             this.position = null;
             return;
         }
@@ -136,7 +131,7 @@ export default class App {
         this.position = Timestamp.from(timestamp);
         const song = this.player.getPlaying();
         if (song) song.length = Duration.from(timestamp.total);
-        this.displayProgress(0);
+        this.playerBar.updateTimestamp(this.position);
     }
 
     /**
@@ -150,7 +145,7 @@ export default class App {
             this.createBarSongs();
         }
         this.player.highlightPlaying();
-        updateCurrent(this.player.getPlaying());
+        this.playerBar.updateCurrent(this.player.getPlaying());
     }
 
     /**
@@ -174,20 +169,11 @@ export default class App {
      * @returns previous active playlist if it exists, otherwise null.
      */
     popPlaylist(cnt = 1) {
-        if (cnt === 0) cnt = this.player.playlist_stack.length;
+        const [prev, removed] = this.player.popPlaylist(cnt);
+        this.playlistTab = Math.max(0, this.playlistTab - removed);
 
-        let prev = null;
-        while (cnt-- > 0 && this.player.playlist_stack.length > 0) {
-            prev = this.player.playlist;
-            this.player.playlist = this.player.playlist_stack.pop();
-
-            removePlaylist();
-            this.playlistTab -= 1;
-        }
-
-        this.playlistTab = Math.max(0, this.playlistTab);
         showPlaylist(this.playlistTab);
-        updateCurrent(this.player.getPlaying());
+        this.playerBar.updateCurrent(this.player.getPlaying());
         this.displayPlaylist();
         return prev;
     }
@@ -207,7 +193,7 @@ export default class App {
         showPlaylist(this.playlistTab);
 
         if (prev !== this.playlistTab) {
-            updateCurrent(this.player.getPlaying());
+            this.playerBar.updateCurrent(this.player.getPlaying());
             this.displayPlaylist();
         }
     }
@@ -234,7 +220,7 @@ export default class App {
             .map((i) => all[len - i]);
 
         showPlaylist(this.playlistTab);
-        updateCurrent(this.player.getPlaying());
+        this.playerBar.updateCurrent(this.player.getPlaying());
         this.player.highlightPlaying();
     }
 
@@ -268,7 +254,7 @@ export default class App {
     displayPlaylist = () => this.playlistTable.render();
     createBarSongs = () => {
         this.barPlaylistTable.render();
-        updatePlaylistMask();
+        this.playerBar.updatePlaylistMask();
     };
 
     displayAlbums = () => displayAlbums(this.library.albums);
@@ -328,70 +314,12 @@ export default class App {
     }
 
     updateAll() {
-        this.displayProgress(0);
-        this.handleSongProgress();
+        this.playerBar.updateTimestamp(null);
         this.displayPlaylistStack();
 
-        updateCurrent(this.player.getPlaying());
-        updatePlayBtn(this.player.isPlaying());
-        updateVolume(this.player.volume, this.player.mute);
-    }
-
-    /** Handles song progress bar updates */
-    handleSongProgress() {
-        if (this.player.isPlaying()) {
-            this.lastUpdate = performance.now();
-            this.stopProgress();
-            this.rafId = requestAnimationFrame(() => this.updateProgressBar());
-        } else {
-            this.stopProgress();
-        }
-    }
-
-    /** Stops the song progres bar updates */
-    stopProgress() {
-        if (this.rafId !== null) {
-            cancelAnimationFrame(this.rafId);
-            this.rafId = null;
-        }
-    }
-
-    /** Updates progress bar based on delta time */
-    updateProgressBar() {
-        if (!this.player.isPlaying()) return;
-
-        const now = performance.now();
-        const delta = (now - this.lastUpdate) / 1000;
-        this.lastUpdate = now;
-
-        this.displayProgress(delta);
-        this.rafId = requestAnimationFrame(() => this.updateProgressBar());
-    }
-
-    /**
-     * Updates progress bar
-     * @param {number} delta - optional delta time
-     */
-    displayProgress(delta = 0) {
-        let current = 0 + delta;
-        if (this.position !== null)
-            current = this.position.current.toSecs() + delta;
-
-        const playing = this.player.getPlaying();
-        if (playing === null) return;
-
-        const total = playing.length?.toSecs() ?? 0;
-        if (current > total) current = total;
-
-        slider.value = (current / total) * 100;
-
-        if (this.position !== null) {
-            this.position.current.secs = Math.floor(current);
-            this.position.current.nanos = Math.floor(
-                (current % 1) * 1_000_000_000,
-            );
-            updateTimestamp(this.position.current);
-        }
+        this.playerBar.updateCurrent(this.player.getPlaying());
+        this.playerBar.setPlaying(this.player.isPlaying());
+        this.playerBar.updateVolume(this.player.volume, this.player.mute);
     }
 
     displayPlaylistStack() {
@@ -472,14 +400,14 @@ export default class App {
     artistBarClick(e) {
         this.artist = this.library.getArtistByName(e.target.textContent);
         displayArtist(this.artist, this.player.getPlayingId());
-        toggleBar();
+        this.playerBar.toggleBar();
         showScreen("artist-detail");
     }
 
     albumBarClick(artist, album) {
         this.album = this.library.getAlbumByKey(artist, album);
         displayAlbum(this.album, this.player.getPlayingId());
-        toggleBar();
+        this.playerBar.toggleBar();
         showScreen("album-detail");
     }
 }
@@ -512,17 +440,6 @@ window.addEventListener("popstate", (e) => {
     navs.forEach((p) =>
         p.classList.toggle("active", p.dataset.screen === target),
     );
-});
-
-slider.addEventListener("input", () => app.stopProgress());
-slider.addEventListener("change", () => {
-    const percent = slider.value / 100;
-
-    const song = app.player.getPlaying();
-
-    const pos = song.length.fromPercent(percent);
-    apiCtrl(`seek=${pos.format()}`);
-    app.updateProgressBar();
 });
 
 /**

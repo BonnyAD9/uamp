@@ -1,9 +1,9 @@
-import { updateCurrent, updatePlayBtn, updateVolume } from "../ui/bar.js";
 import {
     highlightAlbumSong,
     highlightArtistSong,
     highlightLibrary,
     highlightPlaylist,
+    removePlaylist,
 } from "../ui/tables.js";
 import Playlist from "./playlist.js";
 
@@ -26,6 +26,8 @@ export default class Player {
         this.mute = data.mute;
         /** @type {string} */
         this.state = data.state;
+
+        this.playerBar = document.querySelector("player-bar");
     }
 
     /**
@@ -58,7 +60,7 @@ export default class Player {
 
     /**
      * Gets currently playing song
-     * @returns {?Song} currently playing song if found
+     * @returns {Song|null} currently playing song if found
      */
     getPlaying = () => this.playlist.getPlaying();
 
@@ -80,7 +82,7 @@ export default class Player {
      */
     setPlayback(playback) {
         this.state = playback;
-        updatePlayBtn(this.isPlaying());
+        this.playerBar.setPlaying(this.isPlaying());
     }
 
     /**
@@ -90,7 +92,7 @@ export default class Player {
     setCurrent(id) {
         this.playlist.current = id;
         this.highlightPlaying();
-        updateCurrent(this.getPlaying());
+        this.playerBar.updateCurrent(this.getPlaying());
     }
 
     /**
@@ -99,7 +101,7 @@ export default class Player {
      */
     setVolume(volume) {
         this.volume = volume;
-        updateVolume(volume, this.mute);
+        this.playerBar.updateVolume(volume, this.mute);
     }
 
     /**
@@ -108,7 +110,7 @@ export default class Player {
      */
     setMute(mute) {
         this.mute = mute;
-        updateVolume(this.volume, mute);
+        this.playerBar.updateVolume(this.volume, mute);
     }
 
     /**
@@ -121,6 +123,30 @@ export default class Player {
         return this.playlist_stack[this.playlist_stack.length - id] || null;
     }
 
+    /**
+     * Pops playlists from the stack.
+     * @param {number} cnt - number of playlists to pop, 0 means all
+     * @returns {[Playlist|null, number]} removed playlist and popped count
+     */
+    popPlaylist(cnt = 1) {
+        if (cnt === 0) cnt = this.playlist_stack.length;
+
+        let prev = null;
+        let removed = 0;
+        while (cnt-- > 0 && this.playlist_stack.length > 0) {
+            prev = this.playlist;
+            this.playlist = this.playlist_stack.pop();
+
+            removePlaylist();
+            removed += 1;
+        }
+        return [prev, removed];
+    }
+
+    /**
+     * Removes given playlist from the stack.
+     * @param {number} id - ID of the playlist to be removed
+     */
     removePlaylist(id) {
         if (id === 0) {
             this.playlist = this.player.playlist_stack.pop();

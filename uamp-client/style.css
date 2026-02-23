@@ -114,7 +114,7 @@ section.screen {
 
 @-moz-document url-prefix() {
     section.screen,
-    section.bar .playlist,
+    player-bar.bar .playlist,
     section#album-detail .album-detail-wrapper {
         scrollbar-width: thin;
         scrollbar-color: var(--fg-sec) transparent;
@@ -122,7 +122,7 @@ section.screen {
 }
 
 section#album-detail .album-detail-wrapper::-webkit-scrollbar,
-section.bar .playlist::-webkit-scrollbar,
+player-bar.bar .playlist::-webkit-scrollbar,
 section.screen::-webkit-scrollbar {
     width: 4px;
 }
@@ -132,7 +132,7 @@ section.screen::-webkit-scrollbar-track {
 }
 
 section#album-detail .album-detail-wrapper::-webkit-scrollbar-thumb,
-section.bar .playlist::-webkit-scrollbar-thumb,
+player-bar.bar .playlist::-webkit-scrollbar-thumb,
 section.screen::-webkit-scrollbar-thumb {
     background-color: var(--fg-sec);
     transition: 0.3s ease;
@@ -140,7 +140,7 @@ section.screen::-webkit-scrollbar-thumb {
 }
 
 section#album-detail .album-detail-wrapper::-webkit-scrollbar-thumb:hover,
-section.bar .playlist::-webkit-scrollbar-thumb:hover,
+player-bar.bar .playlist::-webkit-scrollbar-thumb:hover,
 section.screen::-webkit-scrollbar-thumb:hover {
     background-color: var(--fg-sec2);
 }
@@ -543,7 +543,7 @@ section#artist-detail h3 {
     font-size: 20px;
 }
 
-section.bar {
+player-bar.bar {
     position: fixed;
     bottom: 0;
     left: 0;
@@ -557,14 +557,14 @@ section.bar {
     z-index: 20;
 }
 
-section.bar.floating {
+player-bar.bar.floating {
     bottom: 8px;
     left: 8px;
     width: calc(100% - 16px);
     border-radius: 10px;
 }
 
-section.bar.expanded {
+player-bar.bar.expanded {
     bottom: 0;
     left: 0;
     height: 100%;
@@ -578,7 +578,7 @@ section.bar.expanded {
     gap: 20px;
 }
 
-section.bar .back-arrow {
+player-bar.bar .back-arrow {
     display: none;
     position: absolute;
     top: 5px;
@@ -592,11 +592,11 @@ section.bar .back-arrow {
     cursor: pointer;
 }
 
-section.bar.expanded .back-arrow {
+player-bar.bar.expanded .back-arrow {
     display: block;
 }
 
-section.bar > .bar-wrapper {
+player-bar.bar > .bar-wrapper {
     width: 100%;
     height: 100%;
     display: grid;
@@ -606,41 +606,41 @@ section.bar > .bar-wrapper {
     padding: 2px 5px;
 }
 
-section.bar.expanded > .bar-wrapper {
+player-bar.bar.expanded > .bar-wrapper {
     display: flex;
     flex-direction: column;
     overflow: hidden;
     justify-content: center;
 }
 
-section.bar #progressBar {
+player-bar.bar #progressBar {
     width: 100%;
 }
 
-section.bar.expanded #progressBar {
+player-bar.bar.expanded #progressBar {
     flex-shrink: 0;
     max-width: 75%;
     margin-bottom: 10px;
 }
 
-section.bar:not(.expanded) #progressBar {
+player-bar.bar:not(.expanded) #progressBar {
     position: absolute;
     top: -4px;
     left: 0;
 }
 
-section.bar .slider-timestamp {
+player-bar.bar .slider-timestamp {
     width: 75%;
     justify-content: space-between;
     align-items: center;
     display: none;
 }
 
-section.bar.expanded .slider-timestamp {
+player-bar.bar.expanded .slider-timestamp {
     display: flex;
 }
 
-section.bar .info {
+player-bar.bar .info {
     display: flex;
     align-items: center;
     gap: 5px;
@@ -649,7 +649,7 @@ section.bar .info {
     cursor: pointer;
 }
 
-section.bar.expanded .info {
+player-bar.bar.expanded .info {
     flex-direction: column;
     height: auto;
     max-height: calc(100% - 60px);
@@ -658,7 +658,7 @@ section.bar.expanded .info {
     width: 100%;
 }
 
-section.bar .info .info-pic {
+player-bar.bar .info .info-pic {
     padding: 3px;
     padding-top: 7px;
     box-sizing: border-box;
@@ -666,7 +666,7 @@ section.bar .info .info-pic {
     aspect-ratio: 1 / 1;
 }
 
-section.bar.expanded .info .info-pic {
+player-bar.bar.expanded .info .info-pic {
     height: auto;
     min-height: 0;
     flex-grow: 1;
@@ -679,14 +679,14 @@ section.bar.expanded .info .info-pic {
     justify-content: center;
 }
 
-section.bar .info .info-pic img {
+player-bar.bar .info .info-pic img {
     height: 100%;
     width: 100%;
     object-fit: contain;
     border-radius: 5px;
 }
 
-section.bar.expanded .info .info-pic img {
+player-bar.bar.expanded .info .info-pic img {
     height: 100%;
     width: 100%;
     width: auto;
@@ -694,25 +694,25 @@ section.bar.expanded .info .info-pic img {
     display: block;
 }
 
-section.bar .info > .title {
+player-bar.bar .info > .title {
     overflow: hidden;
 }
 
-section.bar.expanded .info > .title {
+player-bar.bar.expanded .info > .title {
     display: flex;
     flex-direction: column;
     align-items: center;
     flex-shrink: 0;
 }
 
-section.bar .info > .title h3 {
+player-bar.bar .info > .title h3 {
     font-size: 15px;
     font-weight: normal;
     color: var(--fg);
 }
 
-section.bar .info > .title h4,
-section.bar .slider-timestamp span {
+player-bar.bar .info > .title h4,
+player-bar.bar .slider-timestamp span {
     font-size: 11px;
     font-weight: normal;
     color: var(--fg2);
@@ -721,34 +721,34 @@ section.bar .slider-timestamp span {
     gap: 5px;
 }
 
-section.bar.expanded .info > .title h4 {
+player-bar.bar.expanded .info > .title h4 {
     padding-left: 0;
     cursor: pointer;
 }
 
-section.bar .controls {
+player-bar.bar .controls {
     display: flex;
     align-items: center;
     gap: 20px;
 }
 
-section.bar .control {
+player-bar.bar .control {
     cursor: pointer;
 }
 
-section.bar .controls svg {
+player-bar.bar .controls svg {
     width: 20px;
     height: 20px;
 }
 
-section.bar .controls #play {
+player-bar.bar .controls #play {
     width: 30px;
     height: 30px;
     padding: 5px 0;
     object-fit: contain;
 }
 
-section.bar .volume {
+player-bar.bar .volume {
     display: flex;
     align-items: center;
     justify-content: right;
@@ -757,28 +757,28 @@ section.bar .volume {
     margin-right: 5px;
 }
 
-section.bar.expanded .volume {
+player-bar.bar.expanded .volume {
     display: none;
 }
 
-section.bar .volume img {
+player-bar.bar .volume img {
     max-width: 18px;
     max-height: 18px;
 }
 
-section.bar .volume p {
+player-bar.bar .volume p {
     font-size: 15px;
     padding-bottom: 2px;
 }
 
-section.bar .volume > .volume-slider {
+player-bar.bar .volume > .volume-slider {
     width: 90px;
     height: 4px;
     background-color: var(--bg-lighter);
     border-radius: 2px;
 }
 
-section.bar .volume input[type="range"] {
+player-bar.bar .volume input[type="range"] {
     width: 90px;
 }
 
@@ -895,7 +895,7 @@ input[type="range"]::-moz-range-thumb {
     cursor: grab;
 }
 
-section.bar .volume input[type="range"]:hover::-moz-range-thumb {
+player-bar.bar .volume input[type="range"]:hover::-moz-range-thumb {
     visibility: visible;
 }
 
@@ -934,7 +934,7 @@ input[type="range"]:active::-moz-range-progress {
     filter: brightness(var(--brightness-down));
 }
 
-section.bar .playlist {
+player-bar.bar .playlist {
     display: none;
     overflow: hidden;
     overflow-y: auto;
@@ -949,11 +949,11 @@ section.bar .playlist {
     mask-size: 100% 100%;
 }
 
-section.bar.expanded .playlist {
+player-bar.bar.expanded .playlist {
     display: block;
 }
 
-section.bar .playlist .songs {
+player-bar.bar .playlist .songs {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -962,7 +962,7 @@ section.bar .playlist .songs {
     margin: 0 auto;
 }
 
-section.bar .backdrop {
+player-bar.bar .backdrop {
     position: absolute;
     top: 0;
     left: 0;
@@ -976,11 +976,11 @@ section.bar .backdrop {
     transform: scale(1.1);
 }
 
-section.bar:not(.expanded) .backdrop {
+player-bar.bar:not(.expanded) .backdrop {
     opacity: 0.6;
 }
 
-section.bar .playlist .item {
+player-bar.bar .playlist .item {
     cursor: pointer;
     height: 32px;
     display: flex;
@@ -991,18 +991,18 @@ section.bar .playlist .item {
     padding: 0 10px;
 }
 
-section.bar .playlist p {
+player-bar.bar .playlist p {
     color: var(--fg-sec);
 }
 
-section.bar .playlist p .title,
-section.bar .playlist p .artist {
+player-bar.bar .playlist p .title,
+player-bar.bar .playlist p .artist {
     color: var(--fg2);
     padding: 0 5px;
 }
 
-section.bar .playlist .active .title,
-section.bar .playlist .active .artist {
+player-bar.bar .playlist .active .title,
+player-bar.bar .playlist .active .artist {
     color: var(--primary);
 }
 
@@ -1367,19 +1367,19 @@ svg-icon {
         max-width: calc(20% - 5px);
     }
 
-    section.bar.expanded #progressBar {
+    player-bar.bar.expanded #progressBar {
         max-width: 100%;
     }
 
-    section.bar.expanded .slider-timestamp {
+    player-bar.bar.expanded .slider-timestamp {
         width: 100%;
     }
 
-    section.bar.expanded .info .info-pic {
+    player-bar.bar.expanded .info .info-pic {
         max-width: 100%;
     }
 
-    section.bar .playlist .songs {
+    player-bar.bar .playlist .songs {
         max-width: 100%;
     }
 }

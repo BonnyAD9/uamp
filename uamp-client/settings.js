@@ -2,7 +2,7 @@ import { applyThemeColor, setupDynamicColors } from "./colors.js";
 import HotkeyManager, { defaultHotkeys } from "./hotkeys.js";
 
 const settingsTabs = document.querySelector("#settings .tabs .tabs-wrapper");
-const bar = document.querySelector("section.bar");
+const bar = document.querySelector("player-bar.bar");
 
 // Setting templates
 const toggleTemplate = document.getElementById("toggle-setting");

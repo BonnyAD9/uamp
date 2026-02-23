@@ -150,16 +150,14 @@
         </section>
     </div>
 
-    <section class="bar floating">
-        <img
-            class="back-arrow"
-            src="assets/svg/point_up.svg"
-            onclick="toggleBar()"
-            alt="back arrow"
-        />
+    <player-bar class="bar floating"></player-bar>
+
+    <template id="bar-template">
+        <svg-icon class="back-arrow" src="point_up.svg" alt="back arrow">
+        </svg-icon>
 
         <div class="bar-wrapper">
-            <div class="info" onclick="toggleBar()">
+            <div class="info">
                 <div class="info-pic">
                     <img
                         src="assets/svg/img_placeholder.svg"
@@ -221,7 +219,7 @@
         </div>
 
         <img class="backdrop" src="assets/svg/img_placeholder.svg" />
-    </section>
+    </template>
 
     <template id="songs-template">
         <table class="songs">

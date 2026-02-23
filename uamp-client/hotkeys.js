@@ -75,6 +75,6 @@ export default class HotkeyManager {
     #escHandle(e) {
         e.target.blur();
         contextMenu.hide();
-        document.querySelector("section.bar").classList.remove("expanded");
+        document.querySelector("player-bar.bar").classList.remove("expanded");
     }
 }

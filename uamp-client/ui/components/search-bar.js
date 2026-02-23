@@ -1,4 +1,4 @@
-class SearchBar extends HTMLElement {
+export default class SearchBar extends HTMLElement {
     constructor() {
         super();
     }
@@ -29,6 +29,3 @@ class SearchBar extends HTMLElement {
         });
     }
 }
-
-if (!customElements.get("search-bar"))
-    customElements.define("search-bar", SearchBar);

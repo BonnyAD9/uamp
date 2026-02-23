@@ -1,9 +1,7 @@
 import App from "./app.js";
+import "./ui/components/define.js";
 import "./colors.js";
 import "./ui/context-menu.js";
-import "./ui/components/search-bar.js";
-import "./ui/components/screen-header.js";
-import "./ui/components/svg-icon.js";
 import { spawnScreens } from "./ui/pages.js";
 import { removePlaylistRow } from "./ui/tables.js";
 

@@ -1,4 +1,4 @@
-class ScreenHeader extends HTMLElement {
+export default class ScreenHeader extends HTMLElement {
     constructor() {
         super();
     }
@@ -26,6 +26,3 @@ class ScreenHeader extends HTMLElement {
         }
     }
 }
-
-if (!customElements.get("screen-header"))
-    customElements.define("screen-header", ScreenHeader);

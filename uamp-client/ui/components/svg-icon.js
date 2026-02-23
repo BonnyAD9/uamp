@@ -1,4 +1,4 @@
-class SvgIcon extends HTMLElement {
+export default class SvgIcon extends HTMLElement {
     constructor() {
         super();
 
@@ -14,7 +14,7 @@ class SvgIcon extends HTMLElement {
             return;
         }
 
-        const svg = await fetch(`/app/${src}`).then((res) => {
+        const svg = await fetch(`/app/assets/svg/${src}`).then((res) => {
             if (!res.ok) return null;
             return res.text();
         });
@@ -41,8 +41,4 @@ class SvgIcon extends HTMLElement {
             anim.beginElement();
         }
     }
-}
-
-if (!customElements.get("svg-icon")) {
-    customElements.define("svg-icon", SvgIcon);
 }

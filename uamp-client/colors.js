@@ -7,8 +7,11 @@ function rgbToHsl(r, g, b) {
     g /= 255;
     b /= 255;
 
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    let h, s, l = (max + min) / 2;
+    const max = Math.max(r, g, b),
+        min = Math.min(r, g, b);
+    let h,
+        s,
+        l = (max + min) / 2;
 
     if (max === min) {
         h = s = 0;
@@ -68,6 +71,7 @@ function rgbToRgbaCss(rgb, alpha = 1) {
 const colorThief = new ColorThief();
 
 export function setupDynamicColors(dynamic) {
+    const songIcon = document.querySelector(".bar .info .info-pic img");
     if (dynamic) {
         setDynamicColors();
         songIcon.onload = setDynamicColors;
@@ -129,9 +133,11 @@ export function resetColors() {
 }
 
 if ((getCookie("dynamicColor") ?? "true") === "true") {
-    songIcon.onload = setDynamicColors;
+    const songIcon = document.querySelector(".bar .info .info-pic img");
+    if (songIcon) songIcon.onload = setDynamicColors;
 } else {
+    const songIcon = document.querySelector(".bar .info .info-pic img");
     const color = getCookie("themeColor") ?? "#f6d32d";
     document.documentElement.style.setProperty("--primary", color);
-    songIcon.onload = null;
+    if (songIcon) songIcon.onload = null;
 }
