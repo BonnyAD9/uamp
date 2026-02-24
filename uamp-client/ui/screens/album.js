@@ -1,6 +1,6 @@
 import Album from "../../library/album.js";
 import { displaySongs } from "../pages.js";
-import { getTable } from "../tables.js";
+import { displaySort, getTable } from "../tables.js";
 import Screen from "./screen.js";
 
 export default class AlbumScreen extends Screen {
@@ -15,6 +15,7 @@ export default class AlbumScreen extends Screen {
             artist: this.querySelector(".info .artist"),
             other: this.querySelector(".info .other"),
         };
+        this.album = null;
         this.#spawnTable();
     }
 
@@ -36,6 +37,7 @@ export default class AlbumScreen extends Screen {
     open(album) {
         if (!album) return;
 
+        this.album = album;
         app.album = album;
         this.dom.cover.src = Album.getCover(album.artist, album.name);
         this.dom.title.textContent = album.name;
@@ -44,14 +46,23 @@ export default class AlbumScreen extends Screen {
         const other = album.year !== null ? `${album.getYear()}  •  ` : "";
         this.dom.other.textContent = `${other}${album.songs.len()} songs`;
 
-        const id = app.player.getPlayingId();
-        displaySongs(this.dom.songs, album.songs.get(), false, id);
+        this.#display();
+    }
+
+    /**
+     * Sorts the album songs by the given key.
+     * @param {string} key - key to sort the songs by
+     */
+    sort(key) {
+        if (!this.album) return;
+        this.album.songs.toggleSort(key);
+        this.#display();
     }
 
     #spawnTable() {
         const table = getTable(
             (e) => app.albumSongClick(e),
-            (key) => app.sortAlbumSongs(key),
+            (key) => this.sort(key),
         );
         table.classList.add("with-song-context");
 
@@ -60,5 +71,15 @@ export default class AlbumScreen extends Screen {
 
         this.querySelector(".album-detail-wrapper").appendChild(table);
         this.dom.songs = table;
+    }
+
+    #display() {
+        const id = app.player.getPlayingId();
+        displaySongs(this.dom.songs, this.album.songs.get(), false, id);
+        displaySort(
+            this.dom.songs,
+            this.album.songs.key,
+            this.album.songs.ascending,
+        );
     }
 }

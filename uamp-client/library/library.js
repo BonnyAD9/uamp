@@ -159,6 +159,36 @@ export default class Library {
         this.artists.set(filtered);
     }
 
+    /**
+     * Sorts library songs by the given key.
+     * @param {string} key - key to sort by
+     * @returns {Sorter} - sorted songs
+     */
+    sortLibrary(key) {
+        this.songs.toggleSort(key);
+        return this.songs;
+    }
+
+    /**
+     * Sorts albums by the given key.
+     * @param {string} key - key to sort by
+     * @returns {Sorter} - sorted albums
+     */
+    sortAlbums(key) {
+        this.albums.toggleSort(key);
+        return this.albums;
+    }
+    
+    /**
+     * Sorts artists by the given key.
+     * @param {string} key - key to sort by
+     * @returns {Sorter} - sorted artists
+     */
+    sortArtists(key) {
+        this.artists.toggleSort(key);
+        return this.artists;
+    }
+
     /** Generates albums and artists */
     #generate() {
         for (const song of this.allSongs) {

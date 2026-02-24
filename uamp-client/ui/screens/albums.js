@@ -1,6 +1,6 @@
 import Sorter from "../../library/sorter.js";
 import { genericDisplayAlbums, getCustomHeader } from "../pages.js";
-import { displayAlbumsSort } from "../tables.js";
+import { displaySort } from "../tables.js";
 import Screen from "./screen.js";
 
 export default class AlbumsScreen extends Screen {
@@ -21,12 +21,22 @@ export default class AlbumsScreen extends Screen {
      */
     display(albums) {
         genericDisplayAlbums(this.dom.list, albums.get());
-        displayAlbumsSort(albums.key, albums.ascending);
+        displaySort(this.dom.header, albums.key, albums.ascending);
+    }
+
+    /**
+     * Sorts the albums by the given key.
+     * @param {string} key - key to sort the albums by
+     */
+    sort(key) {
+        const albums = app.library.sortAlbums(key);
+        this.display(albums);
     }
 
     #spawnElements() {
         const labels = ["Year", "Name", "Artist", "Songs"];
-        const header = getCustomHeader(labels, (key) => app.sortAlbums(key));
+        const header = getCustomHeader(labels, (key) => this.sort(key));
         this.querySelector(".header").appendChild(header);
+        this.dom.header = header;
     }
 }

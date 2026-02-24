@@ -8,12 +8,6 @@ import Song from "./library/song.js";
 import Player from "./player/player.js";
 import Playlist from "./player/playlist.js";
 import Config from "./settings.js";
-import { displayAlbumSongs, displayArtistSongs } from "./ui/pages.js";
-import {
-    displayAlbumSongsSort,
-    displayArtistSongsSort,
-    displayLibrarySort,
-} from "./ui/tables.js";
 import VirtualTable from "./ui/virtual-table.js";
 
 export default class App {
@@ -234,40 +228,6 @@ export default class App {
 
     displayAlbums = () => this.albumsScreen.display(this.library.albums);
     displayArtists = () => this.artistsScreen.display(this.library.artists);
-
-    sortSongs = (key) => {
-        this.library.songs.toggleSort(key);
-        this.libraryScreen.table.render();
-        displayLibrarySort(
-            this.library.songs.key,
-            this.library.songs.ascending,
-        );
-    };
-    sortAlbumSongs = (key) => {
-        if (!this.album) return;
-        this.album.songs.toggleSort(key);
-        displayAlbumSongs(this.album, this.player.getPlayingId());
-        displayAlbumSongsSort(this.album.songs.key, this.album.songs.ascending);
-    };
-    sortArtistSongs = (key) => {
-        if (!this.artist) return;
-        this.artist.songs.toggleSort(key);
-        displayArtistSongs(this.artist, this.player.getPlayingId());
-        displayArtistSongsSort(
-            this.artist.songs.key,
-            this.artist.songs.ascending,
-        );
-    };
-
-    sortAlbums = (key) => {
-        this.library.albums.toggleSort(key);
-        this.displayAlbums();
-    };
-
-    sortArtists = (key) => {
-        this.library.artists.toggleSort(key);
-        this.displayArtists();
-    };
 
     searchLibrary = this.searchDebounce((e) => {
         this.library.searchLibrary(e.target.value);

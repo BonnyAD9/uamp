@@ -1,6 +1,6 @@
 import Sorter from "../../library/sorter.js";
 import { getCustomHeader } from "../pages.js";
-import { displayArtistsSort } from "../tables.js";
+import { displaySort } from "../tables.js";
 import Screen from "./screen.js";
 
 export default class ArtistsScreen extends Screen {
@@ -26,12 +26,22 @@ export default class ArtistsScreen extends Screen {
             row.dataset.index = artist.id;
             this.dom.list.appendChild(row);
         });
-        displayArtistsSort(artists.key, artists.ascending);
+        displaySort(this.dom.header, artists.key, artists.ascending);
+    }
+
+    /**
+     * Sorts the artists by the given key.
+     * @param {string} key - key to sort the artists by
+     */
+    sort(key) {
+        const artists = app.library.sortArtists(key);
+        this.display(artists);
     }
 
     #spawnElements() {
         const labels = ["Name", "Albums", "Songs"];
-        const header = getCustomHeader(labels, (key) => app.sortArtists(key));
+        const header = getCustomHeader(labels, (key) => this.sort(key));
         this.querySelector(".header").appendChild(header);
+        this.dom.header = header;
     }
 }

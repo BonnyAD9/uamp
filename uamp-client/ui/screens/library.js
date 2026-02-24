@@ -1,5 +1,5 @@
 import { getSongsHeader } from "../pages.js";
-import { getHeaderlessTable } from "../tables.js";
+import { displaySort, getHeaderlessTable } from "../tables.js";
 import VirtualTable from "../virtual-table.js";
 import Screen from "./screen.js";
 
@@ -21,9 +21,20 @@ export default class LibraryScreen extends Screen {
         this.#spawnElements();
     }
 
+    /**
+     * Sorts the library songs by the given key.
+     * @param {string} key - key to sort by
+     */
+    sort(key) {
+        const songs = app.library.sortLibrary(key);
+        this.table.render();
+        displaySort(this.dom.header, songs.key, songs.ascending);
+    }
+
     #spawnElements() {
-        const header = getSongsHeader((key) => app.sortSongs(key));
+        const header = getSongsHeader((key) => this.sort(key));
         this.querySelector(".header").appendChild(header);
+        this.dom.header = header;
 
         const table = getHeaderlessTable((e) => app.libraryClick(e));
         table.classList.add("with-song-context");

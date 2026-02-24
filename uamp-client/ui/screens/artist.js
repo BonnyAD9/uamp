@@ -1,5 +1,5 @@
 import { displaySongs, genericDisplayAlbums } from "../pages.js";
-import { getTable } from "../tables.js";
+import { displaySort, getTable } from "../tables.js";
 import Screen from "./screen.js";
 
 export default class ArtistScreen extends Screen {
@@ -13,6 +13,7 @@ export default class ArtistScreen extends Screen {
             other: this.querySelector(".info .other"),
             albums: this.querySelector(".list"),
         };
+        this.artist = null;
         this.#spawnTable();
     }
 
@@ -30,23 +31,43 @@ export default class ArtistScreen extends Screen {
     open(artist) {
         if (!artist) return;
 
+        this.artist = artist;
         app.artist = artist;
         this.dom.name.textContent = artist.name;
         this.dom.other.textContent = artist.getOtherDetails();
 
-        const id = app.player.getPlayingId();
-        displaySongs(this.dom.songs, artist.songs.get(), true, id);
-        genericDisplayAlbums(this.dom.albums, artist.albums);
+        this.#display();
+    }
+
+    /**
+     * Sorts the artist songs by the given key.
+     * @param {string} key - key to sort the songs by
+     */
+    sortSongs(key) {
+        if (!this.artist) return;
+        this.artist.songs.toggleSort(key);
+        this.#display();
     }
 
     #spawnTable() {
         const table = getTable(
             (e) => app.artistSongClick(e),
-            (key) => app.sortArtistSongs(key),
+            (key) => this.sortSongs(key),
         );
         table.classList.add("with-song-context");
 
         this.querySelector(".screen-wrapper").appendChild(table);
         this.dom.songs = table;
+    }
+
+    #display() {
+        const id = app.player.getPlayingId();
+        displaySongs(this.dom.songs, this.artist.songs.get(), true, id);
+        genericDisplayAlbums(this.dom.albums, this.artist.albums);
+        displaySort(
+            this.dom.songs,
+            this.artist.songs.key,
+            this.artist.songs.ascending,
+        );
     }
 }

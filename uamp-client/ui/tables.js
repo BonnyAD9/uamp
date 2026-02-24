@@ -26,24 +26,13 @@ function highlightPlaying(songId, container, attr = "songId") {
     }
 }
 
-export const displayLibrarySort = (key, dir) =>
-    displaySort(document.querySelector("#library .header table"), key, dir);
-export const displayArtistSongsSort = (key, dir) =>
-    displaySort(document.querySelector("#artist-detail .songs"), key, dir);
-export const displayAlbumSongsSort = (key, dir) =>
-    displaySort(document.querySelector("#album-detail .songs"), key, dir);
-export const displayAlbumsSort = (key, dir) =>
-    displaySort(document.querySelector("#albums .header table"), key, dir);
-export const displayArtistsSort = (key, dir) =>
-    displaySort(document.querySelector("#artists .header table"), key, dir);
-
 /**
  * Displays the sorting in the thead of the table
  * @param {HTMLTableElement} table - table to which thead should display sort
  * @param {string} key - key of the sorting
  * @param {bool} direction - ascending when true, else descending
  */
-function displaySort(table, key, direction) {
+export function displaySort(table, key, direction) {
     const attrs = table.querySelectorAll("thead th span");
     attrs.forEach((attr) => {
         attr.classList.remove("sorted", "asc", "desc");
