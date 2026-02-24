@@ -6,16 +6,17 @@ import Screen from "./screen.js";
 export default class LibraryScreen extends Screen {
     constructor() {
         super("library-screen-template");
+        this.table = null;
+    }
 
-        this.libraryTable = new VirtualTable(
+    onReady() {
+        this.table = new VirtualTable(
             () => app.library.songs.get(),
             "library-screen",
             ".songs tbody",
             () => app.player.getPlayingId(),
         );
-    }
 
-    onReady() {
         this.dom = {};
         this.#spawnElements();
     }

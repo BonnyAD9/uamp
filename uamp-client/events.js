@@ -2,7 +2,6 @@ import App from "./app.js";
 import "./ui/components.js";
 import "./ui/context-menu.js";
 import { spawnScreens } from "./ui/pages.js";
-import { removePlaylistRow } from "./ui/tables.js";
 
 spawnScreens();
 
@@ -48,7 +47,7 @@ const SSE_HANDLERS = {
         const current = app.player.playlist.current;
         if (current !== null) {
             app.player.playlist.songs.splice(current, 1);
-            removePlaylistRow(current);
+            app.playlistScreen.removeRow(current);
         }
 
         pushPlaylistEvent(data);

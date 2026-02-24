@@ -1,5 +1,4 @@
 import Album from "../library/album.js";
-import { getHeaderlessTable } from "./tables.js";
 
 export function genericDisplayAlbums(albumsList, albums) {
     albumsList.innerHTML = "";
@@ -99,18 +98,6 @@ export function getCustomHeader(labels, sortHandler) {
     return table;
 }
 
-function playlistScreen() {
-    const header = getSongsHeader(null);
-    document.querySelector("#playlist .header").appendChild(header);
-
-    const table = getHeaderlessTable(
-        (e) => app.playlistClick(e),
-        ["playlist-stack", "active"],
-    );
-    table.classList.add("with-playlist-context");
-    document.querySelector("#playlist .playlist-wrapper").appendChild(table);
-}
-
 function gradHoverListeners() {
     document.addEventListener("mousemove", (e) => {
         const target = e.target.closest(".grad-hover");
@@ -154,7 +141,7 @@ function card3DHover() {
 
 export function spawnScreens() {
     // artistsScreen();
-    playlistScreen();
+    // playlistScreen();
 
     gradHoverListeners();
     card3DHover();

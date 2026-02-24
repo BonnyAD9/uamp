@@ -8,6 +8,7 @@ import AlbumsScreen from "./screens/albums.js";
 import ArtistScreen from "./screens/artist.js";
 import ArtistsScreen from "./screens/artists.js";
 import LibraryScreen from "./screens/library.js";
+import PlaylistScreen from "./screens/playlist.js";
 
 /** HTML components */
 customElements.define("player-bar", PlayerBar);
@@ -21,3 +22,4 @@ customElements.define("albums-screen", AlbumsScreen);
 customElements.define("album-screen", AlbumScreen);
 customElements.define("artists-screen", ArtistsScreen);
 customElements.define("artist-screen", ArtistScreen);
+customElements.define("playlist-screen", PlaylistScreen);

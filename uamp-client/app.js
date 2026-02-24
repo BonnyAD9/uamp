@@ -8,19 +8,11 @@ import Song from "./library/song.js";
 import Player from "./player/player.js";
 import Playlist from "./player/playlist.js";
 import Config from "./settings.js";
-import {
-    displayAlbumSongs,
-    displayArtistSongs,
-} from "./ui/pages.js";
+import { displayAlbumSongs, displayArtistSongs } from "./ui/pages.js";
 import {
     displayAlbumSongsSort,
     displayArtistSongsSort,
     displayLibrarySort,
-    displayPlaylistStack,
-    removePlaylist,
-    pushPlaylist,
-    reorderPlaylists,
-    showPlaylist,
 } from "./ui/tables.js";
 import VirtualTable from "./ui/virtual-table.js";
 
@@ -49,14 +41,8 @@ export default class App {
         this.libraryScreen = document.querySelector("library-screen");
         this.albumsScreen = document.querySelector("albums-screen");
         this.artistsScreen = document.querySelector("artists-screen");
+        this.playlistScreen = document.querySelector("playlist-screen");
 
-        this.playlistTable = new VirtualTable(
-            () => this.player.getPlaylist(this.playlistTab).songs,
-            "#playlist",
-            ".playlist-stack.active tbody",
-            () => this.player.getPlaylist(this.playlistTab).current,
-        );
-        this.playlistTable.playlist().autoScrolling();
         this.barPlaylistTable = new VirtualTable(
             () => this.player.playlist.songs,
             ".bar .playlist",
@@ -83,8 +69,8 @@ export default class App {
         /** @type {?Artist} */
         this.artist = null;
 
-        this.libraryScreen.libraryTable.render();
-        this.playlistTable.render();
+        this.libraryScreen.table.render();
+        this.playlistScreen.table.render();
         this.barPlaylistTable.render();
     }
 
@@ -102,7 +88,7 @@ export default class App {
      */
     setCurrent(id) {
         this.player.setCurrent(id);
-        this.playlistTable.render();
+        this.playlistScreen.table.render();
         this.barPlaylistTable.render();
     }
 
@@ -146,14 +132,14 @@ export default class App {
         this.player.playlist_stack.push(this.player.playlist);
         if (this.playlistTab !== 0) this.playlistTab += 1;
 
-        pushPlaylist();
+        this.playlistScreen.push();
         this.setPlaylist(playlist);
-        showPlaylist(this.playlistTab);
+        this.playlistScreen.show(this.playlistTab);
     }
 
     /**
-     * Pops playlists from the stack and sets it as the active playlist. Updates
-     * related UI elements.
+     * Pops playlists from the stack and sets it as the active playlist.
+     * Updates related UI elements.
      * @param {number} cnt - number of playlists to pop from the stack.
      * @returns previous active playlist if it exists, otherwise null.
      */
@@ -161,7 +147,7 @@ export default class App {
         const [prev, removed] = this.player.popPlaylist(cnt);
         this.playlistTab = Math.max(0, this.playlistTab - removed);
 
-        showPlaylist(this.playlistTab);
+        this.playlistScreen.show(this.playlistTab);
         this.playerBar.updateCurrent(this.player.getPlaying());
         this.displayPlaylist();
         return prev;
@@ -173,13 +159,13 @@ export default class App {
      */
     removePlaylist(id) {
         this.player.removePlaylist(id);
-        removePlaylist(id);
+        this.playlistScreen.remove(id);
 
         const prev = this.playlistTab;
         if (this.playlistTab >= id)
             this.playlistTab = Math.max(0, this.playlistTab - 1);
 
-        showPlaylist(this.playlistTab);
+        this.playlistScreen.show(this.playlistTab);
 
         if (prev !== this.playlistTab) {
             this.playerBar.updateCurrent(this.player.getPlaying());
@@ -192,7 +178,7 @@ export default class App {
      * @param {number[]} indexes - reorder indexes containing all playlists
      */
     reorderPlaylists(indexes) {
-        reorderPlaylists(indexes);
+        this.playlistScreen.reorder(indexes);
         if (this.playlistTab !== 0)
             this.playlistTab = indexes.indexOf(this.playlistTab);
 
@@ -208,7 +194,7 @@ export default class App {
             .slice(0, -1)
             .map((i) => all[len - i]);
 
-        showPlaylist(this.playlistTab);
+        this.playlistScreen.show(this.playlistTab);
         this.playerBar.updateCurrent(this.player.getPlaying());
         this.player.highlightPlaying();
     }
@@ -219,7 +205,7 @@ export default class App {
      */
     setPlaylistTab(id) {
         this.playlistTab = id;
-        showPlaylist(id);
+        this.playlistScreen.show(id);
         this.displayPlaylist();
     }
 
@@ -239,8 +225,8 @@ export default class App {
     }
 
     /** Displays songs with virtual scrolling. */
-    displaySongs = () => this.libraryScreen.libraryTable.render();
-    displayPlaylist = () => this.playlistTable.render();
+    displaySongs = () => this.libraryScreen.table.render();
+    displayPlaylist = () => this.playlistScreen.table.render();
     createBarSongs = () => {
         this.barPlaylistTable.render();
         this.playerBar.updatePlaylistMask();
@@ -251,7 +237,7 @@ export default class App {
 
     sortSongs = (key) => {
         this.library.songs.toggleSort(key);
-        this.libraryScreen.libraryTable.render();
+        this.libraryScreen.table.render();
         displayLibrarySort(
             this.library.songs.key,
             this.library.songs.ascending,
@@ -285,7 +271,7 @@ export default class App {
 
     searchLibrary = this.searchDebounce((e) => {
         this.library.searchLibrary(e.target.value);
-        this.libraryScreen.libraryTable.render();
+        this.libraryScreen.table.render();
     });
     searchAlbums = this.searchDebounce((e) => {
         this.library.searchAlbums(e.target.value);
@@ -312,7 +298,7 @@ export default class App {
     }
 
     displayPlaylistStack() {
-        displayPlaylistStack(this.player.playlist_stack.length);
+        this.playlistScreen.displayStack(this.player.playlist_stack.length);
     }
 
     libraryClick = (e) => this.songClickHandler(e, this.library.songs.get());

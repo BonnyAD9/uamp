@@ -53,90 +53,6 @@ function displaySort(table, key, direction) {
     });
 }
 
-const playlists = document.querySelector("#playlist .playlist-wrapper");
-const playlistTabs = document.querySelector("#playlist .tabs .tabs-wrapper");
-/** Pushes empty playing table to the playlist stack and adds new tab */
-export function pushPlaylist() {
-    const table = getHeaderlessTable(
-        (e) => app.playlistClick(e),
-        ["playlist-stack"],
-    );
-    table.classList.add("with-playlist-context");
-
-    const playing = playlists.querySelector(".playlist-stack");
-    playlists.insertBefore(table, playing);
-
-    pushPlaylistTab();
-}
-
-/** Pushes new tab to the playlist tabs */
-function pushPlaylistTab() {
-    const tab = document.createElement("button");
-    tab.classList.add("tab");
-
-    const id = playlistTabs.querySelectorAll(".tab").length;
-    tab.textContent = `-${id}`;
-    tab.onclick = () => app.setPlaylistTab(id);
-    playlistTabs.appendChild(tab);
-}
-
-/** Pops playlist from the playlist stack and removes tab */
-export function removePlaylist(id = 0) {
-    const tables = playlists.querySelectorAll(".playlist-stack");
-    if (tables.length < 2 && tables.length <= id) return;
-    tables[id].remove();
-
-    popPlaylistTab();
-}
-
-/** Pops tab from playlist tabs */
-function popPlaylistTab() {
-    const tabs = playlistTabs.querySelectorAll(".tab:not(#playingPlaylist)");
-    if (tabs.length == 0) return;
-    tabs[tabs.length - 1].remove();
-}
-
-/**
- * Reorders playlists based on the given indexes.
- * @param {number[]} indexes - reorder indexes containing all playlists.
- */
-export function reorderPlaylists(indexes) {
-    const wrapper = document.querySelector(".playlist-wrapper");
-    const tables = Array.from(
-        wrapper.querySelectorAll("#playlist .playlist-stack"),
-    );
-
-    const reordered = indexes.map((i) => tables[i]);
-    reordered.forEach((table) => wrapper.appendChild(table));
-}
-
-/**
- * Removes row of the playing playlist based on the given row ID
- * @param {number} id - row ID to be removed
- */
-export function removePlaylistRow(id) {
-    const table = playlists.querySelector("#playlist .playlist-stack tbody");
-    const rows = table.querySelectorAll("tr");
-    if (rows.length <= id) return;
-
-    if (rows[id].classList.contains("active") && rows[id].nextSibling !== null)
-        rows[id].nextSibling.classList.add("active");
-    rows[id].remove();
-}
-
-/**
- * Displays a playlist based on its ID in the playlist stack
- * @param {number} id - ID of the playlist stack
- */
-export function showPlaylist(id) {
-    const tabs = playlistTabs.querySelectorAll(".tab");
-    const playlistStacks = playlists.querySelectorAll(".playlist-stack");
-    for (let i = 0; i < tabs.length; i++) {
-        tabs[i].classList.toggle("active", i === id);
-        playlistStacks[i].classList.toggle("active", i === id);
-    }
-}
-
 const tableTemplate = document.getElementById("songs-template");
 /**
  * Gets empty songs table
@@ -180,27 +96,4 @@ function addTableSort(table, sortHandler) {
     labels.forEach((label) => {
         label.addEventListener("click", () => sortHandler(label.dataset.sort));
     });
-}
-
-/**
- * Adds playlist tabs and tables to correspond the playlist stack
- * @param {number} n - stack length
- */
-export function displayPlaylistStack(n) {
-    playlistTabs
-        .querySelectorAll(".tab:not(#playingPlaylist)")
-        .forEach((tab) => tab.remove());
-    playlists
-        .querySelectorAll(".playlist-stack")
-        .forEach((table, i) => i !== 0 && table.remove());
-
-    for (let i = 1; i <= n; i++) {
-        const cloned = getHeaderlessTable(
-            (e) => app.playlistClick(e),
-            ["playlist-stack"],
-        );
-        cloned.classList.add("with-playlist-context");
-        playlists.appendChild(cloned);
-        pushPlaylistTab();
-    }
 }

@@ -3,7 +3,6 @@ import {
     highlightArtistSong,
     highlightLibrary,
     highlightPlaylist,
-    removePlaylist,
 } from "../ui/tables.js";
 import Playlist from "./playlist.js";
 
@@ -28,6 +27,7 @@ export default class Player {
         this.state = data.state;
 
         this.playerBar = document.querySelector("player-bar");
+        this.playlistScreen = document.querySelector("playlist-screen");
     }
 
     /**
@@ -137,7 +137,7 @@ export default class Player {
             prev = this.playlist;
             this.playlist = this.playlist_stack.pop();
 
-            removePlaylist();
+            this.playlistScreen.pop();
             removed += 1;
         }
         return [prev, removed];
