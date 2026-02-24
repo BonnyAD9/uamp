@@ -204,25 +204,3 @@ export function displayPlaylistStack(n) {
         pushPlaylistTab();
     }
 }
-
-/** Spawns all the songs tables */
-export function spawnTables() {
-    // const artTable = getTable(
-    //     (e) => app.artistSongClick(e),
-    //     (key) => app.sortArtistSongs(key),
-    // );
-    // artTable.classList.add("with-song-context");
-    // document
-    //     .querySelector("#artist-detail .screen-wrapper")
-    //     .appendChild(artTable);
-    // const table = getTable(
-    //     (e) => app.albumSongClick(e),
-    //     (key) => app.sortAlbumSongs(key),
-    // );
-    // const col = table.querySelector(".col-img");
-    // col.className = "col-empty";
-    // table.classList.add("with-song-context");
-    // document
-    //     .querySelector("#album-detail .album-detail-wrapper")
-    //     .appendChild(table);
-}

@@ -3,7 +3,6 @@ import {
     displayAlbumsSort,
     displayArtistsSort,
     getHeaderlessTable,
-    spawnTables,
 } from "./tables.js";
 
 const albumsList = document.querySelector("#albums .list");
@@ -122,7 +121,7 @@ export function displaySongs(table, songs, icons = true, id = null) {
  * @param {(string) => void} sortHandler - function handling the song sorting
  * @returns {HTMLTableElement} - table for displaying the songs header
  */
-function getSongsHeader(sortHandler = null) {
+export function getSongsHeader(sortHandler = null) {
     const template = document.getElementById("songs-template");
     const cloned = template.content.cloneNode(true);
 
@@ -163,15 +162,6 @@ function getCustomHeader(labels, sortHandler) {
     thead.appendChild(row);
     table.appendChild(thead);
     return table;
-}
-
-function libraryScreen() {
-    const header = getSongsHeader((key) => app.sortSongs(key));
-    document.querySelector("#library .header").appendChild(header);
-
-    const table = getHeaderlessTable((e) => app.libraryClick(e));
-    table.classList.add("with-song-context");
-    document.querySelector("#library .screen-wrapper").appendChild(table);
 }
 
 function albumsScreen() {
@@ -240,12 +230,10 @@ function card3DHover() {
 }
 
 export function spawnScreens() {
-    libraryScreen();
     albumsScreen();
     artistsScreen();
     playlistScreen();
 
-    spawnTables();
     gradHoverListeners();
     card3DHover();
 }

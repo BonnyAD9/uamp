@@ -29,13 +29,14 @@
             </nav>
         </section>
 
-        <section id="library" class="screen active">
+        <library-screen id="library" class="active"></library-screen>
+        <!--<section id="library" class="screen active">
             <screen-header
                 title="Library"
                 oninput="app.searchLibrary(event)"
             ></screen-header>
             <div class="screen-wrapper"></div>
-        </section>
+        </section>-->
 
         <section id="albums" class="screen">
             <screen-header
@@ -189,6 +190,12 @@
         </div>
 
         <img class="backdrop" src="assets/svg/img_placeholder.svg" />
+    </template>
+
+    <template id="library-screen-template">
+        <screen-header title="Library" oninput="app.searchLibrary(event)">
+        </screen-header>
+        <div class="screen-wrapper"></div>
     </template>
 
     <template id="album-screen-template">

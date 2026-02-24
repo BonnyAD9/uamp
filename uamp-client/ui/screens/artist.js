@@ -20,6 +20,14 @@ export default class ArtistScreen extends Screen {
         if (!args?.id) return;
 
         const artist = app.library.allArtists[args.id];
+        this.open(artist);
+    }
+
+    /**
+     * Opens the given artist.
+     * @param {Artist|null} artist - artist to be displayed on the page
+     */
+    open(artist) {
         if (!artist) return;
 
         app.artist = artist;

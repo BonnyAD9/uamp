@@ -229,7 +229,7 @@ table.songs thead {
     width: 100%;
 }
 
-section:not(#playlist) table thead th span {
+.screen:not(#playlist) table thead th span {
     cursor: pointer;
     position: relative;
     display: inline-block;

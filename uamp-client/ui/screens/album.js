@@ -18,10 +18,22 @@ export default class AlbumScreen extends Screen {
         this.#spawnTable();
     }
 
+    /**
+     * Handles navigation to album page
+     * @param {Object} args - page arguments
+     */
     onNavigate(args) {
         if (!args?.id) return;
 
         const album = app.library.allAlbums[args.id];
+        this.open(album);
+    }
+
+    /**
+     * Opens the given album.
+     * @param {Album|null} album - album to be displayed on the page
+     */
+    open(album) {
         if (!album) return;
 
         app.album = album;

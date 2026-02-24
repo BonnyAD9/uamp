@@ -50,12 +50,8 @@ export default class App {
         /** @type {?Artist} */
         this.artist = null;
 
-        this.libraryTable = new VirtualTable(
-            () => this.library.songs.get(),
-            "#library",
-            ".songs tbody",
-            () => this.player.getPlayingId(),
-        );
+        this.libraryScreen = document.querySelector("library-screen");
+
         this.playlistTable = new VirtualTable(
             () => this.player.getPlaylist(this.playlistTab).songs,
             "#playlist",
@@ -89,7 +85,7 @@ export default class App {
         /** @type {?Artist} */
         this.artist = null;
 
-        this.libraryTable.render();
+        this.libraryScreen.libraryTable.render();
         this.playlistTable.render();
         this.barPlaylistTable.render();
     }
@@ -245,7 +241,7 @@ export default class App {
     }
 
     /** Displays songs with virtual scrolling. */
-    displaySongs = () => this.libraryTable.render();
+    displaySongs = () => this.libraryScreen.libraryTable.render();
     displayPlaylist = () => this.playlistTable.render();
     createBarSongs = () => {
         this.barPlaylistTable.render();
@@ -257,7 +253,7 @@ export default class App {
 
     sortSongs = (key) => {
         this.library.songs.toggleSort(key);
-        this.libraryTable.render();
+        this.libraryScreen.libraryTable.render();
         displayLibrarySort(
             this.library.songs.key,
             this.library.songs.ascending,
@@ -291,7 +287,7 @@ export default class App {
 
     searchLibrary = this.searchDebounce((e) => {
         this.library.searchLibrary(e.target.value);
-        this.libraryTable.render();
+        this.libraryScreen.libraryTable.render();
     });
     searchAlbums = this.searchDebounce((e) => {
         this.library.searchAlbums(e.target.value);
@@ -391,15 +387,19 @@ export default class App {
     }
 
     artistBarClick(e) {
-        this.artist = this.library.getArtistByName(e.target.textContent);
-        displayArtist(this.artist, this.player.getPlayingId());
+        const artist = this.library.getArtistByName(e.target.textContent);
+        const screen = document.querySelector("artist-screen");
+        screen?.open(artist);
+
         this.playerBar.toggleBar();
         showScreen("artist-detail");
     }
 
     albumBarClick(artist, album) {
-        this.album = this.library.getAlbumByKey(artist, album);
-        displayAlbum(this.album, this.player.getPlayingId());
+        const a = this.library.getAlbumByKey(artist, album);
+        const albumScreen = document.querySelector("album-screen");
+        albumScreen?.open(a);
+
         this.playerBar.toggleBar();
         showScreen("album-detail");
     }
