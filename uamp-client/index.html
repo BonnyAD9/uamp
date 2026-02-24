@@ -30,15 +30,9 @@
         </section>
 
         <library-screen id="library" class="active"></library-screen>
-        <!--<section id="library" class="screen active">
-            <screen-header
-                title="Library"
-                oninput="app.searchLibrary(event)"
-            ></screen-header>
-            <div class="screen-wrapper"></div>
-        </section>-->
 
-        <section id="albums" class="screen">
+        <albums-screen id="albums"></albums-screen>
+        <!--<section id="albums" class="screen">
             <screen-header
                 title="Albums"
                 oninput="app.searchAlbums(event)"
@@ -49,7 +43,7 @@
                     onclick="app.albumClick(event)"
                 ></div>
             </div>
-        </section>
+        </section>-->
 
         <album-screen id="album-detail"></album-screen>
 
@@ -196,6 +190,17 @@
         <screen-header title="Library" oninput="app.searchLibrary(event)">
         </screen-header>
         <div class="screen-wrapper"></div>
+    </template>
+
+    <template id="albums-screen-template">
+        <screen-header title="Albums" oninput="app.searchAlbums(event)">
+        </screen-header>
+        <div class="screen-wrapper">
+            <div
+                class="list with-album-context"
+                onclick="app.albumClick(event)"
+            ></div>
+        </div>
     </template>
 
     <template id="album-screen-template">

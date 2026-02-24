@@ -142,7 +142,7 @@ export function getSongsHeader(sortHandler = null) {
  * @param {(string) => void} sortHandler - sort handler when label is clicked
  * @returns {HTMLTableElement} - table for displaying the custom header
  */
-function getCustomHeader(labels, sortHandler) {
+export function getCustomHeader(labels, sortHandler) {
     const table = document.createElement("table");
     const thead = document.createElement("thead");
 
@@ -162,12 +162,6 @@ function getCustomHeader(labels, sortHandler) {
     thead.appendChild(row);
     table.appendChild(thead);
     return table;
-}
-
-function albumsScreen() {
-    const labels = ["Year", "Name", "Artist", "Songs"];
-    const header = getCustomHeader(labels, (key) => app.sortAlbums(key));
-    document.querySelector("#albums .header").appendChild(header);
 }
 
 function artistsScreen() {
@@ -230,7 +224,6 @@ function card3DHover() {
 }
 
 export function spawnScreens() {
-    albumsScreen();
     artistsScreen();
     playlistScreen();
 

@@ -51,6 +51,7 @@ export default class App {
         this.artist = null;
 
         this.libraryScreen = document.querySelector("library-screen");
+        this.albumsScreen = document.querySelector("albums-screen");
 
         this.playlistTable = new VirtualTable(
             () => this.player.getPlaylist(this.playlistTab).songs,
@@ -248,7 +249,7 @@ export default class App {
         this.playerBar.updatePlaylistMask();
     };
 
-    displayAlbums = () => displayAlbums(this.library.albums);
+    displayAlbums = () => this.albumsScreen.display(this.library.albums);
     displayArtists = () => displayArtists(this.library.artists);
 
     sortSongs = (key) => {
