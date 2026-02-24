@@ -30,41 +30,9 @@
         </section>
 
         <library-screen id="library" class="active"></library-screen>
-
         <albums-screen id="albums"></albums-screen>
-        <!--<section id="albums" class="screen">
-            <screen-header
-                title="Albums"
-                oninput="app.searchAlbums(event)"
-            ></screen-header>
-            <div class="screen-wrapper">
-                <div
-                    class="list with-album-context"
-                    onclick="app.albumClick(event)"
-                ></div>
-            </div>
-        </section>-->
-
         <album-screen id="album-detail"></album-screen>
-
-        <section id="artists" class="screen">
-            <screen-header
-                title="Artists"
-                oninput="app.searchArtists(event)"
-            ></screen-header>
-            <div class="screen-wrapper">
-                <table class="songs with-artist-context with-album-context">
-                    <colgroup>
-                        <col style="width: 0%">
-                        <col style="width: 50%">
-                        <col style="width: 50%">
-                    </colgroup>
-                    <tbody onclick="app.artistClick(event)">
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
+        <artists-screen id="artists"></artists-screen>
         <artist-screen id="artist-detail"></artist-screen>
 
         <section id="playlist" class="screen">
@@ -213,6 +181,21 @@
                     <span class="other"></span>
                 </div>
             </div>
+        </div>
+    </template>
+
+    <template id="artists-screen-template">
+        <screen-header title="Artists" oninput="app.searchArtists(event)">
+        </screen-header>
+        <div class="screen-wrapper">
+            <table class="songs with-artist-context with-album-context">
+                <colgroup>
+                    <col style="width: 0%">
+                    <col style="width: 50%">
+                    <col style="width: 50%">
+                </colgroup>
+                <tbody onclick="app.artistClick(event)"></tbody>
+            </table>
         </div>
     </template>
 

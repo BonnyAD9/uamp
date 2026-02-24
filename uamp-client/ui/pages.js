@@ -1,19 +1,5 @@
 import Album from "../library/album.js";
-import {
-    displayAlbumsSort,
-    displayArtistsSort,
-    getHeaderlessTable,
-} from "./tables.js";
-
-const albumsList = document.querySelector("#albums .list");
-/**
- * Displays given albums in a given list
- * @param {Album[]} albums
- */
-export function displayAlbums(albums) {
-    genericDisplayAlbums(albumsList, albums.get());
-    displayAlbumsSort(albums.key, albums.ascending);
-}
+import { getHeaderlessTable } from "./tables.js";
 
 export function genericDisplayAlbums(albumsList, albums) {
     albumsList.innerHTML = "";
@@ -24,28 +10,6 @@ export function genericDisplayAlbums(albumsList, albums) {
     });
 }
 
-const albumInfo = document.querySelector("#album-detail .info");
-// const albumBackdrop = document.querySelector('#album-detail .backdrop');
-/**
- * Displays album in the album details page
- * @param {Album} album
- */
-export function displayAlbum(album, id) {
-    albumInfo.querySelector("img").src = Album.getCover(
-        album.artist,
-        album.name,
-    );
-    // albumBackdrop.src = Album.getCover(album.artist, album.name, 64);
-    albumInfo.querySelector(".name").textContent = album.name;
-    albumInfo.querySelector(".artist").textContent = album.artist;
-
-    let other = album.getYear() !== "-" ? `${album.getYear()}  •  ` : "";
-    albumInfo.querySelector(".other").textContent =
-        `${other}${album.songs.len()} songs`;
-
-    displayAlbumSongs(album, id);
-}
-
 /**
  * Display album songs in the album details page
  * @param {Album} album
@@ -54,35 +18,6 @@ export function displayAlbum(album, id) {
 export function displayAlbumSongs(album, id) {
     const albumSongs = document.querySelector("#album-detail .songs");
     displaySongs(albumSongs, album.songs.get(), false, id);
-}
-
-const artistsList = document.querySelector("#artists .songs tbody");
-/**
- * Displays given albums in a given list
- * @param {Album[]} artists
- */
-export function displayArtists(artists) {
-    artistsList.innerHTML = "";
-    artists.get().forEach((artist) => {
-        const row = artist.getTableRow();
-        row.dataset.index = artist.id;
-        artistsList.appendChild(row);
-    });
-    displayArtistsSort(artists.key, artists.ascending);
-}
-
-const artistInfo = document.querySelector("#artist-detail .info");
-const artistAlbums = document.querySelector("#artist-detail .list");
-/**
- * Displays artist in the artist details page
- * @param {Artist} artist
- */
-export function displayArtist(artist, id) {
-    artistInfo.querySelector(".name").textContent = artist.name;
-    artistInfo.querySelector(".other").textContent = artist.getOtherDetails();
-
-    genericDisplayAlbums(artistAlbums, artist.albums);
-    displayArtistSongs(artist, id);
 }
 
 /**
@@ -164,12 +99,6 @@ export function getCustomHeader(labels, sortHandler) {
     return table;
 }
 
-function artistsScreen() {
-    const labels = ["Name", "Albums", "Songs"];
-    const header = getCustomHeader(labels, (key) => app.sortArtists(key));
-    document.querySelector("#artists .header").appendChild(header);
-}
-
 function playlistScreen() {
     const header = getSongsHeader(null);
     document.querySelector("#playlist .header").appendChild(header);
@@ -224,7 +153,7 @@ function card3DHover() {
 }
 
 export function spawnScreens() {
-    artistsScreen();
+    // artistsScreen();
     playlistScreen();
 
     gradHoverListeners();

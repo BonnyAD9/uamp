@@ -9,11 +9,7 @@ import Player from "./player/player.js";
 import Playlist from "./player/playlist.js";
 import Config from "./settings.js";
 import {
-    displayAlbum,
-    displayAlbums,
     displayAlbumSongs,
-    displayArtist,
-    displayArtists,
     displayArtistSongs,
 } from "./ui/pages.js";
 import {
@@ -52,6 +48,7 @@ export default class App {
 
         this.libraryScreen = document.querySelector("library-screen");
         this.albumsScreen = document.querySelector("albums-screen");
+        this.artistsScreen = document.querySelector("artists-screen");
 
         this.playlistTable = new VirtualTable(
             () => this.player.getPlaylist(this.playlistTab).songs,
@@ -250,7 +247,7 @@ export default class App {
     };
 
     displayAlbums = () => this.albumsScreen.display(this.library.albums);
-    displayArtists = () => displayArtists(this.library.artists);
+    displayArtists = () => this.artistsScreen.display(this.library.artists);
 
     sortSongs = (key) => {
         this.library.songs.toggleSort(key);
