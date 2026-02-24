@@ -1,7 +1,21 @@
+import Api from "../../api.js";
 import { getSongsHeader } from "../pages.js";
 import { getHeaderlessTable } from "../tables.js";
 import VirtualTable from "../virtual-table.js";
 import Screen from "./screen.js";
+
+/**
+ * @typedef {Object} ActionButton
+ * @property {string} icon
+ * @property {string} action
+ * @property {string} title
+ */
+
+/** @type {ActionButton[]} */
+const DEFAULT_CONTROLS = [
+    { icon: "push.svg", action: "push=none", title: "Push empty playlist." },
+    { icon: "pop.svg", action: "pop", title: "Pop playing playlist." },
+];
 
 export default class PlaylistScreen extends Screen {
     constructor() {
@@ -22,8 +36,13 @@ export default class PlaylistScreen extends Screen {
         this.dom = {
             playlists: this.querySelector(".playlist-wrapper"),
             tabs: this.querySelector(".tabs .tabs-wrapper"),
+            controls: this.querySelector(".playlist-controls"),
         };
+
         this.#spawnElements();
+        this.renderControls(DEFAULT_CONTROLS);
+
+        this.#setupListeners();
     }
 
     /**
@@ -119,6 +138,29 @@ export default class PlaylistScreen extends Screen {
             row.nextSibling.classList.add("active");
         }
         row.remove();
+    }
+
+    /**
+     * Renders the playlist controls (action buttons).
+     * @param {ActionButton[]} controls - controls configuration
+     */
+    renderControls(controls) {
+        this.dom.controls.innerHTML = "";
+        controls.forEach((ctrl) => {
+            const btn = document.createElement("svg-icon");
+            btn.setAttribute("src", ctrl.icon);
+            btn.setAttribute("title", ctrl.title);
+            btn.dataset.action = ctrl.action;
+
+            this.dom.controls.appendChild(btn);
+        });
+    }
+
+    #setupListeners() {
+        this.dom.controls.addEventListener("click", (e) => {
+            const btn = e.target.closest("svg-icon");
+            if (btn?.dataset?.action) Api.ctrl(btn.dataset.action);
+        });
     }
 
     #spawnElements() {

@@ -36,36 +36,6 @@
         <artist-screen id="artist-detail"></artist-screen>
         <playlist-screen id="playlist"></playlist-screen>
 
-        <!--<section id="playlist" class="screen">
-            <screen-header title="Playlist">
-                <div class="tabs">
-                    <div class="tabs-wrapper">
-                        <button
-                            id="playingPlaylist"
-                            class="tab active"
-                            onclick="app.setPlaylistTab(0)"
-                        >Playing</button>
-                    </div>
-                    <div class="playlist-controls">
-                        <img
-                            src="assets/svg/push.svg"
-                            alt="push playlist"
-                            title="Push empty playlist"
-                            onclick="apiCtrl('push=none')"
-                        />
-                        <img
-                            src="assets/svg/pop.svg"
-                            alt="push playlist"
-                            title="Pops current playlist"
-                            onclick="apiCtrl('pop')"
-                        />
-                    </div>
-                </div>
-            </screen-header>
-
-            <div class="screen-wrapper playlist-wrapper"></div>
-        </section>-->
-
         <section id="settings" class="screen">
             <screen-header title="Settings">
                 <div class="tabs">
@@ -229,20 +199,7 @@
                         onclick="app.setPlaylistTab(0)"
                     >Playing</button>
                 </div>
-                <div class="playlist-controls">
-                    <img
-                        src="assets/svg/push.svg"
-                        alt="push playlist"
-                        title="Push empty playlist"
-                        onclick="apiCtrl('push=none')"
-                    />
-                    <img
-                        src="assets/svg/pop.svg"
-                        alt="push playlist"
-                        title="Pops current playlist"
-                        onclick="apiCtrl('pop')"
-                    />
-                </div>
+                <div class="playlist-controls"></div>
             </div>
         </screen-header>
 

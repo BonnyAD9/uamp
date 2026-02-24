@@ -162,7 +162,7 @@ export default class PlayerBar extends HTMLElement {
         this.controls.innerHTML = "";
         controls.forEach((ctrl) => {
             const btn = document.createElement("svg-icon");
-            btn.setAttribute("src", `${ctrl.icon}`);
+            btn.setAttribute("src", ctrl.icon);
             btn.classList.add("control");
 
             if (ctrl.id) btn.id = ctrl.id;

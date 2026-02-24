@@ -1296,7 +1296,7 @@ input:checked + .slider:before {
     padding-right: 10px;
 }
 
-.tabs > .playlist-controls img {
+.tabs > .playlist-controls svg-icon {
     width: 15px;
     height: 15px;
     object-fit: contain;
