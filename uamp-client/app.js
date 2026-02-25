@@ -1,14 +1,11 @@
 import Api from "./api.js";
 import Duration from "./helper/duration.js";
 import Timestamp from "./helper/timestamp.js";
-import Album from "./library/album.js";
-import Artist from "./library/artist.js";
 import Library from "./library/library.js";
 import Song from "./library/song.js";
 import Player from "./player/player.js";
 import Playlist from "./player/playlist.js";
 import Config from "./settings.js";
-import VirtualTable from "./ui/virtual-table.js";
 
 export default class App {
     constructor() {
@@ -21,14 +18,7 @@ export default class App {
         /** @type {Config} */
         this.config = Config.empty();
 
-        this.searchTimeout = null;
-
         this.playlistTab = 0;
-
-        /** @type {?Album} */
-        this.album = null;
-        /** @type {?Artist} */
-        this.artist = null;
 
         this.playerBar = document.querySelector("player-bar");
 
@@ -49,11 +39,6 @@ export default class App {
         this.playerBar.updateTimestamp(this.position);
 
         this.playlistTab = 0;
-
-        /** @type {?Album} */
-        this.album = null;
-        /** @type {?Artist} */
-        this.artist = null;
 
         this.libraryScreen.table.render();
         this.playlistScreen.table.render();
@@ -220,24 +205,18 @@ export default class App {
     displayAlbums = () => this.albumsScreen.display(this.library.albums);
     displayArtists = () => this.artistsScreen.display(this.library.artists);
 
-    searchLibrary = this.searchDebounce((e) => {
-        this.library.searchLibrary(e.target.value);
+    searchLibrary = (e) => {
+        this.library.searchLibrary(e.detail);
         this.libraryScreen.table.render();
-    });
-    searchAlbums = this.searchDebounce((e) => {
-        this.library.searchAlbums(e.target.value);
+    };
+    searchAlbums = (e) => {
+        this.library.searchAlbums(e.detail);
         this.displayAlbums();
-    });
-    searchArtists = this.searchDebounce((e) => {
-        this.library.searchArtists(e.target.value);
+    };
+    searchArtists = (e) => {
+        this.library.searchArtists(e.detail);
         this.displayArtists();
-    });
-    searchDebounce(searchFn, delay = 100) {
-        return (e) => {
-            clearTimeout(this.searchTimeout);
-            this.searchTimeout = setTimeout(() => searchFn(e), delay);
-        };
-    }
+    };
 
     updateAll() {
         this.playerBar.updateTimestamp(null);
