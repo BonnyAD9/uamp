@@ -173,10 +173,20 @@ export default class PlaylistScreen extends Screen {
 
     #getTable() {
         const table = getHeaderlessTable(
-            (e) => app.playlistClick(e),
+            (e) => this.#songClick(e),
             ["playlist-stack", "active"],
         );
         table.classList.add("with-playlist-context");
         return table;
+    }
+
+    #songClick(e) {
+        const row = e.target.closest("tr");
+        const table = row?.closest("table");
+        if (!row || !table) return;
+
+        const playing = this.dom.playlists.querySelector(".playlist-stack");
+        let cmd = table !== playing ? `rps=${app.playlistTab}&` : "";
+        Api.ctrl(`${cmd}pj=${row.dataset.index}&pp=play`);
     }
 }

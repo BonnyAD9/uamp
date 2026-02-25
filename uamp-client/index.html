@@ -80,17 +80,11 @@
             <div class="slider-timestamp">
                 <span id="timestamp-cur">--:--</span>
                 <span id="timestamp-total">--:--</span>
-
             </div>
 
             <input
-                value="0"
-                type="range"
-                min="0"
-                max="100"
-                step="any"
-                id="progressBar"
-                autocomplete="off"
+                id="progressBar" autocomplete="off" value="0" type="range"
+                min="0" max="100" step="any"
             >
 
             <div class="controls"></div>
@@ -103,23 +97,14 @@
                 >
                 <p id="volumeValue">69</p>
                 <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    id="volumeSlider"
-                    autocomplete="off"
+                    id="volumeSlider" autocomplete="off" type="range"
+                    min="0" max="100"
                 >
             </div>
         </div>
 
         <div class="playlist">
-            <div
-                class="songs"
-                onclick="app.barPlaylistClick(event)"
-            >
-                <div class="spacer spacer-top"></div>
-                <div class="spacer spacer-bottom"></div>
-            </div>
+            <div class="songs" onclick="app.barPlaylistClick(event)"></div>
         </div>
 
         <img class="backdrop" src="assets/svg/img_placeholder.svg" />
@@ -135,10 +120,7 @@
         <screen-header title="Albums" oninput="app.searchAlbums(event)">
         </screen-header>
         <div class="screen-wrapper">
-            <div
-                class="list with-album-context"
-                onclick="app.albumClick(event)"
-            ></div>
+            <div class="list with-album-context"></div>
         </div>
     </template>
 
@@ -165,7 +147,7 @@
                     <col style="width: 50%">
                     <col style="width: 50%">
                 </colgroup>
-                <tbody onclick="app.artistClick(event)"></tbody>
+                <tbody></tbody>
             </table>
         </div>
     </template>
@@ -180,10 +162,7 @@
             </div>
 
             <h3>Albums</h3>
-            <div
-                class="list with-album-context"
-                onclick="app.albumArtistClick(event)"
-            ></div>
+            <div class="list with-album-context"></div>
 
             <h3>Songs</h3>
         </div>

@@ -1,4 +1,9 @@
-import { displaySongs, genericDisplayAlbums } from "../pages.js";
+import {
+    albumClickHandler,
+    displayAlbums,
+    displaySongs,
+    songClickHandler,
+} from "../pages.js";
 import { displaySort, getTable } from "../tables.js";
 import Screen from "./screen.js";
 
@@ -15,6 +20,7 @@ export default class ArtistScreen extends Screen {
         };
         this.artist = null;
         this.#spawnTable();
+        this.#setupListeners();
     }
 
     onNavigate(args) {
@@ -51,7 +57,7 @@ export default class ArtistScreen extends Screen {
 
     #spawnTable() {
         const table = getTable(
-            (e) => app.artistSongClick(e),
+            (e) => songClickHandler(e, this.artist.songs.get()),
             (key) => this.sortSongs(key),
         );
         table.classList.add("with-song-context");
@@ -60,10 +66,14 @@ export default class ArtistScreen extends Screen {
         this.dom.songs = table;
     }
 
+    #setupListeners() {
+        this.dom.albums.addEventListener("click", albumClickHandler);
+    }
+
     #display() {
         const id = app.player.getPlayingId();
         displaySongs(this.dom.songs, this.artist.songs.get(), true, id);
-        genericDisplayAlbums(this.dom.albums, this.artist.albums);
+        displayAlbums(this.dom.albums, this.artist.albums);
         displaySort(
             this.dom.songs,
             this.artist.songs.key,

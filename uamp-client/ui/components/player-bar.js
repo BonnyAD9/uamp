@@ -2,6 +2,7 @@ import Api from "../../api.js";
 import { onSongIconLoad } from "../colors.js";
 import Duration from "../../helper/duration.js";
 import Album from "../../library/album.js";
+import VirtualTable from "../virtual-table.js";
 
 /**
  * @typedef {Object} BarControl
@@ -30,11 +31,21 @@ export default class PlayerBar extends HTMLElement {
         this.currentPos = null;
         /** @type {Duration} */
         this.totalPos = null;
+
+        this.table = null;
     }
 
     connectedCallback() {
         const template = document.getElementById("bar-template");
         this.appendChild(template.content.cloneNode(true));
+
+        this.table = new VirtualTable(
+            () => app.player.playlist.songs,
+            ".bar .playlist",
+            ".songs",
+            () => app.player.playlist.current,
+        );
+        this.table.playlist().list().centering().autoScrolling();
 
         // Prefetch all reusable DOM elements.
         this.controls = this.querySelector(".controls");
@@ -103,6 +114,8 @@ export default class PlayerBar extends HTMLElement {
 
         this.total = song?.length;
         this.timestampTotal.textContent = this.total?.format() ?? "-:--";
+
+        this.table.render();
     }
 
     /**

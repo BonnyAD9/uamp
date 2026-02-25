@@ -1,32 +1,38 @@
-import Album from "../library/album.js";
+import Api from "../api.js";
+import { showScreen } from "../app.js";
+import Song from "../library/song.js";
 
-export function genericDisplayAlbums(albumsList, albums) {
+/**
+ * Handles the songs click.
+ * @param {PointerEvent} e - click event
+ * @param {Song[]} songs - list of songs
+ */
+export function songClickHandler(e, songs) {
+    const row = e.target.closest("tr");
+    if (!row) return;
+    Api.pushPlaylist(songs, row.dataset.index);
+}
+
+/**
+ * Handles the album click.
+ * @param {PointerEvent} e - click event
+ */
+export function albumClickHandler(e) {
+    const card = e.target.closest(".card");
+    if (!card) return;
+
+    const albumScreen = document.querySelector("album-screen");
+    albumScreen?.onNavigate({ id: card.dataset.index });
+    showScreen("album-detail");
+}
+
+export function displayAlbums(albumsList, albums) {
     albumsList.innerHTML = "";
     albums.forEach((album) => {
         const card = album.getCard();
         card.dataset.index = album.id;
         albumsList.appendChild(card);
     });
-}
-
-/**
- * Display album songs in the album details page
- * @param {Album} album
- * @param {number|null} id
- */
-export function displayAlbumSongs(album, id) {
-    const albumSongs = document.querySelector("#album-detail .songs");
-    displaySongs(albumSongs, album.songs.get(), false, id);
-}
-
-/**
- * Display artist songs in the artist details page
- * @param {Arist} artist
- * @param {number|null} id
- */
-export function displayArtistSongs(artist, id) {
-    const artistSongs = document.querySelector("#artist-detail .songs");
-    displaySongs(artistSongs, artist.songs.get(), true, id);
 }
 
 /**
@@ -140,9 +146,6 @@ function card3DHover() {
 }
 
 export function spawnScreens() {
-    // artistsScreen();
-    // playlistScreen();
-
     gradHoverListeners();
     card3DHover();
 }

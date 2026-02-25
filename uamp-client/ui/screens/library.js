@@ -1,4 +1,4 @@
-import { getSongsHeader } from "../pages.js";
+import { getSongsHeader, songClickHandler } from "../pages.js";
 import { displaySort, getHeaderlessTable } from "../tables.js";
 import VirtualTable from "../virtual-table.js";
 import Screen from "./screen.js";
@@ -36,7 +36,9 @@ export default class LibraryScreen extends Screen {
         this.querySelector(".header").appendChild(header);
         this.dom.header = header;
 
-        const table = getHeaderlessTable((e) => app.libraryClick(e));
+        const table = getHeaderlessTable((e) =>
+            songClickHandler(e, app.library.songs.get()),
+        );
         table.classList.add("with-song-context");
         this.querySelector(".screen-wrapper").appendChild(table);
     }

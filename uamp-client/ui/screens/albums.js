@@ -1,5 +1,5 @@
 import Sorter from "../../library/sorter.js";
-import { genericDisplayAlbums, getCustomHeader } from "../pages.js";
+import { albumClickHandler, displayAlbums, getCustomHeader } from "../pages.js";
 import { displaySort } from "../tables.js";
 import Screen from "./screen.js";
 
@@ -13,6 +13,7 @@ export default class AlbumsScreen extends Screen {
             list: this.querySelector(".list"),
         };
         this.#spawnElements();
+        this.#setupListeners();
     }
 
     /**
@@ -20,7 +21,7 @@ export default class AlbumsScreen extends Screen {
      * @param {Sorter} albums - albums to be displayed
      */
     display(albums) {
-        genericDisplayAlbums(this.dom.list, albums.get());
+        displayAlbums(this.dom.list, albums.get());
         displaySort(this.dom.header, albums.key, albums.ascending);
     }
 
@@ -38,5 +39,9 @@ export default class AlbumsScreen extends Screen {
         const header = getCustomHeader(labels, (key) => this.sort(key));
         this.querySelector(".header").appendChild(header);
         this.dom.header = header;
+    }
+
+    #setupListeners() {
+        this.dom.list.addEventListener("click", albumClickHandler);
     }
 }

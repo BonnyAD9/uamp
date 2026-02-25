@@ -1,3 +1,4 @@
+import { showScreen } from "../../app.js";
 import Sorter from "../../library/sorter.js";
 import { getCustomHeader } from "../pages.js";
 import { displaySort } from "../tables.js";
@@ -13,6 +14,7 @@ export default class ArtistsScreen extends Screen {
             list: this.querySelector(".songs tbody"),
         };
         this.#spawnElements();
+        this.#setupListeners();
     }
 
     /**
@@ -43,5 +45,26 @@ export default class ArtistsScreen extends Screen {
         const header = getCustomHeader(labels, (key) => this.sort(key));
         this.querySelector(".header").appendChild(header);
         this.dom.header = header;
+    }
+
+    #setupListeners() {
+        this.dom.list.addEventListener("click", (e) => this.#clickHandler(e));
+    }
+
+    #clickHandler(e) {
+        const row = e.target.closest("tr");
+        if (!row) return;
+
+        const album = e.target.closest(".albums-preview img");
+        if (album) {
+            const albumScreen = document.querySelector("album-screen");
+            albumScreen?.onNavigate({ id: album.dataset.index });
+            showScreen("album-detail");
+            return;
+        }
+
+        const screen = document.querySelector("artist-screen");
+        screen?.onNavigate({ id: row.dataset.index });
+        showScreen("artist-detail");
     }
 }

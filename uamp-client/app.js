@@ -21,8 +21,6 @@ export default class App {
         /** @type {Config} */
         this.config = Config.empty();
 
-        this.playerBar = document.querySelector("player-bar");
-
         this.searchTimeout = null;
 
         this.playlistTab = 0;
@@ -32,18 +30,12 @@ export default class App {
         /** @type {?Artist} */
         this.artist = null;
 
+        this.playerBar = document.querySelector("player-bar");
+
         this.libraryScreen = document.querySelector("library-screen");
         this.albumsScreen = document.querySelector("albums-screen");
         this.artistsScreen = document.querySelector("artists-screen");
         this.playlistScreen = document.querySelector("playlist-screen");
-
-        this.barPlaylistTable = new VirtualTable(
-            () => this.player.playlist.songs,
-            ".bar .playlist",
-            ".songs",
-            () => this.player.playlist.current,
-        );
-        this.barPlaylistTable.playlist().list().centering().autoScrolling();
     }
 
     async init(data) {
@@ -65,7 +57,7 @@ export default class App {
 
         this.libraryScreen.table.render();
         this.playlistScreen.table.render();
-        this.barPlaylistTable.render();
+        this.playerBar.table.render();
     }
 
     /**
@@ -83,7 +75,6 @@ export default class App {
     setCurrent(id) {
         this.player.setCurrent(id);
         this.playlistScreen.table.render();
-        this.barPlaylistTable.render();
     }
 
     /**
@@ -222,7 +213,7 @@ export default class App {
     displaySongs = () => this.libraryScreen.table.render();
     displayPlaylist = () => this.playlistScreen.table.render();
     createBarSongs = () => {
-        this.barPlaylistTable.render();
+        this.playerBar.table.render();
         this.playerBar.updatePlaylistMask();
     };
 
@@ -261,73 +252,10 @@ export default class App {
         this.playlistScreen.displayStack(this.player.playlist_stack.length);
     }
 
-    libraryClick = (e) => this.songClickHandler(e, this.library.songs.get());
-    albumSongClick = (e) => this.songClickHandler(e, this.album.songs.get());
-    artistSongClick = (e) => this.songClickHandler(e, this.artist.songs.get());
-
-    songClickHandler(e, songs) {
-        const row = e.target.closest("tr");
-        if (!row) return;
-
-        Api.pushPlaylist(songs, row.dataset.index);
-    }
-
-    genericSongClick(e, query, sort = "") {
-        const row = e.target.closest("tr");
-        if (!row) return;
-
-        const encQuery = encodeURIComponent(query);
-        const sortQuery = sort === "" ? "" : `&sort=${sort}`;
-        Api.ctrl(`sp=${encQuery}${sortQuery}&pj=${row.dataset.index}&pp=play`);
-    }
-
-    playlistClick(e) {
-        const row = e.target.closest("tr");
-        const table = row?.closest("table");
-        if (!row || !table) return;
-
-        const first = document.querySelector("#playlist .playlist-stack table");
-        let cmd = "";
-        if (table !== first) {
-            cmd = `rps=${this.playlistTab}&`;
-        }
-
-        Api.ctrl(`${cmd}pj=${row.dataset.index}&pp=play`);
-    }
-
     barPlaylistClick(e) {
         const item = e.target.closest(".item");
         if (!item) return;
         Api.ctrl(`pj=${item.dataset.index}`);
-    }
-
-    albumClick = (e) => this.genericAlbumClick(e);
-    albumArtistClick = (e) => this.genericAlbumClick(e);
-
-    genericAlbumClick(e) {
-        const card = e.target.closest(".card");
-        if (!card) return;
-
-        const albumScreen = document.querySelector("album-screen");
-        albumScreen?.onNavigate({ id: card.dataset.index });
-        showScreen("album-detail");
-    }
-
-    artistClick(e) {
-        const row = e.target.closest("tr");
-        if (!row) return;
-
-        const album = e.target.closest(".albums-preview img");
-        if (!album) {
-            const screen = document.querySelector("artist-screen");
-            screen?.onNavigate({ id: row.dataset.index });
-            showScreen("artist-detail");
-            return;
-        }
-
-        const albumScreen = document.querySelector("album-screen");
-        albumScreen?.onNavigate({ id: album.dataset.index });
-        showScreen("album-detail");
     }
 
     artistBarClick(e) {
@@ -364,7 +292,7 @@ navs.forEach((item) => {
     });
 });
 
-function showScreen(target, pushHistory = true) {
+export function showScreen(target, pushHistory = true) {
     document
         .querySelectorAll(".screen")
         .forEach((s) => s.classList.toggle("active", s.id === target));

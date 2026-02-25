@@ -1,5 +1,5 @@
 import Album from "../../library/album.js";
-import { displaySongs } from "../pages.js";
+import { displaySongs, songClickHandler } from "../pages.js";
 import { displaySort, getTable } from "../tables.js";
 import Screen from "./screen.js";
 
@@ -61,7 +61,7 @@ export default class AlbumScreen extends Screen {
 
     #spawnTable() {
         const table = getTable(
-            (e) => app.albumSongClick(e),
+            (e) => songClickHandler(e, this.album.songs.get()),
             (key) => this.sort(key),
         );
         table.classList.add("with-song-context");
