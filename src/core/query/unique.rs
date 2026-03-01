@@ -12,15 +12,15 @@ use crate::core::library::{Library, Song, SongId};
 
 #[derive(Debug, Copy, Clone, FromArg, Serialize, Deserialize)]
 pub enum Unique {
-    #[arg("id" | "path" | "unique" | "u")]
+    #[arg("id", "path", "unique", "u")]
     Songs,
-    #[arg("n" | "tit" | "name")]
+    #[arg("n", "tit", "name")]
     Title,
-    #[arg("p" | "art" | "performer" | "auth" | "author")]
+    #[arg("p", "art", "performer", "auth", "author")]
     Artist,
-    #[arg("a" | "alb")]
+    #[arg("a", "alb")]
     Album,
-    #[arg("t" | "trk" | "track-number")]
+    #[arg("t", "trk", "track-number")]
     Track,
     #[arg("d")]
     Disc,

@@ -4,7 +4,7 @@ use std::{
     sync::Arc,
 };
 
-use rand::Rng;
+use rand::RngExt;
 use serde::{Deserialize, Serialize};
 
 /// Thread safe lazily cloned value. The value may be cloned only when you

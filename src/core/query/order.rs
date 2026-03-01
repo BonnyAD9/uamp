@@ -40,27 +40,27 @@ pub enum OrderField {
     #[arg("rev")]
     Reverse,
     /// Randomly shuffle.
-    #[arg("rng" | "rand" | "random")]
+    #[arg("rng", "rand", "random")]
     Randomize,
     /// Order by file path.
     Path,
     /// Order by song title.
-    #[arg("n" | "tit" | "name")]
+    #[arg("n", "tit", "name")]
     Title,
     /// Order by song artist.
-    #[arg("p" | "art" | "performer" | "auth" | "author")]
+    #[arg("p", "art", "performer", "auth", "author")]
     Artist,
     /// Order by song album.
-    #[arg("a" | "alb")]
+    #[arg("a", "alb")]
     Album,
     /// Order by the track number.
-    #[arg("t" | "trk" | "track-number")]
+    #[arg("t", "trk", "track-number")]
     Track,
     /// Order by the disc number.
     #[arg("d")]
     Disc,
     /// Order by the release date.
-    #[arg("y" | "data")]
+    #[arg("y", "data")]
     Year,
     /// Order by total track length.
     #[arg("len")]
