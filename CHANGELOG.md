@@ -32,6 +32,12 @@ contains albums and artists and song now has nullable fields and `artists` and
 - Add option to negate matching modes with `^`.
 - Support negation in filter with `^`.
 
+#### GUI
+- Add progress bar dragging
+- Add context menus (song, playlist, album, artist)
+- Add keyboard shortcuts
+- Tweak design
+
 ### Changes
 - Add new id control messages `InsertIntoPlaylist` and `RemoveFromPlaylist`.
 - Unify sse `queue` and `play-next` into `insert-into-playlist`.
@@ -51,6 +57,11 @@ contains albums and artists and song now has nullable fields and `artists` and
   library.
 - Properly wait for graceful shutdown of connections when closing uamp.
 - Fix filter parsing.
+
+#### GUI
+- Fix volume overwrite on startup
+- Fix album hover effect
+- Fix history API
 
 ## v0.6.8
 ### New features
