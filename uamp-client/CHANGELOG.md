@@ -1,4 +1,14 @@
 # CHANGELOG
 
-- Add gradient hover effect on table items
-- Add album card hover effect
+## Features
+
+- Add progress bar dragging
+- Add context menus (song, playlist, album, artist)
+- Add keyboard shortcuts
+- Tweak design
+
+## Fixes
+
+- Fix volume overwrite on startup
+- Fix album hover effect
+- Fix history API

@@ -1,99 +1,35 @@
-import Album from "../library/album.js";
-import {
-    displayAlbumsSort,
-    displayArtistsSort,
-    getHeaderlessTable,
-    spawnTables,
-} from "./tables.js";
+import Api from "../api.js";
+import Song from "../library/song.js";
 
-const albumsList = document.querySelector("#albums .list");
 /**
- * Displays given albums in a given list
- * @param {Album[]} albums
+ * Handles the songs click.
+ * @param {PointerEvent} e - click event
+ * @param {Song[]} songs - list of songs
  */
-export function displayAlbums(albums) {
-    genericDisplayAlbums(albumsList, albums.get());
-    displayAlbumsSort(albums.key, albums.ascending);
+export function songClickHandler(e, songs) {
+    const row = e.target.closest("tr");
+    if (!row) return;
+    Api.pushPlaylist(songs, row.dataset.index);
 }
 
-function genericDisplayAlbums(albumsList, albums) {
+/**
+ * Handles the album click.
+ * @param {PointerEvent} e - click event
+ */
+export function albumClickHandler(e) {
+    const card = e.target.closest(".card");
+    if (!card) return;
+
+    app.navigateTo("album-detail", { id: card.dataset.index });
+}
+
+export function displayAlbums(albumsList, albums) {
     albumsList.innerHTML = "";
-    albums.forEach((album, i) => {
+    albums.forEach((album) => {
         const card = album.getCard();
-        card.dataset.index = i;
+        card.dataset.index = album.id;
         albumsList.appendChild(card);
     });
-}
-
-const albumInfo = document.querySelector("#album-detail .info");
-// const albumBackdrop = document.querySelector('#album-detail .backdrop');
-/**
- * Displays album in the album details page
- * @param {Album} album
- */
-export function displayAlbum(album, id) {
-    albumInfo.querySelector("img").src = Album.getCover(
-        album.artist,
-        album.name,
-    );
-    // albumBackdrop.src = Album.getCover(album.artist, album.name, 64);
-    albumInfo.querySelector(".name").textContent = album.name;
-    albumInfo.querySelector(".artist").textContent = album.artist;
-
-    let other = album.getYear() !== "-" ? `${album.getYear()}  •  ` : "";
-    albumInfo.querySelector(".other").textContent =
-        `${other}${album.songs.len()} songs`;
-
-    displayAlbumSongs(album, id);
-}
-
-/**
- * Display album songs in the album details page
- * @param {Album} album
- * @param {number|null} id
- */
-export function displayAlbumSongs(album, id) {
-    const albumSongs = document.querySelector("#album-detail .songs");
-    displaySongs(albumSongs, album.songs.get(), false, id);
-}
-
-const artistsList = document.querySelector("#artists .songs tbody");
-/**
- * Displays given albums in a given list
- * @param {Album[]} artists
- */
-export function displayArtists(artists) {
-    artistsList.innerHTML = "";
-    artists.get().forEach((artist, i) => {
-        const row = artist.getTableRow();
-        row.dataset.index = i;
-        artistsList.appendChild(row);
-    });
-    displayArtistsSort(artists.key, artists.ascending);
-}
-
-const artistInfo = document.querySelector("#artist-detail .info");
-const artistAlbums = document.querySelector("#artist-detail .list");
-/**
- * Displays artist in the artist details page
- * @param {Artist} artist
- */
-export function displayArtist(artist, id) {
-    artistInfo.querySelector(".name").textContent = artist.name;
-    artistInfo.querySelector(".other").textContent = artist.getOtherDetails();
-
-    genericDisplayAlbums(artistAlbums, artist.albums);
-    displayArtistSongs(artist, id);
-}
-
-/**
- * Display artist songs in the artist details page
- * @param {Arist} artist
- * @param {number|null} id
- */
-export function displayArtistSongs(artist, id) {
-    const artistSongs = document.querySelector("#artist-detail .songs");
-    displaySongs(artistSongs, artist.songs.get(), true, id);
 }
 
 /**
@@ -102,7 +38,7 @@ export function displayArtistSongs(artist, id) {
  * @param {Song[]} songs - songs to be displayed
  * @param {boolean} icons - whether to display icons
  */
-function displaySongs(table, songs, icons = true, id = null) {
+export function displaySongs(table, songs, icons = true, id = null) {
     const body = table.querySelector("tbody");
     body.innerHTML = "";
 
@@ -122,7 +58,7 @@ function displaySongs(table, songs, icons = true, id = null) {
  * @param {(string) => void} sortHandler - function handling the song sorting
  * @returns {HTMLTableElement} - table for displaying the songs header
  */
-function getSongsHeader(sortHandler = null) {
+export function getSongsHeader(sortHandler = null) {
     const template = document.getElementById("songs-template");
     const cloned = template.content.cloneNode(true);
 
@@ -143,7 +79,7 @@ function getSongsHeader(sortHandler = null) {
  * @param {(string) => void} sortHandler - sort handler when label is clicked
  * @returns {HTMLTableElement} - table for displaying the custom header
  */
-function getCustomHeader(labels, sortHandler) {
+export function getCustomHeader(labels, sortHandler) {
     const table = document.createElement("table");
     const thead = document.createElement("thead");
 
@@ -165,59 +101,25 @@ function getCustomHeader(labels, sortHandler) {
     return table;
 }
 
-function libraryScreen() {
-    const header = getSongsHeader((key) => AppSingleton.get().sortSongs(key));
-    document.querySelector("#library .header").appendChild(header);
-
-    const table = getHeaderlessTable((e) => AppSingleton.get().libraryClick(e));
-    document.querySelector("#library .screen-wrapper").appendChild(table);
-}
-
-function albumsScreen() {
-    const labels = ["Year", "Name", "Artist", "Songs"];
-    const header = getCustomHeader(labels, (key) =>
-        AppSingleton.get().sortAlbums(key),
-    );
-    document.querySelector("#albums .header").appendChild(header);
-}
-
-function artistsScreen() {
-    const labels = ["Name", "Albums", "Songs"];
-    const header = getCustomHeader(labels, (key) =>
-        AppSingleton.get().sortArtists(key),
-    );
-    document.querySelector("#artists .header").appendChild(header);
-}
-
-function playlistScreen() {
-    const header = getSongsHeader(null);
-    document.querySelector("#playlist .header").appendChild(header);
-
-    const table = getHeaderlessTable(
-        (e) => AppSingleton.get().playlistClick(e),
-        ["playlist-stack", "active"],
-    );
-    document.querySelector("#playlist .playlist-wrapper").appendChild(table);
-}
-
 function gradHoverListeners() {
-    const tables = document.querySelectorAll("table.songs tbody");
-    tables.forEach((table) => {
-        table.addEventListener("mousemove", (e) => {
-            const target = e.target.closest(":not(.spacer)");
-            if (!target) return;
+    document.addEventListener("mousemove", (e) => {
+        if (typeof e.target?.closest !== "function") return;
 
-            const rect = target.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+        const target = e.target.closest(".grad-hover");
+        if (!target) return;
 
-            table.style.setProperty("--mouse-x", `${x}px`);
-            table.style.setProperty("--mouse-y", `${y}px`);
-        });
+        const rect = target.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        document.documentElement.style.setProperty("--mouse-x", `${x}px`);
+        document.documentElement.style.setProperty("--mouse-y", `${y}px`);
     });
 }
 
 function card3DHover() {
+    const MAX_ROTATION = 20;
+
     const lists = document.querySelectorAll(".list");
     lists.forEach((list) => {
         list.addEventListener("mousemove", (e) => {
@@ -225,23 +127,24 @@ function card3DHover() {
             if (!target) return;
 
             const rect = target.getBoundingClientRect();
+
             const x = e.clientX - rect.x - rect.width / 2;
             const y = e.clientY - rect.y - rect.height / 2;
-            const dist = -Math.log(Math.sqrt(x ** 2 + y ** 2)) * 3;
-            list.style.setProperty("--rot-x", y / 100);
-            list.style.setProperty("--rot-y", -x / 100);
-            list.style.setProperty("--rot-angle", `${dist}deg`);
+
+            const xNorm = (x / (rect.width / 2)) * MAX_ROTATION;
+            const yNorm = (y / (rect.height / 2)) * MAX_ROTATION;
+
+            target.style.setProperty("--rot-x", `${-yNorm}deg`);
+            target.style.setProperty("--rot-y", `${xNorm}deg`);
+
+            const glow = target.querySelector(".glow");
+            glow.style.setProperty("--x", `${-x * 2 + rect.width / 2}px`);
+            glow.style.setProperty("--y", `${-y * 2 + rect.height / 2}px`);
         });
     });
 }
 
 export function spawnScreens() {
-    libraryScreen();
-    albumsScreen();
-    artistsScreen();
-    playlistScreen();
-
-    spawnTables();
     gradHoverListeners();
     card3DHover();
 }

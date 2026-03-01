@@ -21,12 +21,12 @@ export default class Library {
         this.allSongs = songs.map((s, i) => Song.from(i, s));
         /** @type {Object<string, Album>} */
         this.allAlbums = Object.entries(albums).reduce((acc, [id, album]) => {
-            acc[id] = Album.from(album, this.allSongs);
+            acc[id] = Album.from(id, album, this.allSongs);
             return acc;
         }, {});
         /** @type {Object<string, Artist>} */
         this.allArtists = Object.entries(artists).reduce((acc, [id, a]) => {
-            acc[id] = Artist.from(a, this.allAlbums, this.allSongs);
+            acc[id] = Artist.from(id, a, this.allAlbums, this.allSongs);
             return acc;
         }, {});
 
@@ -41,6 +41,19 @@ export default class Library {
         this.artists = new Sorter("name");
 
         this.#generate();
+    }
+
+    /**
+     * Creates empty library.
+     * @returns {Library} created library
+     */
+    static empty() {
+        return new Library({
+            songs: [],
+            tmp_songs: [],
+            artists: [],
+            albums: [],
+        });
     }
 
     /**
@@ -144,6 +157,36 @@ export default class Library {
             a.name.toLowerCase().includes(q),
         );
         this.artists.set(filtered);
+    }
+
+    /**
+     * Sorts library songs by the given key.
+     * @param {string} key - key to sort by
+     * @returns {Sorter} - sorted songs
+     */
+    sortLibrary(key) {
+        this.songs.toggleSort(key);
+        return this.songs;
+    }
+
+    /**
+     * Sorts albums by the given key.
+     * @param {string} key - key to sort by
+     * @returns {Sorter} - sorted albums
+     */
+    sortAlbums(key) {
+        this.albums.toggleSort(key);
+        return this.albums;
+    }
+    
+    /**
+     * Sorts artists by the given key.
+     * @param {string} key - key to sort by
+     * @returns {Sorter} - sorted artists
+     */
+    sortArtists(key) {
+        this.artists.toggleSort(key);
+        return this.artists;
     }
 
     /** Generates albums and artists */

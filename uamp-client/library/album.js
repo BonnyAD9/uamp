@@ -6,12 +6,15 @@ const albumTemplate = document.getElementById("album-template");
 export default class Album {
     /**
      * Creates new album
+     * @param {string} id
      * @param {string} name
      * @param {string} artist
      * @param {number|null} year
      * @param {Song[]} songs
      */
-    constructor(name, artist, year, songs = []) {
+    constructor(id, name, artist, year, songs = []) {
+        /** @type {string} */
+        this.id = id;
         /** @type {string} */
         this.name = name;
         /** @type {string} */
@@ -22,10 +25,10 @@ export default class Album {
         this.songs = new Sorter("track", songs);
     }
 
-    static from(obj, allSongs) {
+    static from(id, obj, allSongs) {
         const songs = obj.songs.map((s, _) => allSongs[s]);
         const year = songs[0]?.year ?? null;
-        return new Album(obj.name, obj.artist, year, songs);
+        return new Album(id, obj.name, obj.artist, year, songs);
     }
 
     /**
@@ -68,15 +71,16 @@ export default class Album {
 
     /**
      * Gets the API URL to get the album cover
-     * @param {string} artist
-     * @param {string} album
+     * @param {string|null} artist
+     * @param {string|null} album
      * @return {string} API URL
      */
     static getCover(artist, album, size = null) {
-        let req =
-            `/api/img?artist=${encodeURIComponent(artist)}&album=` +
-            `${encodeURIComponent(album)}&or=` +
-            encodeURIComponent("/app/assets/svg/img_placeholder.svg");
+        const placeholder = "/app/assets/svg/img_placeholder.svg";
+        let req = `/api/img?or=${encodeURIComponent(placeholder)}`;
+        if (artist !== null) req += `&artist=${encodeURIComponent(artist)}`;
+        if (album !== null) req += `&album=${encodeURIComponent(album)}`;
+
         if (size !== null) req += `&size=${size}`;
         return req;
     }

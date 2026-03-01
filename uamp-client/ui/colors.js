@@ -1,14 +1,17 @@
-import { getCookie } from "./settings.js";
+import { getCookie } from "../settings.js";
 
-const songIcon = document.querySelector(".bar .info .info-pic img");
+let songIcon = null;
 
 function rgbToHsl(r, g, b) {
     r /= 255;
     g /= 255;
     b /= 255;
 
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    let h, s, l = (max + min) / 2;
+    const max = Math.max(r, g, b),
+        min = Math.min(r, g, b);
+    let h,
+        s,
+        l = (max + min) / 2;
 
     if (max === min) {
         h = s = 0;
@@ -67,7 +70,17 @@ function rgbToRgbaCss(rgb, alpha = 1) {
 
 const colorThief = new ColorThief();
 
+export function onSongIconLoad() {
+    songIcon = document.querySelector(".bar .info .info-pic img");
+    if ((getCookie("dynamicColor") ?? "true") === "true") {
+        setDynamicColors();
+    } else {
+        resetColors();
+    }
+}
+
 export function setupDynamicColors(dynamic) {
+    const songIcon = document.querySelector(".bar .info .info-pic img");
     if (dynamic) {
         setDynamicColors();
         songIcon.onload = setDynamicColors;
@@ -124,14 +137,16 @@ export function resetColors() {
     root.style.removeProperty("--fg-sec");
     root.style.removeProperty("--fg-sec2");
 
-    const primary = getCookie("themeColor") ?? "#3acbaf";
+    const primary = getCookie("themeColor") ?? "#f6d32d";
     root.style.setProperty("--primary", primary);
 }
 
 if ((getCookie("dynamicColor") ?? "true") === "true") {
-    songIcon.onload = setDynamicColors;
+    const songIcon = document.querySelector(".bar .info .info-pic img");
+    if (songIcon) songIcon.onload = setDynamicColors;
 } else {
-    const color = getCookie("themeColor") ?? "#3acbaf";
+    const songIcon = document.querySelector(".bar .info .info-pic img");
+    const color = getCookie("themeColor") ?? "#f6d32d";
     document.documentElement.style.setProperty("--primary", color);
-    songIcon.onload = null;
+    if (songIcon) songIcon.onload = null;
 }

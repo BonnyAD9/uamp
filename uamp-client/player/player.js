@@ -1,6 +1,8 @@
-import { updateCurrent, updatePlayBtn, updateVolume } from "../ui/bar.js";
 import {
-    highlightAlbumSong, highlightArtistSong, highlightLibrary, highlightPlaylist
+    highlightAlbumSong,
+    highlightArtistSong,
+    highlightLibrary,
+    highlightPlaylist,
 } from "../ui/tables.js";
 import Playlist from "./playlist.js";
 
@@ -14,14 +16,38 @@ export default class Player {
         /** @type {Playlist} */
         this.playlist = new Playlist(data.playlist, library);
         /** @type {Playlist[]} */
-        this.playlist_stack =
-            data.playlist_stack.map(p => new Playlist(p, library));
+        this.playlist_stack = data.playlist_stack.map(
+            (p) => new Playlist(p, library),
+        );
         /** @type {number} */
         this.volume = data.volume;
         /** @type {boolean} */
         this.mute = data.mute;
         /** @type {string} */
         this.state = data.state;
+
+        this.playerBar = document.querySelector("player-bar");
+        this.playlistScreen = document.querySelector("playlist-screen");
+    }
+
+    /**
+     * Creates new empty player.
+     * @returns {Player} created player
+     */
+    static empty() {
+        return new Player({
+            volume: 0.69,
+            mute: false,
+            playlist: {
+                songs: [],
+                current: null,
+                play_pos: null,
+                on_end: null,
+                add_policy: "None",
+            },
+            playlist_stack: [],
+            state: "Paused",
+        });
     }
 
     /**
@@ -29,12 +55,12 @@ export default class Player {
      * @returns {boolean} true when playing, else false
      */
     isPlaying() {
-        return this.state === 'Playing';
+        return this.state === "Playing";
     }
 
     /**
      * Gets currently playing song
-     * @returns {?Song} currently playing song if found
+     * @returns {Song|null} currently playing song if found
      */
     getPlaying = () => this.playlist.getPlaying();
 
@@ -45,12 +71,18 @@ export default class Player {
     getPlayingId = () => this.playlist.getPlayingId();
 
     /**
+     * Gets playlist ID of the next playing song
+     * @returns {number} playlist ID, 0 when no current set
+     */
+    getNextPId = () => this.playlist.getNextPId();
+
+    /**
      * Sets the playback state and updates related UI elements.
      * @param {string} playback - playback state to set.
      */
     setPlayback(playback) {
         this.state = playback;
-        updatePlayBtn(this.isPlaying());
+        this.playerBar.setPlaying(this.isPlaying());
     }
 
     /**
@@ -60,7 +92,7 @@ export default class Player {
     setCurrent(id) {
         this.playlist.current = id;
         this.highlightPlaying();
-        updateCurrent(this.getPlaying());
+        this.playerBar.updateCurrent(this.getPlaying());
     }
 
     /**
@@ -69,7 +101,7 @@ export default class Player {
      */
     setVolume(volume) {
         this.volume = volume;
-        updateVolume(volume, this.mute);
+        this.playerBar.updateVolume(volume, this.mute);
     }
 
     /**
@@ -78,7 +110,7 @@ export default class Player {
      */
     setMute(mute) {
         this.mute = mute;
-        updateVolume(this.volume, mute);
+        this.playerBar.updateVolume(this.volume, mute);
     }
 
     /**
@@ -87,16 +119,49 @@ export default class Player {
      * @returns {Playlist|null} playlist if found, else null
      */
     getPlaylist(id) {
-        if (id === 0)
-            return this.playlist;
+        if (id === 0) return this.playlist;
         return this.playlist_stack[this.playlist_stack.length - id] || null;
+    }
+
+    /**
+     * Pops playlists from the stack.
+     * @param {number} cnt - number of playlists to pop, 0 means all
+     * @returns {[Playlist|null, number]} removed playlist and popped count
+     */
+    popPlaylist(cnt = 1) {
+        if (cnt === 0) cnt = this.playlist_stack.length;
+
+        let prev = null;
+        let removed = 0;
+        while (cnt-- > 0 && this.playlist_stack.length > 0) {
+            prev = this.playlist;
+            this.playlist = this.playlist_stack.pop();
+
+            this.playlistScreen.pop();
+            removed += 1;
+        }
+        return [prev, removed];
+    }
+
+    /**
+     * Removes given playlist from the stack.
+     * @param {number} id - ID of the playlist to be removed
+     */
+    removePlaylist(id) {
+        if (id === 0) {
+            this.playlist = this.player.playlist_stack.pop();
+        } else {
+            this.playlist_stack.splice(this.playlist_stack.length - id, 1);
+        }
     }
 
     /** Highlights currently playing song */
     highlightPlaying() {
         const id = this.getPlayingId();
+        if (id === null) return;
+
         highlightLibrary(id);
-        highlightPlaylist(id);
+        highlightPlaylist(this.playlist.current);
         highlightAlbumSong(id);
         highlightArtistSong(id);
     }

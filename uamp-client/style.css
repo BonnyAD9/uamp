@@ -6,7 +6,7 @@
     --bg-light-trans: #25252599;
     --bg-dark: #151515;
     --bg-dark-trans: #15151599;
-    --primary: #3acbaf;
+    --primary: #f6d32d;
     /* --primary: #dddd55; */
     --fg: #eee;
     --fg2: #ccc;
@@ -83,11 +83,7 @@ section.menu nav p {
     font-size: 15px;
     cursor: pointer;
     border-radius: 5px;
-    transition: 0.2s ease background-color;
-}
-
-section.menu nav p:hover {
-    background-color: var(--bg);
+    overflow: hidden;
 }
 
 section.menu nav p.active::after {
@@ -107,7 +103,7 @@ section.menu nav .spacer {
     flex-grow: 1;
 }
 
-section.screen {
+.screen {
     display: none;
     width: 100%;
     height: 100vh;
@@ -117,43 +113,43 @@ section.screen {
 }
 
 @-moz-document url-prefix() {
-    section.screen,
-    section.bar .playlist,
-    section#album-detail .album-detail-wrapper {
+    .screen,
+    player-bar.bar .playlist,
+    album-screen .album-detail-wrapper {
         scrollbar-width: thin;
         scrollbar-color: var(--fg-sec) transparent;
     }
 }
 
-section#album-detail .album-detail-wrapper::-webkit-scrollbar,
-section.bar .playlist::-webkit-scrollbar,
-section.screen::-webkit-scrollbar {
+album-screen .album-detail-wrapper::-webkit-scrollbar,
+player-bar.bar .playlist::-webkit-scrollbar,
+.screen::-webkit-scrollbar {
     width: 4px;
 }
 
-section.screen::-webkit-scrollbar-track {
+.screen::-webkit-scrollbar-track {
     margin-bottom: 70px;
 }
 
-section#album-detail .album-detail-wrapper::-webkit-scrollbar-thumb,
-section.bar .playlist::-webkit-scrollbar-thumb,
-section.screen::-webkit-scrollbar-thumb {
+album-screen .album-detail-wrapper::-webkit-scrollbar-thumb,
+player-bar.bar .playlist::-webkit-scrollbar-thumb,
+.screen::-webkit-scrollbar-thumb {
     background-color: var(--fg-sec);
     transition: 0.3s ease;
     border-radius: 2px;
 }
 
-section#album-detail .album-detail-wrapper::-webkit-scrollbar-thumb:hover,
-section.bar .playlist::-webkit-scrollbar-thumb:hover,
-section.screen::-webkit-scrollbar-thumb:hover {
+album-screen .album-detail-wrapper::-webkit-scrollbar-thumb:hover,
+player-bar.bar .playlist::-webkit-scrollbar-thumb:hover,
+.screen::-webkit-scrollbar-thumb:hover {
     background-color: var(--fg-sec2);
 }
 
-section.screen.active {
+.screen.active {
     display: block;
 }
 
-section.screen .header {
+.screen .header {
     padding: 3px 5px;
     background-color: var(--bg-trans);
     backdrop-filter: blur(5px);
@@ -162,7 +158,7 @@ section.screen .header {
     z-index: 10;
 }
 
-section.screen .header .header-row {
+.screen .header .header-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -171,25 +167,25 @@ section.screen .header .header-row {
     gap: 5px;
 }
 
-section.screen .header .header-row .filler {
+.screen .header .header-row .filler {
     flex-grow: 1;
     overflow: hidden;
 }
 
-section.screen .header .form-input {
+.screen .header .form-input {
     font-size: 15px;
 }
 
-section.screen h1 {
+.screen h1 {
     font-size: 30px;
     color: var(--fg2);
 }
 
-section.screen .screen-wrapper {
+.screen .screen-wrapper {
     padding: 0px 5px 70px 5px;
 }
 
-section.screen#albums .screen-wrapper {
+.screen#albums .screen-wrapper {
     padding-top: 5px;
 }
 
@@ -233,7 +229,7 @@ table.songs thead {
     width: 100%;
 }
 
-section:not(#playlist) table thead th span {
+.screen:not(#playlist) table thead th span {
     cursor: pointer;
     position: relative;
     display: inline-block;
@@ -312,7 +308,6 @@ table.songs tr.active p {
 
 table.songs tbody tr {
     cursor: pointer;
-    transition: 0.1s ease background-color;
     height: 42px;
     position: relative;
 }
@@ -321,25 +316,21 @@ table.songs tbody tr.spacer {
     height: 0;
 }
 
-table.songs tbody tr::before {
+.grad-hover::before {
     content: "";
+    background: none;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.grad-hover:hover::before {
     background: radial-gradient(
         100% 800px at var(--mouse-x) var(--mouse-y),
         rgba(255, 255, 255, 0.06),
         transparent 40%
     );
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 2;
-    opacity: 0;
-    transition: opacity 100ms;
-}
-
-table.songs tbody tr:hover::before {
-    opacity: 1;
 }
 
 table.songs td {
@@ -363,14 +354,14 @@ table.songs td > img {
 }
 
 table.songs td > p,
-.list .card > .details > p,
+.list .card .details > p,
 .setting > div > p {
     color: var(--fg);
     font-size: 15px;
 }
 
 table.songs td > span,
-.list .card > .details > span,
+.list .card .details > span,
 .setting > div > span {
     color: var(--fg-sec);
     font-size: 11px;
@@ -395,26 +386,36 @@ table.songs td .albums-preview img {
     flex-wrap: wrap;
     gap: 5px;
     justify-content: flex-start;
-    perspective: 5000px;
 }
 
 .list .card {
     flex: 1 1 calc(14.28% - 5px);
     max-width: calc(14.28% - 5px);
+    perspective: 1000px;
+    cursor: pointer;
+}
+
+.list .card-inner {
+    width: 100%;
+    height: 100%;
     box-sizing: border-box;
     background-color: var(--bg-light);
     border-radius: 10px;
     overflow: hidden;
     cursor: pointer;
     transition: 0.2s ease;
-    transform: rotate3D(0);
+    transform-style: preserve-3d;
+    will-change: transform;
 }
 
 .list .card:hover {
+    z-index: 9;
+}
+
+.list .card:hover .card-inner {
     background-color: (--bg-lighter);
-    transform: scale3d(1.07, 1.07, 1.07)
-        rotate3d(var(--rot-x), var(--rot-y), 0, var(--rot-angle));
-    z-index: 20;
+    transform: scale3d(1.07, 1.07, 1.07) rotateX(var(--rot-x))
+        rotateY(var(--rot-y));
     box-shadow: 0 5px 20px 5px #00000044;
     transition: 100ms ease-out;
 }
@@ -423,6 +424,25 @@ table.songs td .albums-preview img {
     width: 100%;
     aspect-ratio: 1 / 1;
     object-fit: contain;
+}
+
+.list .card .glow {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-image: radial-gradient(
+        circle at var(--x) var(--y),
+        #ffffff33,
+        #0000000f
+    );
+    transition: 100ms ease-out;
+    opacity: 0;
+}
+
+.list .card:hover .glow {
+    opacity: 1;
 }
 
 .list .card .details {
@@ -439,23 +459,23 @@ table.songs td .albums-preview img {
     max-width: 100%;
 }
 
-section#album-detail .info,
-section#artist-detail .info {
+album-screen .info,
+artist-screen .info {
     display: flex;
     gap: 10px;
     height: 250px;
     padding-top: 5px;
 }
 
-section#artist-detail .info {
+artist-screen .info {
     height: auto;
 }
 
-section#album-detail {
+album-screen {
     overflow-y: hidden;
 }
 
-section#album-detail .album-detail-wrapper {
+album-screen .album-detail-wrapper {
     width: 100%;
     height: 100%;
     box-sizing: border-box;
@@ -465,7 +485,7 @@ section#album-detail .album-detail-wrapper {
     flex-direction: column;
 }
 
-section#album-detail .backdrop {
+album-screen .backdrop {
     position: absolute;
     top: 0;
     left: 0;
@@ -478,52 +498,52 @@ section#album-detail .backdrop {
     opacity: 0.4;
 }
 
-section#album-detail .info img {
+album-screen .info img {
     max-height: 100%;
     object-fit: contain;
     border-radius: 5px;
 }
 
-section#album-detail .info .details,
-section#artist-detail .info .details {
+album-screen .info .details,
+artist-screen .info .details {
     display: flex;
     flex-direction: column;
     gap: 5px;
     justify-content: center;
 }
 
-section#album-detail .info .details h2,
-section#artist-detail .info .details h2 {
+album-screen .info .details h2,
+artist-screen .info .details h2 {
     font-size: 35px;
     font-weight: normal;
 }
 
-section#album-detail .info .details p,
-section#artist-detail .info .details p {
+album-screen .info .details p,
+artist-screen .info .details p {
     color: var(--fg-sec);
     font-size: 15px;
     padding-left: 3px;
 }
 
-section#album-detail .info .details span {
+album-screen .info .details span {
     color: var(--fg-sec);
     font-size: 11px;
     padding-left: 3px;
     display: block;
 }
 
-section#album-detail .songs {
+album-screen .songs {
     margin-top: 5px;
 }
 
-section#artist-detail h3 {
+artist-screen h3 {
     margin-top: 10px;
     margin-bottom: 5px;
     font-weight: normal;
     font-size: 20px;
 }
 
-section.bar {
+player-bar.bar {
     position: fixed;
     bottom: 0;
     left: 0;
@@ -537,14 +557,14 @@ section.bar {
     z-index: 20;
 }
 
-section.bar.floating {
+player-bar.bar.floating {
     bottom: 8px;
     left: 8px;
     width: calc(100% - 16px);
     border-radius: 10px;
 }
 
-section.bar.expanded {
+player-bar.bar.active {
     bottom: 0;
     left: 0;
     height: 100%;
@@ -558,7 +578,7 @@ section.bar.expanded {
     gap: 20px;
 }
 
-section.bar .back-arrow {
+player-bar.bar .back-arrow {
     display: none;
     position: absolute;
     top: 5px;
@@ -572,11 +592,11 @@ section.bar .back-arrow {
     cursor: pointer;
 }
 
-section.bar.expanded .back-arrow {
+player-bar.bar.active .back-arrow {
     display: block;
 }
 
-section.bar > .bar-wrapper {
+player-bar.bar > .bar-wrapper {
     width: 100%;
     height: 100%;
     display: grid;
@@ -586,51 +606,41 @@ section.bar > .bar-wrapper {
     padding: 2px 5px;
 }
 
-section.bar.expanded > .bar-wrapper {
+player-bar.bar.active > .bar-wrapper {
     display: flex;
     flex-direction: column;
     overflow: hidden;
     justify-content: center;
 }
 
-section.bar .slider {
+player-bar.bar #progressBar {
     width: 100%;
-    height: 4px;
-    background-color: var(--bg-lighter);
-    border-radius: 3px;
 }
 
-section.bar.expanded .slider {
+player-bar.bar.active #progressBar {
     flex-shrink: 0;
     max-width: 75%;
     margin-bottom: 10px;
 }
 
-section.bar:not(.expanded) .slider {
+player-bar.bar:not(.active) #progressBar {
     position: absolute;
-    top: 0;
+    top: -4px;
     left: 0;
 }
 
-section.bar .slider > hr {
-    width: 0%;
-    border: 2px solid var(--primary);
-    border-radius: 2px;
-}
-
-section.bar .slider-timestamp {
+player-bar.bar .slider-timestamp {
     width: 75%;
     justify-content: space-between;
     align-items: center;
     display: none;
-    margin-bottom: 2px;
 }
 
-section.bar.expanded .slider-timestamp {
+player-bar.bar.active .slider-timestamp {
     display: flex;
 }
 
-section.bar .info {
+player-bar.bar .info {
     display: flex;
     align-items: center;
     gap: 5px;
@@ -639,7 +649,7 @@ section.bar .info {
     cursor: pointer;
 }
 
-section.bar.expanded .info {
+player-bar.bar.active .info {
     flex-direction: column;
     height: auto;
     max-height: calc(100% - 60px);
@@ -648,7 +658,7 @@ section.bar.expanded .info {
     width: 100%;
 }
 
-section.bar .info .info-pic {
+player-bar.bar .info .info-pic {
     padding: 3px;
     padding-top: 7px;
     box-sizing: border-box;
@@ -656,7 +666,7 @@ section.bar .info .info-pic {
     aspect-ratio: 1 / 1;
 }
 
-section.bar.expanded .info .info-pic {
+player-bar.bar.active .info .info-pic {
     height: auto;
     min-height: 0;
     flex-grow: 1;
@@ -669,14 +679,14 @@ section.bar.expanded .info .info-pic {
     justify-content: center;
 }
 
-section.bar .info .info-pic img {
+player-bar.bar .info .info-pic img {
     height: 100%;
     width: 100%;
     object-fit: contain;
     border-radius: 5px;
 }
 
-section.bar.expanded .info .info-pic img {
+player-bar.bar.active .info .info-pic img {
     height: 100%;
     width: 100%;
     width: auto;
@@ -684,25 +694,25 @@ section.bar.expanded .info .info-pic img {
     display: block;
 }
 
-section.bar .info > .title {
+player-bar.bar .info > .title {
     overflow: hidden;
 }
 
-section.bar.expanded .info > .title {
+player-bar.bar.active .info > .title {
     display: flex;
     flex-direction: column;
     align-items: center;
     flex-shrink: 0;
 }
 
-section.bar .info > .title h3 {
+player-bar.bar .info > .title h3 {
     font-size: 15px;
     font-weight: normal;
     color: var(--fg);
 }
 
-section.bar .info > .title h4,
-section.bar .slider-timestamp span {
+player-bar.bar .info > .title h4,
+player-bar.bar .slider-timestamp span {
     font-size: 11px;
     font-weight: normal;
     color: var(--fg2);
@@ -711,34 +721,34 @@ section.bar .slider-timestamp span {
     gap: 5px;
 }
 
-section.bar.expanded .info > .title h4 {
+player-bar.bar.active .info > .title h4 {
     padding-left: 0;
     cursor: pointer;
 }
 
-section.bar .controls {
+player-bar.bar .controls {
     display: flex;
     align-items: center;
     gap: 20px;
 }
 
-section.bar .control {
+player-bar.bar .control {
     cursor: pointer;
 }
 
-section.bar .controls img {
+player-bar.bar .controls svg {
     width: 20px;
     height: 20px;
 }
 
-section.bar .controls #play {
+player-bar.bar .controls #play {
     width: 30px;
     height: 30px;
     padding: 5px 0;
     object-fit: contain;
 }
 
-section.bar .volume {
+player-bar.bar .volume {
     display: flex;
     align-items: center;
     justify-content: right;
@@ -747,39 +757,184 @@ section.bar .volume {
     margin-right: 5px;
 }
 
-section.bar.expanded .volume {
+player-bar.bar.active .volume {
     display: none;
 }
 
-section.bar .volume img {
+player-bar.bar .volume img {
     max-width: 18px;
     max-height: 18px;
 }
 
-section.bar .volume p {
+player-bar.bar .volume p {
     font-size: 15px;
     padding-bottom: 2px;
 }
 
-section.bar .volume > .volume-slider {
+player-bar.bar .volume > .volume-slider {
     width: 90px;
     height: 4px;
     background-color: var(--bg-lighter);
     border-radius: 2px;
 }
 
-section.bar .volume > input[type="range"] {
+player-bar.bar .volume input[type="range"] {
     width: 90px;
-    height: 4px;
-    background: transparent;
-    cursor: pointer;
-    border-radius: 2px;
-    border: none;
-    outline: none;
-    accent-color: var(--primary);
 }
 
-section.bar .playlist {
+input[type="range"] {
+    font-size: 10px;
+    outline: none;
+    color: var(--primary);
+    background: transparent;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+
+    --thumb-height: 12px;
+    --track-height: 1px;
+    --track-color: var(--bg-lighter);
+    --brightness-hover: 180%;
+    --brightness-down: 80%;
+    --clip-edges: 0.125em;
+}
+
+input[type="range"]#progressBar {
+    --track-height: 4px;
+}
+
+input[type="range"]:active {
+    cursor: grabbing;
+}
+
+/* === WebKit specific styles === */
+input[type="range"],
+input[type="range"]::-webkit-slider-runnable-track,
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    transition: all ease 100ms;
+    height: var(--thumb-height);
+}
+
+input[type="range"]::-webkit-slider-runnable-track,
+input[type="range"]::-webkit-slider-thumb {
+    position: relative;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    --thumb-radius: calc((var(--thumb-height) * 0.5) - 1px);
+    --clip-top: calc((var(--thumb-height) - var(--track-height)) * 0.5 - 0.5px);
+    --clip-bottom: calc(var(--thumb-height) - var(--clip-top));
+    --clip-further: calc(100% + 1px);
+    --box-fill: calc(-100vmax - var(--thumb-width, var(--thumb-height))) 0 0
+        100vmax currentColor;
+
+    width: var(--thumb-width, var(--thumb-height));
+    background: linear-gradient(currentColor 0 0) scroll no-repeat left center /
+        50% calc(var(--track-height) + 1px);
+    background-color: currentColor;
+    box-shadow: var(--box-fill);
+    border-radius: var(--thumb-width, var(--thumb-height));
+
+    filter: brightness(100%);
+    clip-path: polygon(
+        100% -1px,
+        var(--clip-edges) -1px,
+        0 var(--clip-top),
+        -100vmax var(--clip-top),
+        -100vmax var(--clip-bottom),
+        0 var(--clip-bottom),
+        var(--clip-edges) 100%,
+        var(--clip-further) var(--clip-further)
+    );
+}
+
+input[type="range"]#progressBar::-webkit-slider-thumb {
+    clip-path: polygon(
+        100% var(--clip-top),
+        var(--clip-edges) var(--clip-top),
+        0 var(--clip-top),
+        -100vmax var(--clip-top),
+        -100vmax var(--clip-bottom),
+        0 var(--clip-bottom),
+        var(--clip-edges) var(--clip-bottom),
+        var(--clip-further) var(--clip-bottom)
+    );
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+    filter: brightness(var(--brightness-hover));
+    cursor: grab;
+}
+
+input[type="range"]:active::-webkit-slider-thumb {
+    filter: brightness(var(--brightness-down));
+    cursor: grabbing;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+    background: linear-gradient(var(--track-color) 0 0) scroll no-repeat
+        center / 100% calc(var(--track-height) + 1px);
+}
+
+/* === Firefox specific styles === */
+input[type="range"],
+input[type="range"]::-moz-range-track,
+input[type="range"]::-moz-range-thumb {
+    appearance: none;
+    transition: 100ms ease;
+    height: var(--thumb-height);
+}
+
+input[type="range"]::-moz-range-thumb {
+    visibility: hidden;
+    background: currentColor;
+    border: 0;
+    width: var(--thumb-width, var(--thumb-height));
+    border-radius: var(--thumb-width, var(--thumb-height));
+    cursor: grab;
+}
+
+player-bar.bar .volume input[type="range"]:hover::-moz-range-thumb {
+    visibility: visible;
+}
+
+input[type="range"]:active::-moz-range-thumb {
+    cursor: grabbing;
+}
+
+input[type="range"]::-moz-range-track {
+    width: 100%;
+    background: var(--track-color);
+}
+
+input[type="range"]::-moz-range-progress {
+    appearance: none;
+    background: currentColor;
+}
+
+input[type="range"]::-moz-range-track,
+input[type="range"]::-moz-range-progress {
+    height: 4px;
+    border-radius: 4px;
+}
+
+input[type="range"]::-moz-range-thumb,
+input[type="range"]::-moz-range-progress {
+    filter: brightness(100%);
+}
+
+input[type="range"]:hover::-moz-range-thumb,
+input[type="range"]:hover::-moz-range-progress {
+    filter: brightness(var(--brightness-hover));
+}
+
+input[type="range"]:active::-moz-range-thumb,
+input[type="range"]:active::-moz-range-progress {
+    filter: brightness(var(--brightness-down));
+}
+
+player-bar.bar .playlist {
     display: none;
     overflow: hidden;
     overflow-y: auto;
@@ -794,19 +949,20 @@ section.bar .playlist {
     mask-size: 100% 100%;
 }
 
-section.bar.expanded .playlist {
+player-bar.bar.active .playlist {
     display: block;
 }
 
-section.bar .playlist .songs {
+player-bar.bar .playlist .songs {
     display: flex;
     flex-direction: column;
     max-width: 80%;
     width: 100%;
+    padding-right: 5px;
     margin: 0 auto;
 }
 
-section.bar .backdrop {
+player-bar.bar .backdrop {
     position: absolute;
     top: 0;
     left: 0;
@@ -820,58 +976,34 @@ section.bar .backdrop {
     transform: scale(1.1);
 }
 
-section.bar:not(.expanded) .backdrop {
+player-bar.bar:not(.active) .backdrop {
     opacity: 0.6;
 }
 
-section.bar .playlist .item {
+player-bar.bar .playlist .item {
     cursor: pointer;
     height: 32px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    padding: 0 10px;
 }
 
-section.bar .playlist p {
+player-bar.bar .playlist p {
     color: var(--fg-sec);
 }
 
-section.bar .playlist p .title,
-section.bar .playlist p .artist {
+player-bar.bar .playlist p .title,
+player-bar.bar .playlist p .artist {
     color: var(--fg2);
     padding: 0 5px;
 }
 
-section.bar .playlist .active .title,
-section.bar .playlist .active .artist {
+player-bar.bar .playlist .active .title,
+player-bar.bar .playlist .active .artist {
     color: var(--primary);
-}
-
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 0;
-    height: 0;
-    background: transparent;
-    box-shadow: none;
-    border: none;
-    visibility: hidden;
-}
-
-input[type="range"]::-moz-range-track {
-    height: 4px;
-    background: var(--bg-lighter);
-    border-radius: 2px;
-}
-
-input[type="range"]::-moz-range-progress {
-    height: 4px;
-    background: var(--primary);
-    border-radius: 2px;
-}
-
-input[type="range"]::-moz-range-thumb {
-    width: 0;
-    height: 0;
-    background: transparent;
-    border: none;
 }
 
 section#settings .settings-wrapper {
@@ -1048,6 +1180,10 @@ input:checked + .slider:before {
 
 .search-wrapper {
     position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    display: block;
+    cursor: text;
 }
 
 .search-wrapper input[type="search"] {
@@ -1088,8 +1224,8 @@ input:checked + .slider:before {
     display: block;
 }
 
-section.screen#playlist,
-section.screen#settings {
+.screen#playlist,
+.screen#settings {
     padding-left: 0;
     padding-right: 0;
 }
@@ -1101,7 +1237,7 @@ section.screen#settings {
     display: block;
 }
 
-section.screen#playlist .songs thead {
+.screen#playlist .songs thead {
     top: 30px;
 }
 
@@ -1160,7 +1296,7 @@ section.screen#playlist .songs thead {
     padding-right: 10px;
 }
 
-.tabs > .playlist-controls img {
+.tabs > .playlist-controls svg-icon {
     width: 15px;
     height: 15px;
     object-fit: contain;
@@ -1179,10 +1315,43 @@ section.screen#playlist .songs thead {
     display: table;
 }
 
+ul.context-menu {
+    position: absolute;
+    z-index: 100;
+    background-color: var(--bg-light);
+    border: 1px solid var(--primary);
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    list-style: none;
+    top: 50%;
+    left: 50%;
+    padding: 3px;
+    overflow: hidden;
+    display: none;
+}
+
+ul.context-menu li {
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--fg);
+    border-radius: 7px;
+}
+
+ul.context-menu li:hover {
+    background-color: var(--bg-lighter);
+}
+
 .nosel {
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
+}
+
+svg-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 @media screen and (max-width: 1800px) {
@@ -1198,19 +1367,19 @@ section.screen#playlist .songs thead {
         max-width: calc(20% - 5px);
     }
 
-    section.bar.expanded .slider {
+    player-bar.bar.active #progressBar {
         max-width: 100%;
     }
 
-    section.bar.expanded .slider-timestamp {
+    player-bar.bar.active .slider-timestamp {
         width: 100%;
     }
 
-    section.bar.expanded .info .info-pic {
+    player-bar.bar.active .info .info-pic {
         max-width: 100%;
     }
 
-    section.bar .playlist .songs {
+    player-bar.bar .playlist .songs {
         max-width: 100%;
     }
 }

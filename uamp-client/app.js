@@ -1,96 +1,52 @@
+import Api from "./api.js";
 import Duration from "./helper/duration.js";
 import Timestamp from "./helper/timestamp.js";
-import Album from "./library/album.js";
-import Artist from "./library/artist.js";
 import Library from "./library/library.js";
 import Song from "./library/song.js";
 import Player from "./player/player.js";
 import Playlist from "./player/playlist.js";
 import Config from "./settings.js";
-import {
-    toggleBar,
-    updateCurrent,
-    updatePlayBtn,
-    updatePlaylistMask,
-    updateTimestamp,
-    updateVolume,
-} from "./ui/bar.js";
-import {
-    displayAlbum,
-    displayAlbums,
-    displayAlbumSongs,
-    displayArtist,
-    displayArtists,
-    displayArtistSongs,
-} from "./ui/pages.js";
-import {
-    displayAlbumSongsSort,
-    displayAlbumsSort,
-    displayArtistSongsSort,
-    displayArtistsSort,
-    displayLibrarySort,
-    displayPlaylistStack,
-    popPlaylist,
-    pushPlaylist,
-    reorderPlaylists,
-    showPlaylist,
-} from "./ui/tables.js";
-import VirtualTable from "./ui/virtual_table.js";
-
-const slider = document.querySelector(".bar .slider hr");
 
 export default class App {
-    /**
-     * @param {object} data
-     * @param {Config} config
-     */
-    constructor(data, config) {
+    constructor() {
+        /** @type {Library} */
+        this.library = Library.empty();
+        /** @type {Player} */
+        this.player = Player.empty();
+        /** @type {Timestamp|null} */
+        this.position = null;
+        /** @type {Config} */
+        this.config = Config.empty();
+
+        this.playlistTab = 0;
+
+        this.playerBar = document.querySelector("player-bar");
+
+        this.libraryScreen = document.querySelector("library-screen");
+        this.albumsScreen = document.querySelector("albums-screen");
+        this.artistsScreen = document.querySelector("artists-screen");
+        this.playlistScreen = document.querySelector("playlist-screen");
+
+        this.activeScreen = `#library`;
+        this.activeOverlay = null;
+        this.activeScreenArgs = {};
+    }
+
+    async init(data) {
+        this.config.init(data.config).then(() => this.config.render());
+
         this.library = new Library(data.library);
         /** @type {Player} */
         this.player = new Player(data.player, this.library);
         /** @type {Timestamp} */
         this.position = data.position && Timestamp.from(data.position);
-        /** @type {Config} */
-        this.config = config;
-        this.config.render();
-
-        this.lastUpdate = performance.now();
-        this.rafId = null;
-
-        this.searchTimeout = null;
+        this.playerBar.updateTimestamp(this.position);
 
         this.playlistTab = 0;
 
-        /** @type {?Album} */
-        this.album = null;
-        /** @type {?Artist} */
-        this.artist = null;
-
-        this.libraryTable = new VirtualTable(
-            () => this.library.songs.get(),
-            "#library",
-            ".songs tbody",
-            () => this.player.getPlayingId(),
-        );
-        this.playlistTable = new VirtualTable(
-            () => this.player.getPlaylist(this.playlistTab).songs,
-            "#playlist",
-            ".playlist-stack.active tbody",
-            () => this.player.getPlaylist(this.playlistTab).getPlayingId(),
-        );
-        this.playlistTable.autoScrolling();
-        this.barPlaylistTable = new VirtualTable(
-            () => this.player.playlist.songs,
-            ".bar .playlist",
-            ".songs",
-            () => this.player.getPlayingId(),
-        );
-        this.barPlaylistTable.list().centering().autoScrolling();
-    }
-
-    static async init(data) {
-        const config = await Config.init(data.config);
-        return new App(data, config);
+        this.libraryScreen.table.render();
+        this.playlistScreen.table.render();
+        this.playerBar.table.render();
     }
 
     /**
@@ -99,7 +55,6 @@ export default class App {
      */
     setPlayback(playback) {
         this.player.setPlayback(playback);
-        this.handleSongProgress();
     }
 
     /**
@@ -108,8 +63,7 @@ export default class App {
      */
     setCurrent(id) {
         this.player.setCurrent(id);
-        this.playlistTable.render();
-        this.barPlaylistTable.render();
+        this.playlistScreen.table.render();
     }
 
     /**
@@ -118,13 +72,15 @@ export default class App {
      */
     setTimestamp(timestamp) {
         if (timestamp === null) {
+            this.playerBar.updateTimestamp(null);
             this.position = null;
             return;
         }
 
         this.position = Timestamp.from(timestamp);
-        this.player.getPlaying().length = Duration.from(timestamp.total);
-        this.displayProgress(0);
+        const song = this.player.getPlaying();
+        if (song) song.length = Duration.from(timestamp.total);
+        this.playerBar.updateTimestamp(this.position);
     }
 
     /**
@@ -138,7 +94,7 @@ export default class App {
             this.createBarSongs();
         }
         this.player.highlightPlaying();
-        updateCurrent(this.player.getPlaying());
+        this.playerBar.updateCurrent(this.player.getPlaying());
     }
 
     /**
@@ -150,34 +106,45 @@ export default class App {
         this.player.playlist_stack.push(this.player.playlist);
         if (this.playlistTab !== 0) this.playlistTab += 1;
 
-        pushPlaylist();
+        this.playlistScreen.push();
         this.setPlaylist(playlist);
-        showPlaylist(this.playlistTab);
+        this.playlistScreen.show(this.playlistTab);
     }
 
     /**
-     * Pops playlists from the stack and sets it as the active playlist. Updates
-     * related UI elements.
+     * Pops playlists from the stack and sets it as the active playlist.
+     * Updates related UI elements.
      * @param {number} cnt - number of playlists to pop from the stack.
      * @returns previous active playlist if it exists, otherwise null.
      */
     popPlaylist(cnt = 1) {
-        if (cnt === 0) cnt = this.player.playlist_stack.length;
+        const [prev, removed] = this.player.popPlaylist(cnt);
+        this.playlistTab = Math.max(0, this.playlistTab - removed);
 
-        let prev = null;
-        while (cnt-- > 0 && this.player.playlist_stack.length > 0) {
-            prev = this.player.playlist;
-            this.player.playlist = this.player.playlist_stack.pop();
-
-            popPlaylist();
-            this.playlistTab -= 1;
-        }
-
-        this.playlistTab = Math.max(0, this.playlistTab);
-        showPlaylist(this.playlistTab);
-        updateCurrent(this.player.getPlaying());
+        this.playlistScreen.show(this.playlistTab);
+        this.playerBar.updateCurrent(this.player.getPlaying());
         this.displayPlaylist();
         return prev;
+    }
+
+    /**
+     * Removes given playlist and updates the UI.
+     * @param {number} id - ID of the playlist to be removed
+     */
+    removePlaylist(id) {
+        this.player.removePlaylist(id);
+        this.playlistScreen.remove(id);
+
+        const prev = this.playlistTab;
+        if (this.playlistTab >= id)
+            this.playlistTab = Math.max(0, this.playlistTab - 1);
+
+        this.playlistScreen.show(this.playlistTab);
+
+        if (prev !== this.playlistTab) {
+            this.playerBar.updateCurrent(this.player.getPlaying());
+            this.displayPlaylist();
+        }
     }
 
     /**
@@ -185,7 +152,7 @@ export default class App {
      * @param {number[]} indexes - reorder indexes containing all playlists
      */
     reorderPlaylists(indexes) {
-        reorderPlaylists(indexes);
+        this.playlistScreen.reorder(indexes);
         if (this.playlistTab !== 0)
             this.playlistTab = indexes.indexOf(this.playlistTab);
 
@@ -201,8 +168,8 @@ export default class App {
             .slice(0, -1)
             .map((i) => all[len - i]);
 
-        showPlaylist(this.playlistTab);
-        updateCurrent(this.player.getPlaying());
+        this.playlistScreen.show(this.playlistTab);
+        this.playerBar.updateCurrent(this.player.getPlaying());
         this.player.highlightPlaying();
     }
 
@@ -212,7 +179,7 @@ export default class App {
      */
     setPlaylistTab(id) {
         this.playlistTab = id;
-        showPlaylist(id);
+        this.playlistScreen.show(id);
         this.displayPlaylist();
     }
 
@@ -232,229 +199,128 @@ export default class App {
     }
 
     /** Displays songs with virtual scrolling. */
-    displaySongs = () => this.libraryTable.render();
-    displayPlaylist = () => this.playlistTable.render();
+    displaySongs = () => this.libraryScreen.table.render();
+    displayPlaylist = () => this.playlistScreen.table.render();
     createBarSongs = () => {
-        this.barPlaylistTable.render();
-        updatePlaylistMask();
+        this.playerBar.table.render();
+        this.playerBar.updatePlaylistMask();
     };
 
-    displayAlbums = () => displayAlbums(this.library.albums);
-    displayArtists = () => displayArtists(this.library.artists);
+    displayAlbums = () => this.albumsScreen.display(this.library.albums);
+    displayArtists = () => this.artistsScreen.display(this.library.artists);
 
-    sortSongs = (key) => {
-        this.library.songs.toggleSort(key);
-        this.libraryTable.render();
-        displayLibrarySort(
-            this.library.songs.key,
-            this.library.songs.ascending,
-        );
+    searchLibrary = (e) => {
+        this.library.searchLibrary(e.detail);
+        this.libraryScreen.table.render();
     };
-    sortAlbumSongs = (key) => {
-        if (!this.album) return;
-        this.album.songs.toggleSort(key);
-        displayAlbumSongs(this.album, this.player.getPlayingId());
-        displayAlbumSongsSort(this.album.songs.key, this.album.songs.ascending);
-    };
-    sortArtistSongs = (key) => {
-        if (!this.artist) return;
-        this.artist.songs.toggleSort(key);
-        displayArtistSongs(this.artist, this.player.getPlayingId());
-        displayArtistSongsSort(
-            this.artist.songs.key,
-            this.artist.songs.ascending,
-        );
-    };
-
-    sortAlbums = (key) => {
-        this.library.albums.toggleSort(key);
+    searchAlbums = (e) => {
+        this.library.searchAlbums(e.detail);
         this.displayAlbums();
     };
-
-    sortArtists = (key) => {
-        this.library.artists.toggleSort(key);
+    searchArtists = (e) => {
+        this.library.searchArtists(e.detail);
         this.displayArtists();
     };
-
-    searchLibrary = this.searchDebounce((e) => {
-        this.library.searchLibrary(e.target.value);
-        this.libraryTable.render();
-    });
-    searchAlbums = this.searchDebounce((e) => {
-        this.library.searchAlbums(e.target.value);
-        this.displayAlbums();
-    });
-    searchArtists = this.searchDebounce((e) => {
-        this.library.searchArtists(e.target.value);
-        this.displayArtists();
-    });
-    searchDebounce(searchFn, delay = 100) {
-        return (e) => {
-            clearTimeout(this.searchTimeout);
-            this.searchTimeout = setTimeout(() => searchFn(e), delay);
-        };
-    }
 
     updateAll() {
-        this.displayProgress(0);
-        this.handleSongProgress();
         this.displayPlaylistStack();
 
-        updateCurrent(this.player.getPlaying());
-        updatePlayBtn(this.player.isPlaying());
-        updateVolume(this.player.volume, this.player.mute);
-    }
-
-    /** Handles song progress bar updates */
-    handleSongProgress() {
-        if (this.player.isPlaying()) {
-            this.lastUpdate = performance.now();
-            this.stopProgress();
-            this.rafId = requestAnimationFrame(() => this.updateProgressBar());
-        } else {
-            this.stopProgress();
-        }
-    }
-
-    /** Stops the song progres bar updates */
-    stopProgress() {
-        if (this.rafId !== null) {
-            cancelAnimationFrame(this.rafId);
-            this.rafId = null;
-        }
-    }
-
-    /** Updates progress bar based on delta time */
-    updateProgressBar() {
-        if (!this.player.isPlaying()) return;
-
-        const now = performance.now();
-        const delta = (now - this.lastUpdate) / 1000;
-        this.lastUpdate = now;
-
-        this.displayProgress(delta);
-        this.rafId = requestAnimationFrame(() => this.updateProgressBar());
-    }
-
-    /**
-     * Updates progress bar
-     * @param {number} delta - optional delta time
-     */
-    displayProgress(delta = 0) {
-        let current = 0 + delta;
-        if (this.position !== null)
-            current = this.position.current.toSecs() + delta;
-
-        const playing = this.player.getPlaying();
-        if (playing === null) return;
-
-        const total = playing.length?.toSecs() ?? 0;
-        if (current > total) current = total;
-
-        const percent = (current / total) * 100;
-        slider.style.width = `${percent}%`;
-
-        if (this.position !== null) {
-            this.position.current.secs = Math.floor(current);
-            this.position.current.nanos = Math.floor(
-                (current % 1) * 1_000_000_000,
-            );
-            updateTimestamp(this.position.current);
-        }
+        this.playerBar.updateCurrent(this.player.getPlaying());
+        this.playerBar.setPlaying(this.player.isPlaying());
+        this.playerBar.updateVolume(this.player.volume, this.player.mute);
     }
 
     displayPlaylistStack() {
-        displayPlaylistStack(this.player.playlist_stack.length);
-    }
-
-    libraryClick = (e) => this.songClickHandler(e, this.library.songs.get());
-    albumSongClick = (e) => this.songClickHandler(e, this.album.songs.get());
-    artistSongClick = (e) => this.songClickHandler(e, this.artist.songs.get());
-
-    songClickHandler(e, songs) {
-        const row = e.target.closest("tr");
-        if (!row) return;
-
-        apiPushPlaylist(songs, row.dataset.index);
-    }
-
-    genericSongClick(e, query, sort = "") {
-        const row = e.target.closest("tr");
-        if (!row) return;
-
-        const encQuery = encodeURIComponent(query);
-        const sortQuery = sort === "" ? "" : `&sort=${sort}`;
-        apiCtrl(`sp=${encQuery}${sortQuery}&pj=${row.dataset.index}&pp=play`);
-    }
-
-    playlistClick(e) {
-        const row = e.target.closest("tr");
-        const table = row?.closest("table");
-        if (!row || !table) return;
-
-        const first = document.querySelector("#playlist .playlist-stack table");
-        let cmd = "";
-        if (table !== first) {
-            cmd = `rps=${this.playlistTab}&`;
-        }
-
-        apiCtrl(`${cmd}pj=${row.dataset.index}&pp=play`);
+        this.playlistScreen.displayStack(this.player.playlist_stack.length);
     }
 
     barPlaylistClick(e) {
         const item = e.target.closest(".item");
         if (!item) return;
-        apiCtrl(`pj=${item.dataset.index}`);
-    }
-
-    albumClick = (e) => this.genericAlbumClick(e, this.library.albums.get());
-    albumArtistClick = (e) => this.genericAlbumClick(e, this.artist.albums);
-
-    genericAlbumClick(e, albums) {
-        const card = e.target.closest(".card");
-        if (!card) return;
-
-        this.album = albums[card.dataset.index];
-        displayAlbum(this.album, this.player.getPlayingId());
-        showScreen("album-detail");
-    }
-
-    artistClick(e) {
-        const row = e.target.closest("tr");
-        if (!row) return;
-
-        const artist = this.library.artists.get()[row.dataset.index];
-
-        const album = e.target.closest(".albums-preview img");
-        if (!album) {
-            this.artist = artist;
-            displayArtist(this.artist, this.player.getPlayingId());
-            showScreen("artist-detail");
-            return;
-        }
-
-        this.album = artist.albums[album.dataset.index];
-        displayAlbum(this.album, this.player.getPlayingId());
-        showScreen("album-detail");
+        Api.ctrl(`pj=${item.dataset.index}`);
     }
 
     artistBarClick(e) {
-        this.artist = this.library.getArtistByName(e.target.textContent);
-        displayArtist(this.artist, this.player.getPlayingId());
-        toggleBar();
-        showScreen("artist-detail");
+        const artist = this.library.getArtistByName(e.target.textContent);
+        this.navigateTo("artist-detail", { id: artist.id });
+
+        // this.playerBar.toggleBar();
     }
 
     albumBarClick(artist, album) {
-        this.album = this.library.getAlbumByKey(artist, album);
-        displayAlbum(this.album, this.player.getPlayingId());
-        toggleBar();
-        showScreen("album-detail");
+        const a = this.library.getAlbumByKey(artist, album);
+        this.navigateTo("album-detail", { id: a.id });
+
+        // this.playerBar.toggleBar();
+    }
+
+    /**
+     * Navigates to the given screen, assumes it implements onNavigate
+     * @param {string} target - target screen ID
+     * @param {Object} args - target screen arguments
+     * @param {boolean} pushHistory - whether to push history
+     * @param {boolean} isOverlay - whether target is overlay only
+     */
+    navigateTo(target, args = {}, pushHistory = true, isOverlay = false) {
+        if (isOverlay) {
+            this.navigateToOverlay(target, args, pushHistory);
+            return;
+        }
+
+        document.querySelector(this.activeScreen).classList.remove("active");
+        this.activeScreen = `#${target}`;
+        this.activeScreenArgs = args;
+
+        const active = document.querySelector(this.activeScreen);
+        active.classList.add("active");
+        if (typeof active.onNavigate === "function") active.onNavigate(args);
+
+        if (this.activeOverlay) {
+            const overlay = document.querySelector(this.activeOverlay);
+            overlay.classList.remove("active");
+            this.activeOverlay = null;
+        }
+
+        if (pushHistory)
+            history.pushState(
+                { page: target, args, overlay: null, overlayArgs: null },
+                "",
+            );
+    }
+
+    /**
+     * Navigates to the given overlay, only displays it and pushes to history
+     * @param {string} target - target overlay ID
+     * @param {Object} args - target overlay arguments
+     */
+    navigateToOverlay(target, args = {}, pushHistory = true) {
+        this.activeOverlay = `#${target}`;
+        const overlay = document.querySelector(this.activeOverlay);
+        overlay.classList.add("active");
+        if (typeof overlay.onNavigate === "function") overlay.onNavigate(args);
+
+        if (pushHistory) {
+            const cur = this.activeScreen.replace("#", "");
+            history.pushState(
+                {
+                    page: cur,
+                    args: this.activeScreenArgs,
+                    overlay: target,
+                    overlayArgs: args,
+                },
+                "",
+            );
+        }
+    }
+
+    /** Hides overlay by navigating to the active screen. */
+    hideOverlay() {
+        const target = this.activeScreen.replace("#", "");
+        this.navigateTo(target, this.activeScreenArgs);
     }
 }
 
 const navs = document.querySelectorAll("nav p");
-const screens = document.querySelectorAll(".screen");
 
 navs.forEach((item) => {
     item.addEventListener("click", () => {
@@ -462,69 +328,20 @@ navs.forEach((item) => {
         item.classList.add("active");
 
         const targetId = item.dataset.screen;
-        showScreen(targetId);
-        if (targetId === "playlist") {
-            const app = AppSingleton.get();
-            app.displayPlaylist();
-        }
+        app.navigateTo(targetId);
     });
 });
-
-function showScreen(target, pushHistory = true) {
-    screens.forEach((s) => s.classList.toggle("active", s.id === target));
-    if (pushHistory) history.pushState({ page: target }, "");
-}
 
 history.replaceState({ page: "library" }, "");
 window.addEventListener("popstate", (e) => {
-    const target = e.state?.page || "library";
-    showScreen(target, false);
+    const state = e.state || { page: "library", args: {}, overlay: null };
+    app.navigateTo(state.page, state.args, false);
+
+    if (state.overlay) {
+        app.navigateToOverlay(state.overlay, state.overlayArgs, false);
+    }
+
     navs.forEach((p) =>
-        p.classList.toggle("active", p.dataset.screen === target),
+        p.classList.toggle("active", p.dataset.screen === state.page),
     );
 });
-
-const sliderTrack = document.querySelector(".bar .slider");
-sliderTrack.addEventListener("click", (e) => {
-    const rect = sliderTrack.getBoundingClientRect();
-    const percent = (e.clientX - rect.left) / rect.width;
-
-    const app = AppSingleton.get();
-    const song = app.player.getPlaying();
-
-    const pos = song.length.fromPercent(percent);
-    apiCtrl(`seek=${pos.format()}`);
-    slider.style.width = `${percent * 100}%`;
-});
-
-/**
- * Sends an API request to push playlist
- * @param {Song[]} songs - songs to be pushed to the playlist
- * @param {number} pos - playing song in the playlist
- */
-async function apiPushPlaylist(songs, pos) {
-    const data = {
-        songs: songs.map((s) => s.id),
-        position: Number(pos),
-        play: true,
-    };
-    return fetch("/api/ctrl", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ SetPlaylist: data }),
-    });
-}
-
-async function apiCtrl(query) {
-    return fetch(`/api/ctrl?${query}`)
-        .then((res) => {
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-            return res.text();
-        })
-        .catch((error) => {
-            console.error("Fetch error:", error);
-        });
-}
-window.apiCtrl = apiCtrl;

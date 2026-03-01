@@ -4,16 +4,15 @@ export default class Playlist {
     /**
      * Creates new playlist
      * @param {object} data
-     * @param {Library} library 
+     * @param {Library} library
      */
     constructor(data, library) {
         /** @type {Song[]} */
         this.songs = Playlist.#parseSongs(data.songs, library);
-        /** @type {?number} */
+        /** @type {number|null} */
         this.current = data.current;
-        /** @type {Duration} */
-        this.play_pos = data.play_pos !== null ?
-            Duration.from(data.play_pos) : null;
+        /** @type {Duration|null} */
+        this.play_pos = Duration.from(data.play_pos);
         /** @type {{ name: string, args: string[] }|null} */
         this.on_end = data.on_end;
         /** @type {string} */
@@ -35,6 +34,12 @@ export default class Playlist {
     getPlayingId() {
         return this.current !== null ? this.songs[this.current].id : null;
     }
+
+    /**
+     * Gets playlist ID of the next playing song
+     * @returns {number} playlist ID, 0 when no current set
+     */
+    getNextPId = () => (this.current === null ? 0 : this.current + 1);
 
     /** Parses the given list of song IDs into songs list */
     static #parseSongs(songs, library) {

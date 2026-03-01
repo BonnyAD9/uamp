@@ -1,34 +1,52 @@
-class SearchBar extends HTMLElement {
+export default class SearchBar extends HTMLElement {
     constructor() {
         super();
+
+        this.timeout = 100;
+        this.searchTimeout = null;
     }
 
     connectedCallback() {
         const template = document.getElementById("search-input");
         this.appendChild(template.content.cloneNode(true));
 
-        const input = this.querySelector("input");
-        const clear = this.querySelector("button");
+        this.dom = {
+            input: this.querySelector("input"),
+            clear: this.querySelector("button"),
+        };
 
         if (this.hasAttribute("placeholder"))
-            input.placeholder = this.getAttribute("placeholder");
-        if (this.hasAttribute("id")) input.id = this.getAttribute("id");
+            this.dom.input.placeholder = this.getAttribute("placeholder");
+        if (this.hasAttribute("id"))
+            this.dom.input.id = this.getAttribute("id");
 
-        input.addEventListener("input", () => {
-            this.dispatchEvent(
-                new CustomEvent("input", {
-                    detail: input.value,
-                    bubbles: true,
-                }),
+        this.timeout = Number(this.getAttribute("timeout")) || this.timeout;
+
+        this.#setupListeners();
+    }
+
+    #setupListeners() {
+        this.dom.input.addEventListener("input", (e) => {
+            e.stopPropagation();
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(
+                () => this.#dispatchEvent(),
+                this.timeout,
             );
         });
 
-        clear.addEventListener("click", () => {
-            input.value = "";
-            input.dispatchEvent(new Event("input", { bubbles: true }));
+        this.dom.clear.addEventListener("click", () => {
+            this.dom.input.value = "";
+            this.dom.input.dispatchEvent(new Event("input", { bubbles: true }));
         });
     }
-}
 
-if (!customElements.get("search-bar"))
-    customElements.define("search-bar", SearchBar);
+    #dispatchEvent() {
+        this.dispatchEvent(
+            new CustomEvent("input", {
+                detail: this.dom.input.value,
+                bubbles: true,
+            }),
+        );
+    }
+}

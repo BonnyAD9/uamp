@@ -1,7 +1,8 @@
-import { applyThemeColor, setupDynamicColors } from "./colors.js";
+import { applyThemeColor, setupDynamicColors } from "./ui/colors.js";
+import HotkeyManager, { defaultHotkeys } from "./hotkeys.js";
 
 const settingsTabs = document.querySelector("#settings .tabs .tabs-wrapper");
-const bar = document.querySelector("section.bar");
+const bar = document.querySelector("player-bar.bar");
 
 // Setting templates
 const toggleTemplate = document.getElementById("toggle-setting");
@@ -14,10 +15,19 @@ const colorTemplate = document.getElementById("color-setting");
 export default class Config {
     constructor(data, schema) {
         this.schema = schema;
+        this.hotkeys = new HotkeyManager(defaultHotkeys);
         Object.assign(this, data);
     }
 
-    static async init(data) {
+    /**
+     * Creates new empty Config
+     * @returns {Config} created config
+     */
+    static empty() {
+        return new Config({}, {});
+    }
+
+    async init(data) {
         const schema = await fetch("assets/config_schema.json")
             .then((res) => {
                 if (!res.ok) throw new Error("failed to load config");
@@ -25,7 +35,8 @@ export default class Config {
             })
             .then((res) => res.properties)
             .catch((_) => null);
-        return new Config(data, schema);
+        this.schema = schema;
+        Object.assign(this, data);
     }
 
     render() {
@@ -376,6 +387,7 @@ export function getCookie(name) {
 /// Displays appearance settings in its page
 function displayAppearanceSettings() {
     const appearSettings = document.getElementById("appearanceSettings");
+    appearSettings.innerHTML = "";
 
     const floatingBar = (getCookie("floatingBar") ?? "true") === "true";
     bar.classList.toggle("floating", floatingBar);
@@ -408,7 +420,7 @@ function displayAppearanceSettings() {
     );
     appearSettings.appendChild(dynamicColorToggle);
 
-    const themeColor = getCookie("themeColor") ?? "#3acbaf";
+    const themeColor = getCookie("themeColor") ?? "#f6d32d";
     const themeColorPicker = Config.getColorSetting(
         "theme_color",
         themeColor,

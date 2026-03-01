@@ -1,192 +1,169 @@
 import App from "./app.js";
-import "./colors.js";
-import "./ui/components/search-bar.js";
-import "./ui/components/screen-header.js";
+import "./ui/components.js";
+import "./ui/context-menu.js";
 import { spawnScreens } from "./ui/pages.js";
-import { removePlaylistRow } from "./ui/tables.js";
 
 spawnScreens();
 
-const AppSingleton = (() => {
-    let instance = null;
+window.app = new App();
+window.addEventListener("load", connectSSE);
 
-    return {
-        async init(data) {
-            instance = await App.init(data);
-            return instance;
-        },
-        get() {
-            return instance;
-        },
-    };
-})();
-window.AppSingleton = AppSingleton;
+/** Object containing implemented SSE event handlings. */
+const SSE_HANDLERS = {
+    "set-all": async (data) => {
+        data.sse.forEach((event) => {
+            if (!SSE_HANDLERS[event]) {
+                eventSource.addEventListener(event, (e) => connectSSE());
+            }
+        });
 
-const eventSource = new EventSource("/api/sub");
+        await app.init(data);
+        setTimeout(() => {
+            app.updateAll();
+            app.displayAlbums();
+            app.displayArtists();
+        }, 0);
+    },
+    "set-playlist": setPlaylistEvent,
+    playback: (data) => app.setPlayback(data),
+    "playlist-jump": playlistJumpEvent,
+    seek: (data) => app.setTimestamp(data),
+    quitting: () => console.log("Quitting..."),
+    "set-volume": (data) => app.player.setVolume(data),
+    "set-mute": (data) => app.player.setMute(data),
+    "pop-playlist": ({ pop_cnt, playlist }) => {
+        app.popPlaylist(pop_cnt);
+        playlistJumpEvent(playlist);
+    },
+    "pop-set-playlist": ({ pop_cnt, playlist }) => {
+        app.popPlaylist(pop_cnt);
+        setPlaylistEvent(playlist);
+    },
+    "set-playlist-add-policy": (data) =>
+        (app.player.playlist.add_policy = data),
+    "set-playlist-end-action": (data) => (app.player.playlist.on_end = data),
+    "push-playlist": pushPlaylistEvent,
+    "push-playlist-with-cur": (data) => {
+        const current = app.player.playlist.current;
+        if (current !== null) {
+            app.player.playlist.songs.splice(current, 1);
+            app.playlistScreen.removeRow(current);
+        }
 
-eventSource.addEventListener("set-all", async (e) => {
-    const app = await AppSingleton.init(JSON.parse(e.data));
-    app.displaySongs();
+        pushPlaylistEvent(data);
+    },
+    "insert-into-playlist": (data) => {
+        playlistAction(data, ({ songs, position }, playlist) => {
+            const newSongs = songs.map((id) => app.library.getSong(id));
+            playlist.songs.splice(position, 0, ...newSongs);
+            if (playlist.current !== null && position <= playlist.current) {
+                playlist.current += songs.length;
+            }
+        });
+    },
+    "remove-from-playlist": (data) => {
+        playlistAction(data, (data, playlist) => {
+            data.ranges.sort((a, b) => b[0] - a[0]);
+            data.ranges.forEach((range) => {
+                const [start, end] = range;
+                const deleted = end - start;
+                playlist.songs.splice(start, deleted);
 
-    setTimeout(() => {
-        app.updateAll();
-        app.displayAlbums();
-        app.displayArtists();
-    }, 0);
-});
-
-eventSource.addEventListener("set-playlist", (e) => {
-    setPlaylistEvent(AppSingleton.get(), JSON.parse(e.data));
-});
-
-eventSource.addEventListener("playback", (e) => {
-    AppSingleton.get().setPlayback(JSON.parse(e.data));
-});
-
-eventSource.addEventListener("playlist-jump", (e) => {
-    playlistJumpEvent(AppSingleton.get(), JSON.parse(e.data));
-});
-
-eventSource.addEventListener("seek", (e) => {
-    AppSingleton.get().setTimestamp(JSON.parse(e.data));
-});
-
-eventSource.addEventListener("quitting", (_) => console.log("Quitting..."));
-
-eventSource.addEventListener("set-volume", (e) => {
-    AppSingleton.get().player.setVolume(JSON.parse(e.data));
-});
-
-eventSource.addEventListener("set-mute", (e) => {
-    AppSingleton.get().player.setMute(JSON.parse(e.data));
-});
-
-eventSource.addEventListener("pop-playlist", (e) => {
-    const app = AppSingleton.get();
-    const data = JSON.parse(e.data);
-
-    app.popPlaylist(data.pop_cnt);
-    playlistJumpEvent(app, data.playlist);
-});
-
-eventSource.addEventListener("pop-set-playlist", (e) => {
-    const app = AppSingleton.get();
-    const data = JSON.parse(e.data);
-
-    app.popPlaylist(data.pop_cnt);
-    setPlaylistEvent(app, data.playlist);
-});
-
-eventSource.addEventListener("set-playlist-add-policy", (e) => {
-    const app = AppSingleton.get();
-    app.player.playlist.add_policy = JSON.parse(e.data);
-});
-
-eventSource.addEventListener("set-playlist-end-action", (e) => {
-    const app = AppSingleton.get();
-    app.player.playlist.on_end = JSON.parse(e.data);
-});
-
-eventSource.addEventListener("push-playlist", (e) => {
-    pushPlaylistEvent(AppSingleton.get(), JSON.parse(e.data));
-});
-
-eventSource.addEventListener("push-playlist-with-cur", (e) => {
-    const app = AppSingleton.get();
-    const current = app.player.playlist.current;
-    if (current !== null) {
-        app.player.playlist.songs.splice(current, 1);
-        removePlaylistRow(current);
-    }
-
-    pushPlaylistEvent(app, JSON.parse(e.data));
-});
-
-eventSource.addEventListener("queue", (e) => {
-    const app = AppSingleton.get();
-    app.player.playlist.songs.push(...JSON.parse(e.data));
-    if (app.playlistTab === 0) {
-        app.displayPlaylist();
-        app.createBarSongs();
-    }
-});
-
-eventSource.addEventListener("play-next", (e) => {
-    const app = AppSingleton.get();
-
-    const current = app.player.playlist.current;
-    if (current === null) return;
-
-    app.player.playlist.songs.splice(current + 1, 0, ...JSON.parse(e.data));
-    if (app.playlistTab === 0) {
-        app.displayPlaylist();
-        app.createBarSongs();
-    }
-});
-
-eventSource.addEventListener("restarting", (_) => console.log("Restarting..."));
-
-eventSource.addEventListener("reorder-playlist-stack", (e) => {
-    const app = AppSingleton.get();
-    const data = JSON.parse(e.data);
-
-    const order = extendArray(data.order, app.player.playlist_stack.length);
-    app.reorderPlaylists(order);
-    playlistJumpEvent(app, data.position);
-});
-
-eventSource.addEventListener("play-tmp", (e) => {
-    const app = AppSingleton.get();
-    const data = JSON.parse(e.data);
-
-    app.pushTmpSongs(data.songs);
-    app.setPlaylist(data.playlist);
-    app.setPlayback(data.playback);
-    app.setTimestamp(data.timestamp);
-});
-
-eventSource.addEventListener("new-server", (e) => {
-    const { address, port } = JSON.parse(e.data);
-    const server = `http://${address}:${port}`;
-    const ping = `${server}/api/marco`;
-
-    const interval = setInterval(async () => {
-        fetch(ping, { cache: "no-store" })
-            .then((res) => res.text())
-            .then((text) => {
-                if (text === "polo") {
-                    clearInterval(interval);
-                    window.location.href = `${server}/app`;
+                if (playlist.current !== null && playlist.current >= end) {
+                    playlist.current -= deleted;
                 }
-            })
-            .catch((_) => {});
-    }, 1000);
-});
+            });
+        });
+    },
+    restarting: () => console.log("Restarting..."),
+    "reorder-playlist-stack": ({ order, position }) => {
+        const ord = extendArray(order, app.player.playlist_stack.length);
+        app.reorderPlaylists(ord);
+        playlistJumpEvent(position);
+    },
+    "play-tmp": (data) => {
+        app.pushTmpSongs(data.songs);
+        app.setPlaylist(data.playlist);
+        app.setPlayback(data.playback);
+        app.setTimestamp(data.timestamp);
+    },
+    "new-server": ({ address, port }) => {
+        const server = `http://${address}:${port}`;
+        const ping = `${server}/api/marco`;
 
-eventSource.addEventListener("client-changed", (_) => window.location.reload());
+        const interval = setInterval(async () => {
+            fetch(ping, { cache: "no-store" })
+                .then((res) => res.text())
+                .then((text) => {
+                    if (text === "polo") {
+                        clearInterval(interval);
+                        window.location.href = `${server}/app`;
+                    }
+                })
+                .catch((_) => {});
+        }, 1000);
+    },
+    "client-changed": () => window.location.reload(),
+    "config-changed": async (data) => app.config.init(data),
+    "remove-playlist": (id) => app.removePlaylist(id),
+};
 
-eventSource.addEventListener("config-changed", (e) => {
-    const app = AppSingleton.get();
-    if (app === null) return;
-    app.config = JSON.parse(e.data);
-});
+/** @type {EventSource|null} */
+let eventSource;
+/** Connects SSE to the server with auto-reconnecting. */
+function connectSSE() {
+    if (eventSource) eventSource.close();
 
-function playlistJumpEvent(app, data) {
+    eventSource = new EventSource("/api/sub");
+    Object.entries(SSE_HANDLERS).forEach(([event, handler]) => {
+        eventSource.addEventListener(event, async (e) => {
+            const data = e.data ? JSON.parse(e.data) : null;
+            await handler(data);
+        });
+    });
+
+    eventSource.onopen = () => console.log("SSE connected.");
+    eventSource.onerror = () => {
+        console.error(
+            "Error happened in SSE connection. Reconnecting in 3s...",
+        );
+        eventSource.close();
+        setTimeout(connectSSE, 3000);
+    };
+}
+
+function playlistJumpEvent(data) {
     app.setCurrent(data.position);
     app.setPlayback(data.playback);
     app.setTimestamp(data.timestamp);
 }
 
-function setPlaylistEvent(app, data) {
+function setPlaylistEvent(data) {
     app.setPlaylist(data.playlist);
     app.setTimestamp(data.timestamp);
     app.setPlayback(data.playback);
 }
 
-function pushPlaylistEvent(app, data) {
+function pushPlaylistEvent(data) {
     app.pushPlaylist(data.playlist);
     app.setTimestamp(data.timestamp);
     app.setPlayback(data.playback);
+}
+
+/**
+ * Appplies given action on a playlist
+ * @param {object} data - event data
+ * @param {(object, Playlist) => void} action - action performed on playlist
+ */
+function playlistAction(data, action) {
+    const playlist = app.player.getPlaylist(data.playlist);
+    if (playlist === null) return;
+
+    action(data, playlist);
+    if (app.playlistTab === data.playlist) {
+        app.displayPlaylist();
+        app.createBarSongs();
+    }
 }
 
 function extendArray(arr, max) {

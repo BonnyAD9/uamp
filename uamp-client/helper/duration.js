@@ -82,9 +82,6 @@ export default class Duration {
     format() {
         const minutes = Math.floor(this.secs / 60);
         const seconds = this.secs % 60;
-        if (minutes == 0 && seconds == 0) {
-            return "-:--";
-        }
         return `${minutes}:${seconds.toString().padStart(2, "0")}`;
     }
 }

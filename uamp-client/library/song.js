@@ -1,8 +1,8 @@
 import Duration from "../helper/duration.js";
 import Album from "./album.js";
 
-const songTemplate = document.getElementById('song-template');
-const barSongTemplate = document.getElementById('bar-song-template');
+const songTemplate = document.getElementById("song-template");
+const barSongTemplate = document.getElementById("bar-song-template");
 
 export default class Song {
     /**
@@ -21,8 +21,18 @@ export default class Song {
      * @param {boolean} deleted
      */
     constructor(
-        id, path, title, artists, album, album_artist, track, disc, year,
-        length, genres, deleted = false
+        id,
+        path,
+        title,
+        artists,
+        album,
+        album_artist,
+        track,
+        disc,
+        year,
+        length,
+        genres,
+        deleted = false,
     ) {
         /** @type {number} */
         this.id = id;
@@ -30,7 +40,7 @@ export default class Song {
         this.path = path;
         /** @type {string|null} */
         this.title = title;
-        /** @type {[string]} */
+        /** @type {string[]} */
         this.artists = artists;
         /** @type {string|null} */
         this.album = album;
@@ -44,7 +54,7 @@ export default class Song {
         this.year = year;
         /** @type {Duration|null} */
         this.length = length;
-        /** @type {[string]} */
+        /** @type {string[]} */
         this.genres = genres;
         /** @type {boolean} */
         this.deleted = deleted;
@@ -52,24 +62,61 @@ export default class Song {
 
     static from(id, obj) {
         return new Song(
-            id, obj.path, obj.title, obj.artists, obj.album, obj.album_artist,
-            obj.track, obj.disc, obj.year, Duration.from(obj.length),
-            obj.genres, obj.deleted
+            id,
+            obj.path,
+            obj.title,
+            obj.artists,
+            obj.album,
+            obj.album_artist,
+            obj.track,
+            obj.disc,
+            obj.year,
+            Duration.from(obj.length),
+            obj.genres,
+            obj.deleted,
         );
     }
 
     static empty(id) {
         return new Song(
-            id, '', null, [], null, null, null, null, null, null, [], true
+            id,
+            "",
+            null,
+            [],
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            [],
+            true,
         );
+    }
+
+    /** @returns {string} song title, otherwise the default string. */
+    getTitle(val = "-") {
+        return this.title ?? val;
+    }
+
+    /** @returns {string} artists string, otherwise the default string. */
+    getArtists(val = "-") {
+        return this.artists.length == 0
+            ? (this.album_artist ?? val)
+            : this.artists.join(", ");
+    }
+
+    /** @return {string} album string, otherwise the default string. */
+    getAlbum(val = "-") {
+        return this.album ?? val;
     }
 
     /**
      * Gets songs release year, checks for not set year
      * @returns {string} songs release year
      */
-    getYear() {
-        return this.year === null ? '-' : `${this.year}`;
+    getYear(val = "-") {
+        return this.year === null ? val : `${this.year}`;
     }
 
     /**
@@ -78,38 +125,38 @@ export default class Song {
      */
     getTableRow() {
         const cloned = songTemplate.content.cloneNode(true);
-        const row = cloned.querySelector('tr');
+        const row = cloned.querySelector("tr");
 
-        row.querySelector('img').src = Album.getCover(
-            this.album_artist ?? "--", this.album ?? this.title ?? "--", 64
+        row.querySelector("img").src = Album.getCover(
+            this.album_artist,
+            this.album ?? this.title,
+            64,
         );
-        row.querySelector('.title').textContent = this.title ?? "-";
-        row.querySelector('.author').textContent =
-            this.artists.length == 0 ? "-" : this.artists.join(", ");
-        row.querySelector('.album').textContent = this.album ?? "-";
-        row.querySelector('.year').textContent = this.getYear();
-        row.querySelector('.length').textContent =
-            this.length?.format() ?? "-";
-        row.querySelector('.genre').textContent =
+        row.querySelector(".title").textContent = this.getTitle();
+        row.querySelector(".author").textContent = this.getArtists();
+        row.querySelector(".album").textContent = this.getAlbum();
+        row.querySelector(".year").textContent = this.getYear();
+        row.querySelector(".length").textContent = this.length?.format() ?? "-";
+        row.querySelector(".genre").textContent =
             this.genres.length == 0 ? "-" : this.genres.join(", ");
-        row.querySelector('.track').textContent = this.track ?? "-";
-        row.querySelector('.disc').textContent = this.disc ?? "-";
+        row.querySelector(".track").textContent = this.track ?? "-";
+        row.querySelector(".disc").textContent = this.disc ?? "-";
 
         return row;
     }
 
     /**
      * Gets bar playlist song representation
-     * @param {number} id 
+     * @param {number} id
      * @return {HTMLDivElement} bar playlist song
      */
     getBarRow(id) {
         const cloned = barSongTemplate.content.cloneNode(true);
-        const item = cloned.querySelector('.item');
+        const item = cloned.querySelector(".item");
 
-        item.querySelector('.id').textContent = id + 1;
-        item.querySelector('.title').textContent = this.title ?? "-";
-        item.querySelector('.artist').textContent = this.artists.join(", ");
+        item.querySelector(".id").textContent = id + 1;
+        item.querySelector(".title").textContent = this.title ?? "-";
+        item.querySelector(".artist").textContent = this.artists.join(", ");
 
         return item;
     }
@@ -119,10 +166,12 @@ export default class Song {
      * @returns {string} uamp query string
      */
     getQuery() {
-        const s = (text) => text.replaceAll('/', '//');
-        return `n=/${s(this.title ?? "")}/.p=/${s(this.album_artist ?? "")}` +
+        const s = (text) => text.replaceAll("/", "//");
+        return (
+            `n=/${s(this.title ?? "")}/.p=/${s(this.album_artist ?? "")}` +
             `/.a=/${s(this.album ?? "")}/.t=${this.track ?? ""}.d=` +
-            `${this.disc ?? ""}.y = ${this.year ?? ""}.g=/` +
-            `${ s(this.genres.length == 0 ? "" : this.genres[0]) }/`;
+            `${this.disc ?? ""}.y=${this.year ?? ""}.g=/` +
+            `${s(this.genres.length == 0 ? "" : this.genres[0])}/`
+        );
     }
 }
