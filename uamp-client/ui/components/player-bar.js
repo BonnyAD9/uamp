@@ -22,7 +22,7 @@ export default class PlayerBar extends HTMLElement {
     constructor() {
         super();
 
-        this.playing = false;
+        this.playing = true;
 
         this.radId = null;
         this.lastUpdate = 0;
@@ -86,7 +86,7 @@ export default class PlayerBar extends HTMLElement {
      * Sets the playing state and updates related bar elements.
      * @param {bool} playing - true when playing, false otherwise
      */
-    async setPlaying(playing) {
+    setPlaying(playing) {
         if (this.playing === playing) return;
         this.playing = playing;
 
@@ -158,20 +158,9 @@ export default class PlayerBar extends HTMLElement {
             this.playlist.scrollHeight - this.playlist.scrollTop ===
             this.playlist.clientHeight;
 
-        let gradient =
-            "linear-gradient(to bottom, transparent, black 20%," +
-            "black 80%, transparent)";
-
-        if (atTop && atBottom) {
-            gradient = "none";
-        } else if (atTop) {
-            gradient = "linear-gradient(to bottom, black 80%, transparent)";
-        } else if (atBottom) {
-            gradient = "linear-gradient(to bottom, transparent, black 20%)";
-        }
-
-        this.playlist.style.webkitMaskImage = gradient;
-        this.playlist.style.maskImage = gradient;
+        const getCol = (cond) => (cond ? "black" : "transparent");
+        this.playlist.style.setProperty("--mask-top", getCol(atTop));
+        this.playlist.style.setProperty("--mask-bottom", getCol(atBottom));
     }
 
     /**
@@ -248,7 +237,7 @@ export default class PlayerBar extends HTMLElement {
     async #updatePlayBtn(playing) {
         if (!this.playBtn) return;
 
-        if (this.playBtn.waitRead) await this.playBtn.waitReady();
+        if (this.playBtn.waitReady) await this.playBtn.waitReady();
 
         const anim = playing ? "from_play_to_pause" : "from_pause_to_play";
         this.playBtn.triggerAnimation(anim);

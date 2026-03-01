@@ -101,52 +101,48 @@ export function getCustomHeader(labels, sortHandler) {
     return table;
 }
 
-function gradHoverListeners() {
+function hoverListeners() {
     document.addEventListener("mousemove", (e) => {
         if (typeof e.target?.closest !== "function") return;
 
-        const target = e.target.closest(".grad-hover");
-        if (!target) return;
+        const grad = e.target.closest(".grad-hover");
+        if (grad) handleGradHover(grad, e);
 
-        const rect = target.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        document.documentElement.style.setProperty("--mouse-x", `${x}px`);
-        document.documentElement.style.setProperty("--mouse-y", `${y}px`);
+        const ddd = e.target.closest(".ddd-hover");
+        if (ddd) handle3DHover(ddd, e);
     });
 }
 
-function card3DHover() {
+function handleGradHover(target, e) {
+    const rect = target.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    target.style.setProperty("--mouse-x", `${x}px`);
+    target.style.setProperty("--mouse-y", `${y}px`);
+}
+
+function handle3DHover(target, e) {
     const MAX_ROTATION = 20;
 
-    const lists = document.querySelectorAll(".list");
-    lists.forEach((list) => {
-        list.addEventListener("mousemove", (e) => {
-            const target = e.target.closest(".card");
-            if (!target) return;
+    const rect = target.getBoundingClientRect();
 
-            const rect = target.getBoundingClientRect();
+    const x = e.clientX - rect.x - rect.width / 2;
+    const y = e.clientY - rect.y - rect.height / 2;
 
-            const x = e.clientX - rect.x - rect.width / 2;
-            const y = e.clientY - rect.y - rect.height / 2;
+    const xNorm = (x / (rect.width / 2)) * MAX_ROTATION;
+    const yNorm = (y / (rect.height / 2)) * MAX_ROTATION;
 
-            const xNorm = (x / (rect.width / 2)) * MAX_ROTATION;
-            const yNorm = (y / (rect.height / 2)) * MAX_ROTATION;
+    target.style.setProperty("--rot-x", `${-yNorm}deg`);
+    target.style.setProperty("--rot-y", `${xNorm}deg`);
 
-            target.style.setProperty("--rot-x", `${-yNorm}deg`);
-            target.style.setProperty("--rot-y", `${xNorm}deg`);
-
-            const glow = target.querySelector(".glow");
-            glow.style.setProperty("--x", `${-x * 2 + rect.width / 2}px`);
-            glow.style.setProperty("--y", `${-y * 2 + rect.height / 2}px`);
-        });
-    });
+    const glow = target.querySelector(".glow");
+    glow.style.setProperty("--x", `${-x * 2 + rect.width / 2}px`);
+    glow.style.setProperty("--y", `${-y * 2 + rect.height / 2}px`);
 }
 
 export function spawnScreens() {
-    gradHoverListeners();
-    card3DHover();
+    hoverListeners();
 }
 
 document.querySelectorAll(".search-wrapper").forEach((wrapper) => {

@@ -146,7 +146,7 @@ export default class VirtualTable {
     #getBufferPos(songCnt, topSpacer, botSpacer) {
         const viewHeight = this.container.clientHeight;
 
-        const visible = Math.ceil(viewHeight / this.rowHeight) + 1;
+        const visible = Math.ceil(viewHeight / this.rowHeight) + 2;
         const scrollTop = this.container.scrollTop;
         const start = Math.max(0, Math.floor(scrollTop / this.rowHeight) - 2);
         return this.#getEndPos(start, visible, songCnt, topSpacer, botSpacer);
