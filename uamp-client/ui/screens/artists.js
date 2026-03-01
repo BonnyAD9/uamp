@@ -1,4 +1,3 @@
-import { showScreen } from "../../app.js";
 import Sorter from "../../library/sorter.js";
 import { getCustomHeader } from "../pages.js";
 import { displaySort } from "../tables.js";
@@ -57,14 +56,10 @@ export default class ArtistsScreen extends Screen {
 
         const album = e.target.closest(".albums-preview img");
         if (album) {
-            const albumScreen = document.querySelector("album-screen");
-            albumScreen?.onNavigate({ id: album.dataset.index });
-            showScreen("album-detail");
+            app.navigateTo("album-detail", { id: album.dataset.index });
             return;
         }
 
-        const screen = document.querySelector("artist-screen");
-        screen?.onNavigate({ id: row.dataset.index });
-        showScreen("artist-detail");
+        app.navigateTo("artist-detail", { id: row.dataset.index });
     }
 }

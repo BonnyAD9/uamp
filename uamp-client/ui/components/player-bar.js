@@ -28,9 +28,9 @@ export default class PlayerBar extends HTMLElement {
         this.lastUpdate = 0;
 
         /** @type {Duration} */
-        this.currentPos = null;
+        this.current = null;
         /** @type {Duration} */
-        this.totalPos = null;
+        this.total = null;
 
         this.table = null;
     }
@@ -68,12 +68,17 @@ export default class PlayerBar extends HTMLElement {
         this.#setupListeners();
     }
 
+    onNavigate(_args) {
+        // TODO: dispatchEvent and then handle it
+        setTimeout(() => app.createBarSongs(), 200);
+    }
+
     /** Toggles between expanded and normal player bar. */
     toggleBar() {
-        this.classList.toggle("expanded");
-        if (this.classList.contains("expanded")) {
-            // TODO: dispatchEvent and then handle it
-            setTimeout(() => app.createBarSongs(), 200);
+        if (this.classList.contains("active")) {
+            app.hideOverlay();
+        } else {
+            app.navigateToOverlay("player-bar");
         }
     }
 
@@ -123,9 +128,11 @@ export default class PlayerBar extends HTMLElement {
      * @param {Timestamp|null} time - new timestamp or null when none
      */
     updateTimestamp(time) {
-        this.current = time?.current ?? this.current;
-        this.total = time?.total ?? this.total;
-        this.timestampCur.textContent = time?.current?.format() ?? "-:--";
+        this.current = time?.current;
+        this.total = time?.total;
+
+        this.timestampCur.textContent = this.current?.format() ?? "-:--";
+        this.timestampTotal.textContent = this.total?.format() ?? "-:--";
         this.#displayProgress();
     }
 
@@ -232,7 +239,7 @@ export default class PlayerBar extends HTMLElement {
 
     /** Helper function running action only when bar is expanded. */
     #expandedAction(e, action) {
-        if (!this.classList.contains("expanded")) return;
+        if (!this.classList.contains("active")) return;
         e.stopPropagation();
         action(app.player.getPlaying());
     }
@@ -281,11 +288,11 @@ export default class PlayerBar extends HTMLElement {
         }
 
         let current = delta;
-        if (this.current !== null) current += this.current.toSecs();
+        if (this.current !== null) current += this.current?.toSecs() ?? 0;
 
         this.slider.value = Math.min((current / total) * 100, 100);
 
-        if (this.current !== null) {
+        if (this.current) {
             this.current.secs = Math.floor(current);
             this.current.nanos = Math.floor((current % 1) * 1e9);
             this.timestampCur.textContent = this.current.format();

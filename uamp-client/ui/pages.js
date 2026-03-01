@@ -1,5 +1,4 @@
 import Api from "../api.js";
-import { showScreen } from "../app.js";
 import Song from "../library/song.js";
 
 /**
@@ -21,9 +20,7 @@ export function albumClickHandler(e) {
     const card = e.target.closest(".card");
     if (!card) return;
 
-    const albumScreen = document.querySelector("album-screen");
-    albumScreen?.onNavigate({ id: card.dataset.index });
-    showScreen("album-detail");
+    app.navigateTo("album-detail", { id: card.dataset.index });
 }
 
 export function displayAlbums(albumsList, albums) {
@@ -106,6 +103,8 @@ export function getCustomHeader(labels, sortHandler) {
 
 function gradHoverListeners() {
     document.addEventListener("mousemove", (e) => {
+        if (typeof e.target?.closest !== "function") return;
+
         const target = e.target.closest(".grad-hover");
         if (!target) return;
 

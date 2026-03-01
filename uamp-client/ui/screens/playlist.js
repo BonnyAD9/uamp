@@ -46,6 +46,14 @@ export default class PlaylistScreen extends Screen {
     }
 
     /**
+     * Handles navigation to playlist page
+     * @param {Object} args - playlist arguments
+     */
+    onNavigate(_args) {
+        this.table.render();
+    }
+
+    /**
      * Displays the playlist stack.
      * @param {number} n - number of playlists
      */

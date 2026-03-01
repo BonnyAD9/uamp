@@ -26,6 +26,10 @@ export default class App {
         this.albumsScreen = document.querySelector("albums-screen");
         this.artistsScreen = document.querySelector("artists-screen");
         this.playlistScreen = document.querySelector("playlist-screen");
+
+        this.activeScreen = `#library`;
+        this.activeOverlay = null;
+        this.activeScreenArgs = {};
     }
 
     async init(data) {
@@ -219,7 +223,6 @@ export default class App {
     };
 
     updateAll() {
-        this.playerBar.updateTimestamp(null);
         this.displayPlaylistStack();
 
         this.playerBar.updateCurrent(this.player.getPlaying());
@@ -239,20 +242,81 @@ export default class App {
 
     artistBarClick(e) {
         const artist = this.library.getArtistByName(e.target.textContent);
-        const screen = document.querySelector("artist-screen");
-        screen?.open(artist);
+        this.navigateTo("artist-detail", { id: artist.id });
 
-        this.playerBar.toggleBar();
-        showScreen("artist-detail");
+        // this.playerBar.toggleBar();
     }
 
     albumBarClick(artist, album) {
         const a = this.library.getAlbumByKey(artist, album);
-        const albumScreen = document.querySelector("album-screen");
-        albumScreen?.open(a);
+        this.navigateTo("album-detail", { id: a.id });
 
-        this.playerBar.toggleBar();
-        showScreen("album-detail");
+        // this.playerBar.toggleBar();
+    }
+
+    /**
+     * Navigates to the given screen, assumes it implements onNavigate
+     * @param {string} target - target screen ID
+     * @param {Object} args - target screen arguments
+     * @param {boolean} pushHistory - whether to push history
+     * @param {boolean} isOverlay - whether target is overlay only
+     */
+    navigateTo(target, args = {}, pushHistory = true, isOverlay = false) {
+        if (isOverlay) {
+            this.navigateToOverlay(target, args, pushHistory);
+            return;
+        }
+
+        document.querySelector(this.activeScreen).classList.remove("active");
+        this.activeScreen = `#${target}`;
+        this.activeScreenArgs = args;
+
+        const active = document.querySelector(this.activeScreen);
+        active.classList.add("active");
+        if (typeof active.onNavigate === "function") active.onNavigate(args);
+
+        if (this.activeOverlay) {
+            const overlay = document.querySelector(this.activeOverlay);
+            overlay.classList.remove("active");
+            this.activeOverlay = null;
+        }
+
+        if (pushHistory)
+            history.pushState(
+                { page: target, args, overlay: null, overlayArgs: null },
+                "",
+            );
+    }
+
+    /**
+     * Navigates to the given overlay, only displays it and pushes to history
+     * @param {string} target - target overlay ID
+     * @param {Object} args - target overlay arguments
+     */
+    navigateToOverlay(target, args = {}, pushHistory = true) {
+        this.activeOverlay = `#${target}`;
+        const overlay = document.querySelector(this.activeOverlay);
+        overlay.classList.add("active");
+        if (typeof overlay.onNavigate === "function") overlay.onNavigate(args);
+
+        if (pushHistory) {
+            const cur = this.activeScreen.replace("#", "");
+            history.pushState(
+                {
+                    page: cur,
+                    args: this.activeScreenArgs,
+                    overlay: target,
+                    overlayArgs: args,
+                },
+                "",
+            );
+        }
+    }
+
+    /** Hides overlay by navigating to the active screen. */
+    hideOverlay() {
+        const target = this.activeScreen.replace("#", "");
+        this.navigateTo(target, this.activeScreenArgs);
     }
 }
 
@@ -264,25 +328,20 @@ navs.forEach((item) => {
         item.classList.add("active");
 
         const targetId = item.dataset.screen;
-        showScreen(targetId);
-        if (targetId === "playlist") {
-            app.displayPlaylist();
-        }
+        app.navigateTo(targetId);
     });
 });
 
-export function showScreen(target, pushHistory = true) {
-    document
-        .querySelectorAll(".screen")
-        .forEach((s) => s.classList.toggle("active", s.id === target));
-    if (pushHistory) history.pushState({ page: target }, "");
-}
-
 history.replaceState({ page: "library" }, "");
 window.addEventListener("popstate", (e) => {
-    const target = e.state?.page || "library";
-    showScreen(target, false);
+    const state = e.state || { page: "library", args: {}, overlay: null };
+    app.navigateTo(state.page, state.args, false);
+
+    if (state.overlay) {
+        app.navigateToOverlay(state.overlay, state.overlayArgs, false);
+    }
+
     navs.forEach((p) =>
-        p.classList.toggle("active", p.dataset.screen === target),
+        p.classList.toggle("active", p.dataset.screen === state.page),
     );
 });
