@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## 0.7.0
 ### Breaking changes
 Majority of users are unlikely to be affected.
 
