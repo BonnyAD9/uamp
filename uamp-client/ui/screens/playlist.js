@@ -34,6 +34,7 @@ export default class PlaylistScreen extends Screen {
         this.table.playlist().autoScrolling();
 
         this.dom = {
+            menu: document.querySelector("nav-menu"),
             playlists: this.querySelector(".playlist-wrapper"),
             tabs: this.querySelector(".tabs .tabs-wrapper"),
             controls: this.querySelector(".playlist-controls"),
@@ -50,7 +51,13 @@ export default class PlaylistScreen extends Screen {
      * @param {Object} args - playlist arguments
      */
     onNavigate(_args) {
+        this.render();
+    }
+
+    /** Renders the playlist table and the menu label */
+    render() {
         this.table.render();
+        this.dom.menu.setLabel(app.player.playlist?.songs ?? []);
     }
 
     /**

@@ -17,8 +17,20 @@ export default class LibraryScreen extends Screen {
             () => app.player.getPlayingId(),
         );
 
-        this.dom = {};
+        this.dom = {
+            menu: document.querySelector("nav-menu"),
+        };
         this.#spawnElements();
+    }
+
+    onNavigate(_args) {
+        this.render();
+    }
+
+    /** Renders the library table and the menu label */
+    render() {
+        this.table.render();
+        this.dom.menu.setLabel(app.library.songs.get());
     }
 
     /**

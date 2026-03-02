@@ -3,6 +3,7 @@
 ## Features
 
 - Add hover to the artist albums preview
+- Add info labels
 
 ## Changes
 

@@ -38,7 +38,7 @@ body {
     height: 100vh;
 }
 
-section.menu {
+nav-menu {
     width: 200px;
     height: 100%;
     background-color: var(--bg-dark);
@@ -49,23 +49,23 @@ section.menu {
     color: var(--fg);
 }
 
-section.menu .logo {
+nav-menu .logo {
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-section.menu .logo h1 {
+nav-menu .logo h1 {
     font-size: 26px;
 }
 
-section.menu .logo img {
+nav-menu .logo img {
     max-width: 50px;
     object-fit: contain;
 }
 
-section.menu nav {
+nav-menu nav {
     height: 100%;
     margin-top: 15px;
     width: 100%;
@@ -75,7 +75,7 @@ section.menu nav {
     padding-bottom: 75px;
 }
 
-section.menu nav p {
+nav-menu nav p {
     padding-left: 15px;
     position: relative;
     height: 26px;
@@ -86,7 +86,7 @@ section.menu nav p {
     overflow: hidden;
 }
 
-section.menu nav p.active::after {
+nav-menu nav p.active::after {
     content: "";
     position: absolute;
     top: 0;
@@ -99,8 +99,20 @@ section.menu nav p.active::after {
     z-index: 1;
 }
 
-section.menu nav .spacer {
+nav-menu nav .spacer {
     flex-grow: 1;
+}
+
+nav-menu span {
+    height: 13px;
+    font-size: 11px;
+    font-weight: normal;
+    color: var(--fg-sec);
+    /*padding-left: 15px;*/
+    margin: auto;
+    margin-top: 5px;
+    display: flex;
+    gap: 5px;
 }
 
 .screen {
@@ -746,13 +758,24 @@ player-bar.bar .info > .title h3 {
 }
 
 player-bar.bar .info > .title h4,
-player-bar.bar .slider-timestamp span {
+player-bar.bar .slider-timestamp span,
+player-bar.bar #barPlaylistLabel {
     font-size: 11px;
     font-weight: normal;
     color: var(--fg2);
     padding-left: 3px;
     display: flex;
     gap: 5px;
+}
+
+player-bar.bar #barPlaylistLabel {
+    color: var(--fg-sec);
+    margin-top: 12px;
+    display: none;
+}
+
+player-bar.bar.active #barPlaylistLabel {
+    display: block;
 }
 
 player-bar.bar.active .info > .title h4 {
@@ -793,6 +816,7 @@ player-bar.bar .volume {
 
 player-bar.bar.active .volume {
     display: none;
+    /*margin-top: 10px;*/
 }
 
 player-bar.bar .volume img {

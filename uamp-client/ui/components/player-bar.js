@@ -22,7 +22,7 @@ export default class PlayerBar extends HTMLElement {
     constructor() {
         super();
 
-        this.playing = true;
+        this.playing = false;
 
         this.radId = null;
         this.lastUpdate = 0;
@@ -61,6 +61,7 @@ export default class PlayerBar extends HTMLElement {
         this.volumeSlider = this.querySelector("#volumeSlider");
         this.volumeValue = this.querySelector("#volumeValue");
         this.volumeIcon = this.querySelector(".volume img");
+        this.playlistLabel = this.querySelector("#barPlaylistLabel");
 
         this.renderControls(DEFAULT_CONTROLS);
         this.playBtn = this.querySelector("#play");
@@ -121,6 +122,12 @@ export default class PlayerBar extends HTMLElement {
         this.timestampTotal.textContent = this.total?.format() ?? "-:--";
 
         this.table.render();
+
+        const cur = app.player.playlist.current
+            ? app.player.playlist.current + 1
+            : "-";
+        const len = app.player.playlist.songs.length;
+        this.playlistLabel.textContent = `${cur}/${len}`;
     }
 
     /**
