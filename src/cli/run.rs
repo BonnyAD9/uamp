@@ -1,5 +1,6 @@
 use std::{
     env,
+    io::{IsTerminal, stdout},
     path::Path,
     process::{Child, Command, Stdio},
 };
@@ -167,7 +168,11 @@ pub fn run_detached(
         .spawn()
         .map_err(|e| Error::io(e).msg("Failed to spawn detached uamp."))?;
     let id = child.id();
-    println!("Spawned detached process with id {id}");
+    if stdout().is_terminal() {
+        println!("Spawned detached process with id {id}");
+    } else {
+        println!("{id}");
+    }
     info!("Spawned detached process with id {id}");
 
     Ok(child)

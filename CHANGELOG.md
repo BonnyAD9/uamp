@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## future
+### Changes
+- Uamp now allocates less threads.
+- `uamp run -d` now prints only the pid if not printing in terminal.
+
 ## 0.7.0
 ### Breaking changes
 Majority of users are unlikely to be affected.
