@@ -46,8 +46,7 @@ export default class App {
 
         this.playlistTab = 0;
 
-        this.libraryScreen.render();
-        this.playlistScreen.render();
+        this.navigateTo(this.activeScreen.replace("#", ""));
         this.playerBar.table.render();
     }
 
@@ -332,7 +331,5 @@ window.addEventListener("popstate", (e) => {
         app.navigateToOverlay(state.overlay, state.overlayArgs, false);
     }
 
-    navs.forEach((p) =>
-        p.classList.toggle("active", p.dataset.screen === state.page),
-    );
+    menuElement.highlight(state.page);
 });

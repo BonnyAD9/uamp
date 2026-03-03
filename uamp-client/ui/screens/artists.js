@@ -54,7 +54,7 @@ export default class ArtistsScreen extends Screen {
         const row = e.target.closest("tr");
         if (!row) return;
 
-        const album = e.target.closest(".albums-preview img");
+        const album = e.target.closest(".albums-preview .card");
         if (album) {
             app.navigateTo("album-detail", { id: album.dataset.index });
             return;

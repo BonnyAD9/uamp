@@ -89,15 +89,19 @@ export default class Duration {
      * @returns {string} formated duration
      */
     format() {
-        const hours = Math.floor(this.secs / 3600);
+        const days = Math.floor(this.secs / 86400);
+        const hours = Math.floor((this.secs % 86400) / 3600);
         const minutes = Math.floor((this.secs % 3600) / 60);
         const seconds = this.secs % 60;
 
-        const padSecs = seconds.toString().padStart(2, "0");
-        if (hours > 0) {
-            const padMins = minutes.toString().padStart(2, "0");
-            return `${hours}:${padMins}:${padSecs}`;
+        const pad = (num) => num.toString().padStart(2, "0");
+
+        if (days > 0) {
+            return `${days}d:${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
         }
-        return `${minutes}:${padSecs}`;
+        if (hours > 0) {
+            return `${hours}:${pad(minutes)}:${pad(seconds)}`;
+        }
+        return `${minutes}:${pad(seconds)}`;
     }
 }

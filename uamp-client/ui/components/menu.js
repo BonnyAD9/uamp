@@ -21,8 +21,19 @@ export default class Menu extends HTMLElement {
 
         const nav = this.querySelector("nav");
         nodes.forEach((node) => nav.insertBefore(node, this.dom.label));
+        this.dom.navs = this.querySelectorAll("[data-screen]");
 
         this.#setupListeners();
+    }
+
+    /**
+     * Highlights nav item with the given screen.
+     * @param {string} screen - screen to highlight item for
+     */
+    highlight(screen) {
+        this.dom.navs.forEach((p) =>
+            p.classList.toggle("active", p.dataset.screen === screen),
+        );
     }
 
     /**

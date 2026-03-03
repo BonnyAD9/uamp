@@ -56,6 +56,7 @@ export default class Artist {
             const card = cardTemplate.content
                 .cloneNode(true)
                 .querySelector(".card");
+            card.title = album.name;
             card.dataset.index = album.id;
 
             const img = card.querySelector("img");
