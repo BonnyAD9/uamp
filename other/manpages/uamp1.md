@@ -31,9 +31,9 @@ uamp - Universal Advanced Music Player - command line interface
 
 ## DESCRIPTION
 
-`uamp` is pure CLI music player server without any other UI. It is ment to run
-in background and be controled trough CLI. `uamp` is made to be robust,
-efficient and light on system resources. Even though `uamp` doesn't have any UI
+`uamp` is CLI music player server. It is ment to run in background and be
+controled trough CLI or with http web UI. `uamp` is made to be robust,
+efficient and light on system resources. Even though `uamp` doesn't need any UI
 it is full of features such as fade play/pause, gapless playback and stack
 based playlist (queue) management.
 

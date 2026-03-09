@@ -183,9 +183,9 @@ pub fn help_version(color: bool) {
         "Welcome in {'i g}{APP_ID}{'_} by {signature}{'_}
 Version {VERSION_STR}
 
-uamp (short for Universal Advanced Music Player) is CLI only music player and
-music library manager without UI. For more information about how uamp works see
-{'i}uamp(1){'_}.
+uamp (short for Universal Advanced Music Player) is CLI music player and music
+library manager. It also has http web interface. For more information about how
+uamp works see {'i}uamp(1){'_}.
 "
     )
 }
