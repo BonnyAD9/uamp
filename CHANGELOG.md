@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.7.1
 ### Features
 #### GUI
 - Add hover to the artist albums preview.
