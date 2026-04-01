@@ -38,7 +38,7 @@ body {
     height: 100vh;
 }
 
-section.menu {
+nav-menu {
     width: 200px;
     height: 100%;
     background-color: var(--bg-dark);
@@ -49,23 +49,23 @@ section.menu {
     color: var(--fg);
 }
 
-section.menu .logo {
+nav-menu .logo {
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-section.menu .logo h1 {
+nav-menu .logo h1 {
     font-size: 26px;
 }
 
-section.menu .logo img {
+nav-menu .logo img {
     max-width: 50px;
     object-fit: contain;
 }
 
-section.menu nav {
+nav-menu nav {
     height: 100%;
     margin-top: 15px;
     width: 100%;
@@ -75,7 +75,7 @@ section.menu nav {
     padding-bottom: 75px;
 }
 
-section.menu nav p {
+nav-menu nav p {
     padding-left: 15px;
     position: relative;
     height: 26px;
@@ -86,7 +86,7 @@ section.menu nav p {
     overflow: hidden;
 }
 
-section.menu nav p.active::after {
+nav-menu nav p.active::after {
     content: "";
     position: absolute;
     top: 0;
@@ -99,8 +99,19 @@ section.menu nav p.active::after {
     z-index: 1;
 }
 
-section.menu nav .spacer {
+nav-menu nav .spacer {
     flex-grow: 1;
+}
+
+nav-menu span {
+    height: 13px;
+    font-size: 11px;
+    font-weight: normal;
+    color: var(--fg-sec);
+    padding-left: 15px;
+    margin-top: 5px;
+    display: flex;
+    gap: 5px;
 }
 
 .screen {
@@ -298,7 +309,7 @@ table th {
     padding-bottom: 3px;
 }
 
-table.songs tbody tr:not(:first-child) {
+table.songs tbody tr:not(.spacer) {
     border-bottom: 1px solid var(--bg-light);
 }
 
@@ -369,16 +380,45 @@ table.songs td > span,
     display: block;
 }
 
+artists-screen table.songs td:first-child,
+artists-screen screen-header table th:first-child {
+    padding-left: 4px;
+}
+
 table.songs td .albums-preview {
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 5px;
+    padding-right: 4px;
+}
+
+table.songs td .albums-preview .card {
+    height: 30px;
+    width: 30px;
+    border-radius: 0;
+    perspective: 1000px;
+    cursor: pointer;
+}
+
+table.songs td .albums-preview .card .card-inner {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    cursor: pointer;
+    transition: 0.2s ease;
+    transform-style: preserve-3d;
+    will-change: transform;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 table.songs td .albums-preview img {
-    object-fit: contain;
-    max-height: 30px;
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
 }
 
 .list {
@@ -408,16 +448,21 @@ table.songs td .albums-preview img {
     will-change: transform;
 }
 
-.list .card:hover {
+.ddd-hover:hover {
     z-index: 9;
 }
 
-.list .card:hover .card-inner {
+.ddd-hover:hover .card-inner {
     background-color: (--bg-lighter);
     transform: scale3d(1.07, 1.07, 1.07) rotateX(var(--rot-x))
         rotateY(var(--rot-y));
     box-shadow: 0 5px 20px 5px #00000044;
     transition: 100ms ease-out;
+}
+
+table.songs td .albums-preview .ddd-hover:hover .card-inner {
+    transform: scale3d(1.15, 1.15, 1.15) rotateX(var(--rot-x))
+        rotateY(var(--rot-y));
 }
 
 .list .card img {
@@ -426,7 +471,7 @@ table.songs td .albums-preview img {
     object-fit: contain;
 }
 
-.list .card .glow {
+.ddd-hover .glow {
     position: absolute;
     left: 0;
     top: 0;
@@ -441,7 +486,7 @@ table.songs td .albums-preview img {
     opacity: 0;
 }
 
-.list .card:hover .glow {
+.ddd-hover:hover .glow {
     opacity: 1;
 }
 
@@ -712,13 +757,24 @@ player-bar.bar .info > .title h3 {
 }
 
 player-bar.bar .info > .title h4,
-player-bar.bar .slider-timestamp span {
+player-bar.bar .slider-timestamp span,
+player-bar.bar #barPlaylistLabel {
     font-size: 11px;
     font-weight: normal;
     color: var(--fg2);
     padding-left: 3px;
     display: flex;
     gap: 5px;
+}
+
+player-bar.bar #barPlaylistLabel {
+    color: var(--fg-sec);
+    margin-top: 12px;
+    display: none;
+}
+
+player-bar.bar.active #barPlaylistLabel {
+    display: block;
 }
 
 player-bar.bar.active .info > .title h4 {
@@ -759,6 +815,7 @@ player-bar.bar .volume {
 
 player-bar.bar.active .volume {
     display: none;
+    /*margin-top: 10px;*/
 }
 
 player-bar.bar .volume img {
@@ -934,6 +991,18 @@ input[type="range"]:active::-moz-range-progress {
     filter: brightness(var(--brightness-down));
 }
 
+@property --mask-top {
+    syntax: "<color>";
+    inherits: false;
+    initial-value: black;
+}
+
+@property --mask-bottom {
+    syntax: "<color>";
+    inherits: false;
+    initial-value: black;
+}
+
 player-bar.bar .playlist {
     display: none;
     overflow: hidden;
@@ -947,6 +1016,27 @@ player-bar.bar .playlist {
     -webkit-mask-size: 100% 100%;
     mask-repeat: no-repeat;
     mask-size: 100% 100%;
+    transition: 0.1s ease-in;
+
+    -webkit-mask-image: linear-gradient(
+        to bottom,
+        var(--mask-top) 0%,
+        black 20%,
+        black 80%,
+        var(--mask-bottom) 100%
+    );
+    mask-image: linear-gradient(
+        to bottom,
+        var(--mask-top) 0%,
+        black 20%,
+        black 80%,
+        var(--mask-bottom) 100%
+    );
+
+    /* 2. Transition the variables! */
+    transition:
+        --mask-top 0.2s ease,
+        --mask-bottom 0.2s ease;
 }
 
 player-bar.bar.active .playlist {

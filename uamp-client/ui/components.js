@@ -1,3 +1,4 @@
+import Menu from "./components/menu.js";
 import PlayerBar from "./components/player-bar.js";
 import ScreenHeader from "./components/screen-header.js";
 import SearchBar from "./components/search-bar.js";
@@ -11,6 +12,7 @@ import LibraryScreen from "./screens/library.js";
 import PlaylistScreen from "./screens/playlist.js";
 
 /** HTML components */
+customElements.define("nav-menu", Menu);
 customElements.define("player-bar", PlayerBar);
 customElements.define("screen-header", ScreenHeader);
 customElements.define("search-bar", SearchBar);

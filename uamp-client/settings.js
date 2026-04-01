@@ -477,6 +477,7 @@ var settingsGroups = [
             "enable_server",
             "skin",
             "system_player",
+            "web_client_command",
         ],
     },
     {

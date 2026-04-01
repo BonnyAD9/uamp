@@ -7,6 +7,8 @@ import Player from "./player/player.js";
 import Playlist from "./player/playlist.js";
 import Config from "./settings.js";
 
+const menuElement = document.querySelector("nav-menu");
+
 export default class App {
     constructor() {
         /** @type {Library} */
@@ -44,8 +46,7 @@ export default class App {
 
         this.playlistTab = 0;
 
-        this.libraryScreen.table.render();
-        this.playlistScreen.table.render();
+        this.navigateTo(this.activeScreen.replace("#", ""));
         this.playerBar.table.render();
     }
 
@@ -199,8 +200,8 @@ export default class App {
     }
 
     /** Displays songs with virtual scrolling. */
-    displaySongs = () => this.libraryScreen.table.render();
-    displayPlaylist = () => this.playlistScreen.table.render();
+    displaySongs = () => this.libraryScreen.render();
+    displayPlaylist = () => this.playlistScreen.render();
     createBarSongs = () => {
         this.playerBar.table.render();
         this.playerBar.updatePlaylistMask();
@@ -211,7 +212,7 @@ export default class App {
 
     searchLibrary = (e) => {
         this.library.searchLibrary(e.detail);
-        this.libraryScreen.table.render();
+        this.libraryScreen.render();
     };
     searchAlbums = (e) => {
         this.library.searchAlbums(e.detail);
@@ -271,6 +272,7 @@ export default class App {
         this.activeScreen = `#${target}`;
         this.activeScreenArgs = args;
 
+        menuElement.setLabel([]);
         const active = document.querySelector(this.activeScreen);
         active.classList.add("active");
         if (typeof active.onNavigate === "function") active.onNavigate(args);
@@ -320,18 +322,6 @@ export default class App {
     }
 }
 
-const navs = document.querySelectorAll("nav p");
-
-navs.forEach((item) => {
-    item.addEventListener("click", () => {
-        navs.forEach((p) => p.classList.remove("active"));
-        item.classList.add("active");
-
-        const targetId = item.dataset.screen;
-        app.navigateTo(targetId);
-    });
-});
-
 history.replaceState({ page: "library" }, "");
 window.addEventListener("popstate", (e) => {
     const state = e.state || { page: "library", args: {}, overlay: null };
@@ -341,7 +331,5 @@ window.addEventListener("popstate", (e) => {
         app.navigateToOverlay(state.overlay, state.overlayArgs, false);
     }
 
-    navs.forEach((p) =>
-        p.classList.toggle("active", p.dataset.screen === state.page),
-    );
+    menuElement.highlight(state.page);
 });

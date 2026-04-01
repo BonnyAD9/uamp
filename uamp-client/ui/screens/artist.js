@@ -14,6 +14,7 @@ export default class ArtistScreen extends Screen {
 
     onReady() {
         this.dom = {
+            menu: document.querySelector("nav-menu"),
             name: this.querySelector(".info .name"),
             other: this.querySelector(".info .other"),
             albums: this.querySelector(".list"),
@@ -43,6 +44,7 @@ export default class ArtistScreen extends Screen {
         this.dom.other.textContent = artist.getOtherDetails();
 
         this.#display();
+        this.dom.menu.setLabel(artist.songs.get());
     }
 
     /**

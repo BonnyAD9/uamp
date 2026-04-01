@@ -11,23 +11,16 @@
 
 <body>
     <div class="wrapper">
-        <section class="menu">
-            <div class="logo">
-                <img src="assets/svg/icon.svg" alt="uamp logo">
-                <h1>Uamp</h1>
-            </div>
-
-            <nav>
-                <p class="active nosel grad-hover" data-screen="library">
-                    Library
-                </p>
-                <p class="nosel grad-hover" data-screen="albums">Albums</p>
-                <p class="nosel grad-hover" data-screen="artists">Artists</p>
-                <p class="nosel grad-hover" data-screen="playlist">Playlist</p>
-                <div class="spacer"></div>
-                <p class="nosel grad-hover" data-screen="settings">Settings</p>
-            </nav>
-        </section>
+        <nav-menu>
+            <p class="active nosel grad-hover" data-screen="library">
+                Library
+            </p>
+            <p class="nosel grad-hover" data-screen="albums">Albums</p>
+            <p class="nosel grad-hover" data-screen="artists">Artists</p>
+            <p class="nosel grad-hover" data-screen="playlist">Playlist</p>
+            <div class="spacer"></div>
+            <p class="nosel grad-hover" data-screen="settings">Settings</p>
+        </nav-menu>
 
         <library-screen id="library" class="active"></library-screen>
         <albums-screen id="albums"></albums-screen>
@@ -101,6 +94,8 @@
                     min="0" max="100"
                 >
             </div>
+
+            <p id="barPlaylistLabel">21/456</p>
         </div>
 
         <div class="playlist">
@@ -262,7 +257,7 @@
     </template>
 
     <template id="album-template">
-        <div class="card">
+        <div class="card ddd-hover">
             <div class="card-inner">
                 <div class="glow"></div>
                 <div class="card-pic">
@@ -272,6 +267,15 @@
                     <p class="name ellipsis"></p>
                     <span class="artist ellipsis"></span>
                 </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="album-artist-template">
+        <div class="card ddd-hover">
+            <div class="card-inner">
+                <div class="glow"></div>
+                <img src="assets/svg/img_placeholder.svg" />
             </div>
         </div>
     </template>
@@ -324,7 +328,7 @@
             </div>
             <div class="items">
                 <div class="item input-item">
-                    <input class="form-input" type="text" />
+                    <input class="form-input grad-hover" type="text" />
                 </div>
             </div>
         </label>

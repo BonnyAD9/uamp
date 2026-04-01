@@ -2,13 +2,15 @@
 
 ## Features
 
-- Add progress bar dragging
-- Add context menus (song, playlist, album, artist)
-- Add keyboard shortcuts
-- Tweak design
+- Add hover to the artist albums preview
+- Add info labels
+
+## Changes
+
+- Make playlist on Now Playing transition the fade
+- Other design tweaks
 
 ## Fixes
 
-- Fix volume overwrite on startup
-- Fix album hover effect
-- Fix history API
+- Fix play button not updating its state after load
+- Fix UI bugs

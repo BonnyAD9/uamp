@@ -3,6 +3,7 @@ import Song from "./song.js";
 import Sorter from "./sorter.js";
 
 const artistTemplate = document.getElementById("artist-template");
+const cardTemplate = document.getElementById("album-artist-template");
 
 export default class Artist {
     /**
@@ -50,13 +51,19 @@ export default class Artist {
         row.querySelector(".other").textContent = this.getOtherDetails();
 
         const albums = row.querySelector(".albums-preview");
+
         this.albums.forEach((album) => {
-            const img = document.createElement("img");
-            img.classList.add("card");
+            const card = cardTemplate.content
+                .cloneNode(true)
+                .querySelector(".card");
+            card.title = album.name;
+            card.dataset.index = album.id;
+
+            const img = card.querySelector("img");
             img.src = Album.getCover(album.artist, album.name, 64);
             img.title = album.name;
-            img.dataset.index = album.id;
-            albums.appendChild(img);
+
+            albums.appendChild(card);
         });
 
         return row;

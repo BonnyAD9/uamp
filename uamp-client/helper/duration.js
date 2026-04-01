@@ -32,6 +32,15 @@ export default class Duration {
         }
     }
 
+    add(other) {
+        if (!other) return this;
+
+        this.secs += other.secs;
+        this.nanos += other.nanos;
+        this.normalize();
+        return this;
+    }
+
     /**
      * Compares two durations
      * @param {Duration} other - duration to be compared to current
@@ -80,8 +89,19 @@ export default class Duration {
      * @returns {string} formated duration
      */
     format() {
-        const minutes = Math.floor(this.secs / 60);
+        const days = Math.floor(this.secs / 86400);
+        const hours = Math.floor((this.secs % 86400) / 3600);
+        const minutes = Math.floor((this.secs % 3600) / 60);
         const seconds = this.secs % 60;
-        return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+
+        const pad = (num) => num.toString().padStart(2, "0");
+
+        if (days > 0) {
+            return `${days}d:${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+        }
+        if (hours > 0) {
+            return `${hours}:${pad(minutes)}:${pad(seconds)}`;
+        }
+        return `${minutes}:${pad(seconds)}`;
     }
 }

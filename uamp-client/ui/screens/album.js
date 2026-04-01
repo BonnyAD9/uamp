@@ -10,6 +10,7 @@ export default class AlbumScreen extends Screen {
 
     onReady() {
         this.dom = {
+            menu: document.querySelector("nav-menu"),
             cover: this.querySelector(".info img"),
             title: this.querySelector(".info .name"),
             artist: this.querySelector(".info .artist"),
@@ -47,6 +48,7 @@ export default class AlbumScreen extends Screen {
         this.dom.other.textContent = `${other}${album.songs.len()} songs`;
 
         this.#display();
+        this.dom.menu.setLabel(album.songs.get());
     }
 
     /**
