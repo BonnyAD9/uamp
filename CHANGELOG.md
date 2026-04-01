@@ -1,12 +1,23 @@
 # CHANGELOG
 
 ## future
+### Features
+#### GUI
+- Add hover to the artist albums preview.
+- Add info labels.
+
 ### Changes
 - Uamp now allocates less threads.
 - `uamp run -d` now prints only the pid if not printing in terminal.
 
 #### GUI
-- Tweak design
+- Make playlist on Now Playing transition the fade.
+- Other design tweaks.
+
+### Fixes
+#### GUI
+- Fix play button not updating its state after load.
+- Fix UI bugs.
 
 ## 0.7.0
 ### Breaking changes
