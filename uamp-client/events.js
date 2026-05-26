@@ -83,9 +83,7 @@ const SSE_HANDLERS = {
     },
     "play-tmp": (data) => {
         app.pushTmpSongs(data.songs);
-        app.setPlaylist(data.playlist);
-        app.setPlayback(data.playback);
-        app.setTimestamp(data.timestamp);
+        pushPlaylistEvent(data);
     },
     "new-server": ({ address, port }) => {
         const server = `http://${address}:${port}`;
