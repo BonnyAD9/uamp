@@ -178,7 +178,7 @@ impl SinkWrapper {
     /// Enables/disables gapless playback (applies only for the following calls
     /// to load).
     pub fn set_gapless(&mut self, v: bool) {
-        self.symph.format.enable_gapless = v;
+        self.symph.decoder.gapless = v;
     }
 
     /// Gets the current timestamp of the playing source.
