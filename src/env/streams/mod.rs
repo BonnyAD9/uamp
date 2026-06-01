@@ -28,10 +28,8 @@ impl<Msg> Streams<Msg> {
                     self.add_stream(stream);
                     return Some(msg);
                 }
-                Err(e) => {
-                    if !e.is_cancelled() {
-                        Err::<(), _>(e).or_log_err("Streams task failed");
-                    }
+                Err(e) if !e.is_cancelled() => {
+                    Err::<(), _>(e).or_log_err("Streams task failed");
                 }
                 _ => {}
             }
