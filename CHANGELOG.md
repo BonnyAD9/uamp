@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## future
+### Fixes
+- Fix play-tmp event handling in GUI.
+
 ## v0.7.1
 ### Features
 #### GUI
