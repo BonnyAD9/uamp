@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.7.2
 ### Fixes
 - Fix play-tmp event handling in GUI.
 - Log doesn't show end of stream errors for flac files.
