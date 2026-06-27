@@ -4,6 +4,7 @@ mod control_function;
 mod control_msg;
 mod data_control_msg;
 mod id_control_msg;
+mod types;
 
 pub use self::{
     alias::*, any_control_msg::*, control_function::*, control_msg::*,

@@ -12,6 +12,8 @@ mod library_update;
 mod load_opts;
 mod song;
 mod song_id;
+mod tag;
+mod tags;
 
 //===========================================================================//
 //                                   Public                                  //
@@ -20,4 +22,5 @@ mod song_id;
 pub use self::{
     album::*, album_id::*, artist::*, artist_id::*, library_load_result::*,
     library_struct::*, library_update::*, load_opts::*, song::*, song_id::*,
+    tag::*, tags::*,
 };

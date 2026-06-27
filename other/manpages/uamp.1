@@ -58,7 +58,8 @@ now end so there is no need to end the run mode with \fB\fC\-\-\fR\&.
 .PP
 Playlist and queue refer to the same thing. Queue is just the playlist that
 plays right now. I prefer using the word playlist, even in places where you
-would expect the word queue.
+would expect the word queue. If you wish to achieve something that is simmilar
+to what playlist is called in other players, you can use \fITags\fP\&.
 .PP
 Uamp has unique playlist managment. It contains stack of playlists. Each
 playlist has its songs, current position within playlist, current position
@@ -86,6 +87,18 @@ default end action.
 .IP \(bu 2
 \fB\fCpcont\fR \- pop the playlist and continue playing with the next playlist.
 .RE
+.SS Tags
+.PP
+Tags are something that allows you to group songs. Each song can have any
+number of unique tags. From the other point of view, each tag has any number
+of songs. The songs within each tag are sorted by the order in which they were
+added to the tag. Other players may use the term playlist to represent what
+uamp calls tags.
+.PP
+Tags can be either visible or hidden. This allows specifying which tags are
+visible when presenting to user. Uamp binary itself doesn't use this and always
+shows all the tags. But this may be used by the client application to avoid
+clutter from some tags.
 .SS Configuration
 .PP
 Configuration is usually saved in \fB\fC~/.config/uamp\fR\&. You can get the
@@ -839,6 +852,42 @@ playlist.
 of the playlist.
 .RE
 .TP
+\fB\fCtag=\fR[\fIvisisbility\fP]\fIname\fP\fB\fC:\fR\fIquery\fP, \fB\fCadd\-tag=\fR[\fIvisibility\fP]\fIname\fP\fB\fC:\fR\fIquery\fP
+Add the tag specified by \fIname\fP to all songs that match \fIquery\fP\&. The songs
+are added to the end of the tag list. If the songs were already in the tag
+list, the operation is equivalent to removing them before adding them again.
+The tag list may contain non unique songs only if the query produces non
+unique songs, but this non\-uniqueness is not stable because any readdition
+of a song to a tag list will deduplicate the original tag list.
+.IP
+If you would like to reorder the tag list, you can use the tag as the base:
+\fB\fCtag=\fR\fIname\fP\fB\fC:,tag=\fR\fIname\fP\fB\fC@@\fR\fIorder\fP\&.
+.IP
+\fIvisibility\fP may be onw of:
+.RS
+.IP \(bu 2
+\fB\fC+\fR: Visible \- set the tag to be visible.
+.IP \(bu 2
+\fB\fC\-\fR: Hidden \- set the tag to be hidden.
+.RE
+.IP
+If the visibility is not specified, it will be set to visible if this is new
+tag, otherwise the visibility will stay on its previous value. If you would
+like to change the visibility without adding any songs, you can use \fB\fCnone\fR as
+query base: \fB\fCtag=\fR\fIname\fP\fB\fC:,none\fR\&.
+.IP
+There is currently no special limitation on what the tag name may be. It
+cannot contain \fB\fC:\fR and if it starts with \fB\fC\-\fR or \fB\fC+\fR, visibility has to be
+specified. It is recommended to not use the characters \fB\fC:\fR, \fB\fC,\fR, \fB\fC@\fR and \fB\fC \fR
+(space) and \fB\fC+\fR and \fB\fC\-\fR at the start.
+.IP
+See \fIFormat query\fP for more information on \fIquery\fP\&.
+.TP
+\fB\fCuntag=\fR\fIname\fP\fB\fC:\fR\fIquery\fP, \fB\fCremove\-tags=\fR\fIname\fP\fB\fC:\fR\fIquery\fP
+Remove the tag specified by \fIname\fP from all songs specified by \fIquery\fP\&.
+.IP
+See \fIFormat query\fP for more information on \fIquery\fP\&.
+.TP
 \fB\fCrestart\fR[\fB\fC=\fR\fIbinary\-path\fP]
 Restart the uamp instance. Without the argument, uamp will use its current
 executable. If \fIbinary\-path\fP is present, uamp will use its as the newly
@@ -929,7 +978,7 @@ Matches all songs where the title matches \fIpattern\fP in mode \fI:\fP\&.
 .PP
 \fB\fCp\fR\fI:pattern\fP, \fB\fCart\fR\fI:pattern\fP, \fB\fCartist\fR\fI:pattern\fP, \fB\fCperformer\fR\fI:pattern\fP,
 \fB\fCauth\fR\fI:pattern\fP, \fB\fCauthor\fR\fI:pattern\fP
-  Matches all songs where the artist matches \fIpattern\fP in mode \fI:\fP\&.
+  Matches all songs where at least one artist matches \fIpattern\fP in mode \fI:\fP\&.
 .TP
 \fB\fCa\fR\fI:pattern\fP, \fB\fCalb\fR\fI:pattern\fP, \fB\fCalbum\fR\fI:pattern\fP
 Matches all songs where the album matches \fIpattern\fP in mode \fI:\fP\&.
@@ -944,7 +993,10 @@ Matches all songs where the disc number is \fIuint\fP\&. The mode is ignored.
 Matches all songs where the year is \fIuint\fP\&. The mode is ignored.
 .TP
 \fB\fCg\fR\fI:pattern\fP, \fB\fCgenre\fR\fI:pattern\fP
-Matches all songs where the genre matches \fIpattern\fP in mode \fI:\fP\&.
+Matches all songs where at least one genre matches \fIpattern\fP in mode \fI:\fP\&.
+.TP
+\fB\fCtag\fR\fI:pattern\fP
+Matches all songs where at least one tag matches \fIpattern\fP in mode \fI:\fP\&.
 .PP
 These are the available pattern matching modes \fI:\fP:
 .TP
@@ -1008,7 +1060,7 @@ Sort by the path to the audio file.
 Sort by the title of the song.
 .TP
 \fB\fCp\fR, \fB\fCart\fR, \fB\fCartist\fR, \fB\fCperformer\fR, \fB\fCauth\fR, \fB\fCauthor\fR
-Sort by the artist.
+Sort by the artists.
 .IP
 If complex sorting is enabled, also sort by year, album name, disc and track
 number.
@@ -1036,7 +1088,10 @@ number.
 Sort by the length of the song.
 .TP
 \fB\fCg\fR, \fB\fCgenre\fR
-Sort by the genre of the song.
+Sort by the genres of the song.
+.TP
+\fB\fCtag\fR
+Sort by the tags of the song.
 .PP
 Prefix chars meaning:
 .TP
@@ -1053,7 +1108,7 @@ Use complex sorting.
 Use simple sorting.
 .SS Format query
 .PP
-[\fB\fC,\fR\fIbase\fP][\fIfilter\fP][\fB\fC@\fR\fIorder\fP[\fB\fC@\fR\fIunique\fP]]
+[\fB\fC,\fR\fIbase\fP[\fB\fC@\fR]][\fIfilter\fP][\fB\fC@\fR\fIorder\fP[\fB\fC@\fR\fIunique\fP]]
 .PP
 Query is just combination of \fIbase\fP, \fIfilter\fP, \fIorder\fP and \fIunique\fP\&. Song list
 will be created from sources specified in \fIbase\fP\&. This is by default all songs
@@ -1078,6 +1133,10 @@ All songs in the library.
 \fB\fCnone\fR
 No songs.
 .TP
+\fB\fCtag=\fR\fIname\fP
+Songs of the tag list of the given name in the order in which they are in the
+tag list.
+.TP
 \fIindex\fP
 Playlist from the playlist stack at the \fIindex\fP\&. 0 is the current playlist, 1
 is the next playlist and so on.
@@ -1095,7 +1154,7 @@ Each song is unique.
 Each song title is unique.
 .TP
 \fB\fCp\fR, \fB\fCart\fR, \fB\fCartist\fR, \fB\fCperformer\fR, \fB\fCauth\fR, \fB\fCauthor\fR
-Each artist is unique.
+Each set artists is unique.
 .TP
 \fB\fCa\fR, \fB\fCalb\fR, \fB\fCalbum\fR
 Each album name is unique.
@@ -1113,7 +1172,10 @@ Each year is unique.
 Each song length is unique.
 .TP
 \fB\fCg\fR, \fB\fCgenre\fR
-Each genre is uniuqe.
+Each set of genres is uniuqe.
+.TP
+\fB\fCtag\fR
+Each set of tags is unique.
 .SH FILES
 .TP
 \fI~/.config/uamp/config.json\fP

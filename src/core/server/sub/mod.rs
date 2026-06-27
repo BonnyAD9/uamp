@@ -1,3 +1,4 @@
+mod add_tag;
 mod config;
 mod insert_into_playlist;
 mod library;
@@ -9,13 +10,14 @@ mod playlist_jump;
 mod pop_playlist;
 mod pop_set_playlist;
 mod remove_from_playlist;
+mod remove_tag;
 mod reorder_playlist_stack;
 mod set_all;
 mod set_playlist;
 
 pub use self::{
-    config::*, insert_into_playlist::*, library::*, new_server::*,
+    add_tag::*, config::*, insert_into_playlist::*, library::*, new_server::*,
     play_tmp::*, player::*, playlist::*, playlist_jump::*, pop_playlist::*,
-    pop_set_playlist::*, remove_from_playlist::*, reorder_playlist_stack::*,
-    set_all::*, set_playlist::*,
+    pop_set_playlist::*, remove_from_playlist::*, remove_tag::*,
+    reorder_playlist_stack::*, set_all::*, set_playlist::*,
 };

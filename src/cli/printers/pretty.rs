@@ -206,11 +206,12 @@ pub fn compact_song_list(songs: &[Song], color: bool, send_time: Instant) {
 pub fn verbose_song_list(songs: &[Song], color: bool, send_time: Instant) {
     printmcln!(
         color,
-        "{'bold u y}{:<45} {'c}{:<35} {'m}{:<7} {'g}{:<10}{'_}",
+        "{'bold u y}{:<45} {'c}{:<35} {'m}{:<7} {'g}{:<10} {'b}{:<15}{'_}",
         "TITLE / ARTIST",
         "ALBUM / YEAR",
         "T / D",
-        "LEN / GEN"
+        "LEN / GEN",
+        "TAGS",
     );
 
     let mut total_dur = Duration::ZERO;
@@ -241,6 +242,20 @@ fn print_song(s: &Song, color: bool) {
 }
 
 fn verbose_print_song(s: &Song, color: bool) {
+    let mut tags_line = String::new();
+    let mut tags_line2 = String::new();
+    for t in s.tags() {
+        if tags_line.len() + t.len() < 16 {
+            tags_line += t;
+            tags_line.push(' ');
+        } else {
+            tags_line2 += t;
+            tags_line2.push(' ');
+        }
+    }
+    tags_line.pop();
+    tags_line2.pop();
+
     printmc!(color, "{'y}");
     print_elipsised(s.title_str(), 45);
     printmc!(color, " {'c}");
@@ -249,6 +264,8 @@ fn verbose_print_song(s: &Song, color: bool) {
     print_elipsised(&s.track_str(), 7);
     printmc!(color, " {'g}");
     print_elipsised(&s.length_str(true), 10);
+    printmc!(color, " {'b}");
+    print_elipsised(&tags_line, 15);
     printmcln!(color, "{'_}");
 
     printmc!(color, "{'u uc8 dy} ");
@@ -259,6 +276,8 @@ fn verbose_print_song(s: &Song, color: bool) {
     print_elipsised(&s.disc_str(), 6);
     printmc!(color, " {'dg} ");
     print_elipsised(&s.genres_str(), 9);
+    printmc!(color, " {'db} ");
+    print_elipsised(&tags_line2, 14);
     printmcln!(color, "{'_}");
 }
 

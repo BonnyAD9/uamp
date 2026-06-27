@@ -14,11 +14,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::{
     Alias, AppCtrl, Msg, Result, UampApp,
+    control::types::{AddTag, RemoveTag},
     query::{ComposedFilter, Query},
     server::{
         SubMsg,
         sub::{
-            InsertIntoPlaylist, PlaylistJump, RemoveFromPlaylist,
+            self, InsertIntoPlaylist, PlaylistJump, RemoveFromPlaylist,
             ReorderPlaylistStack,
         },
     },
@@ -57,6 +58,10 @@ pub enum DataControlMsg {
     RemoveFromLibrary(Query),
     /// Retain songs in playlist that match the given filter.
     PlaylistRetain(ComposedFilter),
+    /// Add the given tag to the songs specified by the query.
+    AddTag(AddTag),
+    /// Remove the given tag from all songs specified by the query.
+    RemoveTag(RemoveTag),
 }
 
 impl UampApp {
@@ -215,6 +220,34 @@ impl UampApp {
                     }
                 }
             }
+            DataControlMsg::AddTag(m) => {
+                let songs = m.query.get_ids(
+                    &self.library,
+                    self.config.simple_sorting(),
+                    &self.player,
+                )?;
+                if songs.is_empty() {
+                    return Ok(vec![]);
+                }
+                self.library.add_tag(m.hidden, m.name.clone(), &songs);
+                self.client_update(SubMsg::AddTag(
+                    sub::AddTag::new(m.hidden, m.name, songs).into(),
+                ));
+            }
+            DataControlMsg::RemoveTag(m) => {
+                let songs = m.query.get_ids(
+                    &self.library,
+                    self.config.simple_sorting(),
+                    &self.player,
+                )?;
+                if songs.is_empty() {
+                    return Ok(vec![]);
+                }
+                self.library.remove_tag(&m.name, &songs);
+                self.client_update(SubMsg::RemoveTag(
+                    sub::RemoveTag::new(m.name, songs).into(),
+                ));
+            }
         }
 
         Ok(vec![])
@@ -285,6 +318,12 @@ impl FromStr for DataControlMsg {
             v if starts_any!(v, "playlist-retain=") => {
                 Ok(DataControlMsg::PlaylistRetain(val_arg(v, '=')?))
             }
+            v if starts_any!(v, "add-tag=", "tag=") => {
+                Ok(DataControlMsg::AddTag(val_arg(v, '=')?))
+            }
+            v if starts_any!(v, "remove-tag=", "untag=") => {
+                Ok(DataControlMsg::RemoveTag(val_arg(v, '=')?))
+            }
             v => ArgError::from_msg(
                 ArgErrKind::UnknownArgument,
                 "Unknown control msg.",
@@ -328,6 +367,8 @@ impl Display for DataControlMsg {
             DataControlMsg::PlaylistRetain(q) => {
                 write!(f, "playlist-retain={q}")
             }
+            DataControlMsg::AddTag(m) => write!(f, "tag={m}"),
+            DataControlMsg::RemoveTag(m) => write!(f, "untag={m}"),
         }
     }
 }

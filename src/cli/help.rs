@@ -710,6 +710,15 @@ fn print_control_messages_help(color: bool) {
   {'r}playlist-retain{'w}=<filter>{'_}
     Retain only songs in playlist that match the given filter.
 
+  {'r}tag  add-tag{'w}={'gr}[+|-]{'w}<name>:<query>{'_}
+    Add the given tag to all songs that match the query. All songs will be
+    added to the end of the list for the given tag. The list never contains
+    repetitions. The `+` signifies that the tag is set to be visible. `-`
+    signifies that the tag is hidden.
+
+  {'r}untag  remove-tag{'w}=<name>:<query>{'_}
+    Remove the given tag from all the songs that match the given query.
+
   {'r}save{'_}
     Triggers save (but saves only if there is change).
 
@@ -824,6 +833,10 @@ fn print_base_help(color: bool, header: bool) {
         
       {'r}none{'_}
         No songs.
+
+      {'r}tag{'w}=<name>{'_}
+        All songs with the given tag in the order in which they were added the
+        tag.
         
       {'w}<number>{'_}
         Playlist with the given index from the playlist stack. 0 is the current
@@ -871,6 +884,10 @@ fn print_filter_help(color: bool, header: bool) {
 
       {'r}g  genre{'w}:<pattern>{'_}
         Matches all songs which genre that matches.
+
+      {'r}tag{'w}:<name>{'_}
+        Matches all songs with tag that matches. Consider using tag base where
+        applicable as it is faster.
 
     Instead of `{'i}:{'_}` you can use different separator to change the
     comparison:
@@ -955,6 +972,9 @@ fn print_order_help(color: bool, header: bool) {
       {'r}g  genre{'_}
         Sort by the genre.
 
+      {'r}tag{'_}
+        Sort by tags.
+
     You can alter the sorting with one of the following options (some
     parameters ignore some of this):
       `{'i}<  /{'_}`    sort in ascending order (this is the default).
@@ -1004,6 +1024,9 @@ fn print_unique_help(color: bool, header: bool) {
 
       {'r}g  genre{'_}
         Genres will be unique.
+
+      {'r}tag{'_}
+        Set of tags will be unique.
 "
     );
 }

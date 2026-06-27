@@ -43,6 +43,8 @@ pub enum FilterType {
     Year(Option<i32>),
     /// Song genre contains the given string.
     Genre(Option<String>),
+    /// Song has the tag.
+    Tag(Option<String>),
 }
 
 #[derive(
@@ -102,13 +104,14 @@ impl FilterType {
         }
 
         macro_rules! eqs {
-            ($c:expr, $s:expr) => {
-                match ($c, $s) {
-                    (None, []) => true,
-                    (Some(c), s) => s.iter().any(|s| cmp.matches(c, s, buf)),
+            ($c:expr, $s:expr) => {{
+                let s = $s;
+                match $c {
+                    None if s.is_empty() => true,
+                    Some(c) => s.iter().any(|s| cmp.matches(c, s, buf)),
                     _ => false,
                 }
-            };
+            }};
         }
 
         match self {
@@ -127,6 +130,7 @@ impl FilterType {
             Self::Disc(d) => *d == song.disc(),
             Self::Year(y) => *y == song.year(),
             Self::Genre(s) => eqs!(s, song.genres()),
+            Self::Tag(s) => eqs!(s, song.tags()),
         }
     }
 
@@ -214,6 +218,8 @@ impl Display for Filter {
             FilterType::Year(Some(y)) => write!(f, "y{n}{c}{y}"),
             FilterType::Genre(None) => write!(f, "g{n}{c}"),
             FilterType::Genre(Some(g)) => write!(f, "g{n}{c}{g}"),
+            FilterType::Tag(None) => write!(f, "tag{n}{c}"),
+            FilterType::Tag(Some(t)) => write!(f, "tag{n}{c}{t}"),
         }
     }
 }
@@ -233,7 +239,7 @@ impl FromStr for Filter {
                 | "p" | "art" | "artist" | "performer" | "auth" | "author"
                 | "a" | "alb" | "album" | "t" | "trk" | "track" | "album_artist" | "aa" | "ap"
                 | "track-number" | "d" | "disc" | "y" | "year" | "g"
-                | "genre" => ArgError::failed_to_parse(
+                | "genre" | "tag" => ArgError::failed_to_parse(
                     "Missing argument for filter.",
                     s,
                 )
@@ -329,6 +335,11 @@ impl FromStr for Filter {
             )),
             "g" | "genre" => Ok(Self::new(
                 FilterType::Genre(val.arg_into().map_err(em)?),
+                cmp,
+                negate,
+            )),
+            "tag" => Ok(Self::new(
+                FilterType::Tag(val.arg_into().map_err(em)?),
                 cmp,
                 negate,
             )),

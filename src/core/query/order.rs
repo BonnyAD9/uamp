@@ -68,6 +68,8 @@ pub enum OrderField {
     /// Order by the genre.
     #[arg("g")]
     Genre,
+    /// Order by tags.
+    Tag,
 }
 
 impl SongOrder {
@@ -112,6 +114,7 @@ impl SongOrder {
             OrderField::Year => self.year(lib, simple, songs),
             OrderField::Length => self.length(lib, songs),
             OrderField::Genre => self.genre(lib, songs),
+            OrderField::Tag => self.tag(lib, songs),
         }
 
         if let Some((idx, song)) = cur
@@ -136,10 +139,16 @@ impl FromStr for SongOrder {
             match c {
                 '<' | '>' | '/' | '\\' | '~' => {
                     if reverse.is_some() {
-                        return ArgError::failed_to_parse("Reverse is already set.", s)
-                                .hint("Only one of `<`, `>`, `/`, `\\` or `~` may be specified.")
-                                .spanned(i..i + 1)
-                                .err();
+                        return ArgError::failed_to_parse(
+                            "Reverse is already set.",
+                            s,
+                        )
+                        .hint(
+                            "Only one of `<`, `>`, `/`, `\\` or `~` may be \
+                            specified.",
+                        )
+                        .spanned(i..i + 1)
+                        .err();
                     }
                     reverse = Some(matches!(c, '>' | '\\' | '~'));
                 }
@@ -190,6 +199,7 @@ impl Display for SongOrder {
             OrderField::Year => write!(f, "date"),
             OrderField::Length => write!(f, "len"),
             OrderField::Genre => write!(f, "g"),
+            OrderField::Tag => write!(f, "tag"),
         }
     }
 }
@@ -291,5 +301,9 @@ impl SongOrder {
 
     fn genre(&self, lib: &Library, songs: &mut [SongId]) {
         self.sort_key(songs, |s| lib[s].genres());
+    }
+
+    fn tag(&self, lib: &Library, songs: &mut [SongId]) {
+        self.sort_key(songs, |s| lib[s].tags())
     }
 }

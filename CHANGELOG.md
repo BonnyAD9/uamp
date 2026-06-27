@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## future
+### New features
+#### Tags
+Tags work in a simmilar way to what other players call *playlists*. Each song
+can have any number of unique tags. Each tag can have any number of usually
+unique songs. The list of songs within tags is ordered.
+- New control messages `tag` and `untag`.
+- New base `tag=<name>`.
+- New filter `tag`.
+- New order `tag`.
+- New unique `tag`. 
+- New sse messages `add-tag` and `remove-tag`.
+
 ## v0.7.2
 ### Fixes
 - Fix play-tmp event handling in GUI.

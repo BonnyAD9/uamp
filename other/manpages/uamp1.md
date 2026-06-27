@@ -59,7 +59,8 @@ now end so there is no need to end the run mode with `--`.
 
 Playlist and queue refer to the same thing. Queue is just the playlist that
 plays right now. I prefer using the word playlist, even in places where you
-would expect the word queue.
+would expect the word queue. If you wish to achieve something that is simmilar
+to what playlist is called in other players, you can use *Tags*.
 
 Uamp has unique playlist managment. It contains stack of playlists. Each
 playlist has its songs, current position within playlist, current position
@@ -83,6 +84,19 @@ By default, uamp has defined some aliases useful as end actions for playlists:
   default end action.
 - `repeat` - repeat the playlist indefinitely.
 - `pcont` - pop the playlist and continue playing with the next playlist.
+
+### Tags
+
+Tags are something that allows you to group songs. Each song can have any
+number of unique tags. From the other point of view, each tag has any number
+of songs. The songs within each tag are sorted by the order in which they were
+added to the tag. Other players may use the term playlist to represent what
+uamp calls tags.
+
+Tags can be either visible or hidden. This allows specifying which tags are
+visible when presenting to user. Uamp binary itself doesn't use this and always
+shows all the tags. But this may be used by the client application to avoid
+clutter from some tags.
 
 ### Configuration
 
@@ -785,6 +799,39 @@ Integrations:
   - `m`, `mix`, `mix-in` - mix the newly loaded songs into the unplayed part
     of the playlist.
 
+`tag=`[*visisbility*]*name*`:`*query*, `add-tag=`[*visibility*]*name*`:`*query*
+  Add the tag specified by *name* to all songs that match *query*. The songs
+  are added to the end of the tag list. If the songs were already in the tag
+  list, the operation is equivalent to removing them before adding them again.
+  The tag list may contain non unique songs only if the query produces non
+  unique songs, but this non-uniqueness is not stable because any readdition
+  of a song to a tag list will deduplicate the original tag list.
+
+  If you would like to reorder the tag list, you can use the tag as the base:
+  `tag=`*name*`:,tag=`*name*`@@`*order*.
+
+  *visibility* may be onw of:
+
+  - `+`: Visible - set the tag to be visible.
+  - `-`: Hidden - set the tag to be hidden.
+
+  If the visibility is not specified, it will be set to visible if this is new
+  tag, otherwise the visibility will stay on its previous value. If you would
+  like to change the visibility without adding any songs, you can use `none` as
+  query base: `tag=`*name*`:,none`.
+
+  There is currently no special limitation on what the tag name may be. It
+  cannot contain `:` and if it starts with `-` or `+`, visibility has to be
+  specified. It is recommended to not use the characters `:`, `,`, `@` and ` `
+  (space) and `+` and `-` at the start.
+
+  See *Format query* for more information on *query*.
+
+`untag=`*name*`:`*query*, `remove-tags=`*name*`:`*query*
+  Remove the tag specified by *name* from all songs specified by *query*.
+
+  See *Format query* for more information on *query*.
+
 `restart`[`=`*binary-path*]
   Restart the uamp instance. Without the argument, uamp will use its current
   executable. If *binary-path* is present, uamp will use its as the newly
@@ -878,7 +925,7 @@ Here is list of supported fields to match and their meaning:
 
 `p`*:pattern*, `art`*:pattern*, `artist`*:pattern*, `performer`*:pattern*,
 `auth`*:pattern*, `author`*:pattern*
-  Matches all songs where the artist matches *pattern* in mode *:*.
+  Matches all songs where at least one artist matches *pattern* in mode *:*.
 
 `a`*:pattern*, `alb`*:pattern*, `album`*:pattern*
   Matches all songs where the album matches *pattern* in mode *:*.
@@ -893,7 +940,10 @@ Here is list of supported fields to match and their meaning:
   Matches all songs where the year is *uint*. The mode is ignored.
 
 `g`*:pattern*, `genre`*:pattern*
-  Matches all songs where the genre matches *pattern* in mode *:*.
+  Matches all songs where at least one genre matches *pattern* in mode *:*.
+
+`tag`*:pattern*
+  Matches all songs where at least one tag matches *pattern* in mode *:*.
 
 These are the available pattern matching modes *:*:
 
@@ -954,7 +1004,7 @@ Here is list of available fields for sorting:
   Sort by the title of the song.
 
 `p`, `art`, `artist`, `performer`, `auth`, `author`
-  Sort by the artist.
+  Sort by the artists.
 
   If complex sorting is enabled, also sort by year, album name, disc and track
   number.
@@ -982,7 +1032,10 @@ Here is list of available fields for sorting:
   Sort by the length of the song.
 
 `g`, `genre`
-  Sort by the genre of the song.
+  Sort by the genres of the song.
+
+`tag`
+  Sort by the tags of the song.
 
 Prefix chars meaning:
 
@@ -1000,7 +1053,7 @@ Prefix chars meaning:
 
 ### Format query
 
-[`,`*base*][*filter*][`@`*order*[`@`*unique*]]
+[`,`*base*[`@`]][*filter*][`@`*order*[`@`*unique*]]
 
 Query is just combination of *base*, *filter*, *order* and *unique*. Song list
 will be created from sources specified in *base*. This is by default all songs
@@ -1026,6 +1079,10 @@ Base is just comma separated list of sources for songs. The sources may be:
 `none`
   No songs.
 
+`tag=`*name*
+  Songs of the tag list of the given name in the order in which they are in the
+  tag list.
+
 *index*
   Playlist from the playlist stack at the *index*. 0 is the current playlist, 1
   is the next playlist and so on.
@@ -1044,7 +1101,7 @@ would repeat this property will be removed. The property may be:
   Each song title is unique.
 
 `p`, `art`, `artist`, `performer`, `auth`, `author`
-  Each artist is unique.
+  Each set artists is unique.
 
 `a`, `alb`, `album`
   Each album name is unique.
@@ -1062,7 +1119,10 @@ would repeat this property will be removed. The property may be:
   Each song length is unique.
 
 `g`, `genre`
-  Each genre is uniuqe.
+  Each set of genres is uniuqe.
+
+`tag`
+  Each set of tags is unique.
 
 ## FILES
 

@@ -8,9 +8,9 @@ use crate::core::{
     Alias, Result,
     player::{AddPolicy, Playback},
     server::sub::{
-        Config, InsertIntoPlaylist, NewServer, PlayTmp, PlaylistJump,
-        PopPlaylist, PopSetPlaylist, RemoveFromPlaylist, ReorderPlaylistStack,
-        SetAll, SetPlaylist,
+        AddTag, Config, InsertIntoPlaylist, NewServer, PlayTmp, PlaylistJump,
+        PopPlaylist, PopSetPlaylist, RemoveFromPlaylist, RemoveTag,
+        ReorderPlaylistStack, SetAll, SetPlaylist,
     },
 };
 
@@ -91,6 +91,13 @@ pub enum SubMsg {
     // Remove playlist at the given index (0 is top of the stack).
     #[list_name("remove-playlist")]
     RemovePlaylist(usize),
+    // Add the given tag to all the specified songs. The songs in the tag are
+    // reordered so that the newly added songs are at the end.
+    #[list_name("add-tag")]
+    AddTag(Arc<AddTag>),
+    // Remove the given tag from all of the given songs.
+    #[list_name("remove-tag")]
+    RemoveTag(Arc<RemoveTag>),
 }
 
 impl SubMsg {
@@ -131,6 +138,8 @@ impl SubMsg {
             Self::ClientChanged => Ok("event: client-changed\n\n".to_string()),
             Self::ConfigChanged(d) => make_event("config-changed", d),
             Self::RemovePlaylist(d) => make_event("remove-playlist", d),
+            Self::AddTag(d) => make_event("add-tag", d),
+            Self::RemoveTag(d) => make_event("remove-tag", d),
         }
     }
 }

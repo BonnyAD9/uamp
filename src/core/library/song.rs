@@ -1,5 +1,6 @@
 use std::{
     borrow::Cow,
+    collections::BTreeSet,
     fmt::Debug,
     fs::File,
     path::{Path, PathBuf},
@@ -47,6 +48,8 @@ pub struct Song {
     pub(super) length: Option<Duration>,
     /// The genre of the song.
     pub(super) genres: Vec<String>,
+    /// Tags of the song
+    pub(super) tags: BTreeSet<Arc<str>>,
     /// True if the song is deleted, deleted songs should be skipped in all
     /// all cases, and should be removed from all collections.
     #[serde(default = "default_deleted")]
@@ -105,6 +108,7 @@ impl Song {
             year: None,
             length: None,
             genres: vec![],
+            tags: BTreeSet::new(),
             deleted: false,
         }
     }
@@ -223,6 +227,11 @@ impl Song {
     /// Gets the genre.
     pub fn genres(&self) -> &[String] {
         &self.genres
+    }
+
+    /// Get the tags.
+    pub fn tags(&self) -> &BTreeSet<Arc<str>> {
+        &self.tags
     }
 
     pub fn genres_str(&self) -> Cow<'_, str> {

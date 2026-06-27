@@ -3,12 +3,13 @@ use std::{
     fs::{self, DirEntry, FileType},
     mem,
     path::PathBuf,
+    sync::Arc,
 };
 
 use crate::core::{
     LogResult, Result,
     config::Config,
-    library::{Album, AlbumId, Albums, Artist, ArtistId, Artists},
+    library::{Album, AlbumId, Albums, Artist, ArtistId, Artists, tags::Tags},
 };
 
 use super::{LibraryLoadResult, Song, SongId};
@@ -68,6 +69,8 @@ struct State<'a> {
     albums: &'a mut Albums,
     // All the artists in the library.
     artists: &'a mut Artists,
+    // All the tags in the library.
+    tags: &'a mut Tags,
     // Ids of new songs that are not at the end of `songs`.
     sparse_new: &'a mut Vec<SongId>,
     // Index of the first song that is new at the end of `songs`.
@@ -115,6 +118,7 @@ impl<'a> State<'a> {
             songs: &mut res.songs,
             albums: &mut res.albums,
             artists: &mut res.artists,
+            tags: &mut res.tags,
             sparse_new: &mut res.sparse_new,
             first_new: &mut res.first_new,
             any_removed: &mut res.removed,
@@ -202,6 +206,8 @@ impl<'a> State<'a> {
     fn propagate_remove(&mut self, removed: Vec<(SongId, Song)>) {
         let mut rem_alb: BTreeMap<AlbumId, Vec<SongId>> = BTreeMap::new();
         let mut rem_singles: BTreeMap<ArtistId, Vec<SongId>> = BTreeMap::new();
+        let mut rem_tags: BTreeMap<Arc<str>, HashSet<SongId>> =
+            BTreeMap::new();
         for (id, mut s) in removed {
             let Some(album) = s.album else {
                 for a in s.artists {
@@ -229,11 +235,15 @@ impl<'a> State<'a> {
             for a in s.artists {
                 rem_singles.entry(ArtistId::new(a)).or_default().push(id);
             }
+            for t in s.tags {
+                rem_tags.entry(t).or_default().insert(id);
+            }
         }
 
         let rem_art = self.remove_from_albums(rem_alb);
         self.remove_from_singles(rem_singles);
         self.remove_from_artists(rem_art);
+        self.remove_from_tags(rem_tags);
     }
 
     fn remove_from_albums(
@@ -311,6 +321,22 @@ impl<'a> State<'a> {
 
             if art.singles.is_empty() && art.albums.is_empty() {
                 self.artists.remove(&key);
+            }
+        }
+    }
+
+    fn remove_from_tags(
+        &mut self,
+        rem_tags: impl IntoIterator<Item = (Arc<str>, HashSet<SongId>)>,
+    ) {
+        for (tag, songs) in rem_tags {
+            let Some(t) = self.tags.0.get_mut(&tag) else {
+                continue;
+            };
+
+            t.songs.retain(|a| !songs.contains(a));
+            if t.songs.is_empty() {
+                self.tags.0.remove(&tag);
             }
         }
     }

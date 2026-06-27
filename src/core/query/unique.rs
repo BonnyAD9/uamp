@@ -30,6 +30,7 @@ pub enum Unique {
     Length,
     #[arg("g")]
     Genre,
+    Tag,
 }
 
 impl Unique {
@@ -52,6 +53,7 @@ impl Unique {
                 Cow::<Duration>::Owned(a.length().unwrap_or_default())
             }),
             Self::Genre => unique_filter_song(data, |a| a.genres().into()),
+            Self::Tag => unique_filter_song(data, |a| Cow::Borrowed(a.tags())),
         }
     }
 
@@ -80,6 +82,9 @@ impl Unique {
                 Cow::<Duration>::Owned(lib[a].length().unwrap_or_default())
             }),
             Self::Genre => unique_filter_id(data, |a| lib[a].genres().into()),
+            Self::Tag => {
+                unique_filter_id(data, |a| Cow::Borrowed(lib[a].tags()))
+            }
         }
     }
 }

@@ -3,7 +3,10 @@ use std::{collections::HashSet, fmt::Debug};
 use crate::{
     core::{
         AppCtrl, Error, Job, JobMsg, Msg, Result, UampApp,
-        library::{Albums, Artists, LoadOpts, add_new_songs::add_new_songs},
+        library::{
+            Albums, Artists, LoadOpts, add_new_songs::add_new_songs,
+            tags::Tags,
+        },
         player::AddPolicy,
     },
     ext::Alc,
@@ -23,6 +26,7 @@ pub struct LibraryLoadResult {
     pub(super) songs: Vec<Song>,
     pub(super) albums: Albums,
     pub(super) artists: Artists,
+    pub(super) tags: Tags,
     /// Determines what to do with the new songs.
     pub(super) add_policy: Option<AddPolicy>,
     /// Index of first new song.
@@ -48,6 +52,7 @@ impl Debug for LibraryLoadResult {
             .field("songs.len", &self.songs.len())
             .field("albums.len", &self.albums.len())
             .field("artists.len", &self.artists.len())
+            .field("tags.len", &self.tags.0.len())
             .field("add_policy", &self.add_policy)
             .field("first_new", &self.first_new)
             .field("sparse_new.len", &self.sparse_new.len())
@@ -73,6 +78,7 @@ impl UampApp {
         let songs = self.library.clone_songs();
         let albums = self.library.clone_albums();
         let artists = self.library.clone_artists();
+        let tags = self.library.clone_tags();
         let remove_missing =
             opts.remove_missing.unwrap_or(conf.remove_missing_on_load());
 
@@ -86,6 +92,7 @@ impl UampApp {
                 songs: Alc::take(songs),
                 albums: Alc::take(albums),
                 artists: Alc::take(artists),
+                tags: Alc::take(tags),
             });
 
             add_new_songs(&mut res, &conf, remove_missing);
@@ -129,6 +136,7 @@ impl UampApp {
         *self.library.mut_songs() = res.songs.into();
         self.library.albums = res.albums.into();
         self.library.artists = res.artists.into();
+        self.library.tags = res.tags.into();
         if res.removed {
             if res.first_new < old_cnt || !res.sparse_new.is_empty() {
                 // New songs ids replaced old song ids.

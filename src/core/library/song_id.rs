@@ -19,6 +19,12 @@ use serde::{Deserialize, Serialize};
 )]
 pub struct SongId(isize);
 
+impl AsRef<SongId> for SongId {
+    fn as_ref(&self) -> &SongId {
+        self
+    }
+}
+
 impl SongId {
     /// Makes the ID as temporary at the given index.
     #[inline]

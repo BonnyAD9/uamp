@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use pareg::{ArgError, ArgInto, FromArg};
+use pareg::{ArgError, ArgInto, FromArg, starts_any, val_arg};
 use serde::{Deserialize, Serialize};
 
 use crate::core::{
@@ -9,7 +9,7 @@ use crate::core::{
     player::Player,
 };
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub enum Base {
     #[default]
     Library,
@@ -17,6 +17,7 @@ pub enum Base {
     All,
     None,
     Playlist(usize),
+    Tag(String),
 }
 
 impl Base {
@@ -41,6 +42,7 @@ impl Base {
                         .msg(format!("Invalid playlist index {n}.")));
                 }
             }
+            Self::Tag(s) => Box::new(lib.get_tag_songs(s).iter().copied()),
         };
         Ok(res)
     }
@@ -53,12 +55,18 @@ impl<'a> FromArg<'a> for Base {
             "tmp" | "temporary" => Ok(Self::Temporary),
             "all" | "_" => Ok(Self::All),
             "none" => Ok(Self::None),
-            _ => arg.arg_into().map(Self::Playlist).map_err(|_| {
-                ArgError::invalid_value("Invalid query base.", arg).hint(
-                    "Expected `lib`, `tmp`, `all`, `none` or playlist \
-                        index.",
-                )
-            }),
+            v if starts_any!(v, "tag=") => val_arg(v, '=').map(Self::Tag),
+            s if s.chars().next().is_some_and(|a| a.is_numeric()) => {
+                arg.arg_into().map(Self::Playlist).map_err(|_| {
+                    ArgError::invalid_value("Invalid playlist index.", arg)
+                        .hint("Playlist index must be fully numeric string.")
+                })
+            }
+            _ => Err(ArgError::invalid_value("Invalid query base.", arg)
+                .hint(
+                    "Expected `lib`, `tmp`, `all`, `none`, `tag=<tag>` or \
+                    playlist index.",
+                )),
         }
     }
 }
@@ -71,6 +79,7 @@ impl Display for Base {
             Self::All => f.write_str("all"),
             Self::None => f.write_str("none"),
             Self::Playlist(p) => write!(f, "{p}"),
+            Self::Tag(t) => write!(f, "tag={t}"),
         }
     }
 }

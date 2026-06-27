@@ -4,7 +4,7 @@ use uamp_proc::TrackChange;
 
 use std::{
     cell::Cell,
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     ops::{Index, IndexMut},
     path::Path,
 };
@@ -12,7 +12,7 @@ use std::{
 use crate::{
     core::{
         Result,
-        library::{Album, AlbumId, Artist, ArtistId},
+        library::{Album, AlbumId, Artist, ArtistId, Tag, TagId, tags::Tags},
     },
     ext::Alc,
 };
@@ -47,6 +47,9 @@ pub struct Library {
     #[serde(skip, default)]
     pub(super) artists: Alc<Artists>,
 
+    #[serde(default)]
+    pub(super) tags: Alc<Tags>,
+
     // Other fields
     /// invalid song
     #[serde(skip, default = "default_ghost")]
@@ -72,6 +75,7 @@ impl Library {
             tmp_songs: Alc::default(),
             albums: Alc::default(),
             artists: Alc::default(),
+            tags: Alc::default(),
             lib_update: LibraryUpdate::None,
             change: Cell::new(true),
             ghost: Song::invalid(),
@@ -97,6 +101,10 @@ impl Library {
 
     pub fn clone_artists(&mut self) -> Alc<Artists> {
         Alc::clone(&mut self.artists)
+    }
+
+    pub fn clone_tags(&mut self) -> Alc<Tags> {
+        Alc::clone(&mut self.tags)
     }
 
     /// Change the library update state. Call this when you change some data in
@@ -137,6 +145,7 @@ impl Library {
             tmp_songs: Alc::clone(&mut self.tmp_songs),
             albums: Alc::clone(&mut self.albums),
             artists: Alc::clone(&mut self.artists),
+            tags: Alc::clone(&mut self.tags),
             lib_update: LibraryUpdate::None,
             ghost: self.ghost.clone(),
             change: self.change.clone(),
@@ -206,6 +215,59 @@ impl Library {
     /// the last save.
     pub(super) fn get_change(&self) -> bool {
         self.change.get()
+    }
+
+    pub fn add_tag(
+        &mut self,
+        hidden: Option<bool>,
+        name: impl Into<TagId>,
+        songs: &[SongId],
+    ) {
+        let name = name.into();
+
+        let rem: HashSet<SongId> = songs
+            .iter()
+            .copied()
+            .filter(|s| !self[s].tags.insert(name.clone()))
+            .collect();
+        let tag = self
+            .tags
+            .0
+            .entry(name.clone())
+            .or_insert_with(|| Tag::new(name.clone()));
+
+        if let Some(h) = hidden {
+            tag.hidden = h;
+        }
+
+        tag.songs.retain(|s| !rem.contains(s));
+        tag.songs.extend_from_slice(songs);
+    }
+
+    pub fn remove_tag<S: AsRef<SongId>>(
+        &mut self,
+        name: &str,
+        songs: impl IntoIterator<Item = S>,
+    ) {
+        let rem: HashSet<SongId> = songs
+            .into_iter()
+            .map(|a| *a.as_ref())
+            .filter(|a| self[a].tags.remove(name))
+            .collect();
+        let Some(tag) = self.tags.0.get_mut(name) else {
+            return;
+        };
+        tag.songs.retain(|s| !rem.contains(s));
+    }
+
+    pub fn get_tag(&self, name: &str) -> Option<&Tag> {
+        self.tags.0.get(name)
+    }
+
+    pub fn get_tag_songs(&self, name: &str) -> &[SongId] {
+        self.get_tag(name)
+            .map(|a| a.songs.as_slice())
+            .unwrap_or_default()
     }
 }
 
