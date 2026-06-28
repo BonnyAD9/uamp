@@ -48,6 +48,7 @@ pub struct Library {
     pub(super) artists: Alc<Artists>,
 
     #[serde(default)]
+    #[track_ref(pub, pub)]
     pub(super) tags: Alc<Tags>,
 
     // Other fields
@@ -231,10 +232,10 @@ impl Library {
             .filter(|s| !self[s].tags.insert(name.clone()))
             .collect();
         let tag = self
-            .tags
+            .mut_tags()
             .0
             .entry(name.clone())
-            .or_insert_with(|| Tag::new(name.clone()));
+            .or_insert_with(|| Tag::visible(name.clone()));
 
         if let Some(h) = hidden {
             tag.hidden = h;
@@ -254,14 +255,14 @@ impl Library {
             .map(|a| *a.as_ref())
             .filter(|a| self[a].tags.remove(name))
             .collect();
-        let Some(tag) = self.tags.0.get_mut(name) else {
+        let Some(tag) = self.mut_tags().0.get_mut(name) else {
             return;
         };
         tag.songs.retain(|s| !rem.contains(s));
     }
 
     pub fn get_tag(&self, name: &str) -> Option<&Tag> {
-        self.tags.0.get(name)
+        self.tags().0.get(name)
     }
 
     pub fn get_tag_songs(&self, name: &str) -> &[SongId] {

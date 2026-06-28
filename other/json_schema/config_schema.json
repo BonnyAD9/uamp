@@ -199,6 +199,41 @@
             "description": "The command used to open web client. If null, use the default browser. `${ADDRESS}` will be replaced with the target address to the web client.",
             "type": "string",
             "default": null
+        },
+        "auto_tags": {
+            "description": "List of tags that are automatically added to songs when they are added to library.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "description": "Name of the tag.",
+                        "type": "string",
+                        "pattern": "[^/,@: {}+-][^/,@: {}]*"
+                    },
+                    "hidden": {
+                        "description": "true if this tag shouldn't be visible to users, otherwise false.",
+                        "type": "boolean",
+                        "default": true
+                    }
+                }
+            },
+            "default": [
+                {
+                    "name": "base",
+                    "hidden": true
+                }
+            ]
+        },
+        "version": {
+            "description": "Version of uamp. Shouldn't be modified by users.",
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+                "type": "integer"
+            },
+            "default": [31415926535, 0, 0]
         }
     }
 }

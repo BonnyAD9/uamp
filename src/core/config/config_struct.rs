@@ -5,7 +5,7 @@ use uamp_proc::{JsonValueUpdate, PartialClone, TrackChange};
 use crate::{
     core::{
         Alias, ControlFunction, Error, Result,
-        config::{Change, default},
+        config::{AutoTag, Change, Version, default},
     },
     env::{RunType, install},
     ext::Wrap,
@@ -37,6 +37,10 @@ use super::{CacheSize, song_pos_save::SongPosSave};
     #[derive(Debug, Clone, Serialize, Deserialize)]
 )]
 pub struct Config {
+    #[track_value(pub, pub, eq)]
+    #[serde(default = "default::version")]
+    version: Option<Version>,
+
     // Fields passed by reference
     /// Folders where to look for songs.
     #[track_ref(pub, pub)]
@@ -106,6 +110,10 @@ pub struct Config {
     #[track_ref(pub, pub)]
     #[serde(default = "default::plugin_folders")]
     plugin_folders: Vec<PathBuf>,
+
+    #[track_ref(pub, pub)]
+    #[serde(default = "default::auto_tags")]
+    auto_tags: Vec<AutoTag>,
 
     // fields passed by value:
     /// When enabled uamp will sort only by the primary attribute.

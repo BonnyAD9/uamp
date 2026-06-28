@@ -2,6 +2,9 @@
 
 ## future
 ### New features
+- New config option `version`. This is not expected to be modified by users.
+- Uamp can now detect updates and perform migrations.
+
 #### Tags
 Tags work in a simmilar way to what other players call *playlists*. Each song
 can have any number of unique tags. Each tag can have any number of usually
@@ -12,6 +15,11 @@ unique songs. The list of songs within tags is ordered.
 - New order `tag`.
 - New unique `tag`. 
 - New sse messages `add-tag` and `remove-tag`.
+- New config option `auto_tags`: specifies which tags are added automatically
+  for all songs when they are added to library.
+
+### Migrations
+- Uamp will add tags in `auto_tags` to all songs in the library.
 
 ## v0.7.2
 ### Fixes

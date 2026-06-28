@@ -114,6 +114,8 @@ impl UampApp {
             file_watch: config_watch,
         };
 
+        app.migrate();
+
         if app.config.update_library_on_start() {
             app.start_get_new_songs(ctrl, Default::default())?;
         }

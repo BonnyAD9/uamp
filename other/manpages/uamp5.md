@@ -279,6 +279,21 @@ This section contains options related to playback.
 
     "previous_timeout": null
 
+### Tags
+`auto_tags`
+  This option specifies tags that are automatically added to songs when they
+  are added to library. It is an array of structures where each structure
+  contains tag name and tag visibility.
+
+  Default value:
+
+    "auto_tags": [
+        {
+            "name": "base",
+            "hidden": true
+        }
+    ]
+
 ### Server
 
 This section contains options related to the server created by uamp running in
@@ -512,6 +527,16 @@ change.
 
     "cache_path": "/home/alice/.cache/uamp/cache"
 
+`version`
+  This field contains the uamp version. When uamp gets updated, it uses this
+  field to determine which if any migrations should be applied. Users are not
+  expected to modify this field, but it can be modified to disable/trigger
+  migration on uamp startup.
+
+  Example default value:
+
+    "version": [0, 7, 2]
+
 `$schema`
   This link to json schema of the configuration document. It is not read by
   uamp, but it is set by uamp when it writes the file.
@@ -561,6 +586,11 @@ The default configuration may be on a linux system:
 ```
 {
     "$schema": "https://raw.githubusercontent.com/BonnyAD9/uamp/master/other/json_schema/config_schema.json",
+    "version": [
+        0,
+        7,
+        2
+    ],
     "search_paths": [
         "/home/kubas/music"
     ],
@@ -568,22 +598,36 @@ The default configuration may be on a linux system:
     "player_path": "/home/kubas/.config/uamp_debug/player.json",
     "cache_path": "/home/kubas/.cache/uamp_debug/cache",
     "audio_extensions": [
-        "flac",
         "mp3",
+        "flac",
         "m4a",
-        "mp4"
+        "wav",
+        "wma",
+        "mpga",
+        "bit"
     ],
     "server_address": "127.0.0.1",
     "control_aliases": {
-        "pcont": "pop 'pp=play'",
-        "endless-mix": "'sp=any@rng' 'pj=0' 'pp=play' 'pap=m' 'spea=endless-mix'",
         "repeat-once": "'pj=0' 'pp=play' spea",
+        "pcont": "pop 'pp=play'",
+        "palb": "{name}:'push=a:${name}@+a' 'pp=play' 'spea=pcont'",
         "repeat": "'pj=0' 'pp=play' 'spea=repeat'",
-        "palb": "{name}:'push=a:${name}@+a' 'pp=play' 'spea=pcont'"
+        "endless-mix": "'sp=any@rng' 'pj=0' 'pp=play' 'pap=m' 'spea=endless-mix'"
     },
     "default_playlist_end_action": null,
     "update_mode": "LatestTag",
     "update_remote": "https://github.com/BonnyAD9/uamp.git",
+    "skin": "/usr/share/uamp/skins/default-uamp.tar",
+    "web_client_command": null,
+    "plugin_folders": [
+        "/usr/lib/uamp/plugins"
+    ],
+    "auto_tags": [
+        {
+            "name": "base",
+            "hidden": true
+        }
+    ],
     "simple_sorting": false,
     "play_on_start": false,
     "shuffle_current": true,
@@ -602,7 +646,8 @@ The default configuration may be on a linux system:
     "previous_timeout": null,
     "client_image_lookup": true,
     "system_player": true,
-    "auto_restart": true
+    "auto_restart": true,
+    "default_run_type": "WebClient"
 }
 ```
 

@@ -1,10 +1,13 @@
+mod auto_tag;
 mod cache_size;
 mod change;
 mod config_msg;
 mod config_struct;
 pub mod default;
 mod json;
+mod migrate;
 mod song_pos_save;
+mod version;
 
 //===========================================================================//
 //                                   Public                                  //
@@ -12,11 +15,9 @@ mod song_pos_save;
 
 use std::path::PathBuf;
 
-use const_format::{concatc, str_splice};
-
 pub use self::{
-    cache_size::*, change::*, config_msg::*, config_struct::*,
-    song_pos_save::*,
+    auto_tag::*, cache_size::*, change::*, config_msg::*, config_struct::*,
+    song_pos_save::*, version::*,
 };
 
 /// Unique app identifier, it is different when debugging.
@@ -25,30 +26,6 @@ pub const APP_ID: &str = "uamp";
 /// Unique app identifier, it is different when debugging.
 #[cfg(debug_assertions)]
 pub const APP_ID: &str = "uamp_debug";
-
-/// Version of uamp as string.
-pub const VERSION_STR: &str = {
-    if VERSION_COMMIT.is_some() {
-        const COMMIT: &str = if let Some(commit) = VERSION_COMMIT {
-            commit
-        } else {
-            "unknown-commit" // Unreachable
-        };
-        const COMMIT_SHORT: &str = str_splice!(COMMIT, ..8, "").removed;
-        concatc!(VERSION_NUMBER, "-", COMMIT_SHORT)
-    } else {
-        VERSION_NUMBER
-    }
-};
-
-/// Version number of uamp
-pub const VERSION_NUMBER: &str = {
-    let v = option_env!("CARGO_PKG_VERSION");
-    if let Some(v) = v { v } else { "unknown" }
-};
-
-/// Commit of uamp. Not present in releases.
-pub const VERSION_COMMIT: Option<&str> = option_env!("UAMP_VERSION_COMMIT");
 
 /// Gets the default path for configuration, it is different when debugging.
 pub fn default_config_dir() -> PathBuf {

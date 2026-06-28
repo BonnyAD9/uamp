@@ -4,8 +4,9 @@ use crate::{
     core::{
         Alias, AnyControlMsg, ControlFunction, ControlMsg, DataControlMsg,
         config::{
-            DEFAULT_PORT, SongPosSave, default_cache_dir, default_config_dir,
-            default_http_client_path, default_plugin_folder,
+            AutoTag, DEFAULT_PORT, SongPosSave, Version, default_cache_dir,
+            default_config_dir, default_http_client_path,
+            default_plugin_folder,
         },
         player::AddPolicy,
         query::Query,
@@ -16,6 +17,10 @@ use crate::{
 
 pub fn config_path() -> Option<PathBuf> {
     Some(default_config_dir().join("config.json"))
+}
+
+pub fn version() -> Option<Version> {
+    None
 }
 
 pub fn search_paths() -> Vec<PathBuf> {
@@ -118,6 +123,10 @@ pub fn skin() -> PathBuf {
 
 pub fn plugin_folders() -> Vec<PathBuf> {
     vec![default_plugin_folder()]
+}
+
+pub fn auto_tags() -> Vec<AutoTag> {
+    vec![AutoTag::hidden("base")]
 }
 
 pub fn shuffle_current() -> bool {

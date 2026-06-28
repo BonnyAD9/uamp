@@ -85,6 +85,7 @@ impl Library {
         }
 
         if let Some(p) = conf.library_path() {
+            self.tags.0.retain(|_, v| !v.songs.is_empty());
             let path = p.clone();
             let mut me = self.clone();
             let used = player.get_ids();
