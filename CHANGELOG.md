@@ -15,8 +15,10 @@ unique songs. The list of songs within tags is ordered.
 - New order `tag`.
 - New unique `tag`. 
 - New sse messages `add-tag` and `remove-tag`.
-- New config option `auto_tags`: specifies which tags are added automatically
-  for all songs when they are added to library.
+- New config option `"auto_tags": [{ "name": "base" }]`: specifies which tags
+  are added automatically for all songs when they are added to library.
+- New config option `"default_base": { "Tag": "base" }` to specify which base
+  is used when none is specified.
 
 ### Migrations
 - Uamp will add tags in `auto_tags` to all songs in the library.

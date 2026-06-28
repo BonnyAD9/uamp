@@ -133,6 +133,20 @@ impl Library {
             .filter(|s| !self[s].is_deleted())
     }
 
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &'_ mut Song> + '_ {
+        self.mut_songs().iter_mut().filter(|s| !s.is_deleted())
+    }
+
+    pub fn iter_mut_ids(
+        &mut self,
+    ) -> impl Iterator<Item = (SongId, &'_ mut Song)> + '_ {
+        self.mut_songs()
+            .iter_mut()
+            .enumerate()
+            .filter(|(_, s)| !s.is_deleted())
+            .map(|(i, s)| (SongId::norm(i), s))
+    }
+
     pub fn iter_tmp(&self) -> impl Iterator<Item = SongId> + '_ {
         (0..self.tmp_songs().len())
             .map(SongId::tmp)

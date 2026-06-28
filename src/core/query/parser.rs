@@ -123,6 +123,10 @@ impl<'a> Parser<'a> {
             }
         }
 
+        if res.is_empty() {
+            res.push(Base::Library);
+        }
+
         Ok(res)
     }
 

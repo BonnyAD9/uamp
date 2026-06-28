@@ -1115,6 +1115,10 @@ will be created from sources specified in \fIbase\fP\&. This is by default all s
 in the main library. Than the songs are filtered by \fIfilter\fP and than ordered
 by \fIorder\fP\&. See \fIFormat base\fP, \fIFormat filter\fP, \fIFormat order\fP and
 \fIFormat unique\fP for more info.
+.PP
+If there is no comma at the beggining (no bases) the default base from
+configuration is used. If there is comma but no bases, the base \fB\fClibrary\fR is
+used.
 .SS Format base
 .PP
 [\fIsource\fP [\fB\fC,\fR \fIsource\fP [\fB\fC,\fR ...]]]

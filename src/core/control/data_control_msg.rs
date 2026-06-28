@@ -81,6 +81,7 @@ impl UampApp {
                 let songs = q.get_ids(
                     &self.library,
                     self.config.simple_sorting(),
+                    self.config.default_base().clone(),
                     &self.player,
                 )?;
                 self.player.play_playlist(
@@ -96,6 +97,7 @@ impl UampApp {
                 let songs = q.get_ids(
                     &self.library,
                     self.config.simple_sorting(),
+                    self.config.default_base().clone(),
                     &self.player,
                 )?;
                 self.player.push_playlist(
@@ -111,6 +113,7 @@ impl UampApp {
                 let songs = q.get_ids(
                     &self.library,
                     self.config.simple_sorting(),
+                    self.config.default_base().clone(),
                     &self.player,
                 )?;
                 self.player.push_with_cur(songs.into());
@@ -122,6 +125,7 @@ impl UampApp {
                 let songs = q.get_ids(
                     &self.library,
                     self.config.simple_sorting(),
+                    self.config.default_base().clone(),
                     &self.player,
                 )?;
                 let pl = self.player.mut_playlist();
@@ -135,6 +139,7 @@ impl UampApp {
                 let songs = q.get_ids(
                     &self.library,
                     self.config.simple_sorting(),
+                    self.config.default_base().clone(),
                     &self.player,
                 )?;
                 let pl = self.player.mut_playlist();
@@ -174,6 +179,7 @@ impl UampApp {
                 let songs = q.get_ids(
                     &self.library,
                     self.config.simple_sorting(),
+                    self.config.default_base().clone(),
                     &self.player,
                 )?;
                 self.remove_songs(songs);
@@ -224,6 +230,7 @@ impl UampApp {
                 let songs = m.query.get_ids(
                     &self.library,
                     self.config.simple_sorting(),
+                    self.config.default_base().clone(),
                     &self.player,
                 )?;
                 if songs.is_empty() {
@@ -238,6 +245,7 @@ impl UampApp {
                 let songs = m.query.get_ids(
                     &self.library,
                     self.config.simple_sorting(),
+                    self.config.default_base().clone(),
                     &self.player,
                 )?;
                 if songs.is_empty() {

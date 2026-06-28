@@ -9,7 +9,7 @@ use crate::{
             default_plugin_folder,
         },
         player::AddPolicy,
-        query::Query,
+        query::{Base, Query},
     },
     env::{RunType, install},
     ext::Wrap,
@@ -127,6 +127,10 @@ pub fn plugin_folders() -> Vec<PathBuf> {
 
 pub fn auto_tags() -> Vec<AutoTag> {
     vec![AutoTag::hidden("base")]
+}
+
+pub fn default_base() -> Base {
+    Base::Tag("base".into())
 }
 
 pub fn shuffle_current() -> bool {

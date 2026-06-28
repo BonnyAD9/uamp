@@ -1061,6 +1061,10 @@ in the main library. Than the songs are filtered by *filter* and than ordered
 by *order*. See *Format base*, *Format filter*, *Format order* and
 *Format unique* for more info.
 
+If there is no comma at the beggining (no bases) the default base from
+configuration is used. If there is comma but no bases, the base `library` is
+used.
+
 ### Format base
 
 [*source* [`,` *source* [`,` ...]]]

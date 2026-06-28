@@ -34,8 +34,14 @@ impl UampApp {
 
         self.library.mut_tags().init_tags(auto_tags);
 
-        for s in self.library.mut_songs() {
+        for s in self.library.iter_mut() {
             s.tags.extend(auto_tags.iter().map(|a| a.name.clone()));
+        }
+
+        let songs: Vec<_> = self.library.iter().collect();
+        for t in auto_tags {
+            self.library.mut_tags().0.get_mut(&t.name).unwrap().songs =
+                songs.clone();
         }
     }
 }

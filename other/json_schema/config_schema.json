@@ -234,6 +234,52 @@
                 "type": "integer"
             },
             "default": [31415926535, 0, 0]
+        },
+        "default_base": {
+            "description": "Default base used in queries without explicit base.",
+            "type": ["string", "object"],
+            "oneOf": [
+                {
+                    "description": "All songs in library (without temporary).",
+                    "type": "string",
+                    "value": "Library"
+                },
+                {
+                    "description": "All temporary songs.",
+                    "type": "string",
+                    "value": "Temporary"
+                },
+                {
+                    "description": "All songs in library and temporary songs.",
+                    "type": "string",
+                    "value": "All"
+                },
+                {
+                    "description": "No songs.",
+                    "type": "string",
+                    "value": "None"
+                },
+                {
+                    "description": "All songs in a playlist of the given index.",
+                    "type": "object",
+                    "properties": {
+                        "Playlist": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                {
+                    "description": "All songs in the given tag list.",
+                    "type": "object",
+                    "properties": {
+                        "Tag": {
+                            "type": "string",
+                            "pattern": "[^/,@: {}+-][^/,@: {}]*"
+                        }
+                    }
+                }
+            ],
+            "default": { "Tag": "base" }
         }
     }
 }

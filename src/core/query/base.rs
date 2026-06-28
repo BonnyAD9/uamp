@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, sync::Arc};
 
 use pareg::{ArgError, ArgInto, FromArg, starts_any, val_arg};
 use serde::{Deserialize, Serialize};
@@ -9,15 +9,14 @@ use crate::core::{
     player::Player,
 };
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Base {
-    #[default]
     Library,
     Temporary,
     All,
     None,
     Playlist(usize),
-    Tag(String),
+    Tag(Arc<str>),
 }
 
 impl Base {

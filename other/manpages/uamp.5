@@ -363,6 +363,26 @@ Default value:
 ]
 .fi
 .RE
+.TP
+\fB\fCdefault_base\fR
+Defines the default base used for queries. This can be effectively used to
+effectively exclude some songs from being played with default queries.
+.IP
+Possible values:
+\- \fB\fC"Library"\fR: All songs in the library (without temporary songs).
+\- \fB\fC"Temporary"\fR: Only temporary songs.
+\- \fB\fC"All"\fR: All songs in the library and all the temporary songs.
+\- \fB\fC"None"\fR: No songs.
+\- \fB\fC{ "Playlist":\fR\fIindex\fP\fB\fC}\fR: Playlist at the given index.
+\- \fB\fC{ "Tag":\fR\fIname\fP\fB\fC}\fR: Tag of the given name.
+.IP
+Default value:
+.PP
+.RS
+.nf
+"default_base": { "Tag": "base" }
+.fi
+.RE
 .SS Server
 .PP
 This section contains options related to the server created by uamp running in

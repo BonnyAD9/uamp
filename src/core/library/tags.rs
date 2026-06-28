@@ -9,7 +9,7 @@ use crate::core::{
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(transparent)]
-pub struct Tags(pub(super) HashMap<TagId, Tag>);
+pub struct Tags(pub HashMap<TagId, Tag>);
 
 impl Tags {
     pub fn init_tag(&mut self, tag: &AutoTag) {

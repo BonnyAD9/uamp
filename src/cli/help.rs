@@ -804,6 +804,10 @@ fn print_query_help(color: bool, header: bool) {
       [{'bold}<filter>{'_bold}]\
       [@[{'bold}<order>{'_bold}][@{'bold}<unique>{'_bold}]]{'_}
 
+    If base is ommited completely, the default base from configuration is used.
+    If bases are specified (there is the starting comma) but no bases are
+    listed the base `{'w bold}library{'_}` is used.
+
     See `{'c}uamp {'b}h {'w bold}base filter order unique{'_}` for more info.
 "
     );

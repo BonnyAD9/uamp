@@ -192,7 +192,7 @@ impl ImageLookup<'_> {
         );
         let s = block_on(rt.request(move |app, _| {
             query
-                .get_ids(&app.library, true, &app.player)
+                .get_ids(&app.library, true, Base::All, &app.player)
                 .unwrap()
                 .into_iter()
                 .map(|i| app.library[i].path().to_owned())

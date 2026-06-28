@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AutoTag {
     pub name: Arc<str>,
+    #[serde(default = "default_hidden")]
     pub hidden: bool,
 }
 
@@ -23,4 +24,8 @@ impl AutoTag {
     pub fn visible(name: impl Into<Arc<str>>) -> Self {
         Self::new(name, false)
     }
+}
+
+fn default_hidden() -> bool {
+    true
 }

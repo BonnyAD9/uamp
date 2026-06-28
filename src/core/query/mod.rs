@@ -59,6 +59,7 @@ impl Query {
         &self,
         lib: &Library,
         simple: bool,
+        base: Base,
         player: &Player,
     ) -> Result<Vec<SongId>> {
         let mut buf = String::new();
@@ -69,7 +70,7 @@ impl Query {
         }
 
         if bases.is_empty() {
-            bases.push(Base::default().iter(lib, player)?);
+            bases.push(base.iter(lib, player)?);
         }
 
         let mut res = bases
@@ -93,10 +94,11 @@ impl Query {
         &self,
         lib: &Library,
         simple: bool,
+        base: Base,
         player: &Player,
     ) -> Result<Vec<Song>> {
         let mut res = self
-            .get_ids(lib, simple, player)?
+            .get_ids(lib, simple, base, player)?
             .into_iter()
             .map(|a| lib[a].clone())
             .collect_vec();
@@ -120,8 +122,12 @@ impl FromArgStr for Query {}
 impl Display for Query {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if !self.bases.is_empty() {
-            for b in &self.bases {
-                write!(f, ",{b}")?;
+            if matches!(self.bases.as_slice(), [Base::Library]) {
+                write!(f, ",")?;
+            } else {
+                for b in &self.bases {
+                    write!(f, ",{b}")?;
+                }
             }
             write!(f, "@")?;
         }

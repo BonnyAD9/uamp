@@ -294,6 +294,22 @@ This section contains options related to playback.
         }
     ]
 
+`default_base`
+  Defines the default base used for queries. This can be effectively used to
+  effectively exclude some songs from being played with default queries.
+
+  Possible values:
+  - `"Library"`: All songs in the library (without temporary songs).
+  - `"Temporary"`: Only temporary songs.
+  - `"All"`: All songs in the library and all the temporary songs.
+  - `"None"`: No songs.
+  - `{ "Playlist": `*index*` }`: Playlist at the given index.
+  - `{ "Tag": `*name*` }`: Tag of the given name.
+
+  Default value:
+
+    "default_base": { "Tag": "base" }
+
 ### Server
 
 This section contains options related to the server created by uamp running in

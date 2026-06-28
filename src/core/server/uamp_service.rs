@@ -477,6 +477,7 @@ impl UampApp {
         query.clone_songs(
             &self.library,
             self.config.simple_sorting(),
+            self.config.default_base().clone(),
             &self.player,
         )
     }

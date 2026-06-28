@@ -6,6 +6,7 @@ use crate::{
     core::{
         Alias, ControlFunction, Error, Result,
         config::{AutoTag, Change, Version, default},
+        query::Base,
     },
     env::{RunType, install},
     ext::Wrap,
@@ -114,6 +115,10 @@ pub struct Config {
     #[track_ref(pub, pub)]
     #[serde(default = "default::auto_tags")]
     auto_tags: Vec<AutoTag>,
+
+    #[track_ref(pub, pub)]
+    #[serde(default = "default::default_base")]
+    default_base: Base,
 
     // fields passed by value:
     /// When enabled uamp will sort only by the primary attribute.
