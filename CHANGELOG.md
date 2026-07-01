@@ -3,6 +3,7 @@
 ## v0.7.4
 ### Fixes
 - Fix loading library from previous version.
+- Fix adding auto tags to songs when loading library.
 
 ## v0.7.3
 ### New features
