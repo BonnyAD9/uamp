@@ -15,10 +15,10 @@ members = [
 ]
 
 [dependencies]
-anyhow = "1.0.102"
-astral-tokio-tar = "0.6.2"
+anyhow = "1.0.103"
+astral-tokio-tar = "0.6.3"
 ratag = "0.1.1"
-bitflags = { version = "2.11.1", features = [ "serde" ] }
+bitflags = { version = "2.13.0", features = [ "serde" ] }
 const_format = { version = "0.2.36", features = [ "fmt" ] }
 dirs = "6.0.0"
 edit = { version = "0.1.5", features = [ "quoted-env" ] }
@@ -29,12 +29,12 @@ http-body-util = "0.1.3"
 hyper = { version = "1.10.1", features = ["client", "server", "http1"] }
 hyper-util = { version = "0.1.20", features = ["tokio"] }
 image = "0.25.10"
-itertools = "0.14.0"
+itertools = "0.15.0"
 libloading = "0.9.0"
-log = "0.4.30"
+log = "0.4.33"
 mime_guess = "2.0.5"
 notify = "8.2.0"
-open = "5.3.5"
+open = "5.3.6"
 pareg ="0.12.1"
 # pareg = { path = "../pareg" }
 rand = "0.10.1"
