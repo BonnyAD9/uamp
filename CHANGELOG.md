@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.7.5
+### Fixes
+- Fix uamp version (uamp was thinking it was a later version).
+
 ## v0.7.4
 ### Fixes
 - Fix loading library from previous version.
