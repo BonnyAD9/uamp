@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.7.3
 ### New features
 - New config option `version`. This is not expected to be modified by users.
 - Uamp can now detect updates and perform migrations.
