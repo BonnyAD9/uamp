@@ -16,7 +16,7 @@ impl UampApp {
 
         info!("Migrating from version `{version}`.");
 
-        if version <= Version(0, 7, 2) {
+        if version <= Version(0, 7, 3) {
             self.migrate_add_auto_tags();
         }
 

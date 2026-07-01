@@ -49,6 +49,7 @@ pub struct Song {
     /// The genre of the song.
     pub(super) genres: Vec<String>,
     /// Tags of the song
+    #[serde(default)]
     pub tags: BTreeSet<Arc<str>>,
     /// True if the song is deleted, deleted songs should be skipped in all
     /// all cases, and should be removed from all collections.

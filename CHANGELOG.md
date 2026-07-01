@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.7.4
+### Fixes
+- Fix loading library from previous version.
+
 ## v0.7.3
 ### New features
 - New config option `version`. This is not expected to be modified by users.
