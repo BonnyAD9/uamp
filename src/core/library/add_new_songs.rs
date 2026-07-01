@@ -414,7 +414,13 @@ impl<'a> State<'a> {
     }
 
     fn add_song(&mut self, p: PathBuf) -> Result<()> {
-        let song = Song::from_path(p)?;
+        let tags = self
+            .conf
+            .auto_tags()
+            .iter()
+            .map(|a| a.name.clone())
+            .collect();
+        let song = Song::from_path(p, tags)?;
 
         // Assign id to the song by inserting it to the library.
         let id = if let Some(i) = self.empty.pop() {
@@ -427,6 +433,15 @@ impl<'a> State<'a> {
             self.songs.push(song);
             id
         };
+
+        for t in self.conf.auto_tags() {
+            let t = self
+                .tags
+                .0
+                .entry(t.name.clone())
+                .or_insert_with(|| t.clone().into());
+            t.songs.push(id);
+        }
 
         let song = &mut self.songs[id.as_norm()];
 

@@ -4,7 +4,7 @@ use uamp_proc::TrackChange;
 
 use std::{
     cell::Cell,
-    collections::{HashMap, HashSet},
+    collections::{BTreeSet, HashMap, HashSet},
     ops::{Index, IndexMut},
     path::Path,
 };
@@ -187,16 +187,14 @@ impl Library {
     /// # Errors
     /// - The song fails to load from the given path.
     pub fn add_tmp_path(&mut self, path: impl AsRef<Path>) -> Result<SongId> {
-        Ok(
-            self.add_tmp_song(Song::from_path(path.as_ref()).map_err(
-                |e| {
-                    e.prepend(format!(
-                        "Failed to add tmp song `{}`",
-                        path.as_ref().display()
-                    ))
-                },
-            )?),
-        )
+        Ok(self.add_tmp_song(
+            Song::from_path(path.as_ref(), BTreeSet::new()).map_err(|e| {
+                e.prepend(format!(
+                    "Failed to add tmp song `{}`",
+                    path.as_ref().display()
+                ))
+            })?,
+        ))
     }
 
     pub fn add_tmp_paths(
