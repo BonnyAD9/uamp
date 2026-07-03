@@ -1,4 +1,4 @@
-use pareg::Pareg;
+use pareg::{ArgInto, Pareg, ParegRef};
 
 use crate::{
     core::Result,
@@ -13,10 +13,10 @@ pub struct Install {
 }
 
 impl Install {
-    pub fn parse(args: &mut Pareg) -> Result<Self> {
+    pub fn parse<'a, S: ArgInto<'a>>(args: &mut ParegRef<'a, S>) -> Result<Self> {
         let mut res = Self::default();
 
-        while let Some(arg) = args.next() {
+        while let Some(arg) = args.next_str() {
             match arg {
                 "--man" => res.man = args.next_arg()?,
                 "--root" => res.root = Some(args.next_arg()?),

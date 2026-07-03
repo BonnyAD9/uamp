@@ -35,8 +35,8 @@ log = "0.4.33"
 mime_guess = "2.0.5"
 notify = "8.2.0"
 open = "5.3.6"
-pareg ="0.12.1"
-# pareg = { path = "../pareg" }
+# pareg = "0.12.1"
+pareg = { path = "../pareg", features = ["no-anounce"] }
 rand = "0.10.1"
 raplay = { version = "0.5.0", features = ["serde"] }
 # raplay = { path = "../raplay", features = ["serde"] }

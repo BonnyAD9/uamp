@@ -1,6 +1,6 @@
 use std::{mem, time::Instant};
 
-use pareg::{Pareg, has_any_key, parse_arg};
+use pareg::{ArgInto, Pareg, ParegRef, has_any_key, parse_arg};
 
 use crate::core::{
     Result,
@@ -41,12 +41,12 @@ impl Instance {
     ///
     /// # Errors
     /// - The arguments are invalid.
-    pub(super) fn parse(
+    pub(super) fn parse<'a, S: ArgInto<'a>>(
         &mut self,
-        args: &mut Pareg,
+        args: &mut ParegRef<'a, S>,
         color: bool,
     ) -> Result<()> {
-        while let Some(arg) = args.next() {
+        while let Some(arg) = args.next_str() {
             match arg {
                 v if has_any_key!(v, '=', "info", "nfo") => {
                     let s = args

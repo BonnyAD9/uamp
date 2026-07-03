@@ -1,7 +1,7 @@
 use std::io::Write;
 use std::process::{Command, Stdio};
 
-use pareg::Pareg;
+use pareg::{ArgInto, Pareg, ParegRef};
 
 use crate::core::{Error, Result};
 
@@ -17,12 +17,12 @@ pub struct Man {
 }
 
 impl Man {
-    pub(super) fn parse(
+    pub(super) fn parse<'a, S: ArgInto<'a>>(
         &mut self,
-        args: &mut Pareg,
+        args: &mut ParegRef<'a, S>,
         color: bool,
     ) -> Result<()> {
-        while let Some(arg) = args.next() {
+        while let Some(arg) = args.next_str() {
             match arg {
                 "-h" | "-?" | "--help" => help_man(color),
                 "-p" | "--print" => self.print = true,

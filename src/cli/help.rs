@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use pareg::Pareg;
+use pareg::{ArgInto, Pareg, ParegRef};
 use termal::{eprintacln, gradient, printmcln};
 
 use crate::core::config::{APP_ID, VERSION_STR};
@@ -12,7 +12,7 @@ use super::Args;
 //===========================================================================//
 
 /// Parses help arguments.
-pub fn help(args: &mut Pareg, res: &mut Args) {
+pub fn help<'a, S: ArgInto<'a>>(args: &mut ParegRef<'a, S>, res: &mut Args) {
     res.should_exit = true;
 
     if args.remaining().is_empty() {
@@ -24,7 +24,7 @@ pub fn help(args: &mut Pareg, res: &mut Args) {
 
     let mut formats_header = false;
 
-    while let Some(arg) = args.next() {
+    while let Some(arg) = args.next_str() {
         match arg {
             "basic" => {
                 print_basic_help(res.props.color);
