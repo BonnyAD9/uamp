@@ -6,7 +6,9 @@ use pareg::Pareg;
 use crate::{
     background_app::run_background_app,
     cli::Run,
-    core::{DataControlMsg, Result, config::Config, server::client::Client},
+    core::{
+        DataControlMsg, Error, Result, config::Config, server::client::Client,
+    },
     env::RunType,
 };
 
@@ -44,7 +46,7 @@ impl Open {
             rt.block_on(async {
                 let Ok(mut client) = Client::connect(address.clone()).await
                 else {
-                    return Result::Ok(());
+                    return Result::<_, Error>::Ok(());
                 };
 
                 client.send_ctrl(&[msg.take().unwrap()]).await?;

@@ -22,7 +22,7 @@ pub use self::{err_ctx::*, err_ctx_flags::*, err_kind::*, log_result::*};
 //===========================================================================//
 
 /// Result with the unified error type of uamp
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 #[derive(Debug)]
 pub struct Error(Box<ErrCtx<ErrKind>>);

@@ -308,7 +308,7 @@ impl FromStr for DataControlMsg {
             }
             v if starts_any!(v, "p=", "play=") => {
                 let (_, v) = v.split_once("=").unwrap();
-                Ok(DataControlMsg::PlayTmp(dbg!(parse_path_list(v))))
+                Ok(DataControlMsg::PlayTmp(parse_path_list(v)?))
             }
             v if starts_any!(v, "remove-from-library=") => {
                 Ok(DataControlMsg::RemoveFromLibrary(val_arg(v, '=')?))
@@ -379,8 +379,8 @@ impl Display for DataControlMsg {
 
 impl FromArgStr for DataControlMsg {}
 
-fn parse_path_list(list: &str) -> Vec<PathBuf> {
-    let mut res: Vec<PathBuf> = vec![];
+fn parse_path_list(list: &str) -> Result<Vec<PathBuf>, ArgError> {
+    let mut res = vec![];
     let mut cur = String::new();
     let mut join = false;
 
@@ -398,7 +398,7 @@ fn parse_path_list(list: &str) -> Vec<PathBuf> {
         }
 
         if !cur.is_empty() {
-            res.push(mem::take(&mut cur).into());
+            res.push(PathBuf::from(mem::take(&mut cur)).canonicalize()?);
         }
 
         cur.clear();
@@ -406,8 +406,8 @@ fn parse_path_list(list: &str) -> Vec<PathBuf> {
     }
 
     if !cur.is_empty() {
-        res.push(mem::take(&mut cur).into());
+        res.push(PathBuf::from(mem::take(&mut cur)).canonicalize()?);
     }
 
-    res
+    Ok(res)
 }

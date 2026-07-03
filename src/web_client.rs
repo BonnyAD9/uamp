@@ -24,7 +24,7 @@ pub fn run_web_client(
             .build()?;
         rt.block_on(async {
             let Ok(mut client) = Client::connect(address.clone()).await else {
-                return Result::Ok(false);
+                return Result::<_, Error>::Ok(false);
             };
 
             client.send_ctrl(&init).await?;
