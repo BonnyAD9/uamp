@@ -1,6 +1,6 @@
-use std::io::{self, IsTerminal};
+use std::{ffi::{OsStr, OsString}, io::{self, IsTerminal}};
 
-use pareg::{FromArg, Pareg, has_any_key, parse_arg};
+use pareg::{ArgInto, FromArg, Pareg, ParegRef, has_any_key, parse_arg};
 
 use crate::{
     cli::{help::help_short, port::Port},
@@ -49,10 +49,10 @@ impl Args {
     ///
     /// # Errors
     /// - The arguments are invalid.
-    pub fn parse(mut args: Pareg) -> Result<Self> {
+    pub fn parse<'a, S: ArgInto<'a>>(args: &'a mut Pareg<S>) -> Result<Self> {
         let mut res = Args::default();
 
-        res.top_level(&mut args)?;
+        res.top_level(&mut args.get_mut_ref())?;
 
         Ok(res)
     }
@@ -101,7 +101,7 @@ enum EnableColor {
 }
 
 impl Args {
-    fn top_level(&mut self, args: &mut Pareg) -> Result<()> {
+    fn top_level<'a, S: ArgInto<'a>>(&mut self, args: &mut ParegRef<'a, S>) -> Result<()> {
         fn opt_iter(arg: &str) -> Pareg {
             if arg.is_empty() {
                 vec![].into()
@@ -110,7 +110,7 @@ impl Args {
             }
         }
 
-        while let Some(a) = args.next() {
+        while let Some(a) = args.next_str() {
             match a {
                 "i" | "instance" => self.instance(args)?,
                 "h" | "help" => help(args, self),
@@ -146,25 +146,25 @@ impl Args {
                 "--" => {}
                 a => {
                     if let Some(i) = a.strip_prefix("-I") {
-                        self.instance(&mut opt_iter(i))
+                        self.instance(&mut opt_iter(i).get_mut_ref())
                             .map_err(|e| e.map_pareg(args))?;
                         continue;
                     }
 
                     if let Some(i) = a.strip_prefix("-R") {
-                        self.run(&mut opt_iter(i))
+                        self.run(&mut opt_iter(i).get_mut_ref())
                             .map_err(|e| e.map_pareg(args))?;
                         continue;
                     }
 
                     if let Some(i) = a.strip_prefix("-C") {
-                        self.config(&mut opt_iter(i))
+                        self.config(&mut opt_iter(i).get_mut_ref())
                             .map_err(|e| e.map_pareg(args))?;
                         continue;
                     }
 
                     if let Some(i) = a.strip_prefix("-H") {
-                        help(&mut opt_iter(i), self);
+                        help(&mut opt_iter(i).get_mut_ref(), self);
                         continue;
                     }
 
@@ -182,7 +182,7 @@ impl Args {
         Ok(())
     }
 
-    fn instance(&mut self, args: &mut Pareg) -> Result<()> {
+    fn instance<'a, S: ArgInto<'a>>(&mut self, args: &mut ParegRef<'a, S>) -> Result<()> {
         self.should_exit = true;
 
         let mut instance = Instance::default();
@@ -195,7 +195,7 @@ impl Args {
         Ok(())
     }
 
-    fn update(&mut self, args: &mut Pareg) -> Result<()> {
+    fn update<'a, S: ArgInto<'a>>(&mut self, args: &mut ParegRef<'a, S>) -> Result<()> {
         self.should_exit = true;
 
         let mut update = Update::default();
@@ -206,7 +206,7 @@ impl Args {
         Ok(())
     }
 
-    fn run(&mut self, args: &mut Pareg) -> Result<()> {
+    fn run<'a, S: ArgInto<'a>>(&mut self, args: &mut ParegRef<'a, S>) -> Result<()> {
         let mut info = Run::default();
         info.parse(args, self.props.color)?;
 
@@ -225,7 +225,7 @@ impl Args {
         Ok(())
     }
 
-    fn config(&mut self, args: &mut Pareg) -> Result<()> {
+    fn config<'a, S: ArgInto<'a>>(&mut self, args: &mut ParegRef<'a, S>) -> Result<()> {
         self.should_exit = true;
 
         let mut cfg = super::Config::default();
@@ -238,7 +238,7 @@ impl Args {
         Ok(())
     }
 
-    fn shell(&mut self, args: &mut Pareg) -> Result<()> {
+    fn shell<'a, S: ArgInto<'a>>(&mut self, args: &mut ParegRef<'a, S>) -> Result<()> {
         self.should_exit = true;
 
         let mut sh = Shell::default();
@@ -247,7 +247,7 @@ impl Args {
         Ok(())
     }
 
-    fn internal(&mut self, args: &mut Pareg) -> Result<()> {
+    fn internal<'a, S: ArgInto<'a>>(&mut self, args: &mut ParegRef<'a, S>) -> Result<()> {
         self.should_exit = true;
 
         let i = Internal::new(args, self.props.color)?;
@@ -257,7 +257,7 @@ impl Args {
         Ok(())
     }
 
-    fn man(&mut self, args: &mut Pareg) -> Result<()> {
+    fn man<'a, S: ArgInto<'a>>(&mut self, args: &mut ParegRef<'a, S>) -> Result<()> {
         self.should_exit = true;
 
         let mut m = Man::default();

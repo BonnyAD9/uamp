@@ -1,6 +1,6 @@
 use std::{env, path::Path};
 
-use pareg::Pareg;
+use pareg::{ArgInto, Pareg, ParegRef};
 
 use crate::core::Result;
 
@@ -18,12 +18,12 @@ pub struct Shell {
 }
 
 impl Shell {
-    pub(super) fn parse(
+    pub(super) fn parse<'a, S: ArgInto<'a>>(
         &mut self,
-        args: &mut Pareg,
+        args: &mut ParegRef<'a, S>,
         color: bool,
     ) -> Result<()> {
-        while let Some(arg) = args.next() {
+        while let Some(arg) = args.next_str() {
             match arg {
                 "-h" | "-?" | "--help" => help_shell(color),
                 "-s" | "--script" => self.script = true,

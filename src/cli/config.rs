@@ -1,7 +1,7 @@
 use std::io;
 
 use itertools::Itertools;
-use pareg::{Pareg, parse_arg};
+use pareg::{ArgInto, Pareg, ParegRef, parse_arg};
 
 use crate::core::{self, Error, Result, config::default_config_path};
 
@@ -22,12 +22,12 @@ pub struct Config {
 }
 
 impl Config {
-    pub(super) fn parse(
+    pub(super) fn parse<'a, S: ArgInto<'a>>(
         &mut self,
-        args: &mut Pareg,
+        args: &mut ParegRef<'a, S>,
         color: bool,
     ) -> Result<()> {
-        while let Some(arg) = args.next() {
+        while let Some(arg) = args.next_str() {
             match arg {
                 "-h" | "-?" | "--help" => help_config(color),
                 "-e" | "--edit" | "--edit-file" => {

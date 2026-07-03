@@ -48,7 +48,7 @@ fn main() -> ExitCode {
 fn start() -> Result<()> {
     info!("started");
 
-    let args = Args::parse(Pareg::args())?;
+    let args = Args::parse(&mut Pareg::args_os())?;
 
     let conf = args.make_config()?;
 

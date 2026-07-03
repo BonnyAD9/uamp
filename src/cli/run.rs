@@ -6,7 +6,7 @@ use std::{
 };
 
 use log::info;
-use pareg::Pareg;
+use pareg::{ArgInto, Pareg, ParegRef};
 
 use crate::{
     background_app::run_background_app,
@@ -50,12 +50,12 @@ impl Run {
     ///
     /// # Errors
     /// - The arguments are invalid.
-    pub(super) fn parse(
+    pub(super) fn parse<'a, S: ArgInto<'a>>(
         &mut self,
-        args: &mut Pareg,
+        args: &mut ParegRef<'a, S>,
         color: bool,
     ) -> Result<()> {
-        while let Some(arg) = args.next() {
+        while let Some(arg) = args.next_str() {
             match arg {
                 "-h" | "-?" | "--help" => {
                     help_run(color);

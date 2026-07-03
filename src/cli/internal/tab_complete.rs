@@ -1,6 +1,6 @@
 use std::{borrow::Cow, fs::read_dir, path::Path};
 
-use pareg::Pareg;
+use pareg::{ArgInto, Pareg, ParegRef};
 
 type CowStr = Cow<'static, str>;
 
@@ -37,7 +37,7 @@ pub struct TabComplete {
 }
 
 impl TabComplete {
-    pub fn new(args: &mut Pareg) -> Result<Self> {
+    pub fn new<'a, S: ArgInto<'a>>(args: &mut ParegRef<'a, S>) -> Result<Self> {
         let idx = args.next_arg::<usize>()?.saturating_sub(1);
 
         let mut i = 0;
@@ -46,7 +46,7 @@ impl TabComplete {
         let mut cur = String::new();
         args.next();
 
-        while let Some(arg) = args.next() {
+        while let Some(arg) = args.next_str() {
             if i == idx {
                 cur = arg.into();
                 args.skip_all();
