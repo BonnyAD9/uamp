@@ -1,9 +1,4 @@
-use std::{
-    env,
-    fmt::Display,
-    path::{Path, PathBuf},
-    str::FromStr,
-};
+use std::{env, fmt::Display, mem, path::PathBuf, str::FromStr};
 
 use itertools::Itertools;
 use pareg::{
@@ -313,12 +308,7 @@ impl FromStr for DataControlMsg {
             }
             v if starts_any!(v, "p=", "play=") => {
                 let (_, v) = v.split_once("=").unwrap();
-                Ok(DataControlMsg::PlayTmp(
-                    split_arg::<&Path>(v, ",")?
-                        .iter()
-                        .map(|p| p.canonicalize())
-                        .try_collect()?,
-                ))
+                Ok(DataControlMsg::PlayTmp(dbg!(parse_path_list(v))))
             }
             v if starts_any!(v, "remove-from-library=") => {
                 Ok(DataControlMsg::RemoveFromLibrary(val_arg(v, '=')?))
@@ -367,7 +357,13 @@ impl Display for DataControlMsg {
                 )
             }
             DataControlMsg::PlayTmp(p) => {
-                write!(f, "p={}", p.iter().map(|a| a.display()).join(","))
+                write!(
+                    f,
+                    "p={}",
+                    p.iter()
+                        .map(|a| a.display().to_string().replace(',', ",,"))
+                        .join(",")
+                )
             }
             DataControlMsg::RemoveFromLibrary(q) => {
                 write!(f, "remove-from-library={q}")
@@ -382,3 +378,36 @@ impl Display for DataControlMsg {
 }
 
 impl FromArgStr for DataControlMsg {}
+
+fn parse_path_list(list: &str) -> Vec<PathBuf> {
+    let mut res: Vec<PathBuf> = vec![];
+    let mut cur = String::new();
+    let mut join = false;
+
+    for s in list.split(',') {
+        if join {
+            cur += s;
+            join = false;
+            continue;
+        }
+
+        if s.is_empty() {
+            join = true;
+            cur.push(',');
+            continue;
+        }
+
+        if !cur.is_empty() {
+            res.push(mem::take(&mut cur).into());
+        }
+
+        cur.clear();
+        cur += s;
+    }
+
+    if !cur.is_empty() {
+        res.push(mem::take(&mut cur).into());
+    }
+
+    res
+}

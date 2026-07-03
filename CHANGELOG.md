@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## future
+### New features
+- Add option to escape commas in the control message `play` by doubling them.
+
 ## v0.7.5
 ### Fixes
 - Fix uamp version (uamp was thinking it was a later version).

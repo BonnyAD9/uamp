@@ -653,7 +653,8 @@ Integrations:
   Load the audio files given by *audio-file* as temporary song into uamp and
   push it as new playlist to the playlist stack.
 
-  *audio-files* is comma separated list of paths.
+  *audio-files* is comma separated list of paths. Commas are escaped by
+  repeating them (e.g. `,,`).
 
 `load-songs`[`=`[`l`|`r`][`-`|`e`|`n`|`m`]]
   Load new songs to library from folders specified in configuration. The value

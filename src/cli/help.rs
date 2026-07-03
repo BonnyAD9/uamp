@@ -632,7 +632,8 @@ fn print_control_messages_help(color: bool) {
     Mute/Unmute. When without argument, toggle.
     
   {'r}play p{'w}=<file path>{'gr}[, <file path>[, ...]]{'_}
-    Play the given files in new playlist on top of the stack.
+    Play the given files in new playlist on top of the stack. Escape commas by
+    repeating them (e.g. `,,`).
 
   {'r}load-songs{'gr}[=[l|r][-|e|n|m]]{'_}
     Look for new songs. This can be modifed with the load options of the form

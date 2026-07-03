@@ -689,7 +689,8 @@ Mute/Unmute. If \fIB\fP is not specified, toggle between the states.
 Load the audio files given by \fIaudio\-file\fP as temporary song into uamp and
 push it as new playlist to the playlist stack.
 .IP
-\fIaudio\-files\fP is comma separated list of paths.
+\fIaudio\-files\fP is comma separated list of paths. Commas are escaped by
+repeating them (e.g. \fB\fC,,\fR).
 .TP
 \fB\fCload\-songs\fR[\fB\fC=\fR[\fB\fCl\fR|\fB\fCr\fR][\fB\fC\-\fR|\fB\fCe\fR|\fB\fCn\fR|\fB\fCm\fR]]
 Load new songs to library from folders specified in configuration. The value
