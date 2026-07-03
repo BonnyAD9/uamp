@@ -4,6 +4,9 @@
 ### New features
 - Add option to escape commas in the control message `play` by doubling them.
 
+### Fixes
+- Add `tag` and `untag` to tab completion.
+
 ## v0.7.5
 ### Fixes
 - Fix uamp version (uamp was thinking it was a later version).

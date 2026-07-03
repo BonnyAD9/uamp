@@ -261,19 +261,27 @@ fn update_mode_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
 }
 
 fn file_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
-    _ = file_args_inner(arg, p);
+    _ = file_args_inner(arg, p, false);
+}
+
+fn comma_escape_file_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
+    _ = file_args_inner(arg, p, true);
 }
 
 fn file_list_args(conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
     let arg = arg.split(",").last().unwrap_or_default();
-    file_args(conf, arg, p);
+    comma_escape_file_args(conf, arg, p);
 }
 
 fn true_false_args(_conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
     select_args(TRUE_FALSE_ARG, arg, p);
 }
 
-fn file_args_inner(arg: &str, p: &impl Fn(CowStr)) -> Result<()> {
+fn file_args_inner(
+    arg: &str,
+    p: &impl Fn(CowStr),
+    comma_escape: bool,
+) -> Result<()> {
     let mut prefix = "";
     let path: &Path = if arg.ends_with('/') {
         Path::new(arg)
@@ -303,6 +311,9 @@ fn file_args_inner(arg: &str, p: &impl Fn(CowStr)) -> Result<()> {
             let mut s = s.to_string();
             if f.file_type()?.is_dir() {
                 s += "/";
+            }
+            if comma_escape {
+                s = s.replace(',', ",,");
             }
             p(s.into())
         }
@@ -485,6 +496,8 @@ const ANY_CONTROL_MSG: &[&[&str]] = &[
     &["rps=", "reorder-playlist-stack="],
     &["end-playlist"],
     &["remove-playlist"],
+    &["tag="],
+    &["untag="],
 ];
 
 const PORT_ARG: &[&[&str]] =
