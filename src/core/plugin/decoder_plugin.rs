@@ -143,6 +143,10 @@ impl DecoderPlugin {
             imp: self.imp.clone(),
         }))
     }
+
+    pub fn name(&self) -> &str {
+        &self.imp.name
+    }
 }
 
 struct DecoderPluginSource {

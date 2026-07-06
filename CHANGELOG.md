@@ -9,6 +9,9 @@
 - Opening file with comma in its path by double clicking it now works.
 - Playing temporary song would sometimes not start playing the song.
 
+### Changes
+- Add more logging to player.
+
 ## v0.7.5
 ### Fixes
 - Fix uamp version (uamp was thinking it was a later version).

@@ -1,5 +1,6 @@
 use std::{fmt::Debug, fs::File, path::Path, time::Duration};
 
+use log::{info, trace};
 use raplay::{
     CallbackInfo, CpalError, Sink, Timestamp,
     reexp::BuildStreamError,
@@ -207,6 +208,7 @@ impl SinkWrapper {
     /// # Errors
     /// - Not supported by the device.
     pub fn hard_pause(&mut self) -> Result<()> {
+        trace!("Hard pausing.");
         self.sink.hard_pause()?;
         Ok(())
     }
@@ -248,21 +250,45 @@ impl SinkWrapper {
             let file = File::open(p.as_ref())?;
             let err = match Symph::try_new(file.try_clone()?, &self.symph) {
                 Ok(s) => return Ok(Box::new(s)),
-                Err(e) => e,
+                Err(e) => {
+                    info!(
+                        "Symhonia failed load file `{:?}` probed as `{:?}`: \
+                        {e}",
+                        &probe.tags[..],
+                        p.as_ref().display()
+                    );
+                    e
+                }
             };
             errs.push(err.into());
+        } else {
+            info!(
+                "Skipping symphonia decoder for file `{:?}` `{:?}`",
+                p.as_ref().display(),
+                &probe.tags[..]
+            );
         }
 
         for d in &self.decoder_plugins {
             match d.open(p.as_ref()) {
                 Ok(d) => return Ok(d),
-                Err(e) => errs.push(e),
+                Err(e) => {
+                    info!(
+                        "Decoder `{}` failed to load file `{}` probed as \
+                        `{:?}`: {e}",
+                        d.name(),
+                        p.as_ref().display(),
+                        &probe.tags[..]
+                    );
+                    errs.push(e)
+                }
             }
         }
 
         // Seems like no other decoder supports this. Actually try symphonia
         // even if it seems unlikely to work.
         if skip_symph {
+            info!("All decoders failed. Trying skipped symphonia.");
             let file = File::open(p.as_ref())?;
             let err = match Symph::try_new(file.try_clone()?, &self.symph) {
                 Ok(s) => return Ok(Box::new(s)),
