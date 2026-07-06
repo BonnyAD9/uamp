@@ -6,6 +6,7 @@
 
 ### Fixes
 - Add `tag` and `untag` to tab completion.
+- Opening file with comma in its path by double clicking it now works.
 - Playing temporary song would sometimes not start playing the song.
 
 ## v0.7.5
