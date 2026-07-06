@@ -168,6 +168,7 @@ impl UampApp {
 
                 self.player
                     .push_playlist(&mut self.library, ids.into(), true);
+                self.hard_pause_at = None;
                 self.client_update_tmp_songs();
             }
             DataControlMsg::RemoveFromLibrary(q) => {
