@@ -1,7 +1,7 @@
 use std::io::Write;
 use std::process::{Command, Stdio};
 
-use pareg::{ArgInto, Pareg, ParegRef};
+use pareg::{ArgInto, ParegRef};
 
 use crate::core::{Error, Result};
 

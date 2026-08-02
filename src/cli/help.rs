@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use pareg::{ArgInto, Pareg, ParegRef};
+use pareg::{ArgInto, ParegRef};
 use termal::{eprintacln, gradient, printmcln};
 
 use crate::core::config::{APP_ID, VERSION_STR};

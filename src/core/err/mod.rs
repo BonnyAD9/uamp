@@ -13,7 +13,7 @@ mod err_kind;
 mod log_result;
 
 use itertools::Either;
-use pareg::{ArgInto, Pareg, ParegRef};
+use pareg::{ArgInto, ParegRef};
 
 pub use self::{err_ctx::*, err_ctx_flags::*, err_kind::*, log_result::*};
 
@@ -64,7 +64,10 @@ impl Error {
         self
     }
 
-    pub fn map_pareg<'a, S: ArgInto<'a>>(self, args: &ParegRef<'a, S>) -> Self {
+    pub fn map_pareg<'a, S: ArgInto<'a>>(
+        self,
+        args: &ParegRef<'a, S>,
+    ) -> Self {
         self.map_kind(|k| match k {
             ErrKind::Pareg(p) => args.map_err(p).into(),
             k => k,

@@ -1,4 +1,4 @@
-use pareg::{ArgInto, Pareg, ParegRef};
+use pareg::{ArgInto, ParegRef};
 
 mod install;
 mod open;
@@ -19,7 +19,10 @@ pub enum Internal {
 }
 
 impl Internal {
-    pub fn new<'a, S: ArgInto<'a>>(args: &mut ParegRef<'a, S>, color: bool) -> Result<Self> {
+    pub fn new<'a, S: ArgInto<'a>>(
+        args: &mut ParegRef<'a, S>,
+        color: bool,
+    ) -> Result<Self> {
         let Some(a) = args.next_str() else {
             return args.err_no_more_arguments().err()?;
         };

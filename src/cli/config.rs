@@ -1,7 +1,7 @@
 use std::io;
 
 use itertools::Itertools;
-use pareg::{ArgInto, Pareg, ParegRef, parse_arg};
+use pareg::{ArgInto, ParegRef, parse_arg};
 
 use crate::core::{self, Error, Result, config::default_config_path};
 

@@ -6,7 +6,7 @@ use std::{
 };
 
 use log::info;
-use pareg::{ArgInto, Pareg, ParegRef};
+use pareg::{ArgInto, ParegRef};
 
 use crate::{
     background_app::run_background_app,

@@ -1,6 +1,6 @@
 use std::{mem, time::Instant};
 
-use pareg::{ArgInto, Pareg, ParegRef, has_any_key, parse_arg};
+use pareg::{ArgInto, ParegRef, has_any_key, parse_arg};
 
 use crate::core::{
     Result,

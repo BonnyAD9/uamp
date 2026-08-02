@@ -1,6 +1,6 @@
 use std::{env, path::Path};
 
-use pareg::{ArgInto, Pareg, ParegRef};
+use pareg::{ArgInto, ParegRef};
 
 use crate::core::Result;
 

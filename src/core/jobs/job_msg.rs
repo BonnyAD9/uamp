@@ -24,7 +24,7 @@ impl UampApp {
             JobMsg::LibrarySave(res) => self.finish_library_save_songs(res)?,
             JobMsg::Server(Err(e)) => {
                 self.jobs.finish(Job::SERVER);
-                return Err(e.prepend("Server ended unexpectedly."))?;
+                return Err(e.prepend("Server ended unexpectedly."));
             }
             JobMsg::Server(Ok(_)) => {
                 self.jobs.finish(Job::SERVER);

@@ -1,4 +1,4 @@
-use std::{ffi::{OsStr, OsString}, io::{self, IsTerminal}};
+use std::io::{self, IsTerminal};
 
 use pareg::{ArgInto, FromArg, Pareg, ParegRef, has_any_key, parse_arg};
 
@@ -101,7 +101,10 @@ enum EnableColor {
 }
 
 impl Args {
-    fn top_level<'a, S: ArgInto<'a>>(&mut self, args: &mut ParegRef<'a, S>) -> Result<()> {
+    fn top_level<'a, S: ArgInto<'a>>(
+        &mut self,
+        args: &mut ParegRef<'a, S>,
+    ) -> Result<()> {
         fn opt_iter(arg: &str) -> Pareg {
             if arg.is_empty() {
                 vec![].into()
@@ -182,7 +185,10 @@ impl Args {
         Ok(())
     }
 
-    fn instance<'a, S: ArgInto<'a>>(&mut self, args: &mut ParegRef<'a, S>) -> Result<()> {
+    fn instance<'a, S: ArgInto<'a>>(
+        &mut self,
+        args: &mut ParegRef<'a, S>,
+    ) -> Result<()> {
         self.should_exit = true;
 
         let mut instance = Instance::default();
@@ -195,7 +201,10 @@ impl Args {
         Ok(())
     }
 
-    fn update<'a, S: ArgInto<'a>>(&mut self, args: &mut ParegRef<'a, S>) -> Result<()> {
+    fn update<'a, S: ArgInto<'a>>(
+        &mut self,
+        args: &mut ParegRef<'a, S>,
+    ) -> Result<()> {
         self.should_exit = true;
 
         let mut update = Update::default();
@@ -206,7 +215,10 @@ impl Args {
         Ok(())
     }
 
-    fn run<'a, S: ArgInto<'a>>(&mut self, args: &mut ParegRef<'a, S>) -> Result<()> {
+    fn run<'a, S: ArgInto<'a>>(
+        &mut self,
+        args: &mut ParegRef<'a, S>,
+    ) -> Result<()> {
         let mut info = Run::default();
         info.parse(args, self.props.color)?;
 
@@ -225,7 +237,10 @@ impl Args {
         Ok(())
     }
 
-    fn config<'a, S: ArgInto<'a>>(&mut self, args: &mut ParegRef<'a, S>) -> Result<()> {
+    fn config<'a, S: ArgInto<'a>>(
+        &mut self,
+        args: &mut ParegRef<'a, S>,
+    ) -> Result<()> {
         self.should_exit = true;
 
         let mut cfg = super::Config::default();
@@ -238,7 +253,10 @@ impl Args {
         Ok(())
     }
 
-    fn shell<'a, S: ArgInto<'a>>(&mut self, args: &mut ParegRef<'a, S>) -> Result<()> {
+    fn shell<'a, S: ArgInto<'a>>(
+        &mut self,
+        args: &mut ParegRef<'a, S>,
+    ) -> Result<()> {
         self.should_exit = true;
 
         let mut sh = Shell::default();
@@ -247,7 +265,10 @@ impl Args {
         Ok(())
     }
 
-    fn internal<'a, S: ArgInto<'a>>(&mut self, args: &mut ParegRef<'a, S>) -> Result<()> {
+    fn internal<'a, S: ArgInto<'a>>(
+        &mut self,
+        args: &mut ParegRef<'a, S>,
+    ) -> Result<()> {
         self.should_exit = true;
 
         let i = Internal::new(args, self.props.color)?;
@@ -257,7 +278,10 @@ impl Args {
         Ok(())
     }
 
-    fn man<'a, S: ArgInto<'a>>(&mut self, args: &mut ParegRef<'a, S>) -> Result<()> {
+    fn man<'a, S: ArgInto<'a>>(
+        &mut self,
+        args: &mut ParegRef<'a, S>,
+    ) -> Result<()> {
         self.should_exit = true;
 
         let mut m = Man::default();

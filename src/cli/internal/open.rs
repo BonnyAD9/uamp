@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use itertools::Itertools;
-use pareg::{ArgInto, Pareg, ParegRef};
+use pareg::{ArgInto, ParegRef};
 
 use crate::{
     background_app::run_background_app,
@@ -18,12 +18,14 @@ pub struct Open {
 }
 
 impl Open {
-    pub fn parse<'a, S: ArgInto<'a>>(pareg: &mut ParegRef<'a, S>) -> Result<Self> {
+    pub fn parse<'a, S: ArgInto<'a>>(
+        pareg: &mut ParegRef<'a, S>,
+    ) -> Result<Self> {
         let files = pareg
             .remaining()
             .iter()
             .map(|p| Result::Ok(p.arg_into::<&Path>()?.canonicalize()?))
-            .try_collect()?;
+            .try_collect::<_, _, Error>()?;
         pareg.skip_all();
         Ok(Self { files })
     }

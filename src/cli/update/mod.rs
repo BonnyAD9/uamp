@@ -1,4 +1,4 @@
-use pareg::{ArgInto, Pareg, ParegRef};
+use pareg::{ArgInto, ParegRef};
 use termal::printcln;
 
 use crate::{
