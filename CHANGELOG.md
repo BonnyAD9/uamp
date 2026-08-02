@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.7.6
 ### New features
 - Add option to escape commas in the control message `play` by doubling them.
 
