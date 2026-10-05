@@ -2,8 +2,7 @@ use std::{fmt::Debug, fs::File, path::Path, time::Duration};
 
 use log::{info, trace};
 use raplay::{
-    CallbackInfo, CpalError, Sink, Timestamp,
-    reexp::BuildStreamError,
+    CallbackInfo, Sink, Timestamp,
     source::{Source, Symph, symph},
 };
 use ratag::{TagType, tag};
@@ -304,14 +303,15 @@ impl SinkWrapper {
     fn load_inner(&mut self, src: Box<dyn Source>, play: bool) -> Result<()> {
         let mut src = Some(src);
         match self.sink.try_load(&mut src, play) {
-            e @ Err(raplay::Error::Cpal(CpalError::BuildStream(
-                BuildStreamError::DeviceNotAvailable,
-            ))) => {
+            Err(raplay::Error::Cpal(ce))
+                if ce.kind()
+                    == raplay::reexp::ErrorKind::DeviceNotAvailable =>
+            {
                 self.sink.restart_device(None)?;
                 if src.is_some() {
                     self.sink.try_load(&mut src, play)
                 } else {
-                    e
+                    Err(raplay::Error::Cpal(ce))
                 }
             }
             r => r,
