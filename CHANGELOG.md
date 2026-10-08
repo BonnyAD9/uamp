@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## v0.7.7
+This update only updates the dependencies to achieve some improvements:
+- Fixed potential problems with alsa.
+- The symphonia source moves data from decoder to output device more
+  efficiently.
+- Less artefacts when resampling is required (when output device doesn't
+  support the required sample rate).
+- Better errors.
+
 ## v0.7.6
 ### New features
 - Add option to escape commas in the control message `play` by doubling them.
