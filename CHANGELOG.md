@@ -8,6 +8,8 @@ This update only updates the dependencies to achieve some improvements:
 - Less artefacts when resampling is required (when output device doesn't
   support the required sample rate).
 - Better errors.
+- The dependency versions are now locked to avoid problems with untested
+  version configurations.
 
 ## v0.7.6
 ### New features
