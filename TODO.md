@@ -1,5 +1,6 @@
 # TODO
 - Fix playing opus.
+- Save changes with swap files.
 - Push doesn't change playback state (continue playing).
 - Sort by album artist.
 - Proper support for multidisc albums.
