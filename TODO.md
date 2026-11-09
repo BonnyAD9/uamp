@@ -1,6 +1,8 @@
 # TODO
 - Migrate off of astral-tokio-tar.
 - Fix playing opus.
+- Play single playlist song and `uamp i info=0..18446744073709551615` crashes.
+- `uamp i push=none qn` crashes.
 - Save changes with swap files.
 - Push doesn't change playback state (continue playing).
 - Sort by album artist.
