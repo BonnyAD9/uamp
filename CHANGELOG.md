@@ -3,6 +3,7 @@
 ## future
 ### Fixes
 - Fix config over HTTP.
+- Fix potential voulnerabilities by updating dependencies.
 
 ## v0.7.7
 This update only updates the dependencies to achieve some improvements:
