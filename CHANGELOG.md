@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## future
+### Fixes
+- Fix config over HTTP.
+
 ## v0.7.7
 This update only updates the dependencies to achieve some improvements:
 - Fixed potential problems with alsa.

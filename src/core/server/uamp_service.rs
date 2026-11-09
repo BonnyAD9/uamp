@@ -258,7 +258,7 @@ impl UampService {
         let id_msgs = serde_json::from_slice::<OneOrVec<IdControlMsg>>(&data)?;
         let mut msgs = Vec::with_capacity(id_msgs.len());
         for msg in id_msgs {
-            if is_loopback && matches!(msg, IdControlMsg::SetConfig(_)) {
+            if !is_loopback && matches!(msg, IdControlMsg::SetConfig(_)) {
                 return Error::http(
                     403,
                     "Only loopback is allowed to modify settings.",
