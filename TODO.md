@@ -1,4 +1,5 @@
 # TODO
+- Migrate off of astral-tokio-tar.
 - Fix playing opus.
 - Save changes with swap files.
 - Push doesn't change playback state (continue playing).
