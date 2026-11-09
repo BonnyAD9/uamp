@@ -16,40 +16,40 @@ members = [
 
 [dependencies]
 anyhow = "1.0.104"
-astral-tokio-tar = "0.7.0"
-ratag = "0.2.0"
+astral-tokio-tar = "0.7.1"
+ratag = "0.2.1"
 bitflags = { version = "2.13.2", features = ["serde"] }
-const_format = { version = "0.2.36", features = ["fmt"] }
+const_format = { version = "0.2.37", features = ["fmt"] }
 dirs = "7.0.0"
 edit = { version = "0.1.5", features = ["quoted-env"] }
-filesan = "0.2.0"
+filesan = "0.2.1"
 flexi_logger = "0.31.10"
 futures = "0.3.34"
 http-body-util = "0.1.5"
-hyper = { version = "1.11.1", features = ["client", "server", "http1"] }
+hyper = { version = "1.12.0", features = ["client", "server", "http1"] }
 hyper-util = { version = "0.1.21", features = ["tokio"] }
 image = "0.25.10"
 itertools = "0.15.0"
 libloading = "0.9.0"
-log = "0.4.34"
+log = "0.4.35"
 mime_guess = "2.0.5"
-notify = "8.2.0"
-open = "5.4.4"
-pareg = "0.13.1"
+notify = "8.2.2"
+open = "5.4.5"
+pareg = "0.14.0"
 # pareg = { path = "../pareg", features = ["no-anounce"] }
 rand = "0.10.3"
 raplay = { version = "0.6.1", features = ["serde"] }
 # raplay = { path = "../raplay", features = ["serde"] }
 serde = { version = "1.0.229", features = ["rc"] }
-serde_json = "1.0.151"
+serde_json = "1.0.154"
 shell-words = "1.1.1"
-termal = { version =  "5.2.0", features = ["image", "raw", "events"] }
+termal = { version =  "5.2.1", features = ["image", "raw", "events"] }
 thiserror = "2.0.21"
-tokio = { version = "1.53.2", features = ["rt", "sync", "signal", "macros", "net", "rt-multi-thread", "fs"] }
-tokio-util = { version = "0.7.19", features = ["codec"] }
+tokio = { version = "1.54.1", features = ["rt", "sync", "signal", "macros", "net", "rt-multi-thread", "fs"] }
+tokio-util = { version = "0.7.20", features = ["codec"] }
 unidecode = "0.3.0"
 url = "2.5.8"
 uamp_proc = { version = "0.1.6", path = "uamp_proc" }
 
 [target.'cfg(unix)'.dependencies]
-mpris-server = "0.10.0"
+mpris-server = "0.11.0"
