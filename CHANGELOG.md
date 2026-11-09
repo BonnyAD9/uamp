@@ -1,7 +1,7 @@
 # CHANGELOG
 
 ## future
-### Fixes
+### v0.7.8
 - Fix config over HTTP.
 - Fix potential voulnerabilities by updating dependencies.
 
