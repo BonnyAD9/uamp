@@ -66,6 +66,8 @@ impl DataControlMsg {
             Self::PlayTmp(_) => Origin::Local,
             Self::Restart(Some(_)) => Origin::Internal,
             Self::Restart(None) => Origin::Local,
+            Self::Alias(_) => Origin::Local,
+            Self::SetPlaylistEndAction(_) => Origin::Local,
             _ => Origin::Remote,
         }
     }
