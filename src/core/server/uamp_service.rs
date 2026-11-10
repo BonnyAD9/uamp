@@ -397,7 +397,7 @@ impl UampService {
         app_path: &Path,
         mut path: &str,
     ) -> Result<MyResponse> {
-        path = path.strip_prefix("/").unwrap_or(path);
+        path = path.trim_start_matches('/');
         let os_path = Path::new(&path);
         if os_path.components().any(|c| c.as_os_str() == "..") {
             return Error::http(403, "Relative `..` is disallowed.").err();
