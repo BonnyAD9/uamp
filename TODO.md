@@ -1,4 +1,6 @@
 # TODO
+- Add option to disable remote access over HTTP.
+- Don't send song paths to client.
 - Migrate off of astral-tokio-tar.
 - Fix playing opus.
 - Play single playlist song and `uamp i info=0..18446744073709551615` crashes.
