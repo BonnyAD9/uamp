@@ -1,6 +1,11 @@
 use std::{
-    borrow::Cow, convert::Infallible, env, io::ErrorKind, net::SocketAddr,
+    borrow::Cow,
+    convert::Infallible,
+    env,
+    io::ErrorKind,
+    net::{IpAddr, SocketAddr},
     path::Path,
+    str::FromStr,
 };
 
 use const_format::concatc;
@@ -27,8 +32,8 @@ use url::Url;
 
 use crate::{
     core::{
-        AnyControlMsg, ErrKind, Error, IdControlMsg, Msg, Result, RtAndle,
-        UampApp,
+        AnyControlMsg, ErrKind, Error, IdControlMsg, Msg, Origin, Result,
+        RtAndle, UampApp,
         config::{self, CacheSize},
         library::{Song, img_lookup::lookup_image_path_rt_thread},
         query::Query,
@@ -109,6 +114,8 @@ impl UampService {
         &self,
         req: Request<Incoming>,
     ) -> Result<MyResponse> {
+        let origin = self.validate_request_origin(&req)?;
+
         let url = uri_to_url(req.uri())?;
         let mut msgs: Vec<Msg> = vec![];
         // This is kind of dirty solution, but it works.
@@ -120,7 +127,18 @@ impl UampService {
                 buf.push('=');
                 buf += &v;
             }
-            msgs.push(AnyControlMsg::from_arg(&buf)?.into());
+            let msg = AnyControlMsg::from_arg(&buf)?;
+            let req_origin = msg.min_origin();
+            if origin < req_origin {
+                return Error::http(
+                    403,
+                    format!(
+                        "{req_origin:?} access required for this operation."
+                    ),
+                )
+                .err();
+            }
+            msgs.push(msg.into());
         }
 
         self.rt.msgs_result(msgs).await?;
@@ -226,6 +244,8 @@ impl UampService {
         &self,
         mut req: Request<Incoming>,
     ) -> Result<MyResponse> {
+        validate_content_type(&req, "application/json")?;
+
         let len = req
             .headers()
             .get("Content-Length")
@@ -253,15 +273,18 @@ impl UampService {
             return Err(Error::http(413, "Too much data.".to_string()));
         }
 
-        let is_loopback = self.peer.ip().is_loopback();
+        let origin = self.validate_request_origin(&req)?;
 
         let id_msgs = serde_json::from_slice::<OneOrVec<IdControlMsg>>(&data)?;
         let mut msgs = Vec::with_capacity(id_msgs.len());
         for msg in id_msgs {
-            if !is_loopback && matches!(msg, IdControlMsg::SetConfig(_)) {
+            let req_origin = msg.min_origin();
+            if origin < req_origin {
                 return Error::http(
                     403,
-                    "Only loopback is allowed to modify settings.",
+                    format!(
+                        "{req_origin:?} access required for this operation."
+                    ),
                 )
                 .err();
             }
@@ -277,6 +300,8 @@ impl UampService {
         &self,
         mut req: Request<Incoming>,
     ) -> Result<MyResponse> {
+        validate_content_type(&req, "text/plain")?;
+
         let len: Option<usize> = req
             .headers()
             .get("Content-Length")
@@ -287,7 +312,7 @@ impl UampService {
         if let Some(len) = len
             && len > MAX_ACCEPT_LENGTH
         {
-            return Err(Error::http(413, "Too much data.".to_string()));
+            return Err(Error::http(413, "Too much data."));
         }
 
         let mut res = String::new();
@@ -301,7 +326,7 @@ impl UampService {
         }
 
         if res.len() > MAX_ACCEPT_LENGTH {
-            return Err(Error::http(413, "Too much data.".to_string()));
+            return Err(Error::http(413, "Too much data."));
         }
 
         Ok(string_response(res))
@@ -311,6 +336,8 @@ impl UampService {
         &self,
         mut req: Request<Incoming>,
     ) -> Result<MyResponse> {
+        validate_content_type(&req, "application/json")?;
+
         let len: Option<usize> = req
             .headers()
             .get("Content-Length")
@@ -419,6 +446,50 @@ impl UampService {
         let mime = mime_guess::from_path(file.path()?).first_or_octet_stream();
 
         Ok(reader_response(file, mime.essence_str()))
+    }
+
+    fn validate_request_origin(
+        &self,
+        r: &Request<Incoming>,
+    ) -> Result<Origin> {
+        if !self.peer.ip().is_loopback() {
+            return Ok(Origin::Remote);
+        }
+
+        let mut any = false;
+
+        for h in r.headers().get_all(hyper::header::ORIGIN) {
+            let origin = h
+                .to_str()
+                .map_err(|_| Error::http(400, "Origin is not valid utf-8."))?;
+            dbg!(h);
+            let uri = Uri::from_str(origin)
+                .map_err(|_| Error::http(400, "Origin is not a valid uri."))?;
+
+            any = true;
+
+            let Some(host) = uri.host() else {
+                return Ok(Origin::Remote);
+            };
+
+            if host == "localhost" {
+                continue;
+            }
+
+            let Ok(addr) = IpAddr::from_str(host) else {
+                return Ok(Origin::Remote);
+            };
+
+            if !addr.is_loopback() {
+                return Ok(Origin::Remote);
+            }
+        }
+
+        if any {
+            Ok(Origin::Local)
+        } else {
+            Ok(Origin::Remote)
+        }
     }
 }
 
@@ -647,4 +718,16 @@ fn path_join<S: AsRef<str>>(paths: impl IntoIterator<Item = S>) -> String {
     }
 
     res
+}
+
+fn validate_content_type(req: &Request<Incoming>, ct: &str) -> Result<()> {
+    let rct = req
+        .headers()
+        .get(hyper::header::CONTENT_TYPE)
+        .ok_or_else(|| Error::http(400, "Missing content type."))?;
+    if rct.as_bytes() != ct.as_bytes() {
+        Err(Error::http(415, "Unexpected content type."))
+    } else {
+        Ok(())
+    }
 }

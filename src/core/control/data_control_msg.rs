@@ -1,6 +1,7 @@
 use std::{env, fmt::Display, mem, path::PathBuf, str::FromStr};
 
 use itertools::Itertools;
+use log::warn;
 use pareg::{
     ArgErrKind, ArgError, FromArgStr, has_any_key, mval_arg, split_arg,
     starts_any, val_arg,
@@ -8,7 +9,7 @@ use pareg::{
 use serde::{Deserialize, Serialize};
 
 use crate::core::{
-    Alias, AppCtrl, Msg, Result, UampApp,
+    Alias, AppCtrl, Msg, Origin, Result, UampApp,
     control::types::{AddTag, RemoveTag},
     query::{ComposedFilter, Query},
     server::{
@@ -57,6 +58,17 @@ pub enum DataControlMsg {
     AddTag(AddTag),
     /// Remove the given tag from all songs specified by the query.
     RemoveTag(RemoveTag),
+}
+
+impl DataControlMsg {
+    pub fn min_origin(&self) -> Origin {
+        match self {
+            Self::PlayTmp(_) => Origin::Local,
+            Self::Restart(Some(_)) => Origin::Internal,
+            Self::Restart(None) => Origin::Local,
+            _ => Origin::Remote,
+        }
+    }
 }
 
 impl UampApp {
@@ -300,9 +312,7 @@ impl FromStr for DataControlMsg {
                     mval_arg(v, '=')?.unwrap_or_default(),
                 ))
             }
-            v if has_any_key!(v, '=', "restart") => {
-                Ok(DataControlMsg::Restart(mval_arg(v, '=')?))
-            }
+            "restart" => Ok(DataControlMsg::Restart(None)),
             v if starts_any!(v, "rps=", "reorder-playlist-stack=") => {
                 let (_, v) = v.split_once("=").unwrap();
                 Ok(DataControlMsg::ReorderPlaylistStack(split_arg(v, ",")?))
@@ -347,8 +357,9 @@ impl Display for DataControlMsg {
             DataControlMsg::Queue(ft) => write!(f, "q={ft}"),
             DataControlMsg::PlayNext(ft) => write!(f, "qn={ft}"),
             DataControlMsg::Restart(None) => write!(f, "restart"),
-            DataControlMsg::Restart(Some(ft)) => {
-                write!(f, "restart={}", ft.to_string_lossy())
+            DataControlMsg::Restart(_) => {
+                warn!("Attempted to form restart with path.");
+                write!(f, "restart")
             }
             DataControlMsg::ReorderPlaylistStack(ord) => {
                 write!(

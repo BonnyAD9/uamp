@@ -45,6 +45,7 @@ impl Client {
         let req = Request::builder()
             .uri(url.to_string())
             .header(hyper::header::HOST, url.authority())
+            .header(hyper::header::ORIGIN, "http://localhost/")
             .body(Full::new(Bytes::new()))?;
 
         self.sender.ready().await?;
@@ -69,6 +70,7 @@ impl Client {
         let req = Request::builder()
             .uri(url.to_string())
             .header(hyper::header::HOST, url.authority())
+            .header(hyper::header::ORIGIN, "http://localhost/")
             .body(Full::new(Bytes::new()))?;
 
         self.sender.ready().await?;
@@ -106,6 +108,7 @@ impl Client {
         let req = Request::builder()
             .uri(url.to_string())
             .header(hyper::header::HOST, url.authority())
+            .header(hyper::header::ORIGIN, "http://localhost/")
             .body(Full::new(Bytes::new()))?;
 
         self.sender.ready().await?;

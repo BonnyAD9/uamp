@@ -1,5 +1,6 @@
 mod err;
 mod helpers;
+mod json_value_classify;
 mod json_value_update;
 mod partial_clone;
 mod track_change;
@@ -19,6 +20,16 @@ pub fn derive_track_change(item: TokenStream) -> TokenStream {
 )]
 pub fn derive_json_value_update(item: TokenStream) -> TokenStream {
     extract_stream(json_value_update::derive_json_value_update_impl(
+        item.into(),
+    ))
+}
+
+#[proc_macro_derive(
+    JsonValueClassify,
+    attributes(class, class_default, class_type)
+)]
+pub fn derive_json_value_classify(item: TokenStream) -> TokenStream {
+    extract_stream(json_value_classify::derive_json_value_classify_impl(
         item.into(),
     ))
 }

@@ -3,6 +3,8 @@ use std::{fmt::Display, str::FromStr};
 use pareg::{ArgErrKind, ArgError, FromArgStr};
 use serde::{Deserialize, Serialize};
 
+use crate::core::Origin;
+
 use super::{ControlMsg, DataControlMsg};
 
 //===========================================================================//
@@ -16,6 +18,15 @@ pub enum AnyControlMsg {
     Control(ControlMsg),
     /// [`DataControlMsg`]
     Data(Box<DataControlMsg>),
+}
+
+impl AnyControlMsg {
+    pub fn min_origin(&self) -> Origin {
+        match self {
+            Self::Control(c) => c.min_origin(),
+            Self::Data(d) => d.min_origin(),
+        }
+    }
 }
 
 impl FromStr for AnyControlMsg {

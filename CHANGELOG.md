@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## future
+### Fixes
+- Limit the access over http.
+- Restart doesn't allow specifying binary.
+
 ## v0.7.8
 ### Fixes
 - Fix config over HTTP.

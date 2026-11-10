@@ -1,10 +1,12 @@
 use serde::{Deserialize, Serialize};
 use std::{cell::Cell, collections::HashMap, path::PathBuf, time::Duration};
-use uamp_proc::{JsonValueUpdate, PartialClone, TrackChange};
+use uamp_proc::{
+    JsonValueClassify, JsonValueUpdate, PartialClone, TrackChange,
+};
 
 use crate::{
     core::{
-        Alias, ControlFunction, Error, Result,
+        Alias, ControlFunction, Error, Origin, Result,
         config::{AutoTag, Change, Version, default},
         query::Base,
     },
@@ -22,6 +24,7 @@ use super::{CacheSize, song_pos_save::SongPosSave};
     JsonValueUpdate,
     PartialClone,
     TrackChange,
+    JsonValueClassify,
 )]
 #[serde(
     tag = "$schema",
@@ -37,50 +40,60 @@ use super::{CacheSize, song_pos_save::SongPosSave};
     ConfigClone,
     #[derive(Debug, Clone, Serialize, Deserialize)]
 )]
+#[class_type(Origin)]
+#[class_default(Origin::Local)]
 pub struct Config {
     #[track_value(pub, pub, eq)]
     #[serde(default = "default::version")]
+    #[class(Origin::Internal)]
     version: Option<Version>,
 
     // Fields passed by reference
     /// Folders where to look for songs.
     #[track_ref(pub, pub)]
     #[serde(default = "default::search_paths")]
+    #[class(Origin::Local)]
     search_paths: Vec<PathBuf>,
 
     /// Path to library data file.
     #[track_ref(pub, pub)]
     #[serde(default = "default::library_path")]
     #[value_change(Change::LIBRARY_PATH)]
+    #[class(Origin::Internal)]
     library_path: Option<PathBuf>,
 
     /// Path to player data file.
     #[track_ref(pub, pub)]
     #[serde(default = "default::player_path")]
     #[value_change(Change::PLAYER_PATH)]
+    #[class(Origin::Internal)]
     player_path: Option<PathBuf>,
 
     /// Path to uamp cache folder
     #[track_ref(pub, pub)]
     #[serde(default = "default::cache_path")]
     #[value_change(Change::CACHE_PATH)]
+    #[class(Origin::Internal)]
     cache_path: PathBuf,
 
     /// File extensions that will be used to recognize audio files.
     #[track_ref(pub, pub)]
     #[serde(default = "default::audio_extensions")]
     #[value_change(Change::AUDIO_EXTENSIONS)]
+    #[class(Origin::Local)]
     audio_extensions: Vec<String>,
 
     /// Address of server that is used to control uamp.
     #[track_ref(pub, pub)]
     #[serde(default = "default::server_address")]
     #[value_change(Change::SERVER_ADDRESS)]
+    #[class(Origin::Internal)]
     server_address: String,
 
     /// Aliases for groups of control actions.
     #[track_ref(pub, pub)]
     #[serde(default = "default::control_aliases")]
+    #[class(Origin::Local)]
     control_aliases: HashMap<String, ControlFunction>,
 
     /// This will be used as playlist end action if the end action
@@ -92,24 +105,29 @@ pub struct Config {
     /// Determines how uamp will self update.
     #[track_ref(pub, pub)]
     #[serde(default)]
+    #[class(Origin::Internal)]
     update_mode: install::UpdateMode,
 
     /// Determines the repository fro which uamp will update.
     #[track_ref(pub, pub)]
     #[serde(default = "default::update_remote")]
+    #[class(Origin::Internal)]
     update_remote: String,
 
     #[track_ref(pub, pub)]
     #[serde(default = "default::skin")]
     #[value_change(Change::SKIN)]
+    #[class(Origin::Internal)]
     skin: PathBuf,
 
     #[track_ref(pub, pub)]
     #[serde(default)]
+    #[class(Origin::Internal)]
     web_client_command: Option<String>,
 
     #[track_ref(pub, pub)]
     #[serde(default = "default::plugin_folders")]
+    #[class(Origin::Internal)]
     plugin_folders: Vec<PathBuf>,
 
     #[track_ref(pub, pub)]
@@ -194,12 +212,14 @@ pub struct Config {
     #[track_value(pub, pub, eq)]
     #[serde(default = "default::port")]
     #[value_change(Change::PORT)]
+    #[class(Origin::Internal)]
     port: u16,
 
     /// Determines how old must logs be so that they are
     /// automatically deleted.
     #[track_value(pub, pub, eq)]
     #[serde(default = "default::delete_logs_after")]
+    #[class(Origin::Local)]
     delete_logs_after: Wrap<Duration>,
 
     /// Enable/Disable server that is used to control uamp. Server
@@ -208,6 +228,7 @@ pub struct Config {
     #[track_value(pub, pub, eq)]
     #[serde(default = "default::enable_server")]
     #[value_change(Change::ENABLE_SERVER)]
+    #[class(Origin::Local)]
     enable_server: bool,
 
     /// When jumping to the start of the song, if the command is
@@ -227,6 +248,7 @@ pub struct Config {
     #[track_value(pub, pub, eq)]
     #[serde(default = "default::system_player")]
     #[value_change(Change::SYSTEM_PLAYER)]
+    #[class(Origin::Local)]
     system_player: bool,
 
     /// If true, uamp will automatically restart when its binary
@@ -234,6 +256,7 @@ pub struct Config {
     #[track_value(pub, pub, eq)]
     #[serde(default = "default::auto_restart")]
     #[value_change(Change::AUTO_RESTART)]
+    #[class(Origin::Local)]
     auto_restart: bool,
 
     /// The run type to use by default.
@@ -243,7 +266,9 @@ pub struct Config {
 
     // fields that aren't serialized
     #[serde(skip_serializing, default = "default::config_path")]
+    #[class(Origin::Internal)]
     pub config_path: Option<PathBuf>,
+
     #[serde(skip_serializing, default)]
     #[no_update]
     #[no_clone]
@@ -302,6 +327,14 @@ impl Config {
         self.change();
 
         self.update_from_json_object(obj)
+    }
+
+    pub fn min_update_origin(up: &serde_json::Value) -> Origin {
+        let serde_json::Value::Object(obj) = up else {
+            return Origin::Local;
+        };
+
+        Self::classify(obj)
     }
 }
 

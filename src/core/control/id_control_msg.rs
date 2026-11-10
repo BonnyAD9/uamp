@@ -1,8 +1,8 @@
 use serde::Deserialize;
 
 use crate::core::{
-    Error, Msg, Result, UampApp,
-    config::ConfigMsg,
+    Error, Msg, Origin, Result, UampApp,
+    config::{Config, ConfigMsg},
     library::SongId,
     player::Playlist,
     server::{
@@ -35,6 +35,15 @@ pub enum IdControlMsg {
         playlist: usize,
     },
     SetConfig(serde_json::Value),
+}
+
+impl IdControlMsg {
+    pub fn min_origin(&self) -> Origin {
+        match self {
+            Self::SetConfig(c) => Config::min_update_origin(c),
+            _ => Origin::Remote,
+        }
+    }
 }
 
 impl UampApp {

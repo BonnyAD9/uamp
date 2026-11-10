@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::{
-        AppCtrl, ErrKind, Error, Msg, Result, UampApp,
+        AppCtrl, ErrKind, Error, Msg, Origin, Result, UampApp,
         library::LoadOpts,
         player::AddPolicy,
         query::SongOrder,
@@ -77,6 +77,16 @@ pub enum ControlMsg {
     EndPlaylist,
     /// Remove playlist at the given index. Top playlist is 0.
     RemovePlaylist(usize),
+}
+
+impl ControlMsg {
+    pub fn min_origin(&self) -> Origin {
+        match self {
+            Self::Save => Origin::Local,
+            Self::Close => Origin::Local,
+            _ => Origin::Remote,
+        }
+    }
 }
 
 impl UampApp {
