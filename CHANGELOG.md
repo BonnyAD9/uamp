@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## future
+## v0.7.9
 ### Fixes
 - Limit the access over http.
 - Restart doesn't allow specifying binary.
