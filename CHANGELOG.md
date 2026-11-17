@@ -3,7 +3,7 @@
 ## future
 ### New features
 - Add option to export playlists with `export-playlist` (e.g.
-  `uamp i export-playlist playlist.m3u`, for more info see `uamp h i`)
+  `uamp i export-playlist playlist.m3u`, for more info see `uamp h i`).
 
 ## v0.7.9
 ### Fixes
