@@ -371,6 +371,29 @@ These are instance messages:
   
   The amount of printed information is affected by verbosity.
 
+`export-playlist` *path* [*query*] [*flags*] [--]
+  Export playlist of songs produced by *query* to *path*. If query is not
+  specified the current top playlist is exported. Flags can be:
+
+  `-o` *path*, `--output` *path*
+    Explicitly specified path. This is necesary if the path starts with `-` so
+    it wouldn't be possible to name it with positional argument.
+
+  `-q` *query*, `--query` *query*
+    Explicitly specify the query. This is necessary if the query starts with
+    `-` so it wouldn't be possible to name it with positional argument.
+
+  `--format` *format*, `--`*format*
+    Specify the playlist format. If the format is not specified, it is
+    determined from the file extension. Supported file formats are: `m3u`,
+    `m3u8` and `pls`. `m3u` and `m3u8` are eqivalent to writing all paths to
+    the songs to a file. The difference between them is that `m3u8` enforces
+    utf-8 encoding.
+
+  `--`
+    End the arguments to the `export-playlist` subcommand and continue with
+    instance processing.
+
 ### Action `run`
 
 `run` [`-h`] [`-d`] [`-p` *port*] [`-a` *address*] [*control-message*] ...

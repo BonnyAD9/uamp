@@ -400,6 +400,23 @@ fn print_instance_help(color: bool) {
     Print all songs that pass the query. Without value, lists all songs. The
     amount of printed information is affected by verbosity. See
     `{'c}uamp {'b}h {'w bold}query{'_}` for more info.
+
+  {'r}export-playlist {'w}<path> {'gr}[query] [flags] --{'_}
+    Export playlist of songs produced by query to the specified path. If query
+    is not specified, the current playlist is used. Flags can be:
+    {'y}-o  --output {'w}<path>{'_}
+      Explicitily specify the output path.
+      
+    {'y}-q  --query {'w}<query>{'_}
+      Explicitly specify the query.
+      
+    {'y}--format {'w}m3u|m3u8|pls{'_}
+    {'y}--{'w}m3u|m3u8|pls{'_}
+      Specify the playlist format. If format is not specified, it is determined
+      from the file extension.
+
+    {'y}--{'_}
+      End the arguments to export-playlist.
 ",
     );
 }

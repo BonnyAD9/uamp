@@ -10,6 +10,7 @@ use crate::core::{Result, config::Config};
 pub enum TabMode {
     Basic,
     Instance,
+    InstanceExportPlaylist,
     Run,
     Config,
     Shell,
@@ -27,6 +28,7 @@ pub enum TabMode {
     UpdateMode,
     TrueFalse,
     Path,
+    PlaylistFormat,
     None,
 }
 
@@ -62,6 +64,7 @@ impl TabComplete {
                     | TabMode::None
                     | TabMode::TrueFalse
                     | TabMode::Path
+                    | TabMode::PlaylistFormat
             ) {
                 mode = mode2;
                 mode2 = TabMode::Basic;
@@ -90,6 +93,16 @@ impl TabComplete {
                 ) => {
                     mode2 = mode;
                     mode = TabMode::None;
+                }
+                (TabMode::Instance, "export-playlist") => {
+                    mode = TabMode::InstanceExportPlaylist
+                }
+                (TabMode::InstanceExportPlaylist, "--") => {
+                    mode = TabMode::Instance
+                }
+                (TabMode::InstanceExportPlaylist, "--format") => {
+                    mode2 = mode;
+                    mode = TabMode::PlaylistFormat;
                 }
                 (TabMode::Basic, "--color") => {
                     mode2 = mode;
@@ -140,6 +153,9 @@ impl TabComplete {
         match self.mode {
             TabMode::Basic => basic_args(conf, &self.cur, p),
             TabMode::Instance => instance_args(conf, &self.cur, p),
+            TabMode::InstanceExportPlaylist => {
+                instance_export_playlist_args(conf, &self.cur, p)
+            }
             TabMode::Run => run_args(conf, &self.cur, p),
             TabMode::Config => config_args(conf, &self.cur, p),
             TabMode::Shell => shell_args(conf, &self.cur, p),
@@ -159,6 +175,9 @@ impl TabComplete {
             TabMode::UpdateMode => update_mode_args(conf, &self.cur, p),
             TabMode::TrueFalse => true_false_args(conf, &self.cur, p),
             TabMode::Path => file_args(conf, &self.cur, p),
+            TabMode::PlaylistFormat => {
+                playlist_format_args(conf, &self.cur, p)
+            }
             TabMode::None => {}
         }
 
@@ -200,8 +219,20 @@ fn instance_args(conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
         "play=" => file_list_args,
         "al=" => alias_args,
         "alias=" => alias_args,
-        "restart=" => file_args,
     );
+}
+
+fn instance_export_playlist_args(
+    conf: &Config,
+    arg: &str,
+    p: &impl Fn(CowStr),
+) {
+    select_args(INSTANCE_EXPORT_PLAYLIST_ARG, arg, p);
+    file_args(conf, arg, p);
+}
+
+fn playlist_format_args(_: &Config, arg: &str, p: &impl Fn(CowStr)) {
+    select_args(PLAYLIST_FORMAT_ARG, arg, p);
 }
 
 fn run_args(conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
@@ -214,7 +245,6 @@ fn run_args(conf: &Config, arg: &str, p: &impl Fn(CowStr)) {
         "mute=" => [TRUE_FALSE_ARG],
         "al=" => alias_args,
         "alias=" => alias_args,
-        "restart=" => file_args,
     );
 }
 
@@ -389,6 +419,7 @@ const INSTANCE_ARG: &[&[&str]] = &[
     &["show"],
     &["play", "p"],
     &["list", "query", "l"],
+    &["export-playlist"],
     &["-h", "-?", "--help"],
     &["-p", "--port"],
     &["-a", "--address"],
@@ -396,6 +427,17 @@ const INSTANCE_ARG: &[&[&str]] = &[
     &["--"],
     // ANY_CONTROL_MSG
 ];
+
+const INSTANCE_EXPORT_PLAYLIST_ARG: &[&[&str]] = &[
+    &["-o", "--output"],
+    &["--format"],
+    &["--m3u"],
+    &["--m3u8"],
+    &["--pls"],
+    &["--"],
+];
+
+const PLAYLIST_FORMAT_ARG: &[&[&str]] = &[&["m3u"], &["m3u8"], &["pls"]];
 
 const HELP_ARG: &[&[&str]] = &[
     &["basic"],
@@ -500,6 +542,7 @@ const ANY_CONTROL_MSG: &[&[&str]] = &[
     &["remove-playlist"],
     &["tag="],
     &["untag="],
+    &["restart"],
 ];
 
 const PORT_ARG: &[&[&str]] =

@@ -32,6 +32,10 @@ impl Error {
         Self(Box::new(ErrCtx::new(kind.into())))
     }
 
+    pub fn unknown_file_extension() -> Self {
+        Self::new(ErrKind::UnknownFileExtension)
+    }
+
     pub fn invalid_operation() -> Self {
         Self::new(ErrKind::InvalidOperation)
     }

@@ -394,6 +394,29 @@ Search in all songs managed by running instance of uamp. \fIquery\fP specifies
 filter for the songs and their order. See \fIFormat query\fP for more info.
 .IP
 The amount of printed information is affected by verbosity.
+.TP
+\fB\fCexport\-playlist\fR \fIpath\fP [\fIquery\fP] [\fIflags\fP] [\-\-]
+Export playlist of songs produced by \fIquery\fP to \fIpath\fP\&. If query is not
+specified the current top playlist is exported. Flags can be:
+.TP
+\fB\fC\-o\fR \fIpath\fP, \fB\fC\-\-output\fR \fIpath\fP
+    Explicitly specified path. This is necesary if the path starts with \fB\fC\-\fR so
+    it wouldn't be possible to name it with positional argument.
+.TP
+\fB\fC\-q\fR \fIquery\fP, \fB\fC\-\-query\fR \fIquery\fP
+    Explicitly specify the query. This is necessary if the query starts with
+    \fB\fC\-\fR so it wouldn't be possible to name it with positional argument.
+.TP
+\fB\fC\-\-format\fR \fIformat\fP, \fB\fC\-\-\fR\fIformat\fP
+    Specify the playlist format. If the format is not specified, it is
+    determined from the file extension. Supported file formats are: \fB\fCm3u\fR,
+    \fB\fCm3u8\fR and \fB\fCpls\fR\&. \fB\fCm3u\fR and \fB\fCm3u8\fR are eqivalent to writing all paths to
+    the songs to a file. The difference between them is that \fB\fCm3u8\fR enforces
+    utf\-8 encoding.
+.TP
+\fB\fC\-\-\fR
+    End the arguments to the \fB\fCexport\-playlist\fR subcommand and continue with
+    instance processing.
 .SS Action \fB\fCrun\fR
 .PP
 \fB\fCrun\fR [\fB\fC\-h\fR] [\fB\fC\-d\fR] [\fB\fC\-p\fR \fIport\fP] [\fB\fC\-a\fR \fIaddress\fP] [\fIcontrol\-message\fP] ...

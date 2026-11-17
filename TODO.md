@@ -1,15 +1,19 @@
 # TODO
-- Add option to disable remote access over HTTP.
-- Don't send song paths to client.
-- Migrate off of astral-tokio-tar.
 - Fix playing opus.
 - Play single playlist song and `uamp i info=0..18446744073709551615` crashes.
 - `uamp i push=none qn` crashes.
+- Add option to disable remote access over HTTP.
+- Don't send song paths to client.
+- Migrate off of astral-tokio-tar.
 - Save changes with swap files.
 - Push doesn't change playback state (continue playing).
+- Update supported files.
+- Avoid redundant tag information in library when saving to json.
 - Sort by album artist.
 - Proper support for multidisc albums.
-- Song tags (categories)
+- Transition from json.
+- Refactor cli code with new pareg features.
+- Generic CLI interface (checks if instance runs, if not realizes without it)
 - Custom format for listing songs.
 - TUI
 - Tag editor

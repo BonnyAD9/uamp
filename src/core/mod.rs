@@ -6,6 +6,7 @@ mod msg;
 mod origin;
 mod state;
 mod uamp_app;
+pub mod utils;
 
 //===========================================================================//
 //                                   Public                                  //

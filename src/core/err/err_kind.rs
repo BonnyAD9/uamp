@@ -43,6 +43,9 @@ pub enum ErrKind {
     /// Invalid value.
     #[error("Invalid value.")]
     InvalidValue,
+    /// Unknown file extension.
+    #[error("Unknown file extension.")]
+    UnknownFileExtension,
     /// Failed to parse arguments.
     #[error(transparent)]
     Pareg(#[from] pareg::ArgError),

@@ -55,6 +55,15 @@ impl Query {
         )
     }
 
+    pub fn current_top() -> Self {
+        Self::new(
+            vec![Base::Playlist(0)],
+            ComposedFilter::Filter(Filter::any()),
+            None,
+            None,
+        )
+    }
+
     pub fn get_ids(
         &self,
         lib: &Library,

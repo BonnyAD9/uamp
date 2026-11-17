@@ -334,6 +334,12 @@ impl<'a> TagStore for SongTagReader<'a> {
     }
 }
 
+impl AsRef<Song> for Song {
+    fn as_ref(&self) -> &Song {
+        self
+    }
+}
+
 fn default_deleted() -> bool {
     false
 }

@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## future
+### New features
+- Add option to export playlists with (e.g.
+  `uamp i export-playlist playlist.m3u`, for more info see `uamp h i`)
+
 ## v0.7.9
 ### Fixes
 - Limit the access over http.

@@ -1,16 +1,24 @@
 use std::{mem, time::Instant};
 
 use pareg::{ArgInto, ParegRef, has_any_key, parse_arg};
+use termal::printc;
 
-use crate::core::{
-    Result,
-    config::Config,
-    server::{ReqMsg, SndMsg, client::Client},
+use crate::{
+    cli::instance::{export_playlist::ExportPlaylist, intention::Intention},
+    core::{
+        Result,
+        config::Config,
+        server::{ReqMsg, SndMsg, client::Client},
+        utils::exim::export_playlist_to_file,
+    },
 };
 
 use super::{
     Props, help::help_instance, playlist_range::PlaylistRange, port::Port,
 };
+
+mod export_playlist;
+mod intention;
 
 //===========================================================================//
 //                                   Public                                  //
@@ -27,13 +35,6 @@ pub struct Instance {
     pub server: Option<String>,
     /// Verbosity override for this actoin
     verbosity: Option<i32>,
-}
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
-pub enum Intention {
-    #[default]
-    Default,
-    Clear,
 }
 
 impl Instance {
@@ -71,6 +72,13 @@ impl Instance {
                         ReqMsg::Query(args.cur_mval('=')?.unwrap_or_default())
                             .into(),
                         Intention::Default,
+                    ));
+                }
+                "export-playlist" => {
+                    let ep: ExportPlaylist = args.next_sub()?;
+                    self.messages.push((
+                        SndMsg::Req(ReqMsg::Query(ep.query)),
+                        Intention::Export(ep.path, ep.format),
                     ));
                 }
                 "-h" | "-?" | "--help" => help_instance(color),
@@ -127,11 +135,21 @@ impl Instance {
                 }
                 SndMsg::Req(ReqMsg::Query(q)) => {
                     let songs = client.req_query(&q).await?;
-                    props.print_style.song_list(
-                        &songs,
-                        &props.with_verbosity(self.verbosity),
-                        send_time,
-                    );
+                    match i {
+                        Intention::Export(path, format) => {
+                            export_playlist_to_file(path, songs, format)?;
+                        }
+                        Intention::Clear | Intention::Default => {
+                            if i == Intention::Clear {
+                                printc!("{'clear}");
+                            }
+                            props.print_style.song_list(
+                                &songs,
+                                &props.with_verbosity(self.verbosity),
+                                send_time,
+                            );
+                        }
+                    }
                 }
             }
         }
