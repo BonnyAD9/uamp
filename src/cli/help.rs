@@ -401,7 +401,7 @@ fn print_instance_help(color: bool) {
     amount of printed information is affected by verbosity. See
     `{'c}uamp {'b}h {'w bold}query{'_}` for more info.
 
-  {'r}export-playlist {'w}<path> {'gr}[query] [flags] --{'_}
+  {'r}export-playlist {'w}<path> {'gr}[<query>] [<flags>] [--]{'_}
     Export playlist of songs produced by query to the specified path. If query
     is not specified, the current playlist is used. Flags can be:
     {'y}-o  --output {'w}<path>{'_}
