@@ -9,6 +9,7 @@ use std::{
 };
 
 use itertools::Itertools;
+use log::{error, info, warn};
 use raplay::{Source, source::Symph};
 use ratag::{DataType, TagStore, read_tag_from_file, trap};
 use serde::{Deserialize, Serialize};
@@ -259,9 +260,24 @@ impl<'a> SongTagReader<'a> {
 
     pub fn read_to(s: &'a mut Song, p: impl AsRef<Path>) -> Result<()> {
         let mut r = Self::new(s);
-        match read_tag_from_file(p, &mut r, &trap::Skip) {
-            Err(ratag::Error::NoTag) => Ok(()),
-            r => r.map_err(|e| e.into()),
+        let path = p.as_ref();
+        match read_tag_from_file(path, &mut r, &trap::Skip) {
+            Err(ratag::Error::NoTag) => {
+                info!("No tag in file `{}`.", path.display());
+                Ok(())
+            }
+            Err(e @ ratag::Error::Unsupported(_)) => {
+                warn!("File `{}` not supported by ratag: {e}", path.display());
+                Ok(())
+            }
+            Err(e) => {
+                error!(
+                    "Failed to read tags from file `{}`: {e}",
+                    path.display()
+                );
+                Ok(())
+            }
+            Ok(_) => Ok(()),
         }
     }
 }

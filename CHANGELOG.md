@@ -5,6 +5,9 @@
 - Add option to export playlists with `export-playlist` (e.g.
   `uamp i export-playlist playlist.m3u`, for more info see `uamp h i`).
 
+### Fixes
+- Allow loading songs with unsupported or errorenous tags.
+
 ## v0.7.9
 ### Fixes
 - Limit the access over http.
