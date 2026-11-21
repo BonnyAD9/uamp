@@ -1,6 +1,5 @@
 # TODO
 - Fix playing opus.
-- Play single playlist song and `uamp i info=0..18446744073709551615` crashes.
 - `uamp i push=none qn` crashes.
 - Add option to disable remote access over HTTP.
 - Don't send song paths to client.

@@ -7,6 +7,7 @@
 
 ### Fixes
 - Allow loading songs with unsupported or errorenous tags.
+- Fix overflow when handling info request.
 
 ## v0.7.9
 ### Fixes

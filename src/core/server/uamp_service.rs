@@ -498,7 +498,8 @@ impl UampApp {
         let idx = self.player.playlist().current_idx();
         let (before, after) = if let Some(idx) = idx {
             let start = idx.saturating_sub(b);
-            let end = (idx + a + 1).min(self.player.playlist().len());
+            let end =
+                a.saturating_add(idx + 1).min(self.player.playlist().len());
             (
                 self.player.playlist()[start..idx]
                     .iter()
