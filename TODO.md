@@ -17,6 +17,7 @@
 - GUI
 - Grououping by albums and artists
 - Migrate off of tokio.
+- Add support for xspf.
 
 # known issues
 - When playlist obruptly ends (calling `ns` on last song or `end-playlist`),
