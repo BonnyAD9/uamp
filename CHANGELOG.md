@@ -4,11 +4,16 @@
 ### New features
 - Add option to export playlists with `export-playlist` (e.g.
   `uamp i export-playlist playlist.m3u`, for more info see `uamp h i`).
+- Add support for Ogg Vorbis.
 
 ### Fixes
 - Allow loading songs with unsupported or errorenous tags.
 - Fix overflow when handling info request.
 - Fix overflow in queue next to empty playlist.
+
+### Migrations
+- The extension `ogg` is added to audio extensions in the config if it was not
+  previously there.
 
 ## v0.7.9
 ### Fixes

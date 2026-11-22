@@ -12,7 +12,7 @@ Icon=uamp
 Actions=Exit;Pop
 Categories=AudioVideo;Audio;Player;Music
 StartupWMClass=uamp
-MimeType=audio/mpeg;audio/mpa;audio/mpa-robust;audio/flac;audio/mp4;audio/wav;audio/vnd.wav;audio/x-wav;
+MimeType=audio/mpeg;audio/mpa;audio/mpa-robust;audio/flac;audio/mp4;audio/wav;audio/vnd.wav;audio/x-wav;audio/x-ms-asf;audio/vnd.ms-asf;application/ogg;audio/ogg;audio/vorbis;audio/vorbis-config;
 
 [Desktop Action Exit]
 Name=Close server

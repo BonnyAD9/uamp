@@ -53,6 +53,7 @@ pub fn audio_extensions() -> Vec<String> {
         "wma".to_owned(),
         "mpga".to_owned(),
         "bit".to_owned(),
+        "ogg".to_owned(),
     ]
 }
 

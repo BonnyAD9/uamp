@@ -1,6 +1,5 @@
 # TODO
 - Fix playing opus.
-- Update supported files.
 - Add option to disable remote access over HTTP.
 - Don't send song paths to client.
 - Migrate off of astral-tokio-tar.

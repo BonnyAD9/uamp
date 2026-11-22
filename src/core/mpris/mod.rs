@@ -120,6 +120,11 @@ impl RootInterface for Mpris {
             // wma
             "audio/x-ms-asf".to_string(),
             "application/vnd.ms-asf".to_string(),
+            // Ogg Vorbis
+            "application/ogg".to_string(),
+            "audio/ogg".to_string(),
+            "audio/vorbis".to_string(),
+            "audio/vorbis-config".to_string(),
         ])
     }
 }

@@ -20,6 +20,10 @@ impl UampApp {
             self.migrate_add_auto_tags();
         }
 
+        if version <= Version(0, 7, 9) {
+            self.migrate_add_extensions(&["ogg"]);
+        }
+
         self.config.set_version(config::VERSION);
     }
 
@@ -42,6 +46,15 @@ impl UampApp {
         for t in auto_tags {
             self.library.mut_tags().0.get_mut(&t.name).unwrap().songs =
                 songs.clone();
+        }
+    }
+
+    fn migrate_add_extensions(&mut self, ext: &[&str]) {
+        let exts = self.config.mut_audio_extensions();
+        for ext in ext {
+            if !exts.iter().any(|e| e == ext) {
+                exts.push(ext.to_string());
+            }
         }
     }
 }
