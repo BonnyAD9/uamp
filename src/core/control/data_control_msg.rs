@@ -152,10 +152,10 @@ impl UampApp {
                     &self.player,
                 )?;
                 let pl = self.player.mut_playlist();
-                let cur = pl.current_idx().unwrap_or(pl.len() - 1);
+                let cur = pl.current_idx().map(|c| c + 1).unwrap_or(pl.len());
                 pl.play_next(songs.iter().copied());
                 self.client_update(SubMsg::InsertIntoPlaylist(
-                    InsertIntoPlaylist::new(songs, cur + 1, 0),
+                    InsertIntoPlaylist::new(songs, cur, 0),
                 ));
             }
             DataControlMsg::Restart(exe) => {

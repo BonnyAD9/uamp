@@ -163,7 +163,7 @@ impl Playlist {
 
     /// Adds the songs to the playlist after the currently playing song.
     pub fn play_next(&mut self, iter: impl IntoIterator<Item = SongId>) {
-        let c = self.current + 1;
+        let c = (self.current + 1).min(self.len());
         self.songs.splice(c..c, iter);
     }
 

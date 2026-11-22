@@ -1,12 +1,11 @@
 # TODO
 - Fix playing opus.
-- `uamp i push=none qn` crashes.
+- Update supported files.
 - Add option to disable remote access over HTTP.
 - Don't send song paths to client.
 - Migrate off of astral-tokio-tar.
 - Save changes with swap files.
 - Push doesn't change playback state (continue playing).
-- Update supported files.
 - Avoid redundant tag information in library when saving to json.
 - Sort by album artist.
 - Proper support for multidisc albums.

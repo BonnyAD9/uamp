@@ -8,6 +8,7 @@
 ### Fixes
 - Allow loading songs with unsupported or errorenous tags.
 - Fix overflow when handling info request.
+- Fix overflow in queue next to empty playlist.
 
 ## v0.7.9
 ### Fixes
